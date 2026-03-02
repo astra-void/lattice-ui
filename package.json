@@ -1,0 +1,29 @@
+{
+  "name": "unnamed-ui-package",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "pnpm -r build",
+    "watch": "pnpm -r watch",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.4",
+    "@eslint/js": "^10.0.1",
+    "@rbxts/compiler-types": "3.0.0-types.0",
+    "@rbxts/react": "17.3.7-ts.1",
+    "@rbxts/react-roblox": "17.3.7-ts.1",
+    "@rbxts/types": "^1.0.909",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-roblox-ts": "^1.4.0",
+    "prettier": "^3.8.1",
+    "roblox-ts": "^3.0.0",
+    "typescript": "5.5.3",
+    "typescript-eslint": "^8.56.1"
+  }
+}
