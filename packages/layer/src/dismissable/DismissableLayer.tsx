@@ -2,6 +2,7 @@ import { React } from "@lattice-ui/core";
 import { isOutsidePointerEvent } from "./events";
 import { registerLayer, unregisterLayer } from "./layerStack";
 import { Portal } from "../portal/Portal";
+import { DEFAULT_LAYER_IGNORE_GUI_INSET } from "../internals/constants";
 import { usePortalContext } from "../portal/PortalProvider";
 import type { DismissableLayerProps, LayerInteractEvent } from "./types";
 
@@ -16,10 +17,10 @@ function useLatest<T>(value: T) {
 export function DismissableLayer(props: DismissableLayerProps) {
   const enabled = props.enabled ?? true;
   const shouldBlockOutsidePointer = props.modal === true || props.disableOutsidePointerEvents === true;
+  const layerIgnoresGuiInset = DEFAULT_LAYER_IGNORE_GUI_INSET;
 
   const portalContext = usePortalContext();
   const contentRootRef = React.useRef<Frame>();
-  const layerIdRef = React.useRef<number>();
   const [stackOrder, setStackOrder] = React.useState(0);
 
   const enabledRef = useLatest(enabled);
@@ -52,7 +53,9 @@ export function DismissableLayer(props: DismissableLayerProps) {
         if (!contentRoot) {
           return false;
         }
-        return isOutsidePointerEvent(inputObject, portalContext.container, contentRoot);
+        return isOutsidePointerEvent(inputObject, portalContext.container, contentRoot, {
+          layerIgnoresGuiInset,
+        });
       },
       onPointerDownOutside: callPointerDownOutside,
       onInteractOutside: callInteractOutside,
@@ -60,21 +63,27 @@ export function DismissableLayer(props: DismissableLayerProps) {
       onDismiss: callDismiss,
     });
 
-    layerIdRef.current = registration.id;
     setStackOrder(registration.mountOrder);
 
     return () => {
       unregisterLayer(registration.id);
-      layerIdRef.current = undefined;
     };
-  }, []);
+  }, [
+    callDismiss,
+    callEscape,
+    callInteractOutside,
+    callPointerDownOutside,
+    enabledRef,
+    layerIgnoresGuiInset,
+    portalContext.container,
+  ]);
 
   return (
     <Portal>
       <screengui
         key={`Layer_${stackOrder}`}
         DisplayOrder={portalContext.displayOrderBase + stackOrder}
-        IgnoreGuiInset={true}
+        IgnoreGuiInset={layerIgnoresGuiInset}
         ResetOnSpawn={false}
         ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
       >

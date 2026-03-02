@@ -11,7 +11,7 @@ export function NestedStackScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(720, 28)}
-        Text="Open Outer -> Open Inner. ESC dismisses only top-most first."
+        Text="Open Outer -> Open Inner. Press ESC twice: Inner first, then Outer."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
         TextXAlignment={Enum.TextXAlignment.Left}

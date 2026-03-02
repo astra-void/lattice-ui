@@ -1,4 +1,4 @@
-import { UserInputService } from "../internals/env";
+import { GuiService, UserInputService } from "../internals/env";
 import { isPointerInput, toLayerInteractEvent } from "./events";
 import type { LayerInteractEvent } from "./types";
 
@@ -41,6 +41,20 @@ function handleDismissEvent(entry: LayerEntry, event: LayerInteractEvent) {
   }
 }
 
+function shouldIgnoreEscapeDismiss() {
+  const focusedTextBox = UserInputService.GetFocusedTextBox();
+  if (focusedTextBox) {
+    return true;
+  }
+
+  const selectedObject = GuiService.SelectedObject;
+  if (selectedObject && selectedObject.IsA("TextBox")) {
+    return true;
+  }
+
+  return false;
+}
+
 function handleInputBegan(inputObject: InputObject, gameProcessedEvent: boolean) {
   if (gameProcessedEvent) {
     return;
@@ -52,6 +66,10 @@ function handleInputBegan(inputObject: InputObject, gameProcessedEvent: boolean)
   }
 
   if (inputObject.KeyCode === Enum.KeyCode.Escape) {
+    if (shouldIgnoreEscapeDismiss()) {
+      return;
+    }
+
     const escapeEvent = toLayerInteractEvent(inputObject);
     topLayer.onEscapeKeyDown?.(escapeEvent);
     handleDismissEvent(topLayer, escapeEvent);
@@ -91,6 +109,14 @@ function stopInputListener() {
   inputConnection = undefined;
 }
 
+function syncInputListener() {
+  if (layerEntries.size() > 0) {
+    startInputListener();
+  } else {
+    stopInputListener();
+  }
+}
+
 export function registerLayer(params: RegisterLayerParams): LayerRegistration {
   nextLayerId += 1;
   nextMountOrder += 1;
@@ -102,7 +128,7 @@ export function registerLayer(params: RegisterLayerParams): LayerRegistration {
   };
 
   layerEntries.push(entry);
-  startInputListener();
+  syncInputListener();
 
   return {
     id: entry.id,
@@ -117,8 +143,5 @@ export function unregisterLayer(layerId: number) {
   }
 
   layerEntries.remove(layerIndex);
-
-  if (layerEntries.size() === 0) {
-    stopInputListener();
-  }
+  syncInputListener();
 }

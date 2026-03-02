@@ -1,17 +1,19 @@
 import { React, ReactRoblox } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
+import { InsetHitTestScene } from "./scenes/InsetHitTestScene";
 import { LayerDismissScene } from "./scenes/LayerDismissScene";
 import { ModalBlockScene } from "./scenes/ModalBlockScene";
 import { NestedStackScene } from "./scenes/NestedStackScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 
-type SceneKey = "dismiss" | "nested" | "modal" | "presence";
+type SceneKey = "dismiss" | "nested" | "modal" | "presence" | "inset";
 
 const sceneOptions = [
   { key: "dismiss" as SceneKey, label: "Layer Dismiss" },
   { key: "nested" as SceneKey, label: "Nested Stack" },
   { key: "modal" as SceneKey, label: "Modal Block" },
   { key: "presence" as SceneKey, label: "Presence" },
+  { key: "inset" as SceneKey, label: "Inset Hit-Test" },
 ];
 
 type AppProps = {
@@ -67,6 +69,7 @@ function App(props: AppProps) {
             {activeScene === "nested" ? <NestedStackScene /> : undefined}
             {activeScene === "modal" ? <ModalBlockScene /> : undefined}
             {activeScene === "presence" ? <PresenceScene /> : undefined}
+            {activeScene === "inset" ? <InsetHitTestScene /> : undefined}
           </frame>
         </frame>
       </screengui>

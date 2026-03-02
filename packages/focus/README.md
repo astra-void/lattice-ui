@@ -1,9 +1,15 @@
 # @lattice-ui/focus
 
-Initial skeleton package for focus primitives.
+This package is intentionally a skeleton in the current phase.
 
-## Planned first implementation
+## Current status
+
+- `FocusScope` and `RovingFocusGroup` are no-op placeholders.
+- Public API is kept stable while layer/popper hardening lands first.
+
+## Next implementation targets
 
 - `FocusScope`: trap + restore behavior for dialog-like surfaces.
 - `RovingFocusGroup`: keyboard/gamepad directional navigation.
-- `internals/guiSelection`: `GuiService.SelectedObject` integration surface.
+- `GuiService.SelectedObject` + `NextSelection*` graph management.
+- Focus restore flow to trigger elements when scope closes.

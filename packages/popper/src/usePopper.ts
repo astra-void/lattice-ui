@@ -1,31 +1,43 @@
-import type React from "@rbxts/react";
+import { React } from "@lattice-ui/core";
 import { computePopper } from "./compute";
-import type { UsePopperOptions, UsePopperResult } from "./types";
+import { subscribeAnchor, subscribeContent, subscribeViewport } from "./observers";
+import type { ComputePopperResult, UsePopperOptions, UsePopperResult } from "./types";
 
 const WorkspaceService = game.GetService("Workspace");
+const RunService = game.GetService("RunService");
 
-function readGuiRef(
-  ref: React.RefObject<GuiObject> | React.MutableRefObject<GuiObject | undefined>,
-): GuiObject | undefined {
+function readGuiRef(ref: UsePopperOptions["anchorRef"] | UsePopperOptions["contentRef"]): GuiObject | undefined {
   return ref.current;
 }
 
-function getDefaultResult(placement: UsePopperOptions["placement"]): UsePopperResult {
-  const resolvedPlacement = placement ?? "bottom";
-  const noop = () => {};
+function getDefaultComputedResult(placement: UsePopperOptions["placement"]): ComputePopperResult {
   return {
     anchorPoint: new Vector2(0, 0),
-    placement: resolvedPlacement,
+    placement: placement ?? "bottom",
     position: UDim2.fromOffset(0, 0),
-    update: noop,
   };
 }
 
-export function usePopper(options: UsePopperOptions): UsePopperResult {
-  let currentResult = getDefaultResult(options.placement);
+function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {
+  return (
+    a.placement === b.placement &&
+    a.anchorPoint.X === b.anchorPoint.X &&
+    a.anchorPoint.Y === b.anchorPoint.Y &&
+    a.position.X.Scale === b.position.X.Scale &&
+    a.position.X.Offset === b.position.X.Offset &&
+    a.position.Y.Scale === b.position.Y.Scale &&
+    a.position.Y.Offset === b.position.Y.Offset
+  );
+}
 
-  const update = () => {
-    if (options.enabled === false) {
+export function usePopper(options: UsePopperOptions): UsePopperResult {
+  const enabled = options.enabled ?? true;
+  const [computedResult, setComputedResult] = React.useState<ComputePopperResult>(() =>
+    getDefaultComputedResult(options.placement),
+  );
+
+  const update = React.useCallback(() => {
+    if (!enabled) {
       return;
     }
 
@@ -36,25 +48,83 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
     }
 
     const viewportSize = WorkspaceService.CurrentCamera?.ViewportSize ?? new Vector2(1920, 1080);
-    const computed = computePopper({
+    const nextResult = computePopper({
       anchorPosition: anchor.AbsolutePosition,
       anchorSize: anchor.AbsoluteSize,
       contentSize: content.AbsoluteSize,
-      viewportSize,
-      placement: options.placement,
       offset: options.offset,
       padding: options.padding,
+      placement: options.placement,
+      viewportSize,
     });
 
-    currentResult = {
-      ...computed,
-      update,
-    };
-  };
+    setComputedResult((currentResult) => (areResultsEqual(currentResult, nextResult) ? currentResult : nextResult));
+  }, [enabled, options.anchorRef, options.contentRef, options.offset, options.padding, options.placement]);
 
-  update();
-  return {
-    ...currentResult,
-    update,
-  };
+  React.useEffect(() => {
+    update();
+  }, [update]);
+
+  React.useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    let disconnectAnchor: (() => void) | undefined;
+    let disconnectContent: (() => void) | undefined;
+    let disconnectViewport: (() => void) | undefined;
+    let waitForRefsConnection: RBXScriptConnection | undefined;
+    let attached = false;
+
+    const attachObservers = () => {
+      if (attached) {
+        return true;
+      }
+
+      const anchor = readGuiRef(options.anchorRef);
+      const content = readGuiRef(options.contentRef);
+      if (!anchor || !content) {
+        return false;
+      }
+
+      disconnectAnchor = subscribeAnchor(anchor, update);
+      disconnectContent = subscribeContent(content, update);
+      disconnectViewport = subscribeViewport(update);
+      attached = true;
+      return true;
+    };
+
+    if (!attachObservers()) {
+      waitForRefsConnection = RunService.Heartbeat.Connect(() => {
+        if (attachObservers()) {
+          if (waitForRefsConnection) {
+            waitForRefsConnection.Disconnect();
+            waitForRefsConnection = undefined;
+          }
+          update();
+        }
+      });
+    } else {
+      update();
+    }
+
+    return () => {
+      if (waitForRefsConnection) {
+        waitForRefsConnection.Disconnect();
+        waitForRefsConnection = undefined;
+      }
+
+      disconnectAnchor?.();
+      disconnectContent?.();
+      disconnectViewport?.();
+    };
+  }, [enabled, options.anchorRef, options.contentRef, update]);
+
+  return React.useMemo(
+    () => ({
+      ...computedResult,
+      update,
+    }),
+    [computedResult, update],
+  );
 }
