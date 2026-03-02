@@ -1,5 +1,5 @@
 {
-  "name": "@rblx-primitives/core",
+  "name": "@lattice-ui/core",
   "version": "0.0.0",
   "private": true,
   "main": "out/init.luau",
