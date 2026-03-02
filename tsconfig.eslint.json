@@ -2,8 +2,13 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "typeRoots": ["./node_modules/@rbxts"],
+    "typeRoots": ["./node_modules/@rbxts", "./node_modules/@lattice-ui"],
     "types": ["types", "compiler-types"]
   },
-  "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"]
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx"
+  ]
 }

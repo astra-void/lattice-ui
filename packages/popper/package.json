@@ -1,0 +1,23 @@
+{
+  "name": "@lattice-ui/popper",
+  "version": "0.0.0",
+  "private": true,
+  "main": "out/init.luau",
+  "types": "out/index.d.ts",
+  "scripts": {
+    "build": "rbxtsc -p tsconfig.json",
+    "watch": "rbxtsc -p tsconfig.json -w",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lattice-ui/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@rbxts/react": "17.3.7-ts.1",
+    "@rbxts/react-roblox": "17.3.7-ts.1"
+  },
+  "peerDependencies": {
+    "@rbxts/react": "^17",
+    "@rbxts/react-roblox": "^17"
+  }
+}

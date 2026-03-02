@@ -1,0 +1,18 @@
+{
+  "name": "@lattice-ui/playground",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "rbxtsc -p tsconfig.json",
+    "watch": "rbxtsc -p tsconfig.json -w",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/layer": "workspace:*"
+  },
+  "devDependencies": {
+    "@rbxts/react": "17.3.7-ts.1",
+    "@rbxts/react-roblox": "17.3.7-ts.1"
+  }
+}

@@ -11,6 +11,10 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.1",
+    "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/focus": "workspace:*",
+    "@lattice-ui/layer": "workspace:*",
+    "@lattice-ui/popper": "workspace:*",
     "@rbxts/compiler-types": "3.0.0-types.0",
     "@rbxts/react": "17.3.7-ts.1",
     "@rbxts/react-roblox": "17.3.7-ts.1",
