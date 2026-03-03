@@ -81,7 +81,12 @@ export function Presence(props: PresenceProps) {
     return undefined;
   }
 
-  return props.children({
+  const render = props.render ?? props.children;
+  if (!render) {
+    return undefined;
+  }
+
+  return render({
     isPresent,
     onExitComplete: completeExit,
   });

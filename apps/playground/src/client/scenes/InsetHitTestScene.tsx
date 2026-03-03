@@ -53,10 +53,11 @@ export function InsetHitTestScene() {
       return;
     }
 
-    const playerGui = localPlayer.FindFirstChild("PlayerGui") as PlayerGui | undefined;
-    if (!playerGui) {
+    const playerGuiInstance = localPlayer.FindFirstChild("PlayerGui");
+    if (!playerGuiInstance || !playerGuiInstance.IsA("PlayerGui")) {
       return;
     }
+    const playerGui = playerGuiInstance;
 
     const connection = UserInputService.InputBegan.Connect((inputObject, gameProcessedEvent) => {
       if (gameProcessedEvent || !isPointerInput(inputObject)) {

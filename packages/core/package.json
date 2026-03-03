@@ -1,13 +1,15 @@
 {
   "name": "@lattice-ui/core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "main": "out/init.luau",
   "types": "out/index.d.ts",
   "scripts": {
+    "prebuild": "node ./scripts/ensure-hoisted-links.mjs",
     "build": "rbxtsc -p tsconfig.json",
+    "prewatch": "node ./scripts/ensure-hoisted-links.mjs",
     "watch": "rbxtsc -p tsconfig.json -w",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.typecheck.json"
   },
   "devDependencies": {
     "@rbxts/react": "17.3.7-ts.1",

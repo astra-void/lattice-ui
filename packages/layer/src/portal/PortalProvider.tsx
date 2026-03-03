@@ -1,4 +1,4 @@
-import { React, createStrictContext } from "@lattice-ui/core";
+import { createStrictContext, React } from "@lattice-ui/core";
 import { DEFAULT_DISPLAY_ORDER_BASE } from "../internals/constants";
 import type { PortalContextValue, PortalProviderProps } from "./types";
 

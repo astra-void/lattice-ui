@@ -1,3 +1,3 @@
-import ReactRoblox from "@rbxts/react-roblox";
+import ReactRoblox = require("@rbxts/react-roblox");
 
 export default ReactRoblox;

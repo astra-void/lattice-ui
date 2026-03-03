@@ -9,12 +9,12 @@ import { PresenceScene } from "./scenes/PresenceScene";
 type SceneKey = "dismiss" | "nested" | "modal" | "presence" | "inset";
 
 const sceneOptions = [
-  { key: "dismiss" as SceneKey, label: "Layer Dismiss" },
-  { key: "nested" as SceneKey, label: "Nested Stack" },
-  { key: "modal" as SceneKey, label: "Modal Block" },
-  { key: "presence" as SceneKey, label: "Presence" },
-  { key: "inset" as SceneKey, label: "Inset Hit-Test" },
-];
+  { key: "dismiss", label: "Layer Dismiss" },
+  { key: "nested", label: "Nested Stack" },
+  { key: "modal", label: "Modal Block" },
+  { key: "presence", label: "Presence" },
+  { key: "inset", label: "Inset Hit-Test" },
+] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
 type AppProps = {
   playerGui: PlayerGui;
@@ -83,7 +83,11 @@ if (!localPlayer) {
   error("LocalPlayer is required for playground.");
 }
 
-const playerGui = localPlayer.WaitForChild("PlayerGui") as PlayerGui;
+const playerGuiInstance = localPlayer.WaitForChild("PlayerGui");
+if (!playerGuiInstance.IsA("PlayerGui")) {
+  error("PlayerGui instance is required for playground.");
+}
+const playerGui = playerGuiInstance;
 const rootContainer = new Instance("Folder");
 rootContainer.Name = "LatticePlaygroundRoot";
 rootContainer.Parent = playerGui;

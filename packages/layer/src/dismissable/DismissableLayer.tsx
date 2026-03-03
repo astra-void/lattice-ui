@@ -1,9 +1,9 @@
 import { React } from "@lattice-ui/core";
+import { DEFAULT_LAYER_IGNORE_GUI_INSET } from "../internals/constants";
+import { Portal } from "../portal/Portal";
+import { usePortalContext } from "../portal/PortalProvider";
 import { isOutsidePointerEvent } from "./events";
 import { registerLayer, unregisterLayer } from "./layerStack";
-import { Portal } from "../portal/Portal";
-import { DEFAULT_LAYER_IGNORE_GUI_INSET } from "../internals/constants";
-import { usePortalContext } from "../portal/PortalProvider";
 import type { DismissableLayerProps, LayerInteractEvent } from "./types";
 
 function useLatest<T>(value: T) {

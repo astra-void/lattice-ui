@@ -1,11 +1,11 @@
 {
   "name": "@lattice-ui/playground",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "scripts": {
-    "build": "rbxtsc -p tsconfig.json",
-    "watch": "rbxtsc -p tsconfig.json -w",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "rbxtsc -p rbxtsc.build.json",
+    "watch": "rbxtsc -p rbxtsc.build.json -w",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@lattice-ui/core": "workspace:*",

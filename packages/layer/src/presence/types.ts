@@ -5,9 +5,12 @@ export type PresenceRenderState = {
   onExitComplete: () => void;
 };
 
+export type PresenceRender = (state: PresenceRenderState) => React.ReactElement | undefined;
+
 export type PresenceProps = {
   present: boolean;
   exitFallbackMs?: number;
   onExitComplete?: () => void;
-  children: (state: PresenceRenderState) => React.ReactElement | undefined;
+  children?: PresenceRender;
+  render?: PresenceRender;
 };

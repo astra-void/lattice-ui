@@ -6,14 +6,18 @@ type Props<T> = {
   onChange?: (next: T) => void;
 };
 
+function isUpdater<T>(value: T | ((prev: T) => T)): value is (prev: T) => T {
+  return typeIs(value, "function");
+}
+
 export function useControllableState<T>({ value, defaultValue, onChange }: Props<T>) {
   const [inner, setInner] = React.useState(defaultValue);
   const controlled = value !== undefined;
-  const state = (controlled ? value : inner) as T;
+  const state = value !== undefined ? value : inner;
 
   const setState = React.useCallback(
     (nextValue: T | ((prev: T) => T)) => {
-      const computed = typeIs(nextValue, "function") ? (nextValue as (p: T) => T)(state) : nextValue;
+      const computed = isUpdater(nextValue) ? nextValue(state) : nextValue;
       if (!controlled) setInner(computed);
       onChange?.(computed);
     },

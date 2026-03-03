@@ -1,9 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "out",
-    "declaration": false,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@lattice-ui/core": ["../../packages/core/src/index.ts"],
+      "@lattice-ui/layer": ["../../packages/layer/src/index.ts"],
+      "@lattice-ui/focus": ["../../packages/focus/src/index.ts"],
+      "@lattice-ui/popper": ["../../packages/popper/src/index.ts"]
+    },
     "typeRoots": [
       "./node_modules/@rbxts",
       "../../node_modules/@rbxts",
@@ -12,7 +17,7 @@
     ],
     "types": ["types", "compiler-types"]
   },
-  "include": ["src"],
+  "include": ["src", "../../packages/core/src", "../../packages/layer/src"],
   "rbxts": {
     "type": "game",
     "rojo": "default.project.json",

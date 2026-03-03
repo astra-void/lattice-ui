@@ -1,14 +1,23 @@
 {
   "name": "unnamed-ui-package",
-  "version": "1.0.0",
+  "version": "0.1.0",
+  "private": false,
   "description": "",
   "scripts": {
     "build": "pnpm -r build",
     "watch": "pnpm -r watch",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "check:any": "sh -c 'rg -n --glob \"*.{ts,tsx}\" \"\\\\bany\\\\b\" packages apps; code=$?; if [ \"$code\" -eq 0 ]; then echo \"Explicit any is forbidden.\"; exit 1; fi; if [ \"$code\" -eq 1 ]; then exit 0; fi; exit \"$code\"'",
+    "lint:types": "eslint \"{packages,apps}/**/*.{ts,tsx}\"",
+    "verify:types": "pnpm run check:any && pnpm run lint:types && pnpm run typecheck",
+    "lint": "pnpm -w eslint .",
+    "lint:fix": "pnpm -w eslint . --fix",
+    "format": "pnpm -w prettier . --write",
+    "format:check": "pnpm -w prettier . --check",
+    "biome:fix": "pnpm -w biome check --fix --unsafe"
   },
-  "packageManager": "pnpm@10.30.3",
   "devDependencies": {
+    "@biomejs/biome": "2.4.5",
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.1",
     "@lattice-ui/core": "workspace:*",
@@ -27,7 +36,7 @@
     "eslint-plugin-roblox-ts": "^1.4.0",
     "prettier": "^3.8.1",
     "roblox-ts": "^3.0.0",
-    "typescript": "5.5.3",
-    "typescript-eslint": "^8.56.1"
-  }
+    "typescript": "5.9.3"
+  },
+  "packageManager": "pnpm@10.30.3"
 }

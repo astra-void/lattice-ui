@@ -1,3 +1,3 @@
-import React from "@rbxts/react";
+import React = require("@rbxts/react");
 
 export default React;

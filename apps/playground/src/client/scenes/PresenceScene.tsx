@@ -101,13 +101,8 @@ export function PresenceScene() {
           setUnmountCount((value) => value + 1);
         }}
         present={present}
-      >
-        {
-          ((state: { isPresent: boolean; onExitComplete: () => void }) => (
-            <ExitAnimatedCard isPresent={state.isPresent} onExitComplete={state.onExitComplete} />
-          )) as never
-        }
-      </Presence>
+        render={(state) => <ExitAnimatedCard isPresent={state.isPresent} onExitComplete={state.onExitComplete} />}
+      />
     </frame>
   );
 }

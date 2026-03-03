@@ -1,19 +1,79 @@
 import React from "@rbxts/react";
 import { composeRefs } from "./refs";
 
-type AnyProps = Record<string, unknown>;
 type Fn = (...args: unknown[]) => void;
 type HandlerTable = Partial<Record<string, Fn>>;
+type SlotRef = React.ForwardedRef<Instance>;
+type SlotPropBag = React.Attributes & Record<string, unknown>;
+type InstanceRefCallback = (instance: Instance | undefined) => void;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeIs(value, "table");
+}
+
+function toSlotPropBag(value: unknown): SlotPropBag {
+  return isRecord(value) ? (value as SlotPropBag) : {};
+}
+
+function isFn(value: unknown): value is Fn {
+  return typeIs(value, "function");
+}
+
+function toHandlerTable(value: unknown): HandlerTable | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const out: HandlerTable = {};
+  for (const [rawKey, candidate] of pairs(value)) {
+    if (!typeIs(rawKey, "string")) {
+      continue;
+    }
+
+    if (isFn(candidate)) {
+      out[rawKey] = candidate;
+    }
+  }
+
+  return next(out)[0] !== undefined ? out : undefined;
+}
+
+function toForwardedRef(value: unknown): SlotRef | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (isInstanceRefCallback(value)) {
+    return value;
+  }
+
+  if (isInstanceMutableRefObject(value)) {
+    return value;
+  }
+
+  return undefined;
+}
+
+function isInstanceRefCallback(value: unknown): value is InstanceRefCallback {
+  return typeIs(value, "function");
+}
+
+function isInstanceMutableRefObject(value: unknown): value is React.MutableRefObject<Instance | undefined> {
+  return typeIs(value, "table") && "current" in value;
+}
 
 function mergeHandlerTable(a?: HandlerTable, b?: HandlerTable) {
   if (!a) return b;
   if (!b) return a;
   const out: HandlerTable = { ...a };
-  for (const [key, value] of pairs(b)) {
-    const k = key as string;
-    const af = a[k];
-    const bf = value as Fn | undefined;
-    out[k] =
+  for (const [rawKey, candidate] of pairs(b)) {
+    if (!typeIs(rawKey, "string") || !isFn(candidate)) {
+      continue;
+    }
+
+    const af = a[rawKey];
+    const bf = candidate;
+    out[rawKey] =
       af && bf
         ? (...args) => {
             bf(...args);
@@ -25,33 +85,32 @@ function mergeHandlerTable(a?: HandlerTable, b?: HandlerTable) {
 }
 
 export type SlotProps = {
-  children: React.ReactElement;
-} & Record<string, unknown>;
+  children: React.ReactElement<SlotPropBag>;
+  ref?: SlotRef;
+} & SlotPropBag;
 
 export const Slot = React.forwardRef<Instance, SlotProps>((props, forwardedRef) => {
-  const child = React.Children.only(props.children) as React.ReactElement;
-  const childProps = child.props as AnyProps;
+  const child = props.children;
+  const childProps = toSlotPropBag((child as { props?: unknown }).props);
 
-  const mergedProps: AnyProps = { ...props, ...childProps };
+  const mergedProps: SlotPropBag = { ...props, ...childProps };
   mergedProps.children = childProps.children;
 
-  const slotEvent = props.Event as HandlerTable | undefined;
-  const childEvent = childProps.Event as HandlerTable | undefined;
-  const slotChange = props.Change as HandlerTable | undefined;
-  const childChange = childProps.Change as HandlerTable | undefined;
+  const slotEvent = toHandlerTable(props.Event);
+  const childEvent = toHandlerTable(childProps.Event);
+  const slotChange = toHandlerTable(props.Change);
+  const childChange = toHandlerTable(childProps.Change);
 
   const Event = mergeHandlerTable(slotEvent, childEvent);
   const Change = mergeHandlerTable(slotChange, childChange);
   if (Event) mergedProps.Event = Event;
   if (Change) mergedProps.Change = Change;
 
-  const slotRef = props.ref as React.ForwardedRef<Instance> | undefined;
-  const childRef = childProps.ref as React.ForwardedRef<Instance> | undefined;
+  const slotRef = toForwardedRef(props.ref);
+  const childRef = toForwardedRef(childProps.ref);
   const mergedRef = composeRefs(childRef, forwardedRef, slotRef);
+  mergedProps.ref = mergedRef;
 
-  return React.cloneElement(child, {
-    ...(mergedProps as React.Attributes),
-    ref: mergedRef,
-  });
+  return React.cloneElement(child, mergedProps);
 });
 Slot.displayName = "Slot";
