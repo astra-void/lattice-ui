@@ -147,6 +147,7 @@ export function normalizePackageManifest(manifest) {
     "description",
     "main",
     "types",
+    "files",
     "scripts",
     "dependencies",
     "devDependencies",
@@ -158,7 +159,6 @@ export function normalizePackageManifest(manifest) {
     "repository",
     "homepage",
     "bugs",
-    "files",
     "engines",
   ];
 

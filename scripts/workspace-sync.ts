@@ -96,7 +96,7 @@ for (const pkg of packages) {
   }
 
   const normalizedManifest = normalizePackageManifest(nextManifest);
-  if (!jsonEqual(pkg.manifest, normalizedManifest)) {
+  if (JSON.stringify(pkg.manifest) !== JSON.stringify(normalizedManifest)) {
     writeJson(pkg.manifestPath, normalizedManifest);
     manifestUpdates += 1;
   }
