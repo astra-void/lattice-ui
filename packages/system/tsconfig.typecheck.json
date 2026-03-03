@@ -5,10 +5,21 @@
     "baseUrl": "..",
     "rootDir": "..",
     "paths": {
+      "@lattice-ui/checkbox": ["checkbox/src/index.ts"],
       "@lattice-ui/core": ["core/src/index.ts"],
-      "@lattice-ui/toggle-group": ["toggle-group/src/index.ts"],
+      "@lattice-ui/dialog": ["dialog/src/index.ts"],
+      "@lattice-ui/focus": ["focus/src/index.ts"],
+      "@lattice-ui/layer": ["layer/src/index.ts"],
+      "@lattice-ui/menu": ["menu/src/index.ts"],
+      "@lattice-ui/popover": ["popover/src/index.ts"],
+      "@lattice-ui/popper": ["popper/src/index.ts"],
+      "@lattice-ui/radio-group": ["radio-group/src/index.ts"],
       "@lattice-ui/style": ["style/src/index.ts"],
-      "@lattice-ui/system": ["system/src/index.ts"]
+      "@lattice-ui/switch": ["switch/src/index.ts"],
+      "@lattice-ui/system": ["system/src/index.ts"],
+      "@lattice-ui/tabs": ["tabs/src/index.ts"],
+      "@lattice-ui/toggle-group": ["toggle-group/src/index.ts"],
+      "@lattice-ui/tooltip": ["tooltip/src/index.ts"]
     }
   }
 }

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "changelog": false,
+  "commit": false,
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": ["@lattice-ui/playground", "@lattice-ui/test-harness"],
+  "fixed": [
+    [
+      "@lattice-ui/checkbox",
+      "@lattice-ui/core",
+      "@lattice-ui/dialog",
+      "@lattice-ui/focus",
+      "@lattice-ui/layer",
+      "@lattice-ui/menu",
+      "@lattice-ui/popover",
+      "@lattice-ui/popper",
+      "@lattice-ui/radio-group",
+      "@lattice-ui/style",
+      "@lattice-ui/switch",
+      "@lattice-ui/system",
+      "@lattice-ui/tabs",
+      "@lattice-ui/toggle-group",
+      "@lattice-ui/tooltip"
+    ]
+  ],
+  "linked": []
+}
