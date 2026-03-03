@@ -17,6 +17,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.0.2)
+      '@lattice-ui/checkbox':
+        specifier: workspace:*
+        version: link:packages/checkbox
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:packages/core
@@ -38,9 +41,15 @@ importers:
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:packages/popper
+      '@lattice-ui/radio-group':
+        specifier: workspace:*
+        version: link:packages/radio-group
       '@lattice-ui/style':
         specifier: workspace:*
         version: link:packages/style
+      '@lattice-ui/switch':
+        specifier: workspace:*
+        version: link:packages/switch
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:packages/tabs
@@ -89,6 +98,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@lattice-ui/checkbox':
+        specifier: workspace:*
+        version: link:../../packages/checkbox
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -104,15 +116,34 @@ importers:
       '@lattice-ui/popover':
         specifier: workspace:*
         version: link:../../packages/popover
+      '@lattice-ui/radio-group':
+        specifier: workspace:*
+        version: link:../../packages/radio-group
       '@lattice-ui/style':
         specifier: workspace:*
         version: link:../../packages/style
+      '@lattice-ui/switch':
+        specifier: workspace:*
+        version: link:../../packages/switch
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:../../packages/tabs
       '@lattice-ui/tooltip':
         specifier: workspace:*
         version: link:../../packages/tooltip
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/checkbox:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -229,7 +260,36 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
+  packages/radio-group:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
   packages/style:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/switch:
     dependencies:
       '@lattice-ui/core':
         specifier: workspace:*

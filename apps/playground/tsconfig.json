@@ -4,6 +4,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
+      "@lattice-ui/checkbox": ["../../packages/checkbox/src/index.ts"],
       "@lattice-ui/core": ["../../packages/core/src/index.ts"],
       "@lattice-ui/dialog": ["../../packages/dialog/src/index.ts"],
       "@lattice-ui/focus": ["../../packages/focus/src/index.ts"],
@@ -11,7 +12,9 @@
       "@lattice-ui/menu": ["../../packages/menu/src/index.ts"],
       "@lattice-ui/popover": ["../../packages/popover/src/index.ts"],
       "@lattice-ui/popper": ["../../packages/popper/src/index.ts"],
+      "@lattice-ui/radio-group": ["../../packages/radio-group/src/index.ts"],
       "@lattice-ui/style": ["../../packages/style/src/index.ts"],
+      "@lattice-ui/switch": ["../../packages/switch/src/index.ts"],
       "@lattice-ui/tabs": ["../../packages/tabs/src/index.ts"],
       "@lattice-ui/tooltip": ["../../packages/tooltip/src/index.ts"]
     },
@@ -25,6 +28,7 @@
   },
   "include": [
     "src",
+    "../../packages/checkbox/src",
     "../../packages/core/src",
     "../../packages/dialog/src",
     "../../packages/focus/src",
@@ -32,7 +36,9 @@
     "../../packages/menu/src",
     "../../packages/popover/src",
     "../../packages/popper/src",
+    "../../packages/radio-group/src",
     "../../packages/style/src",
+    "../../packages/switch/src",
     "../../packages/tabs/src",
     "../../packages/tooltip/src"
   ],

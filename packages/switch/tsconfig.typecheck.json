@@ -32,9 +32,6 @@
       "@lattice-ui/tabs": [
         "tabs/src/index.ts"
       ],
-      "@lattice-ui/tooltip": [
-        "tooltip/src/index.ts"
-      ],
       "@lattice-ui/checkbox": [
         "checkbox/src/index.ts"
       ],
@@ -43,6 +40,9 @@
       ],
       "@lattice-ui/radio-group": [
         "radio-group/src/index.ts"
+      ],
+      "@lattice-ui/tooltip": [
+        "tooltip/src/index.ts"
       ]
     }
   }

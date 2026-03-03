@@ -1,6 +1,7 @@
 import { React, ReactRoblox } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
 import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text, ThemeProvider, useTheme } from "@lattice-ui/style";
+import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
 import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
 import { DialogNestedScene } from "./scenes/DialogNestedScene";
@@ -13,6 +14,9 @@ import { PopoverBasicScene } from "./scenes/PopoverBasicScene";
 import { PopoverFlipClampScene } from "./scenes/PopoverFlipClampScene";
 import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
+import { RadioGroupDisabledScene } from "./scenes/RadioGroupDisabledScene";
+import { RadioGroupRovingScene } from "./scenes/RadioGroupRovingScene";
+import { SwitchBasicScene } from "./scenes/SwitchBasicScene";
 import { TabsBasicScene } from "./scenes/TabsBasicScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
 import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
@@ -24,6 +28,10 @@ type SceneKey =
   | "modal"
   | "presence"
   | "inset"
+  | "checkbox-basic"
+  | "switch-basic"
+  | "radio-roving"
+  | "radio-disabled"
   | "dialog-basic"
   | "dialog-nested"
   | "dialog-modal"
@@ -41,6 +49,10 @@ const sceneOptions = [
   { key: "modal", label: "Modal Block" },
   { key: "presence", label: "Presence" },
   { key: "inset", label: "Inset Hit-Test" },
+  { key: "checkbox-basic", label: "Checkbox Basic" },
+  { key: "switch-basic", label: "Switch Basic" },
+  { key: "radio-roving", label: "Radio Roving" },
+  { key: "radio-disabled", label: "Radio Disabled" },
   { key: "dialog-basic", label: "Dialog Basic" },
   { key: "dialog-nested", label: "Dialog Nested" },
   { key: "dialog-modal", label: "Dialog Modal Block" },
@@ -142,6 +154,10 @@ function AppContent(props: AppProps) {
             {activeScene === "modal" ? <ModalBlockScene /> : undefined}
             {activeScene === "presence" ? <PresenceScene /> : undefined}
             {activeScene === "inset" ? <InsetHitTestScene /> : undefined}
+            {activeScene === "checkbox-basic" ? <CheckboxBasicScene /> : undefined}
+            {activeScene === "switch-basic" ? <SwitchBasicScene /> : undefined}
+            {activeScene === "radio-roving" ? <RadioGroupRovingScene /> : undefined}
+            {activeScene === "radio-disabled" ? <RadioGroupDisabledScene /> : undefined}
             {activeScene === "dialog-basic" ? <DialogBasicScene /> : undefined}
             {activeScene === "dialog-nested" ? <DialogNestedScene /> : undefined}
             {activeScene === "dialog-modal" ? <DialogModalBlockScene /> : undefined}
