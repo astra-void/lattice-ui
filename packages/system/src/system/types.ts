@@ -13,9 +13,12 @@ export type SystemProviderProps = {
 };
 
 export type SystemThemeContextValue = {
+  /** Density-resolved theme for read usage in system-managed trees. */
   theme: Theme;
+  /** Raw theme before density transforms. Writes must target this base theme. */
   baseTheme: Theme;
   density: DensityToken;
+  /** Use this to update the raw/base theme source. */
   setBaseTheme: (next: Theme) => void;
   setDensity: (next: DensityToken) => void;
 };

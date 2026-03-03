@@ -1,8 +1,8 @@
 import { React, ReactRoblox } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
 import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text } from "@lattice-ui/style";
-import { SystemProvider, useSystemTheme } from "@lattice-ui/system";
 import type { DensityToken } from "@lattice-ui/system";
+import { SystemProvider, useSystemTheme } from "@lattice-ui/system";
 import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";
 import { DensityScopeScene } from "./scenes/DensityScopeScene";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
@@ -19,6 +19,7 @@ import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 import { RadioGroupDisabledScene } from "./scenes/RadioGroupDisabledScene";
 import { RadioGroupRovingScene } from "./scenes/RadioGroupRovingScene";
+import { SurfaceShowcaseScene } from "./scenes/SurfaceShowcaseScene";
 import { SwitchBasicScene } from "./scenes/SwitchBasicScene";
 import { TabsBasicScene } from "./scenes/TabsBasicScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
@@ -45,7 +46,8 @@ type SceneKey =
   | "tooltip-delay"
   | "tooltip-follow"
   | "menu-roving"
-  | "density-scope";
+  | "density-scope"
+  | "surface-showcase";
 
 const sceneOptions = [
   { key: "dismiss", label: "Layer Dismiss" },
@@ -68,6 +70,7 @@ const sceneOptions = [
   { key: "tooltip-follow", label: "Tooltip Follow" },
   { key: "menu-roving", label: "Menu Roving" },
   { key: "density-scope", label: "Density Scope" },
+  { key: "surface-showcase", label: "Surface Showcase" },
 ] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
 const densityOrder = ["compact", "comfortable", "spacious"] as const satisfies ReadonlyArray<DensityToken>;
@@ -192,6 +195,7 @@ function AppContent(props: AppProps) {
             {activeScene === "tooltip-follow" ? <TooltipFollowScene /> : undefined}
             {activeScene === "menu-roving" ? <MenuRovingScene /> : undefined}
             {activeScene === "density-scope" ? <DensityScopeScene /> : undefined}
+            {activeScene === "surface-showcase" ? <SurfaceShowcaseScene /> : undefined}
           </frame>
         </frame>
       </screengui>

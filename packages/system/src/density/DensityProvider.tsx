@@ -1,10 +1,10 @@
 import { createStrictContext, React, useControllableState } from "@lattice-ui/core";
 import { ThemeProvider } from "@lattice-ui/style";
+import { useSystemBaseThemeContext } from "../system/baseThemeContext";
+import { SystemThemeContextProvider } from "../system/systemThemeContext";
+import type { SystemThemeContextValue } from "../system/types";
 import { applyDensity } from "./density";
 import type { DensityContextValue, DensityProviderProps, DensityToken } from "./types";
-import { SystemThemeContextProvider } from "../system/systemThemeContext";
-import { useSystemBaseThemeContext } from "../system/baseThemeContext";
-import type { SystemThemeContextValue } from "../system/types";
 
 const [DensityContextProvider, useDensityContext] = createStrictContext<DensityContextValue>("DensityProvider");
 const DEFAULT_DENSITY: DensityToken = "comfortable";
@@ -18,6 +18,7 @@ export function DensityProvider(props: DensityProviderProps) {
     onChange: props.onDensityChange,
   });
 
+  // Read-path contract: resolvedTheme is derived from baseTheme + current density.
   const resolvedTheme = React.useMemo(() => applyDensity(baseTheme, densityValue), [baseTheme, densityValue]);
 
   const setDensity = React.useCallback(

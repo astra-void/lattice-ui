@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { DensityProvider, useDensity } from "@lattice-ui/system";
 import type { DensityToken } from "@lattice-ui/system";
+import { DensityProvider, useDensity } from "@lattice-ui/system";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 const densityOrder = ["compact", "comfortable", "spacious"] as const satisfies ReadonlyArray<DensityToken>;
