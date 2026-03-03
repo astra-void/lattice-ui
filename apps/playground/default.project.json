@@ -7,10 +7,103 @@
       "node_modules": {
         "$className": "Folder",
         "@lattice-ui": {
-          "$path": "node_modules/@lattice-ui"
+          "$className": "Folder",
+          "checkbox": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/checkbox/out"
+            }
+          },
+          "core": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/core/out"
+            }
+          },
+          "dialog": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/dialog/out"
+            }
+          },
+          "focus": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/focus/out"
+            }
+          },
+          "layer": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/layer/out"
+            }
+          },
+          "menu": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/menu/out"
+            }
+          },
+          "popover": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/popover/out"
+            }
+          },
+          "popper": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/popper/out"
+            }
+          },
+          "radio-group": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/radio-group/out"
+            }
+          },
+          "style": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/style/out"
+            }
+          },
+          "switch": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/switch/out"
+            }
+          },
+          "system": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/system/out"
+            }
+          },
+          "tabs": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/tabs/out"
+            }
+          },
+          "toggle-group": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/toggle-group/out"
+            }
+          },
+          "tooltip": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/tooltip/out"
+            }
+          }
         },
         "@rbxts": {
           "$path": "../../node_modules/@rbxts"
+        },
+        "@rbxts-js": {
+          "$path": "../../node_modules/@rbxts-js"
         }
       },
       "TS": {

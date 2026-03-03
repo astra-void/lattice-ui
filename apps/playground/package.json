@@ -15,6 +15,8 @@
     "@lattice-ui/menu": "workspace:*",
     "@lattice-ui/popover": "workspace:*",
     "@lattice-ui/radio-group": "workspace:*",
+    "@lattice-ui/focus": "workspace:*",
+    "@lattice-ui/popper": "workspace:*",
     "@lattice-ui/style": "workspace:*",
     "@lattice-ui/system": "workspace:*",
     "@lattice-ui/switch": "workspace:*",
