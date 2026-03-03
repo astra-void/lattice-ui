@@ -1,5 +1,6 @@
 import type { Sx } from "@lattice-ui/style";
-import { createRecipe } from "@lattice-ui/style";
+import { createRecipe, mergeSx } from "@lattice-ui/style";
+import { surface } from "@lattice-ui/system";
 import type React from "@rbxts/react";
 
 type StyleProps = React.Attributes & Record<string, unknown>;
@@ -24,10 +25,9 @@ export const sceneTabRecipe = createRecipe<StyleProps, SceneTabVariants>({
         BackgroundColor3: theme.colors.accent,
         TextColor3: theme.colors.accentContrast,
       }),
-      false: (theme) => ({
-        BackgroundColor3: theme.colors.surface,
+      false: mergeSx(surface<StyleProps>("surface"), (theme) => ({
         TextColor3: theme.colors.textPrimary,
-      }),
+      })),
     },
   },
   defaultVariants: {
@@ -60,10 +60,9 @@ export const buttonRecipe = createRecipe<StyleProps, ButtonVariants>({
         BackgroundColor3: theme.colors.accent,
         TextColor3: theme.colors.accentContrast,
       }),
-      surface: (theme) => ({
-        BackgroundColor3: theme.colors.surface,
+      surface: mergeSx(surface<StyleProps>("surface"), (theme) => ({
         TextColor3: theme.colors.textPrimary,
-      }),
+      })),
       danger: (theme) => ({
         BackgroundColor3: theme.colors.danger,
         TextColor3: theme.colors.dangerContrast,
@@ -97,12 +96,8 @@ export const panelRecipe = createRecipe<StyleProps, PanelVariants>({
   }),
   variants: {
     tone: {
-      surface: (theme) => ({
-        BackgroundColor3: theme.colors.surface,
-      }),
-      elevated: (theme) => ({
-        BackgroundColor3: theme.colors.surfaceElevated,
-      }),
+      surface: surface<StyleProps>("surface"),
+      elevated: surface<StyleProps>("elevated"),
     },
   },
   defaultVariants: {
@@ -130,22 +125,20 @@ export const menuItemRecipe = createRecipe<StyleProps, MenuItemVariants>({
   }),
   variants: {
     intent: {
-      default: (theme) => ({
-        BackgroundColor3: theme.colors.surfaceElevated,
+      default: mergeSx(surface<StyleProps>("elevated"), (theme) => ({
         TextColor3: theme.colors.textPrimary,
-      }),
+      })),
       danger: (theme) => ({
         BackgroundColor3: theme.colors.danger,
         TextColor3: theme.colors.dangerContrast,
       }),
     },
     disabled: {
-      true: (theme) => ({
+      true: mergeSx(surface<StyleProps>("surface"), (theme) => ({
         Active: false,
         Selectable: false,
-        BackgroundColor3: theme.colors.surface,
         TextColor3: theme.colors.textSecondary,
-      }),
+      })),
       false: () => ({
         Active: true,
         Selectable: true,
@@ -162,10 +155,9 @@ export const menuItemRecipe = createRecipe<StyleProps, MenuItemVariants>({
         intent: "danger",
         disabled: "true",
       },
-      sx: (theme) => ({
-        BackgroundColor3: theme.colors.surface,
+      sx: mergeSx(surface<StyleProps>("surface"), (theme) => ({
         TextColor3: theme.colors.textSecondary,
-      }),
+      })),
     },
   ],
 });

@@ -1,6 +1,8 @@
 import { React, ReactRoblox } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
 import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text, ThemeProvider, useTheme } from "@lattice-ui/style";
+import { applyDensity } from "@lattice-ui/system";
+import type { DensityToken } from "@lattice-ui/system";
 import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
 import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
@@ -65,6 +67,14 @@ const sceneOptions = [
   { key: "menu-roving", label: "Menu Roving" },
 ] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
+const densityOrder = ["compact", "comfortable", "spacious"] as const satisfies ReadonlyArray<DensityToken>;
+
+function nextDensity(current: DensityToken): DensityToken {
+  const currentIndex = densityOrder.indexOf(current);
+  const normalizedIndex = currentIndex >= 0 ? currentIndex : 0;
+  return densityOrder[(normalizedIndex + 1) % densityOrder.size()];
+}
+
 type AppProps = {
   playerGui: PlayerGui;
 };
@@ -72,11 +82,13 @@ type AppProps = {
 function AppContent(props: AppProps) {
   const [activeScene, setActiveScene] = React.useState<SceneKey>("dismiss");
   const [darkMode, setDarkMode] = React.useState(true);
+  const [densityMode, setDensityMode] = React.useState<DensityToken>("comfortable");
   const { theme, setTheme } = useTheme();
 
   React.useEffect(() => {
-    setTheme(darkMode ? defaultDarkTheme : defaultLightTheme);
-  }, [darkMode, setTheme]);
+    const baseTheme = darkMode ? defaultDarkTheme : defaultLightTheme;
+    setTheme(applyDensity(baseTheme, densityMode));
+  }, [darkMode, densityMode, setTheme]);
 
   return (
     <PortalProvider container={props.playerGui}>
@@ -105,11 +117,21 @@ function AppContent(props: AppProps) {
                   },
                 }) as Record<string, unknown>)}
               />
+              <textbutton
+                {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
+                  Text: `Density: ${densityMode}`,
+                  Event: {
+                    Activated: () => {
+                      setDensityMode((current) => nextDensity(current));
+                    },
+                  },
+                }) as Record<string, unknown>)}
+              />
               <Text
                 BackgroundTransparency={1}
                 LayoutOrder={2}
                 Position={UDim2.fromOffset(0, 7)}
-                Size={UDim2.fromOffset(320, 24)}
+                Size={UDim2.fromOffset(420, 24)}
                 Text={`Active Scene: ${activeScene}`}
                 TextColor3={theme.colors.textSecondary}
                 TextSize={theme.typography.labelSm.textSize}

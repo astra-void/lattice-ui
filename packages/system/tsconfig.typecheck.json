@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": "..",
+    "rootDir": "..",
+    "paths": {
+      "@lattice-ui/core": ["core/src/index.ts"],
+      "@lattice-ui/style": ["style/src/index.ts"],
+      "@lattice-ui/system": ["system/src/index.ts"]
+    }
+  }
+}

@@ -50,6 +50,9 @@ importers:
       '@lattice-ui/switch':
         specifier: workspace:*
         version: link:packages/switch
+      '@lattice-ui/system':
+        specifier: workspace:*
+        version: link:packages/system
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:packages/tabs
@@ -125,6 +128,9 @@ importers:
       '@lattice-ui/switch':
         specifier: workspace:*
         version: link:../../packages/switch
+      '@lattice-ui/system':
+        specifier: workspace:*
+        version: link:../../packages/system
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:../../packages/tabs
@@ -301,6 +307,12 @@ importers:
       '@rbxts/react-roblox':
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/system:
+    dependencies:
+      '@lattice-ui/style':
+        specifier: workspace:*
+        version: link:../style
 
   packages/tabs:
     dependencies:
