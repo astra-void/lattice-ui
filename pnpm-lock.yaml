@@ -310,6 +310,9 @@ importers:
 
   packages/system:
     dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
       '@lattice-ui/style':
         specifier: workspace:*
         version: link:../style

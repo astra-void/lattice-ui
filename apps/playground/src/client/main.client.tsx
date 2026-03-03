@@ -1,9 +1,10 @@
 import { React, ReactRoblox } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
-import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text, ThemeProvider, useTheme } from "@lattice-ui/style";
-import { applyDensity } from "@lattice-ui/system";
+import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text } from "@lattice-ui/style";
+import { SystemProvider, useSystemTheme } from "@lattice-ui/system";
 import type { DensityToken } from "@lattice-ui/system";
 import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";
+import { DensityScopeScene } from "./scenes/DensityScopeScene";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
 import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
 import { DialogNestedScene } from "./scenes/DialogNestedScene";
@@ -43,7 +44,8 @@ type SceneKey =
   | "tabs-basic"
   | "tooltip-delay"
   | "tooltip-follow"
-  | "menu-roving";
+  | "menu-roving"
+  | "density-scope";
 
 const sceneOptions = [
   { key: "dismiss", label: "Layer Dismiss" },
@@ -65,6 +67,7 @@ const sceneOptions = [
   { key: "tooltip-delay", label: "Tooltip Delay" },
   { key: "tooltip-follow", label: "Tooltip Follow" },
   { key: "menu-roving", label: "Menu Roving" },
+  { key: "density-scope", label: "Density Scope" },
 ] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
 const densityOrder = ["compact", "comfortable", "spacious"] as const satisfies ReadonlyArray<DensityToken>;
@@ -82,13 +85,11 @@ type AppProps = {
 function AppContent(props: AppProps) {
   const [activeScene, setActiveScene] = React.useState<SceneKey>("dismiss");
   const [darkMode, setDarkMode] = React.useState(true);
-  const [densityMode, setDensityMode] = React.useState<DensityToken>("comfortable");
-  const { theme, setTheme } = useTheme();
+  const { theme, density, setBaseTheme, setDensity } = useSystemTheme();
 
   React.useEffect(() => {
-    const baseTheme = darkMode ? defaultDarkTheme : defaultLightTheme;
-    setTheme(applyDensity(baseTheme, densityMode));
-  }, [darkMode, densityMode, setTheme]);
+    setBaseTheme(darkMode ? defaultDarkTheme : defaultLightTheme);
+  }, [darkMode, setBaseTheme]);
 
   return (
     <PortalProvider container={props.playerGui}>
@@ -119,10 +120,10 @@ function AppContent(props: AppProps) {
               />
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
-                  Text: `Density: ${densityMode}`,
+                  Text: `Density: ${density}`,
                   Event: {
                     Activated: () => {
-                      setDensityMode((current) => nextDensity(current));
+                      setDensity(nextDensity(density));
                     },
                   },
                 }) as Record<string, unknown>)}
@@ -190,6 +191,7 @@ function AppContent(props: AppProps) {
             {activeScene === "tooltip-delay" ? <TooltipDelayScene /> : undefined}
             {activeScene === "tooltip-follow" ? <TooltipFollowScene /> : undefined}
             {activeScene === "menu-roving" ? <MenuRovingScene /> : undefined}
+            {activeScene === "density-scope" ? <DensityScopeScene /> : undefined}
           </frame>
         </frame>
       </screengui>
@@ -199,9 +201,9 @@ function AppContent(props: AppProps) {
 
 function App(props: AppProps) {
   return (
-    <ThemeProvider defaultTheme={defaultDarkTheme}>
+    <SystemProvider defaultDensity="comfortable" defaultTheme={defaultDarkTheme}>
       <AppContent playerGui={props.playerGui} />
-    </ThemeProvider>
+    </SystemProvider>
   );
 }
 

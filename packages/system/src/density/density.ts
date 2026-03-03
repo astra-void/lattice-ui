@@ -1,6 +1,5 @@
 import type { Theme } from "@lattice-ui/style";
-
-export type DensityToken = "compact" | "comfortable" | "spacious";
+import type { DensityToken } from "./types";
 
 type DensityScale = {
   space: number;
