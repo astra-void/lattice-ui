@@ -19,6 +19,7 @@
     "@lattice-ui/system": "workspace:*",
     "@lattice-ui/switch": "workspace:*",
     "@lattice-ui/tabs": "workspace:*",
+    "@lattice-ui/toggle-group": "workspace:*",
     "@lattice-ui/tooltip": "workspace:*"
   },
   "devDependencies": {

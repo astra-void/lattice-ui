@@ -56,6 +56,9 @@ importers:
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:packages/tabs
+      '@lattice-ui/toggle-group':
+        specifier: workspace:*
+        version: link:packages/toggle-group
       '@lattice-ui/tooltip':
         specifier: workspace:*
         version: link:packages/tooltip
@@ -134,6 +137,9 @@ importers:
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:../../packages/tabs
+      '@lattice-ui/toggle-group':
+        specifier: workspace:*
+        version: link:../../packages/toggle-group
       '@lattice-ui/tooltip':
         specifier: workspace:*
         version: link:../../packages/tooltip
@@ -328,6 +334,22 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/toggle-group:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1

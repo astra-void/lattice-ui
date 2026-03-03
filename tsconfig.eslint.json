@@ -14,7 +14,8 @@
       "@lattice-ui/style": ["packages/style/src/index.ts"],
       "@lattice-ui/system": ["packages/system/src/index.ts"],
       "@lattice-ui/switch": ["packages/switch/src/index.ts"],
-      "@lattice-ui/tabs": ["packages/tabs/src/index.ts"]
+      "@lattice-ui/tabs": ["packages/tabs/src/index.ts"],
+      "@lattice-ui/toggle-group": ["packages/toggle-group/src/index.ts"]
     },
     "typeRoots": ["./node_modules/@rbxts", "./node_modules/@lattice-ui"],
     "types": ["types", "compiler-types"]

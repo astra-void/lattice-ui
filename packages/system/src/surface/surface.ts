@@ -9,7 +9,8 @@ function asSxProps<Props extends GuiPropRecord>(value: GuiPropRecord): Partial<P
 }
 
 /**
- * M1 limitation: this helper only returns props for existing instances.
+ * Props-only surface helper.
+ * Use this when you only want host props (including host border props).
  * It does not create child instances like UICorner/UIStroke/shadow nodes.
  */
 export function surface<Props extends GuiPropRecord>(token: SurfaceToken): Sx<Props> {

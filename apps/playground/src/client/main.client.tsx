@@ -19,9 +19,12 @@ import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 import { RadioGroupDisabledScene } from "./scenes/RadioGroupDisabledScene";
 import { RadioGroupRovingScene } from "./scenes/RadioGroupRovingScene";
+import { StackShowcaseScene } from "./scenes/StackShowcaseScene";
 import { SurfaceShowcaseScene } from "./scenes/SurfaceShowcaseScene";
 import { SwitchBasicScene } from "./scenes/SwitchBasicScene";
 import { TabsBasicScene } from "./scenes/TabsBasicScene";
+import { ToggleGroupBasicScene } from "./scenes/ToggleGroupBasicScene";
+import { ToggleGroupRovingScene } from "./scenes/ToggleGroupRovingScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
 import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
 import { buttonRecipe, sceneTabRecipe } from "./theme/recipes";
@@ -36,6 +39,8 @@ type SceneKey =
   | "switch-basic"
   | "radio-roving"
   | "radio-disabled"
+  | "toggle-basic"
+  | "toggle-roving"
   | "dialog-basic"
   | "dialog-nested"
   | "dialog-modal"
@@ -47,7 +52,8 @@ type SceneKey =
   | "tooltip-follow"
   | "menu-roving"
   | "density-scope"
-  | "surface-showcase";
+  | "surface-showcase"
+  | "stack-showcase";
 
 const sceneOptions = [
   { key: "dismiss", label: "Layer Dismiss" },
@@ -59,6 +65,8 @@ const sceneOptions = [
   { key: "switch-basic", label: "Switch Basic" },
   { key: "radio-roving", label: "Radio Roving" },
   { key: "radio-disabled", label: "Radio Disabled" },
+  { key: "toggle-basic", label: "Toggle Basic" },
+  { key: "toggle-roving", label: "Toggle Roving" },
   { key: "dialog-basic", label: "Dialog Basic" },
   { key: "dialog-nested", label: "Dialog Nested" },
   { key: "dialog-modal", label: "Dialog Modal Block" },
@@ -71,6 +79,7 @@ const sceneOptions = [
   { key: "menu-roving", label: "Menu Roving" },
   { key: "density-scope", label: "Density Scope" },
   { key: "surface-showcase", label: "Surface Showcase" },
+  { key: "stack-showcase", label: "Stack Showcase" },
 ] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
 const densityOrder = ["compact", "comfortable", "spacious"] as const satisfies ReadonlyArray<DensityToken>;
@@ -184,6 +193,8 @@ function AppContent(props: AppProps) {
             {activeScene === "switch-basic" ? <SwitchBasicScene /> : undefined}
             {activeScene === "radio-roving" ? <RadioGroupRovingScene /> : undefined}
             {activeScene === "radio-disabled" ? <RadioGroupDisabledScene /> : undefined}
+            {activeScene === "toggle-basic" ? <ToggleGroupBasicScene /> : undefined}
+            {activeScene === "toggle-roving" ? <ToggleGroupRovingScene /> : undefined}
             {activeScene === "dialog-basic" ? <DialogBasicScene /> : undefined}
             {activeScene === "dialog-nested" ? <DialogNestedScene /> : undefined}
             {activeScene === "dialog-modal" ? <DialogModalBlockScene /> : undefined}
@@ -196,6 +207,7 @@ function AppContent(props: AppProps) {
             {activeScene === "menu-roving" ? <MenuRovingScene /> : undefined}
             {activeScene === "density-scope" ? <DensityScopeScene /> : undefined}
             {activeScene === "surface-showcase" ? <SurfaceShowcaseScene /> : undefined}
+            {activeScene === "stack-showcase" ? <StackShowcaseScene /> : undefined}
           </frame>
         </frame>
       </screengui>

@@ -13,7 +13,9 @@ export type SurfaceProps = {
 } & StyleProps;
 
 /**
- * Surface M2: frame-hosted primitive with fixed token-driven decoration.
+ * Decorated surface host primitive.
+ * Unlike `surface()`, this renders instance-graph decoration via UICorner/UIStroke.
+ * Host border props are not the canonical border representation here.
  * `asChild` is intentionally not supported in this milestone.
  */
 export function Surface(props: SurfaceProps) {

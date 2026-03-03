@@ -4,7 +4,8 @@
   "private": false,
   "description": "",
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm -r --workspace-concurrency=1 build",
+    "build:parallel": "pnpm -r build",
     "watch": "pnpm -r watch",
     "typecheck": "pnpm -r typecheck",
     "check:any": "sh -c 'rg -n --glob \"*.{ts,tsx}\" \"\\\\bany\\\\b\" packages apps; code=$?; if [ \"$code\" -eq 0 ]; then echo \"Explicit any is forbidden.\"; exit 1; fi; if [ \"$code\" -eq 1 ]; then exit 0; fi; exit \"$code\"'",
@@ -36,6 +37,7 @@
     "@lattice-ui/system": "workspace:*",
     "@lattice-ui/switch": "workspace:*",
     "@lattice-ui/tabs": "workspace:*",
+    "@lattice-ui/toggle-group": "workspace:*",
     "@lattice-ui/tooltip": "workspace:*",
     "@rbxts/compiler-types": "3.0.0-types.0",
     "@rbxts/react": "17.3.7-ts.1",

@@ -1,6 +1,19 @@
 export { DensityProvider, useDensity } from "./density/DensityProvider";
 export { applyDensity, density } from "./density/density";
 export type { DensityContextValue, DensityProviderProps, DensityToken } from "./density/types";
+export { Row } from "./layout/Row";
+export { Stack } from "./layout/Stack";
+export type {
+  LayoutDirection,
+  RowProps,
+  SpaceToken,
+  SpaceValue,
+  StackAlign,
+  StackAutoSize,
+  StackJustify,
+  StackPadding,
+  StackProps,
+} from "./layout/types";
 export type { SurfaceToken } from "./surface/surface";
 export { surface } from "./surface/surface";
 export type { SurfaceProps } from "./surface/surfacePrimitive";

@@ -41,6 +41,9 @@
       "@lattice-ui/radio-group": [
         "radio-group/src/index.ts"
       ],
+      "@lattice-ui/toggle-group": [
+        "toggle-group/src/index.ts"
+      ],
       "@lattice-ui/tooltip": [
         "tooltip/src/index.ts"
       ]
