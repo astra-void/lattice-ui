@@ -21,6 +21,7 @@
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.1",
     "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/dialog": "workspace:*",
     "@lattice-ui/focus": "workspace:*",
     "@lattice-ui/layer": "workspace:*",
     "@lattice-ui/popper": "workspace:*",

@@ -6,8 +6,9 @@
     "rootDir": "..",
     "paths": {
       "@lattice-ui/core": ["core/src/index.ts"],
-      "@lattice-ui/layer": ["layer/src/index.ts"],
+      "@lattice-ui/dialog": ["dialog/src/index.ts"],
       "@lattice-ui/focus": ["focus/src/index.ts"],
+      "@lattice-ui/layer": ["layer/src/index.ts"],
       "@lattice-ui/popper": ["popper/src/index.ts"]
     }
   }

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/dialog": "workspace:*",
     "@lattice-ui/layer": "workspace:*"
   },
   "devDependencies": {

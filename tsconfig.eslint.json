@@ -5,6 +5,7 @@
     "baseUrl": ".",
     "paths": {
       "@lattice-ui/core": ["packages/core/src/index.ts"],
+      "@lattice-ui/dialog": ["packages/dialog/src/index.ts"],
       "@lattice-ui/layer": ["packages/layer/src/index.ts"],
       "@lattice-ui/focus": ["packages/focus/src/index.ts"],
       "@lattice-ui/popper": ["packages/popper/src/index.ts"]

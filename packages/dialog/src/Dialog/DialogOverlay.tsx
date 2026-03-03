@@ -1,0 +1,48 @@
+import { React, Slot } from "@lattice-ui/core";
+import { useDialogContext } from "./context";
+import type { DialogOverlayProps } from "./types";
+
+export function DialogOverlay(props: DialogOverlayProps) {
+  const dialogContext = useDialogContext();
+  const open = dialogContext.open;
+  const shouldRender = open || props.forceMount === true;
+
+  const handleActivated = React.useCallback(() => {
+    dialogContext.setOpen(false);
+  }, [dialogContext.setOpen]);
+
+  if (!shouldRender) {
+    return undefined;
+  }
+
+  if (props.asChild) {
+    const child = props.children;
+    if (!child) {
+      error("[DialogOverlay] `asChild` requires a child element.");
+    }
+
+    return (
+      <Slot Active={open} Event={{ Activated: handleActivated }} Visible={open}>
+        {child}
+      </Slot>
+    );
+  }
+
+  return (
+    <textbutton
+      Active={open}
+      AutoButtonColor={false}
+      BackgroundColor3={Color3.fromRGB(8, 10, 14)}
+      BackgroundTransparency={open ? 0.35 : 1}
+      BorderSizePixel={0}
+      Event={{ Activated: handleActivated }}
+      Position={UDim2.fromScale(0, 0)}
+      Selectable={false}
+      Size={UDim2.fromScale(1, 1)}
+      Text=""
+      TextTransparency={1}
+      Visible={open}
+      ZIndex={5}
+    />
+  );
+}

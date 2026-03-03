@@ -1,12 +1,23 @@
 import { React, ReactRoblox } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
+import { DialogBasicScene } from "./scenes/DialogBasicScene";
+import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
+import { DialogNestedScene } from "./scenes/DialogNestedScene";
 import { InsetHitTestScene } from "./scenes/InsetHitTestScene";
 import { LayerDismissScene } from "./scenes/LayerDismissScene";
 import { ModalBlockScene } from "./scenes/ModalBlockScene";
 import { NestedStackScene } from "./scenes/NestedStackScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 
-type SceneKey = "dismiss" | "nested" | "modal" | "presence" | "inset";
+type SceneKey =
+  | "dismiss"
+  | "nested"
+  | "modal"
+  | "presence"
+  | "inset"
+  | "dialog-basic"
+  | "dialog-nested"
+  | "dialog-modal";
 
 const sceneOptions = [
   { key: "dismiss", label: "Layer Dismiss" },
@@ -14,6 +25,9 @@ const sceneOptions = [
   { key: "modal", label: "Modal Block" },
   { key: "presence", label: "Presence" },
   { key: "inset", label: "Inset Hit-Test" },
+  { key: "dialog-basic", label: "Dialog Basic" },
+  { key: "dialog-nested", label: "Dialog Nested" },
+  { key: "dialog-modal", label: "Dialog Modal Block" },
 ] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
 type AppProps = {
@@ -70,6 +84,9 @@ function App(props: AppProps) {
             {activeScene === "modal" ? <ModalBlockScene /> : undefined}
             {activeScene === "presence" ? <PresenceScene /> : undefined}
             {activeScene === "inset" ? <InsetHitTestScene /> : undefined}
+            {activeScene === "dialog-basic" ? <DialogBasicScene /> : undefined}
+            {activeScene === "dialog-nested" ? <DialogNestedScene /> : undefined}
+            {activeScene === "dialog-modal" ? <DialogModalBlockScene /> : undefined}
           </frame>
         </frame>
       </screengui>
