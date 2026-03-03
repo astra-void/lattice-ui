@@ -1,0 +1,36 @@
+{
+  "name": "lattice-ui-test-harness",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "node_modules": {
+        "$className": "Folder",
+        "@lattice-ui": {
+          "$path": "node_modules/@lattice-ui"
+        },
+        "@rbxts": {
+          "$path": "../../node_modules/@rbxts"
+        }
+      },
+      "TS": {
+        "$path": "include"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "TestHarness": {
+          "$path": "out/client",
+          "tests": {
+            "$path": "out/tests"
+          },
+          "test-utils": {
+            "$path": "out/test-utils"
+          }
+        }
+      }
+    }
+  }
+}

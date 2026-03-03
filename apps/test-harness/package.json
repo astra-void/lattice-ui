@@ -1,0 +1,32 @@
+{
+  "name": "@lattice-ui/test-harness",
+  "version": "0.1.0",
+  "private": false,
+  "scripts": {
+    "build": "rbxtsc -p rbxtsc.build.json",
+    "watch": "rbxtsc -p rbxtsc.build.json -w",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@lattice-ui/checkbox": "workspace:*",
+    "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/dialog": "workspace:*",
+    "@lattice-ui/focus": "workspace:*",
+    "@lattice-ui/layer": "workspace:*",
+    "@lattice-ui/menu": "workspace:*",
+    "@lattice-ui/popover": "workspace:*",
+    "@lattice-ui/popper": "workspace:*",
+    "@lattice-ui/radio-group": "workspace:*",
+    "@lattice-ui/style": "workspace:*",
+    "@lattice-ui/switch": "workspace:*",
+    "@lattice-ui/system": "workspace:*",
+    "@lattice-ui/tabs": "workspace:*",
+    "@lattice-ui/toggle-group": "workspace:*",
+    "@lattice-ui/tooltip": "workspace:*"
+  },
+  "devDependencies": {
+    "@rbxts/react": "17.3.7-ts.1",
+    "@rbxts/react-roblox": "17.3.7-ts.1",
+    "@rbxts/testez": "0.4.2-ts.0"
+  }
+}

@@ -17,7 +17,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules/**", "**/out/**", "**/include/**"]),
+  globalIgnores(["**/node_modules/**", "**/out/**", "**/include/**", "tests/vitest/**"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: compat.extends(
