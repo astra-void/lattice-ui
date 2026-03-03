@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": "..",
+    "rootDir": "..",
+    "paths": {
+      "@lattice-ui/core": ["core/src/index.ts"],
+      "@lattice-ui/dialog": ["dialog/src/index.ts"],
+      "@lattice-ui/focus": ["focus/src/index.ts"],
+      "@lattice-ui/layer": ["layer/src/index.ts"],
+      "@lattice-ui/menu": ["menu/src/index.ts"],
+      "@lattice-ui/popover": ["popover/src/index.ts"],
+      "@lattice-ui/popper": ["popper/src/index.ts"],
+      "@lattice-ui/tooltip": ["tooltip/src/index.ts"]
+    }
+  }
+}

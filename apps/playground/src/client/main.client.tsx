@@ -5,9 +5,15 @@ import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
 import { DialogNestedScene } from "./scenes/DialogNestedScene";
 import { InsetHitTestScene } from "./scenes/InsetHitTestScene";
 import { LayerDismissScene } from "./scenes/LayerDismissScene";
+import { MenuRovingScene } from "./scenes/MenuRovingScene";
 import { ModalBlockScene } from "./scenes/ModalBlockScene";
 import { NestedStackScene } from "./scenes/NestedStackScene";
+import { PopoverBasicScene } from "./scenes/PopoverBasicScene";
+import { PopoverFlipClampScene } from "./scenes/PopoverFlipClampScene";
+import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
+import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
+import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
 
 type SceneKey =
   | "dismiss"
@@ -17,7 +23,13 @@ type SceneKey =
   | "inset"
   | "dialog-basic"
   | "dialog-nested"
-  | "dialog-modal";
+  | "dialog-modal"
+  | "popover-basic"
+  | "popover-flip"
+  | "popover-nested"
+  | "tooltip-delay"
+  | "tooltip-follow"
+  | "menu-roving";
 
 const sceneOptions = [
   { key: "dismiss", label: "Layer Dismiss" },
@@ -28,6 +40,12 @@ const sceneOptions = [
   { key: "dialog-basic", label: "Dialog Basic" },
   { key: "dialog-nested", label: "Dialog Nested" },
   { key: "dialog-modal", label: "Dialog Modal Block" },
+  { key: "popover-basic", label: "Popover Basic" },
+  { key: "popover-flip", label: "Popover Flip/Clamp" },
+  { key: "popover-nested", label: "Popover Nested" },
+  { key: "tooltip-delay", label: "Tooltip Delay" },
+  { key: "tooltip-follow", label: "Tooltip Follow" },
+  { key: "menu-roving", label: "Menu Roving" },
 ] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
 type AppProps = {
@@ -87,6 +105,12 @@ function App(props: AppProps) {
             {activeScene === "dialog-basic" ? <DialogBasicScene /> : undefined}
             {activeScene === "dialog-nested" ? <DialogNestedScene /> : undefined}
             {activeScene === "dialog-modal" ? <DialogModalBlockScene /> : undefined}
+            {activeScene === "popover-basic" ? <PopoverBasicScene /> : undefined}
+            {activeScene === "popover-flip" ? <PopoverFlipClampScene /> : undefined}
+            {activeScene === "popover-nested" ? <PopoverNestedScene /> : undefined}
+            {activeScene === "tooltip-delay" ? <TooltipDelayScene /> : undefined}
+            {activeScene === "tooltip-follow" ? <TooltipFollowScene /> : undefined}
+            {activeScene === "menu-roving" ? <MenuRovingScene /> : undefined}
           </frame>
         </frame>
       </screengui>

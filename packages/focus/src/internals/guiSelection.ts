@@ -1,5 +1,7 @@
 import { GuiService } from "../FocusScope/focusManager";
 
+export const UserInputService = game.GetService("UserInputService");
+
 export function getSelectedGuiObject() {
   return GuiService.SelectedObject;
 }

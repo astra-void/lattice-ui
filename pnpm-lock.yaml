@@ -29,9 +29,18 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:packages/layer
+      '@lattice-ui/menu':
+        specifier: workspace:*
+        version: link:packages/menu
+      '@lattice-ui/popover':
+        specifier: workspace:*
+        version: link:packages/popover
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:packages/popper
+      '@lattice-ui/tooltip':
+        specifier: workspace:*
+        version: link:packages/tooltip
       '@rbxts/compiler-types':
         specifier: 3.0.0-types.0
         version: 3.0.0-types.0
@@ -83,6 +92,15 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../../packages/layer
+      '@lattice-ui/menu':
+        specifier: workspace:*
+        version: link:../../packages/menu
+      '@lattice-ui/popover':
+        specifier: workspace:*
+        version: link:../../packages/popover
+      '@lattice-ui/tooltip':
+        specifier: workspace:*
+        version: link:../../packages/tooltip
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -120,6 +138,10 @@ importers:
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
   packages/focus:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -141,11 +163,71 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
+  packages/menu:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
+      '@lattice-ui/layer':
+        specifier: workspace:*
+        version: link:../layer
+      '@lattice-ui/popper':
+        specifier: workspace:*
+        version: link:../popper
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/popover:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/layer':
+        specifier: workspace:*
+        version: link:../layer
+      '@lattice-ui/popper':
+        specifier: workspace:*
+        version: link:../popper
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
   packages/popper:
     dependencies:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/tooltip:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/layer':
+        specifier: workspace:*
+        version: link:../layer
+      '@lattice-ui/popper':
+        specifier: workspace:*
+        version: link:../popper
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1

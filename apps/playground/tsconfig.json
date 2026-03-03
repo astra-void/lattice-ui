@@ -8,7 +8,10 @@
       "@lattice-ui/dialog": ["../../packages/dialog/src/index.ts"],
       "@lattice-ui/focus": ["../../packages/focus/src/index.ts"],
       "@lattice-ui/layer": ["../../packages/layer/src/index.ts"],
-      "@lattice-ui/popper": ["../../packages/popper/src/index.ts"]
+      "@lattice-ui/menu": ["../../packages/menu/src/index.ts"],
+      "@lattice-ui/popover": ["../../packages/popover/src/index.ts"],
+      "@lattice-ui/popper": ["../../packages/popper/src/index.ts"],
+      "@lattice-ui/tooltip": ["../../packages/tooltip/src/index.ts"]
     },
     "typeRoots": [
       "./node_modules/@rbxts",
@@ -18,7 +21,17 @@
     ],
     "types": ["types", "compiler-types"]
   },
-  "include": ["src", "../../packages/core/src", "../../packages/dialog/src", "../../packages/layer/src"],
+  "include": [
+    "src",
+    "../../packages/core/src",
+    "../../packages/dialog/src",
+    "../../packages/focus/src",
+    "../../packages/layer/src",
+    "../../packages/menu/src",
+    "../../packages/popover/src",
+    "../../packages/popper/src",
+    "../../packages/tooltip/src"
+  ],
   "rbxts": {
     "type": "game",
     "rojo": "default.project.json",
