@@ -110,6 +110,14 @@ export function RovingFocusGroup(props: RovingFocusGroupProps) {
         return;
       }
 
+      const keyCode = inputObject.KeyCode;
+      const isHomeKey = keyCode === Enum.KeyCode.Home;
+      const isEndKey = keyCode === Enum.KeyCode.End;
+      const direction = resolveArrowDirection(keyCode, orientation);
+      if (!isHomeKey && !isEndKey && !direction) {
+        return;
+      }
+
       const items = itemEntriesRef.current;
       const itemCount = items.size();
       if (itemCount <= 0) {
@@ -118,8 +126,11 @@ export function RovingFocusGroup(props: RovingFocusGroupProps) {
 
       const selectedObject = getSelectedGuiObject();
       const currentIndex = findCurrentIndex(items, selectedObject);
+      if (currentIndex < 0) {
+        return;
+      }
 
-      if (inputObject.KeyCode === Enum.KeyCode.Home) {
+      if (isHomeKey) {
         const firstEnabledIndex = getFirstEnabledRovingIndex(itemCount, (index) => isItemDisabled(items, index));
         if (firstEnabledIndex >= 0) {
           focusItem(items, firstEnabledIndex);
@@ -127,7 +138,7 @@ export function RovingFocusGroup(props: RovingFocusGroupProps) {
         return;
       }
 
-      if (inputObject.KeyCode === Enum.KeyCode.End) {
+      if (isEndKey) {
         const lastEnabledIndex = getLastEnabledRovingIndex(itemCount, (index) => isItemDisabled(items, index));
         if (lastEnabledIndex >= 0) {
           focusItem(items, lastEnabledIndex);
@@ -135,7 +146,6 @@ export function RovingFocusGroup(props: RovingFocusGroupProps) {
         return;
       }
 
-      const direction = resolveArrowDirection(inputObject.KeyCode, orientation);
       if (!direction) {
         return;
       }

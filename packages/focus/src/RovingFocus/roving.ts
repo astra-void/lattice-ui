@@ -1,21 +1,5 @@
 import type { RovingDirection } from "./types";
 
-function normalizeIndex(index: number, itemCount: number, direction: RovingDirection, loop: boolean) {
-  if (itemCount <= 0) {
-    return -1;
-  }
-
-  if (index >= 0 && index < itemCount) {
-    return index;
-  }
-
-  if (!loop) {
-    return direction === "next" ? -1 : itemCount;
-  }
-
-  return direction === "next" ? itemCount - 1 : 0;
-}
-
 function getDirectionDelta(direction: RovingDirection) {
   return direction === "next" ? 1 : -1;
 }
@@ -31,15 +15,13 @@ export function getNextRovingIndex(
     return -1;
   }
 
-  const start = normalizeIndex(currentIndex, itemCount, direction, loop);
-  if (start === -1 || start === itemCount) {
-    return direction === "next"
-      ? getFirstEnabledRovingIndex(itemCount, isDisabled)
-      : getLastEnabledRovingIndex(itemCount, isDisabled);
+  // Keep focus unchanged when the current index is outside this group.
+  if (currentIndex < 0 || currentIndex >= itemCount) {
+    return currentIndex;
   }
 
   const delta = getDirectionDelta(direction);
-  let candidate = start;
+  let candidate = currentIndex;
 
   for (let attempts = 0; attempts < itemCount; attempts++) {
     candidate += delta;
