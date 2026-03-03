@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { Text, useTheme } from "@lattice-ui/style";
-import { Surface, useDensity } from "@lattice-ui/system";
 import type { SurfaceToken } from "@lattice-ui/system";
+import { Surface, useDensity } from "@lattice-ui/system";
 
 type ToneCardProps = {
   tone: SurfaceToken;

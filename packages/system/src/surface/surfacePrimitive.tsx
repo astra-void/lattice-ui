@@ -1,8 +1,8 @@
 import { React } from "@lattice-ui/core";
-import { mergeGuiProps, resolveSx, useTheme } from "@lattice-ui/style";
 import type { Sx } from "@lattice-ui/style";
-import { surface } from "./surface";
+import { mergeGuiProps, resolveSx, useTheme } from "@lattice-ui/style";
 import type { SurfaceToken } from "./surface";
+import { surface } from "./surface";
 
 type StyleProps = React.Attributes & Record<string, unknown>;
 

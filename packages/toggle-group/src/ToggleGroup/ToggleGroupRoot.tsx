@@ -43,7 +43,8 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
   });
 
   const [multipleValue, setMultipleValueState] = useControllableState<Array<string>>({
-    value: props.type === "multiple" ? normalizeMultiple(props.value) : undefined,
+    value:
+      props.type === "multiple" ? (props.value !== undefined ? normalizeMultiple(props.value) : undefined) : undefined,
     defaultValue: props.type === "multiple" ? normalizeMultiple(props.defaultValue ?? []) : [],
     onChange: (nextValue) => {
       if (props.type === "multiple") {

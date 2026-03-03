@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { ToggleGroup, ToggleGroupItem } from "@lattice-ui/toggle-group";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { ToggleGroup, ToggleGroupItem } from "@lattice-ui/toggle-group";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function formatSingleValue(value: string | undefined) {
@@ -34,9 +34,7 @@ export function ToggleGroupBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 34)}
         Size={UDim2.fromOffset(930, 24)}
-        Text={
-          `single(controlled)=${formatSingleValue(singleControlled)} | single(uncontrolled)=${formatSingleValue(singleUncontrolledMirror)}`
-        }
+        Text={`single(controlled)=${formatSingleValue(singleControlled)} | single(uncontrolled)=${formatSingleValue(singleUncontrolledMirror)}`}
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.bodyMd.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -45,9 +43,7 @@ export function ToggleGroupBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 58)}
         Size={UDim2.fromOffset(930, 24)}
-        Text={
-          `multiple(controlled)=${formatMultipleValue(multipleControlled)} | multiple(uncontrolled)=${formatMultipleValue(multipleUncontrolledMirror)}`
-        }
+        Text={`multiple(controlled)=${formatMultipleValue(multipleControlled)} | multiple(uncontrolled)=${formatMultipleValue(multipleUncontrolledMirror)}`}
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.bodyMd.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -78,11 +74,7 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup
-          onValueChange={setSingleControlled}
-          type="single"
-          value={singleControlled}
-        >
+        <ToggleGroup onValueChange={setSingleControlled} type="single" value={singleControlled}>
           <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
@@ -134,18 +126,17 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup
-          defaultValue="beta"
-          onValueChange={setSingleUncontrolledMirror}
-          type="single"
-        >
+        <ToggleGroup defaultValue="beta" onValueChange={setSingleUncontrolledMirror} type="single">
           <frame BackgroundTransparency={1} LayoutOrder={4} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
             <ToggleGroupItem asChild value="alpha">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: singleUncontrolledMirror === "alpha" ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: singleUncontrolledMirror === "alpha" ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Alpha",
@@ -157,7 +148,10 @@ export function ToggleGroupBasicScene() {
             <ToggleGroupItem asChild value="beta">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: singleUncontrolledMirror === "beta" ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: singleUncontrolledMirror === "beta" ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Beta",
@@ -169,7 +163,10 @@ export function ToggleGroupBasicScene() {
             <ToggleGroupItem asChild value="gamma">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: singleUncontrolledMirror === "gamma" ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: singleUncontrolledMirror === "gamma" ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Gamma",
@@ -190,18 +187,17 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup
-          onValueChange={setMultipleControlled}
-          type="multiple"
-          value={multipleControlled}
-        >
+        <ToggleGroup onValueChange={setMultipleControlled} type="multiple" value={multipleControlled}>
           <frame BackgroundTransparency={1} LayoutOrder={6} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
             <ToggleGroupItem asChild value="bold">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: multipleControlled.includes("bold") ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: multipleControlled.includes("bold") ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Bold",
@@ -213,7 +209,10 @@ export function ToggleGroupBasicScene() {
             <ToggleGroupItem asChild value="italic">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: multipleControlled.includes("italic") ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: multipleControlled.includes("italic") ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Italic",
@@ -225,7 +224,10 @@ export function ToggleGroupBasicScene() {
             <ToggleGroupItem asChild value="underline">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: multipleControlled.includes("underline") ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: multipleControlled.includes("underline") ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Underline",
@@ -246,18 +248,17 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup
-          defaultValue={["left"]}
-          onValueChange={setMultipleUncontrolledMirror}
-          type="multiple"
-        >
+        <ToggleGroup defaultValue={["left"]} onValueChange={setMultipleUncontrolledMirror} type="multiple">
           <frame BackgroundTransparency={1} LayoutOrder={8} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
             <ToggleGroupItem asChild value="left">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: multipleUncontrolledMirror.includes("left") ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: multipleUncontrolledMirror.includes("left") ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Left",
@@ -269,7 +270,10 @@ export function ToggleGroupBasicScene() {
             <ToggleGroupItem asChild value="center">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: multipleUncontrolledMirror.includes("center") ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: multipleUncontrolledMirror.includes("center") ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Center",
@@ -281,7 +285,10 @@ export function ToggleGroupBasicScene() {
             <ToggleGroupItem asChild value="right">
               <textbutton
                 {...(mergeGuiProps(
-                  buttonRecipe({ intent: multipleUncontrolledMirror.includes("right") ? "primary" : "surface", size: "sm" }, theme),
+                  buttonRecipe(
+                    { intent: multipleUncontrolledMirror.includes("right") ? "primary" : "surface", size: "sm" },
+                    theme,
+                  ),
                   {
                     Size: UDim2.fromOffset(170, 34),
                     Text: "Right",

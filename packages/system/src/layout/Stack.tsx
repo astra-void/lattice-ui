@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, resolveSx, useTheme } from "@lattice-ui/style";
-import type { LayoutDirection, StackAlign, StackAutoSize, StackJustify, StackProps } from "./types";
 import { resolvePadding, resolveSpace } from "./space";
+import type { LayoutDirection, StackAlign, StackAutoSize, StackJustify, StackProps } from "./types";
 
 type StyleProps = React.Attributes & Record<string, unknown>;
 
