@@ -10,3 +10,5 @@ include
 .pnpm-store
 .pnpm_store
 .DS_Store
+
+pnpm-publish-summary.json
