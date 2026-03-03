@@ -12,6 +12,7 @@
       "@lattice-ui/popover": ["../../packages/popover/src/index.ts"],
       "@lattice-ui/popper": ["../../packages/popper/src/index.ts"],
       "@lattice-ui/style": ["../../packages/style/src/index.ts"],
+      "@lattice-ui/tabs": ["../../packages/tabs/src/index.ts"],
       "@lattice-ui/tooltip": ["../../packages/tooltip/src/index.ts"]
     },
     "typeRoots": [
@@ -32,6 +33,7 @@
     "../../packages/popover/src",
     "../../packages/popper/src",
     "../../packages/style/src",
+    "../../packages/tabs/src",
     "../../packages/tooltip/src"
   ],
   "rbxts": {

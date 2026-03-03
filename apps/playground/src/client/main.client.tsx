@@ -13,6 +13,7 @@ import { PopoverBasicScene } from "./scenes/PopoverBasicScene";
 import { PopoverFlipClampScene } from "./scenes/PopoverFlipClampScene";
 import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
+import { TabsBasicScene } from "./scenes/TabsBasicScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
 import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
 import { buttonRecipe, sceneTabRecipe } from "./theme/recipes";
@@ -29,6 +30,7 @@ type SceneKey =
   | "popover-basic"
   | "popover-flip"
   | "popover-nested"
+  | "tabs-basic"
   | "tooltip-delay"
   | "tooltip-follow"
   | "menu-roving";
@@ -45,6 +47,7 @@ const sceneOptions = [
   { key: "popover-basic", label: "Popover Basic" },
   { key: "popover-flip", label: "Popover Flip/Clamp" },
   { key: "popover-nested", label: "Popover Nested" },
+  { key: "tabs-basic", label: "Tabs Basic" },
   { key: "tooltip-delay", label: "Tooltip Delay" },
   { key: "tooltip-follow", label: "Tooltip Follow" },
   { key: "menu-roving", label: "Menu Roving" },
@@ -145,6 +148,7 @@ function AppContent(props: AppProps) {
             {activeScene === "popover-basic" ? <PopoverBasicScene /> : undefined}
             {activeScene === "popover-flip" ? <PopoverFlipClampScene /> : undefined}
             {activeScene === "popover-nested" ? <PopoverNestedScene /> : undefined}
+            {activeScene === "tabs-basic" ? <TabsBasicScene /> : undefined}
             {activeScene === "tooltip-delay" ? <TooltipDelayScene /> : undefined}
             {activeScene === "tooltip-follow" ? <TooltipFollowScene /> : undefined}
             {activeScene === "menu-roving" ? <MenuRovingScene /> : undefined}

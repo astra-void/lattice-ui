@@ -9,7 +9,8 @@
       "@lattice-ui/layer": ["packages/layer/src/index.ts"],
       "@lattice-ui/focus": ["packages/focus/src/index.ts"],
       "@lattice-ui/popper": ["packages/popper/src/index.ts"],
-      "@lattice-ui/style": ["packages/style/src/index.ts"]
+      "@lattice-ui/style": ["packages/style/src/index.ts"],
+      "@lattice-ui/tabs": ["packages/tabs/src/index.ts"]
     },
     "typeRoots": ["./node_modules/@rbxts", "./node_modules/@lattice-ui"],
     "types": ["types", "compiler-types"]

@@ -13,6 +13,7 @@
       "@lattice-ui/popover": ["popover/src/index.ts"],
       "@lattice-ui/popper": ["popper/src/index.ts"],
       "@lattice-ui/style": ["style/src/index.ts"],
+      "@lattice-ui/tabs": ["tabs/src/index.ts"],
       "@lattice-ui/tooltip": ["tooltip/src/index.ts"]
     }
   }

@@ -31,6 +31,7 @@
     "@lattice-ui/popover": "workspace:*",
     "@lattice-ui/popper": "workspace:*",
     "@lattice-ui/style": "workspace:*",
+    "@lattice-ui/tabs": "workspace:*",
     "@lattice-ui/tooltip": "workspace:*",
     "@rbxts/compiler-types": "3.0.0-types.0",
     "@rbxts/react": "17.3.7-ts.1",
