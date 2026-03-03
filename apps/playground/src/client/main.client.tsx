@@ -1,5 +1,6 @@
 import { React, ReactRoblox } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
+import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text, ThemeProvider, useTheme } from "@lattice-ui/style";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
 import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
 import { DialogNestedScene } from "./scenes/DialogNestedScene";
@@ -14,6 +15,7 @@ import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
 import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
+import { buttonRecipe, sceneTabRecipe } from "./theme/recipes";
 
 type SceneKey =
   | "dismiss"
@@ -52,42 +54,77 @@ type AppProps = {
   playerGui: PlayerGui;
 };
 
-function App(props: AppProps) {
+function AppContent(props: AppProps) {
   const [activeScene, setActiveScene] = React.useState<SceneKey>("dismiss");
+  const [darkMode, setDarkMode] = React.useState(true);
+  const { theme, setTheme } = useTheme();
+
+  React.useEffect(() => {
+    setTheme(darkMode ? defaultDarkTheme : defaultLightTheme);
+  }, [darkMode, setTheme]);
 
   return (
     <PortalProvider container={props.playerGui}>
       <screengui IgnoreGuiInset={true} ResetOnSpawn={false}>
         <frame
-          BackgroundColor3={Color3.fromRGB(18, 21, 26)}
+          BackgroundColor3={theme.colors.background}
           BorderSizePixel={0}
           Position={UDim2.fromScale(0, 0)}
           Size={UDim2.fromScale(1, 1)}
         >
-          <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, 10)} />
+          <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[10])} />
 
-          <frame BackgroundTransparency={1} LayoutOrder={1} Size={UDim2.fromOffset(900, 44)}>
-            <uipadding PaddingLeft={new UDim(0, 16)} PaddingTop={new UDim(0, 10)} />
-            <uigridlayout CellPadding={UDim2.fromOffset(8, 8)} CellSize={UDim2.fromOffset(145, 34)} />
-            {sceneOptions.map((scene) => {
-              const selected = scene.key === activeScene;
-              return (
-                <textbutton
-                  AutoButtonColor={false}
-                  BackgroundColor3={selected ? Color3.fromRGB(35, 92, 178) : Color3.fromRGB(33, 37, 46)}
-                  BorderSizePixel={0}
-                  key={scene.key}
-                  Text={scene.label}
-                  TextColor3={Color3.fromRGB(235, 239, 245)}
-                  TextSize={16}
-                  Event={{
+          <frame BackgroundTransparency={1} LayoutOrder={1} Size={UDim2.fromOffset(940, 92)}>
+            <uipadding PaddingLeft={new UDim(0, theme.space[16])} PaddingTop={new UDim(0, theme.space[10])} />
+            <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
+
+            <frame BackgroundTransparency={1} LayoutOrder={1} Size={UDim2.fromOffset(900, 38)}>
+              <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
+              <textbutton
+                {...(mergeGuiProps(buttonRecipe({ intent: darkMode ? "surface" : "primary", size: "sm" }, theme), {
+                  Text: darkMode ? "Dark Theme" : "Light Theme",
+                  Event: {
                     Activated: () => {
-                      setActiveScene(scene.key);
+                      setDarkMode((value) => !value);
                     },
-                  }}
-                />
-              );
-            })}
+                  },
+                }) as Record<string, unknown>)}
+              />
+              <Text
+                BackgroundTransparency={1}
+                LayoutOrder={2}
+                Position={UDim2.fromOffset(0, 7)}
+                Size={UDim2.fromOffset(320, 24)}
+                Text={`Active Scene: ${activeScene}`}
+                TextColor3={theme.colors.textSecondary}
+                TextSize={theme.typography.labelSm.textSize}
+                TextXAlignment={Enum.TextXAlignment.Left}
+              />
+            </frame>
+
+            <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(900, 44)}>
+              <uigridlayout
+                CellPadding={UDim2.fromOffset(theme.space[8], theme.space[8])}
+                CellSize={UDim2.fromOffset(145, 34)}
+              />
+              {sceneOptions.map((scene) => {
+                const selected = scene.key === activeScene;
+
+                return (
+                  <textbutton
+                    key={scene.key}
+                    {...(mergeGuiProps(sceneTabRecipe({ selected: selected ? "true" : "false" }, theme), {
+                      Text: scene.label,
+                      Event: {
+                        Activated: () => {
+                          setActiveScene(scene.key);
+                        },
+                      },
+                    }) as Record<string, unknown>)}
+                  />
+                );
+              })}
+            </frame>
           </frame>
 
           <frame
@@ -96,7 +133,7 @@ function App(props: AppProps) {
             Position={UDim2.fromScale(0, 0)}
             Size={UDim2.fromScale(1, 1)}
           >
-            <uipadding PaddingLeft={new UDim(0, 16)} PaddingTop={new UDim(0, 8)} />
+            <uipadding PaddingLeft={new UDim(0, theme.space[16])} PaddingTop={new UDim(0, theme.space[8])} />
             {activeScene === "dismiss" ? <LayerDismissScene /> : undefined}
             {activeScene === "nested" ? <NestedStackScene /> : undefined}
             {activeScene === "modal" ? <ModalBlockScene /> : undefined}
@@ -115,6 +152,14 @@ function App(props: AppProps) {
         </frame>
       </screengui>
     </PortalProvider>
+  );
+}
+
+function App(props: AppProps) {
+  return (
+    <ThemeProvider defaultTheme={defaultDarkTheme}>
+      <AppContent playerGui={props.playerGui} />
+    </ThemeProvider>
   );
 }
 

@@ -13,6 +13,7 @@
     "@lattice-ui/layer": "workspace:*",
     "@lattice-ui/menu": "workspace:*",
     "@lattice-ui/popover": "workspace:*",
+    "@lattice-ui/style": "workspace:*",
     "@lattice-ui/tooltip": "workspace:*"
   },
   "devDependencies": {

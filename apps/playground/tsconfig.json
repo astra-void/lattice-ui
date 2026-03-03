@@ -11,6 +11,7 @@
       "@lattice-ui/menu": ["../../packages/menu/src/index.ts"],
       "@lattice-ui/popover": ["../../packages/popover/src/index.ts"],
       "@lattice-ui/popper": ["../../packages/popper/src/index.ts"],
+      "@lattice-ui/style": ["../../packages/style/src/index.ts"],
       "@lattice-ui/tooltip": ["../../packages/tooltip/src/index.ts"]
     },
     "typeRoots": [
@@ -30,6 +31,7 @@
     "../../packages/menu/src",
     "../../packages/popover/src",
     "../../packages/popper/src",
+    "../../packages/style/src",
     "../../packages/tooltip/src"
   ],
   "rbxts": {

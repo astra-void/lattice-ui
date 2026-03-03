@@ -13,7 +13,11 @@ export function MenuGroup(props: MenuGroupProps) {
 
   return (
     <frame BackgroundTransparency={1} Size={UDim2.fromOffset(220, 0)}>
-      <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, 4)} SortOrder={Enum.SortOrder.LayoutOrder} />
+      <uilistlayout
+        FillDirection={Enum.FillDirection.Vertical}
+        Padding={new UDim(0, 4)}
+        SortOrder={Enum.SortOrder.LayoutOrder}
+      />
       {props.children}
     </frame>
   );

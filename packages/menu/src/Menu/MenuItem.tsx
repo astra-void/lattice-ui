@@ -38,7 +38,11 @@ export function MenuItem(props: MenuItemProps) {
 
     return (
       <RovingFocusItem asChild disabled={props.disabled}>
-        <Slot Active={props.disabled !== true} Event={{ Activated: handleActivated }} Selectable={props.disabled !== true}>
+        <Slot
+          Active={props.disabled !== true}
+          Event={{ Activated: handleActivated }}
+          Selectable={props.disabled !== true}
+        >
           {child}
         </Slot>
       </RovingFocusItem>

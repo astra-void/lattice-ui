@@ -38,6 +38,9 @@ importers:
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:packages/popper
+      '@lattice-ui/style':
+        specifier: workspace:*
+        version: link:packages/style
       '@lattice-ui/tooltip':
         specifier: workspace:*
         version: link:packages/tooltip
@@ -98,6 +101,9 @@ importers:
       '@lattice-ui/popover':
         specifier: workspace:*
         version: link:../../packages/popover
+      '@lattice-ui/style':
+        specifier: workspace:*
+        version: link:../../packages/style
       '@lattice-ui/tooltip':
         specifier: workspace:*
         version: link:../../packages/tooltip
@@ -205,6 +211,19 @@ importers:
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
   packages/popper:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/style:
     dependencies:
       '@lattice-ui/core':
         specifier: workspace:*

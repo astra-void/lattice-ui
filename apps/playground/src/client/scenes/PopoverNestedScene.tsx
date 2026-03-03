@@ -75,7 +75,11 @@ export function PopoverNestedScene() {
                       Size={UDim2.fromOffset(220, 110)}
                     >
                       <uicorner CornerRadius={new UDim(0, 8)} />
-                      <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} PaddingTop={new UDim(0, 8)} />
+                      <uipadding
+                        PaddingLeft={new UDim(0, 10)}
+                        PaddingRight={new UDim(0, 10)}
+                        PaddingTop={new UDim(0, 8)}
+                      />
                       <textlabel
                         BackgroundTransparency={1}
                         Size={UDim2.fromOffset(180, 22)}

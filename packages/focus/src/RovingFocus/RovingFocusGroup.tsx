@@ -1,10 +1,8 @@
 import { React } from "@lattice-ui/core";
-import { UserInputService } from "../internals/guiSelection";
-import { getSelectedGuiObject, setSelectedGuiObject } from "../internals/guiSelection";
+import { getSelectedGuiObject, setSelectedGuiObject, UserInputService } from "../internals/guiSelection";
 import { RovingFocusProvider } from "./context";
 import { getFirstEnabledRovingIndex, getLastEnabledRovingIndex, getNextRovingIndex } from "./roving";
-import type { RovingFocusGroupProps } from "./types";
-import type { RovingDirection, RovingItemRegistration, RovingOrientation } from "./types";
+import type { RovingDirection, RovingFocusGroupProps, RovingItemRegistration, RovingOrientation } from "./types";
 
 function findCurrentIndex(items: Array<RovingItemRegistration>, selectedObject: GuiObject | undefined) {
   if (!selectedObject) {

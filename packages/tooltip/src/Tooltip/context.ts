@@ -1,4 +1,4 @@
-import { React, createStrictContext } from "@lattice-ui/core";
+import { createStrictContext, React } from "@lattice-ui/core";
 import type { TooltipContextValue, TooltipProviderContextValue } from "./types";
 
 const [TooltipContextProvider, useTooltipContext] = createStrictContext<TooltipContextValue>("Tooltip");
