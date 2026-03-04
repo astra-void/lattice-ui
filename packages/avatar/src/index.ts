@@ -8,6 +8,6 @@ export const Avatar = {
   Fallback: AvatarFallback,
 } as const;
 
-export { resolveAvatarFallbackVisible } from "./Avatar/state";
 export type { AvatarStatus } from "./Avatar/state";
+export { resolveAvatarFallbackVisible } from "./Avatar/state";
 export type { AvatarContextValue, AvatarFallbackProps, AvatarImageProps, AvatarProps } from "./Avatar/types";

@@ -10,12 +10,7 @@
       "./node_modules/@lattice-ui",
       "../../node_modules/@lattice-ui"
     ],
-    "types": [
-      "types",
-      "compiler-types"
-    ]
+    "types": ["types", "compiler-types"]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

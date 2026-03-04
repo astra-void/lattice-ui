@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { TextField } from "@lattice-ui/text-field";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { TextField } from "@lattice-ui/text-field";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 export function TextFieldBasicScene() {

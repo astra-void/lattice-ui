@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
 import { Avatar } from "@lattice-ui/avatar";
+import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 

@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
 import { Combobox } from "@lattice-ui/combobox";
+import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 

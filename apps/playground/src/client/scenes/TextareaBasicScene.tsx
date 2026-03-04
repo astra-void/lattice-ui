@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { Textarea } from "@lattice-ui/textarea";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { Textarea } from "@lattice-ui/textarea";
 import { panelRecipe } from "../theme/recipes";
 
 export function TextareaBasicScene() {

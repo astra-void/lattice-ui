@@ -182,7 +182,12 @@ export function RadioGroupRovingScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <RadioGroup.Root loop={false} onValueChange={setHorizontalValue} orientation="horizontal" value={horizontalValue}>
+        <RadioGroup.Root
+          loop={false}
+          onValueChange={setHorizontalValue}
+          orientation="horizontal"
+          value={horizontalValue}
+        >
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(12, 238)} Size={UDim2.fromOffset(650, 44)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 

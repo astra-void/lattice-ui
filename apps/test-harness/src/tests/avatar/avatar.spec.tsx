@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
 import { Avatar } from "@lattice-ui/avatar";
+import { React } from "@lattice-ui/core";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

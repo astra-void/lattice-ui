@@ -10,7 +10,12 @@ type TileProps = {
 function Tile(props: TileProps) {
   const { theme } = useTheme();
   return (
-    <frame BackgroundColor3={theme.colors.accent} BorderSizePixel={0} LayoutOrder={props.order} Size={UDim2.fromOffset(10, 28)}>
+    <frame
+      BackgroundColor3={theme.colors.accent}
+      BorderSizePixel={0}
+      LayoutOrder={props.order}
+      Size={UDim2.fromOffset(10, 28)}
+    >
       <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
       <Text
         AnchorPoint={new Vector2(0.5, 0.5)}

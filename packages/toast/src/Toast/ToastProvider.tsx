@@ -16,25 +16,22 @@ export function ToastProvider(props: ToastProviderProps) {
   const [toasts, setToasts] = React.useState<Array<ToastRecord>>([]);
   const idSequenceRef = React.useRef(0);
 
-  const enqueue = React.useCallback(
-    (options: ToastOptions) => {
-      idSequenceRef.current += 1;
-      const id = options.id ?? `toast-${idSequenceRef.current}`;
+  const enqueue = React.useCallback((options: ToastOptions) => {
+    idSequenceRef.current += 1;
+    const id = options.id ?? `toast-${idSequenceRef.current}`;
 
-      setToasts((currentQueue) =>
-        enqueueToast(currentQueue, {
-          id,
-          title: options.title,
-          description: options.description,
-          durationMs: options.durationMs,
-          createdAtMs: nowMs(),
-        }),
-      );
+    setToasts((currentQueue) =>
+      enqueueToast(currentQueue, {
+        id,
+        title: options.title,
+        description: options.description,
+        durationMs: options.durationMs,
+        createdAtMs: nowMs(),
+      }),
+    );
 
-      return id;
-    },
-    [],
-  );
+    return id;
+  }, []);
 
   const remove = React.useCallback((id: string) => {
     setToasts((currentQueue) => currentQueue.filter((toast) => toast.id !== id));

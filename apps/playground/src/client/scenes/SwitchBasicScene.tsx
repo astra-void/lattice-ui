@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { Switch } from "@lattice-ui/switch";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { Switch } from "@lattice-ui/switch";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function toSwitchLabel(checked: boolean) {

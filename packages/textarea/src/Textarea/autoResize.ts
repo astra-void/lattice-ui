@@ -20,7 +20,8 @@ export function resolveTextareaHeight(text: string, options: TextareaAutoResizeO
   const verticalPadding = math.max(0, options.verticalPadding ?? 0);
 
   const naturalRows = countLines(text);
-  const clampedRows = maxRows !== undefined ? math.clamp(naturalRows, minRows, maxRows) : math.max(minRows, naturalRows);
+  const clampedRows =
+    maxRows !== undefined ? math.clamp(naturalRows, minRows, maxRows) : math.max(minRows, naturalRows);
 
   return clampedRows * lineHeight + verticalPadding;
 }

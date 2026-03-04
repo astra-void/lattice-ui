@@ -16,9 +16,9 @@ export const Toast = {
   Close: ToastClose,
 } as const;
 
-export { useToast } from "./Toast/ToastProvider";
-export { dequeueToast, enqueueToast, getVisibleToasts, pruneExpiredToasts } from "./Toast/queue";
 export type { ToastRecord } from "./Toast/queue";
+export { dequeueToast, enqueueToast, getVisibleToasts, pruneExpiredToasts } from "./Toast/queue";
+export { useToast } from "./Toast/ToastProvider";
 export type {
   ToastActionProps,
   ToastCloseProps,

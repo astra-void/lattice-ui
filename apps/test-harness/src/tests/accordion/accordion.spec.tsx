@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
 import { Accordion } from "@lattice-ui/accordion";
+import { React } from "@lattice-ui/core";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

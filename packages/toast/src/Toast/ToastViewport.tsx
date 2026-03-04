@@ -20,7 +20,11 @@ export function ToastViewport(props: ToastViewportProps) {
 
   return (
     <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromOffset(340, 320)}>
-      <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, 8)} SortOrder={Enum.SortOrder.LayoutOrder} />
+      <uilistlayout
+        FillDirection={Enum.FillDirection.Vertical}
+        Padding={new UDim(0, 8)}
+        SortOrder={Enum.SortOrder.LayoutOrder}
+      />
       {toastContext.visibleToasts.map((toast) => (
         <ToastRoot key={toast.id}>
           <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromOffset(300, 22)}>

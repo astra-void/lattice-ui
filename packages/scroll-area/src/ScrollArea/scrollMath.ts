@@ -1,9 +1,4 @@
-export function resolveThumbSize(
-  viewportSize: number,
-  contentSize: number,
-  trackSize: number,
-  minimumThumbSize = 18,
-) {
+export function resolveThumbSize(viewportSize: number, contentSize: number, trackSize: number, minimumThumbSize = 18) {
   if (viewportSize <= 0 || contentSize <= 0 || trackSize <= 0) {
     return minimumThumbSize;
   }

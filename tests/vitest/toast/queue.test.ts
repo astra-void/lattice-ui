@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { dequeueToast, enqueueToast, getVisibleToasts, pruneExpiredToasts } from "../../../packages/toast/src/Toast/queue";
+import {
+  dequeueToast,
+  enqueueToast,
+  getVisibleToasts,
+  pruneExpiredToasts,
+} from "../../../packages/toast/src/Toast/queue";
 
 describe("toast queue", () => {
   it("enqueues and dequeues items", () => {

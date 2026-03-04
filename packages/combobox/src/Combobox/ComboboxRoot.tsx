@@ -1,10 +1,10 @@
 import { React, useControllableState } from "@lattice-ui/core";
 import { ComboboxContextProvider } from "./context";
 import {
+  type ComboboxOption,
   defaultComboboxFilter,
   resolveComboboxInputValue,
   resolveForcedComboboxValue,
-  type ComboboxOption,
 } from "./logic";
 import type { ComboboxItemRegistration, ComboboxProps } from "./types";
 

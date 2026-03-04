@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
 import { Accordion } from "@lattice-ui/accordion";
+import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { panelRecipe } from "../theme/recipes";
 

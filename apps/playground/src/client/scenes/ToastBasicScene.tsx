@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { Toast } from "@lattice-ui/toast";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { Toast } from "@lattice-ui/toast";
 import { panelRecipe } from "../theme/recipes";
 
 export function ToastBasicScene() {
@@ -33,9 +33,18 @@ export function ToastBasicScene() {
         <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
         <Toast.Root asChild>
-          <frame BackgroundColor3={theme.colors.surfaceElevated} BorderSizePixel={0} LayoutOrder={1} Size={UDim2.fromOffset(360, 72)}>
+          <frame
+            BackgroundColor3={theme.colors.surfaceElevated}
+            BorderSizePixel={0}
+            LayoutOrder={1}
+            Size={UDim2.fromOffset(360, 72)}
+          >
             <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-            <uipadding PaddingLeft={new UDim(0, theme.space[10])} PaddingRight={new UDim(0, theme.space[10])} PaddingTop={new UDim(0, theme.space[8])} />
+            <uipadding
+              PaddingLeft={new UDim(0, theme.space[10])}
+              PaddingRight={new UDim(0, theme.space[10])}
+              PaddingTop={new UDim(0, theme.space[8])}
+            />
             <Toast.Title asChild>
               <Text
                 BackgroundTransparency={1}
@@ -73,9 +82,18 @@ export function ToastBasicScene() {
         </Toast.Root>
 
         <Toast.Root asChild>
-          <frame BackgroundColor3={theme.colors.surfaceElevated} BorderSizePixel={0} LayoutOrder={2} Size={UDim2.fromOffset(360, 72)}>
+          <frame
+            BackgroundColor3={theme.colors.surfaceElevated}
+            BorderSizePixel={0}
+            LayoutOrder={2}
+            Size={UDim2.fromOffset(360, 72)}
+          >
             <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-            <uipadding PaddingLeft={new UDim(0, theme.space[10])} PaddingRight={new UDim(0, theme.space[10])} PaddingTop={new UDim(0, theme.space[8])} />
+            <uipadding
+              PaddingLeft={new UDim(0, theme.space[10])}
+              PaddingRight={new UDim(0, theme.space[10])}
+              PaddingTop={new UDim(0, theme.space[8])}
+            />
             <Toast.Title asChild>
               <Text
                 BackgroundTransparency={1}

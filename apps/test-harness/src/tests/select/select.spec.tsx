@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { Select } from "@lattice-ui/select";
 import { PortalProvider } from "@lattice-ui/layer";
+import { Select } from "@lattice-ui/select";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

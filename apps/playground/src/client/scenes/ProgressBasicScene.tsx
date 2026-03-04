@@ -44,7 +44,12 @@ export function ProgressBasicScene() {
         />
 
         <Progress.Root max={100} value={value}>
-          <frame BackgroundColor3={theme.colors.surfaceElevated} BorderSizePixel={0} LayoutOrder={2} Size={UDim2.fromOffset(860, 16)}>
+          <frame
+            BackgroundColor3={theme.colors.surfaceElevated}
+            BorderSizePixel={0}
+            LayoutOrder={2}
+            Size={UDim2.fromOffset(860, 16)}
+          >
             <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
             <Progress.Indicator asChild>
               <frame BackgroundColor3={theme.colors.accent} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)}>

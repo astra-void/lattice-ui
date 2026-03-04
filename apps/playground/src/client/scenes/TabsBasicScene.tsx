@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { Tabs } from "@lattice-ui/tabs";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { Tabs } from "@lattice-ui/tabs";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 type DemoTabKey = "overview" | "activity" | "settings";

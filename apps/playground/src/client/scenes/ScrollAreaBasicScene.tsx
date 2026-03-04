@@ -44,13 +44,28 @@ export function ScrollAreaBasicScene() {
                 ScrollingDirection={Enum.ScrollingDirection.XY}
                 Size={UDim2.fromOffset(480, 180)}
               >
-                <frame BackgroundColor3={theme.colors.accent} BorderSizePixel={0} Position={UDim2.fromOffset(32, 32)} Size={UDim2.fromOffset(360, 120)} />
-                <frame BackgroundColor3={theme.colors.danger} BorderSizePixel={0} Position={UDim2.fromOffset(620, 320)} Size={UDim2.fromOffset(280, 140)} />
+                <frame
+                  BackgroundColor3={theme.colors.accent}
+                  BorderSizePixel={0}
+                  Position={UDim2.fromOffset(32, 32)}
+                  Size={UDim2.fromOffset(360, 120)}
+                />
+                <frame
+                  BackgroundColor3={theme.colors.danger}
+                  BorderSizePixel={0}
+                  Position={UDim2.fromOffset(620, 320)}
+                  Size={UDim2.fromOffset(280, 140)}
+                />
               </scrollingframe>
             </ScrollArea.Viewport>
 
             <ScrollArea.Scrollbar asChild orientation="vertical">
-              <frame BackgroundColor3={theme.colors.border} BorderSizePixel={0} Position={UDim2.fromOffset(484, 0)} Size={UDim2.fromOffset(8, 180)}>
+              <frame
+                BackgroundColor3={theme.colors.border}
+                BorderSizePixel={0}
+                Position={UDim2.fromOffset(484, 0)}
+                Size={UDim2.fromOffset(8, 180)}
+              >
                 <ScrollArea.Thumb asChild orientation="vertical">
                   <frame BackgroundColor3={theme.colors.textSecondary} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)}>
                     <uicorner CornerRadius={new UDim(1, 0)} />
@@ -60,7 +75,12 @@ export function ScrollAreaBasicScene() {
             </ScrollArea.Scrollbar>
 
             <ScrollArea.Scrollbar asChild orientation="horizontal">
-              <frame BackgroundColor3={theme.colors.border} BorderSizePixel={0} Position={UDim2.fromOffset(0, 184)} Size={UDim2.fromOffset(480, 8)}>
+              <frame
+                BackgroundColor3={theme.colors.border}
+                BorderSizePixel={0}
+                Position={UDim2.fromOffset(0, 184)}
+                Size={UDim2.fromOffset(480, 8)}
+              >
                 <ScrollArea.Thumb asChild orientation="horizontal">
                   <frame BackgroundColor3={theme.colors.textSecondary} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)}>
                     <uicorner CornerRadius={new UDim(1, 0)} />
@@ -70,7 +90,12 @@ export function ScrollAreaBasicScene() {
             </ScrollArea.Scrollbar>
 
             <ScrollArea.Corner asChild>
-              <frame BackgroundColor3={theme.colors.border} BorderSizePixel={0} Position={UDim2.fromOffset(484, 184)} Size={UDim2.fromOffset(8, 8)} />
+              <frame
+                BackgroundColor3={theme.colors.border}
+                BorderSizePixel={0}
+                Position={UDim2.fromOffset(484, 184)}
+                Size={UDim2.fromOffset(8, 8)}
+              />
             </ScrollArea.Corner>
           </frame>
         </ScrollArea.Root>

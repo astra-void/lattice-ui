@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
 import { Combobox } from "@lattice-ui/combobox";
+import { React } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";

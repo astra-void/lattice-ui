@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
 import { ScrollAreaContextProvider } from "./context";
-import type { ScrollAxisMetrics, ScrollAreaProps } from "./types";
+import type { ScrollAreaProps, ScrollAxisMetrics } from "./types";
 
 function createAxisMetrics(): ScrollAxisMetrics {
   return {

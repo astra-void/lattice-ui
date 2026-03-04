@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
-import { Popover } from "@lattice-ui/popover";
 import { PortalProvider } from "@lattice-ui/layer";
+import { Popover } from "@lattice-ui/popover";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

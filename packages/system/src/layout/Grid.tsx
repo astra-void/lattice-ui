@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, resolveSx, useTheme } from "@lattice-ui/style";
-import { resolvePadding, resolveSpace } from "./space";
 import { resolveGridCellWidth, resolveGridColumns } from "./gridMath";
+import { resolvePadding, resolveSpace } from "./space";
 import type { GridProps } from "./types";
 
 type StyleProps = React.Attributes & Record<string, unknown>;
