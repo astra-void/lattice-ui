@@ -5,14 +5,14 @@ import { PopoverPortal } from "./Popover/PopoverPortal";
 import { Popover as PopoverRoot } from "./Popover/PopoverRoot";
 import { PopoverTrigger } from "./Popover/PopoverTrigger";
 
-export const Popover = Object.assign(PopoverRoot, {
+export const Popover = {
   Root: PopoverRoot,
   Trigger: PopoverTrigger,
   Portal: PopoverPortal,
   Content: PopoverContent,
   Anchor: PopoverAnchor,
   Close: PopoverClose,
-}) as typeof PopoverRoot & {
+} as const satisfies {
   Root: typeof PopoverRoot;
   Trigger: typeof PopoverTrigger;
   Portal: typeof PopoverPortal;

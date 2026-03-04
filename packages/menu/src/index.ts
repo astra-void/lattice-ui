@@ -7,7 +7,7 @@ import { Menu as MenuRoot } from "./Menu/MenuRoot";
 import { MenuSeparator } from "./Menu/MenuSeparator";
 import { MenuTrigger } from "./Menu/MenuTrigger";
 
-export const Menu = Object.assign(MenuRoot, {
+export const Menu = {
   Root: MenuRoot,
   Trigger: MenuTrigger,
   Portal: MenuPortal,
@@ -16,7 +16,7 @@ export const Menu = Object.assign(MenuRoot, {
   Group: MenuGroup,
   Label: MenuLabel,
   Separator: MenuSeparator,
-}) as typeof MenuRoot & {
+} as const satisfies {
   Root: typeof MenuRoot;
   Trigger: typeof MenuTrigger;
   Portal: typeof MenuPortal;

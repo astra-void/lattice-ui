@@ -5,14 +5,14 @@ import { DialogPortal } from "./Dialog/DialogPortal";
 import { Dialog as DialogRoot } from "./Dialog/DialogRoot";
 import { DialogTrigger } from "./Dialog/DialogTrigger";
 
-export const Dialog = Object.assign(DialogRoot, {
+export const Dialog = {
   Root: DialogRoot,
   Trigger: DialogTrigger,
   Portal: DialogPortal,
   Content: DialogContent,
   Overlay: DialogOverlay,
   Close: DialogClose,
-}) as typeof DialogRoot & {
+} as const satisfies {
   Root: typeof DialogRoot;
   Trigger: typeof DialogTrigger;
   Portal: typeof DialogPortal;

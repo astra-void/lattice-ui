@@ -6,6 +6,10 @@ type HandlerTable = Partial<Record<string, Fn>>;
 type SlotRef = React.ForwardedRef<Instance>;
 type SlotPropBag = React.Attributes & Record<string, unknown>;
 type InstanceRefCallback = (instance: Instance | undefined) => void;
+type ReactRuntimeWithEvents = {
+  Event: Record<string, string>;
+  Change: Record<string, string>;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeIs(value, "table");
@@ -84,6 +88,33 @@ function mergeHandlerTable(a?: HandlerTable, b?: HandlerTable) {
   return out;
 }
 
+function moveHandlersToReactKeyedProps(props: SlotPropBag, key: "Event" | "Change") {
+  const handlers = toHandlerTable(props[key]);
+  if (!handlers) {
+    props[key] = undefined;
+    return;
+  }
+
+  const reactRuntime = React as unknown as ReactRuntimeWithEvents;
+  const source = key === "Event" ? reactRuntime.Event : reactRuntime.Change;
+  const dynamicProps = props as unknown as Record<string, unknown>;
+
+  for (const [rawKey, candidate] of pairs(handlers)) {
+    if (!typeIs(rawKey, "string") || !isFn(candidate)) {
+      continue;
+    }
+
+    const reactKey = source[rawKey];
+    if (reactKey === undefined) {
+      continue;
+    }
+
+    dynamicProps[reactKey] = candidate;
+  }
+
+  props[key] = undefined;
+}
+
 export type SlotProps = {
   children: React.ReactElement<SlotPropBag>;
   ref?: SlotRef;
@@ -110,6 +141,10 @@ export const Slot = React.forwardRef<Instance, SlotProps>((props, forwardedRef) 
   const childRef = toForwardedRef(childProps.ref);
   const mergedRef = composeRefs(childRef, forwardedRef, slotRef);
   mergedProps.ref = mergedRef;
+
+  // cloneElement bypasses @rbxts/react createElement Event/Change normalization.
+  moveHandlersToReactKeyedProps(mergedProps, "Event");
+  moveHandlersToReactKeyedProps(mergedProps, "Change");
 
   return React.cloneElement(child, mergedProps);
 });

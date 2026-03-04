@@ -38,7 +38,7 @@ import { ToggleGroupBasicScene } from "./scenes/ToggleGroupBasicScene";
 import { ToggleGroupRovingScene } from "./scenes/ToggleGroupRovingScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
 import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
-import { buttonRecipe, sceneTabRecipe } from "./theme/recipes";
+import { buttonRecipe, panelRecipe, sceneTabRecipe } from "./theme/recipes";
 
 type SceneKey =
   | "dismiss"
@@ -77,43 +77,278 @@ type SceneKey =
   | "grid-showcase"
   | "accordion-basic";
 
+type SceneCategory = "Layering" | "Forms" | "Selection" | "Showcase";
+
+type SceneOption = {
+  key: SceneKey;
+  label: string;
+  description: string;
+  category: SceneCategory;
+};
+
 const sceneOptions = [
-  { key: "dismiss", label: "Layer Dismiss" },
-  { key: "nested", label: "Nested Stack" },
-  { key: "modal", label: "Modal Block" },
-  { key: "presence", label: "Presence" },
-  { key: "inset", label: "Inset Hit-Test" },
-  { key: "checkbox-basic", label: "Checkbox Basic" },
-  { key: "switch-basic", label: "Switch Basic" },
-  { key: "radio-roving", label: "Radio Roving" },
-  { key: "radio-disabled", label: "Radio Disabled" },
-  { key: "text-field-basic", label: "TextField Basic" },
-  { key: "textarea-basic", label: "Textarea Basic" },
-  { key: "select-basic", label: "Select Basic" },
-  { key: "combobox-basic", label: "Combobox Basic" },
-  { key: "slider-basic", label: "Slider Basic" },
-  { key: "progress-basic", label: "Progress Basic" },
-  { key: "avatar-basic", label: "Avatar Basic" },
-  { key: "toggle-basic", label: "Toggle Basic" },
-  { key: "toggle-roving", label: "Toggle Roving" },
-  { key: "dialog-basic", label: "Dialog Basic" },
-  { key: "dialog-nested", label: "Dialog Nested" },
-  { key: "dialog-modal", label: "Dialog Modal Block" },
-  { key: "popover-basic", label: "Popover Basic" },
-  { key: "popover-flip", label: "Popover Flip/Clamp" },
-  { key: "popover-nested", label: "Popover Nested" },
-  { key: "tabs-basic", label: "Tabs Basic" },
-  { key: "tooltip-delay", label: "Tooltip Delay" },
-  { key: "tooltip-follow", label: "Tooltip Follow" },
-  { key: "menu-roving", label: "Menu Roving" },
-  { key: "toast-basic", label: "Toast Basic" },
-  { key: "density-scope", label: "Density Scope" },
-  { key: "scroll-area-basic", label: "ScrollArea Basic" },
-  { key: "surface-showcase", label: "Surface Showcase" },
-  { key: "stack-showcase", label: "Stack Showcase" },
-  { key: "grid-showcase", label: "Grid Showcase" },
-  { key: "accordion-basic", label: "Accordion Basic" },
-] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
+  {
+    key: "dismiss",
+    label: "Layer Dismiss",
+    description: "Outside click and escape dismissal orchestration.",
+    category: "Layering",
+  },
+  {
+    key: "nested",
+    label: "Nested Stack",
+    description: "Layer ownership and nested portal behavior.",
+    category: "Layering",
+  },
+  {
+    key: "modal",
+    label: "Modal Block",
+    description: "Modal surfaces with outside interaction blocking.",
+    category: "Layering",
+  },
+  {
+    key: "presence",
+    label: "Presence",
+    description: "Mount and unmount transitions with presence states.",
+    category: "Layering",
+  },
+  {
+    key: "inset",
+    label: "Inset Hit-Test",
+    description: "Pointer hit region tuning for small controls.",
+    category: "Layering",
+  },
+  {
+    key: "dialog-basic",
+    label: "Dialog Basic",
+    description: "Core dialog primitives and focus handoff.",
+    category: "Layering",
+  },
+  {
+    key: "dialog-nested",
+    label: "Dialog Nested",
+    description: "Nested dialog sequencing and layering.",
+    category: "Layering",
+  },
+  {
+    key: "dialog-modal",
+    label: "Dialog Modal Block",
+    description: "Modal dialog that locks external interaction.",
+    category: "Layering",
+  },
+  {
+    key: "popover-basic",
+    label: "Popover Basic",
+    description: "Anchored popover positioning with portals.",
+    category: "Layering",
+  },
+  {
+    key: "popover-flip",
+    label: "Popover Flip/Clamp",
+    description: "Viewport-aware popover fallback placement.",
+    category: "Layering",
+  },
+  {
+    key: "popover-nested",
+    label: "Popover Nested",
+    description: "Layer stack behavior with nested popovers.",
+    category: "Layering",
+  },
+  {
+    key: "tooltip-delay",
+    label: "Tooltip Delay",
+    description: "Open/close delay behavior for tooltips.",
+    category: "Layering",
+  },
+  {
+    key: "tooltip-follow",
+    label: "Tooltip Follow",
+    description: "Tooltip movement following pointer position.",
+    category: "Layering",
+  },
+  {
+    key: "menu-roving",
+    label: "Menu Roving",
+    description: "Keyboard navigation via roving focus.",
+    category: "Layering",
+  },
+  {
+    key: "toast-basic",
+    label: "Toast Basic",
+    description: "Declarative toast composition examples.",
+    category: "Layering",
+  },
+  {
+    key: "checkbox-basic",
+    label: "Checkbox Basic",
+    description: "Checkbox states and controlled usage.",
+    category: "Forms",
+  },
+  {
+    key: "switch-basic",
+    label: "Switch Basic",
+    description: "Switch interactions and state labels.",
+    category: "Forms",
+  },
+  {
+    key: "text-field-basic",
+    label: "TextField Basic",
+    description: "Single-line text input variants.",
+    category: "Forms",
+  },
+  {
+    key: "textarea-basic",
+    label: "Textarea Basic",
+    description: "Multi-line input and helper text.",
+    category: "Forms",
+  },
+  {
+    key: "select-basic",
+    label: "Select Basic",
+    description: "Trigger/content select composition.",
+    category: "Forms",
+  },
+  {
+    key: "combobox-basic",
+    label: "Combobox Basic",
+    description: "Text input with option filtering behavior.",
+    category: "Forms",
+  },
+  {
+    key: "slider-basic",
+    label: "Slider Basic",
+    description: "Single and range slider interaction.",
+    category: "Forms",
+  },
+  {
+    key: "progress-basic",
+    label: "Progress Basic",
+    description: "Progress indicators with semantic states.",
+    category: "Forms",
+  },
+  {
+    key: "avatar-basic",
+    label: "Avatar Basic",
+    description: "Avatar fallbacks, sizing and status.",
+    category: "Forms",
+  },
+  {
+    key: "radio-roving",
+    label: "Radio Roving",
+    description: "Roving radio group keyboard model.",
+    category: "Selection",
+  },
+  {
+    key: "radio-disabled",
+    label: "Radio Disabled",
+    description: "Disabled radio behavior and focus rules.",
+    category: "Selection",
+  },
+  {
+    key: "toggle-basic",
+    label: "Toggle Basic",
+    description: "Single toggle pressed state behavior.",
+    category: "Selection",
+  },
+  {
+    key: "toggle-roving",
+    label: "Toggle Roving",
+    description: "Toggle group arrow-key navigation.",
+    category: "Selection",
+  },
+  {
+    key: "tabs-basic",
+    label: "Tabs Basic",
+    description: "Tabs activation, indicators and content.",
+    category: "Selection",
+  },
+  {
+    key: "accordion-basic",
+    label: "Accordion Basic",
+    description: "Expandable sections with animated disclosure.",
+    category: "Selection",
+  },
+  {
+    key: "density-scope",
+    label: "Density Scope",
+    description: "Per-scope density overrides across components.",
+    category: "Showcase",
+  },
+  {
+    key: "scroll-area-basic",
+    label: "ScrollArea Basic",
+    description: "Custom XY viewport and thumb composition.",
+    category: "Showcase",
+  },
+  {
+    key: "surface-showcase",
+    label: "Surface Showcase",
+    description: "Surface tone tokens and elevation structure.",
+    category: "Showcase",
+  },
+  {
+    key: "stack-showcase",
+    label: "Stack Showcase",
+    description: "Vertical composition and spacing primitives.",
+    category: "Showcase",
+  },
+  {
+    key: "grid-showcase",
+    label: "Grid Showcase",
+    description: "Grid composition and responsive track setup.",
+    category: "Showcase",
+  },
+] satisfies ReadonlyArray<SceneOption>;
+
+const sceneCategories = [
+  { key: "Layering", label: "Layering & Overlays" },
+  { key: "Forms", label: "Forms & Inputs" },
+  { key: "Selection", label: "Selection Patterns" },
+  { key: "Showcase", label: "System & Layout" },
+] as const satisfies ReadonlyArray<{ key: SceneCategory; label: string }>;
+
+const scenesByCategory = sceneCategories.map((category) => ({
+  key: category.key,
+  label: category.label,
+  scenes: sceneOptions.filter((scene) => scene.category === category.key),
+}));
+
+const sceneComponents = {
+  dismiss: LayerDismissScene,
+  nested: NestedStackScene,
+  modal: ModalBlockScene,
+  presence: PresenceScene,
+  inset: InsetHitTestScene,
+  "checkbox-basic": CheckboxBasicScene,
+  "switch-basic": SwitchBasicScene,
+  "radio-roving": RadioGroupRovingScene,
+  "radio-disabled": RadioGroupDisabledScene,
+  "text-field-basic": TextFieldBasicScene,
+  "textarea-basic": TextareaBasicScene,
+  "select-basic": SelectBasicScene,
+  "combobox-basic": ComboboxBasicScene,
+  "slider-basic": SliderBasicScene,
+  "progress-basic": ProgressBasicScene,
+  "avatar-basic": AvatarBasicScene,
+  "toggle-basic": ToggleGroupBasicScene,
+  "toggle-roving": ToggleGroupRovingScene,
+  "dialog-basic": DialogBasicScene,
+  "dialog-nested": DialogNestedScene,
+  "dialog-modal": DialogModalBlockScene,
+  "popover-basic": PopoverBasicScene,
+  "popover-flip": PopoverFlipClampScene,
+  "popover-nested": PopoverNestedScene,
+  "tabs-basic": TabsBasicScene,
+  "tooltip-delay": TooltipDelayScene,
+  "tooltip-follow": TooltipFollowScene,
+  "menu-roving": MenuRovingScene,
+  "toast-basic": ToastBasicScene,
+  "density-scope": DensityScopeScene,
+  "scroll-area-basic": ScrollAreaBasicScene,
+  "surface-showcase": SurfaceShowcaseScene,
+  "stack-showcase": StackShowcaseScene,
+  "grid-showcase": GridShowcaseScene,
+  "accordion-basic": AccordionBasicScene,
+} satisfies Record<SceneKey, () => React.ReactNode>;
 
 const densityOrder = ["compact", "comfortable", "spacious"] as const satisfies ReadonlyArray<DensityToken>;
 
@@ -131,10 +366,17 @@ function AppContent(props: AppProps) {
   const [activeScene, setActiveScene] = React.useState<SceneKey>("dismiss");
   const [darkMode, setDarkMode] = React.useState(true);
   const { theme, density, setBaseTheme, setDensity } = useSystemTheme();
+  const activeSceneMeta = sceneOptions.find((scene) => scene.key === activeScene) ?? sceneOptions[0];
+  const ActiveScene = sceneComponents[activeScene];
 
   React.useEffect(() => {
     setBaseTheme(darkMode ? defaultDarkTheme : defaultLightTheme);
   }, [darkMode, setBaseTheme]);
+
+  const outerPadding = theme.space[16];
+  const headerHeight = 104;
+  const navWidth = 280;
+  const panelGap = theme.space[12];
 
   return (
     <PortalProvider container={props.playerGui}>
@@ -145,24 +387,80 @@ function AppContent(props: AppProps) {
           Position={UDim2.fromScale(0, 0)}
           Size={UDim2.fromScale(1, 1)}
         >
-          <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[10])} />
+          <uigradient
+            Color={
+              new ColorSequence([
+                new ColorSequenceKeypoint(0, theme.colors.background),
+                new ColorSequenceKeypoint(1, theme.colors.surfaceElevated),
+              ])
+            }
+            Rotation={90}
+          />
 
-          <frame BackgroundTransparency={1} LayoutOrder={1} Size={UDim2.fromOffset(940, 92)}>
-            <uipadding PaddingLeft={new UDim(0, theme.space[16])} PaddingTop={new UDim(0, theme.space[10])} />
-            <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
+          <frame
+            {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
+              Position: UDim2.fromOffset(outerPadding, outerPadding),
+              Size: new UDim2(1, -outerPadding * 2, 0, headerHeight),
+            }) as Record<string, unknown>)}
+          >
+            <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
+            <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.25} />
+            <uipadding
+              PaddingBottom={new UDim(0, theme.space[12])}
+              PaddingLeft={new UDim(0, theme.space[16])}
+              PaddingRight={new UDim(0, theme.space[16])}
+              PaddingTop={new UDim(0, theme.space[12])}
+            />
 
-            <frame BackgroundTransparency={1} LayoutOrder={1} Size={UDim2.fromOffset(900, 38)}>
-              <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
+            <frame BackgroundTransparency={1} Size={new UDim2(1, -266, 1, 0)}>
+              <Text
+                BackgroundTransparency={1}
+                Size={new UDim2(1, 0, 0, 30)}
+                Text="Lattice UI Playground"
+                TextColor3={theme.colors.textPrimary}
+                TextSize={theme.typography.titleMd.textSize + 4}
+                TextXAlignment={Enum.TextXAlignment.Left}
+              />
+              <Text
+                BackgroundTransparency={1}
+                Position={UDim2.fromOffset(0, 36)}
+                Size={new UDim2(1, 0, 0, 22)}
+                Text={`${activeSceneMeta.category} / ${activeSceneMeta.description}`}
+                TextColor3={theme.colors.textSecondary}
+                TextSize={theme.typography.bodyMd.textSize}
+                TextTruncate={Enum.TextTruncate.AtEnd}
+                TextXAlignment={Enum.TextXAlignment.Left}
+              />
+              <Text
+                BackgroundTransparency={1}
+                Position={UDim2.fromOffset(0, 60)}
+                Size={new UDim2(1, 0, 0, 18)}
+                Text={`Active Scene: ${activeSceneMeta.label}`}
+                TextColor3={theme.colors.textSecondary}
+                TextSize={theme.typography.labelSm.textSize}
+                TextXAlignment={Enum.TextXAlignment.Left}
+              />
+            </frame>
+
+            <frame BackgroundTransparency={1} Position={new UDim2(1, -250, 0, 0)} Size={UDim2.fromOffset(250, 80)}>
+              <uilistlayout
+                FillDirection={Enum.FillDirection.Horizontal}
+                HorizontalAlignment={Enum.HorizontalAlignment.Right}
+                Padding={new UDim(0, theme.space[8])}
+                VerticalAlignment={Enum.VerticalAlignment.Center}
+              />
               <textbutton
-                {...(mergeGuiProps(buttonRecipe({ intent: darkMode ? "surface" : "primary", size: "sm" }, theme), {
-                  Text: darkMode ? "Dark Theme" : "Light Theme",
+                {...(mergeGuiProps(buttonRecipe({ intent: "primary", size: "sm" }, theme), {
+                  Text: darkMode ? "Theme: Dark" : "Theme: Light",
                   Event: {
                     Activated: () => {
                       setDarkMode((value) => !value);
                     },
                   },
                 }) as Record<string, unknown>)}
-              />
+              >
+                <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+              </textbutton>
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                   Text: `Density: ${density}`,
@@ -172,86 +470,173 @@ function AppContent(props: AppProps) {
                     },
                   },
                 }) as Record<string, unknown>)}
-              />
-              <Text
-                BackgroundTransparency={1}
-                LayoutOrder={2}
-                Position={UDim2.fromOffset(0, 7)}
-                Size={UDim2.fromOffset(420, 24)}
-                Text={`Active Scene: ${activeScene}`}
-                TextColor3={theme.colors.textSecondary}
-                TextSize={theme.typography.labelSm.textSize}
-                TextXAlignment={Enum.TextXAlignment.Left}
-              />
-            </frame>
-
-            <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(900, 44)}>
-              <uigridlayout
-                CellPadding={UDim2.fromOffset(theme.space[8], theme.space[8])}
-                CellSize={UDim2.fromOffset(145, 34)}
-              />
-              {sceneOptions.map((scene) => {
-                const selected = scene.key === activeScene;
-
-                return (
-                  <textbutton
-                    key={scene.key}
-                    {...(mergeGuiProps(sceneTabRecipe({ selected: selected ? "true" : "false" }, theme), {
-                      Text: scene.label,
-                      Event: {
-                        Activated: () => {
-                          setActiveScene(scene.key);
-                        },
-                      },
-                    }) as Record<string, unknown>)}
-                  />
-                );
-              })}
+              >
+                <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.4} />
+              </textbutton>
             </frame>
           </frame>
 
           <frame
             BackgroundTransparency={1}
-            LayoutOrder={2}
-            Position={UDim2.fromScale(0, 0)}
-            Size={UDim2.fromScale(1, 1)}
+            Position={UDim2.fromOffset(outerPadding, outerPadding * 2 + headerHeight)}
+            Size={new UDim2(1, -outerPadding * 2, 1, -(outerPadding * 3 + headerHeight))}
           >
-            <uipadding PaddingLeft={new UDim(0, theme.space[16])} PaddingTop={new UDim(0, theme.space[8])} />
-            {activeScene === "dismiss" ? <LayerDismissScene /> : undefined}
-            {activeScene === "nested" ? <NestedStackScene /> : undefined}
-            {activeScene === "modal" ? <ModalBlockScene /> : undefined}
-            {activeScene === "presence" ? <PresenceScene /> : undefined}
-            {activeScene === "inset" ? <InsetHitTestScene /> : undefined}
-            {activeScene === "checkbox-basic" ? <CheckboxBasicScene /> : undefined}
-            {activeScene === "switch-basic" ? <SwitchBasicScene /> : undefined}
-            {activeScene === "radio-roving" ? <RadioGroupRovingScene /> : undefined}
-            {activeScene === "radio-disabled" ? <RadioGroupDisabledScene /> : undefined}
-            {activeScene === "text-field-basic" ? <TextFieldBasicScene /> : undefined}
-            {activeScene === "textarea-basic" ? <TextareaBasicScene /> : undefined}
-            {activeScene === "select-basic" ? <SelectBasicScene /> : undefined}
-            {activeScene === "combobox-basic" ? <ComboboxBasicScene /> : undefined}
-            {activeScene === "slider-basic" ? <SliderBasicScene /> : undefined}
-            {activeScene === "progress-basic" ? <ProgressBasicScene /> : undefined}
-            {activeScene === "avatar-basic" ? <AvatarBasicScene /> : undefined}
-            {activeScene === "toggle-basic" ? <ToggleGroupBasicScene /> : undefined}
-            {activeScene === "toggle-roving" ? <ToggleGroupRovingScene /> : undefined}
-            {activeScene === "dialog-basic" ? <DialogBasicScene /> : undefined}
-            {activeScene === "dialog-nested" ? <DialogNestedScene /> : undefined}
-            {activeScene === "dialog-modal" ? <DialogModalBlockScene /> : undefined}
-            {activeScene === "popover-basic" ? <PopoverBasicScene /> : undefined}
-            {activeScene === "popover-flip" ? <PopoverFlipClampScene /> : undefined}
-            {activeScene === "popover-nested" ? <PopoverNestedScene /> : undefined}
-            {activeScene === "tabs-basic" ? <TabsBasicScene /> : undefined}
-            {activeScene === "tooltip-delay" ? <TooltipDelayScene /> : undefined}
-            {activeScene === "tooltip-follow" ? <TooltipFollowScene /> : undefined}
-            {activeScene === "menu-roving" ? <MenuRovingScene /> : undefined}
-            {activeScene === "toast-basic" ? <ToastBasicScene /> : undefined}
-            {activeScene === "density-scope" ? <DensityScopeScene /> : undefined}
-            {activeScene === "scroll-area-basic" ? <ScrollAreaBasicScene /> : undefined}
-            {activeScene === "surface-showcase" ? <SurfaceShowcaseScene /> : undefined}
-            {activeScene === "stack-showcase" ? <StackShowcaseScene /> : undefined}
-            {activeScene === "grid-showcase" ? <GridShowcaseScene /> : undefined}
-            {activeScene === "accordion-basic" ? <AccordionBasicScene /> : undefined}
+            <frame
+              {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
+                Size: new UDim2(0, navWidth, 1, 0),
+              }) as Record<string, unknown>)}
+            >
+              <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
+              <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.35} />
+              <Text
+                BackgroundTransparency={1}
+                Position={UDim2.fromOffset(theme.space[12], theme.space[10])}
+                Size={new UDim2(1, -theme.space[24], 0, 20)}
+                Text="Scene Navigator"
+                TextColor3={theme.colors.textPrimary}
+                TextSize={theme.typography.labelSm.textSize + 1}
+                TextXAlignment={Enum.TextXAlignment.Left}
+              />
+              <Text
+                BackgroundTransparency={1}
+                Position={UDim2.fromOffset(theme.space[12], 30)}
+                Size={new UDim2(1, -theme.space[24], 0, 18)}
+                Text={`${sceneOptions.size()} scenes`}
+                TextColor3={theme.colors.textSecondary}
+                TextSize={theme.typography.labelSm.textSize}
+                TextXAlignment={Enum.TextXAlignment.Left}
+              />
+              <scrollingframe
+                AutomaticCanvasSize={Enum.AutomaticSize.Y}
+                BackgroundTransparency={1}
+                BorderSizePixel={0}
+                CanvasSize={UDim2.fromOffset(0, 0)}
+                Position={UDim2.fromOffset(theme.space[8], 58)}
+                ScrollBarImageColor3={theme.colors.border}
+                ScrollBarImageTransparency={0.3}
+                ScrollBarThickness={6}
+                ScrollingDirection={Enum.ScrollingDirection.Y}
+                Size={new UDim2(1, -theme.space[16], 1, -66)}
+              >
+                <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[10])} />
+
+                {scenesByCategory.map((category) => (
+                  <frame
+                    key={category.key}
+                    AutomaticSize={Enum.AutomaticSize.Y}
+                    BackgroundTransparency={1}
+                    Size={new UDim2(1, 0, 0, 0)}
+                  >
+                    <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[6])} />
+                    <Text
+                      BackgroundTransparency={1}
+                      LayoutOrder={1}
+                      Size={new UDim2(1, -4, 0, 20)}
+                      Text={category.label}
+                      TextColor3={theme.colors.textSecondary}
+                      TextSize={theme.typography.labelSm.textSize}
+                      TextXAlignment={Enum.TextXAlignment.Left}
+                    />
+                    {category.scenes.map((scene) => {
+                      const selected = scene.key === activeScene;
+
+                      return (
+                        <textbutton
+                          key={scene.key}
+                          {...(mergeGuiProps(sceneTabRecipe({ selected: selected ? "true" : "false" }, theme), {
+                            LayoutOrder: 2,
+                            Size: new UDim2(1, -4, 0, 32),
+                            Text: scene.label,
+                            TextXAlignment: Enum.TextXAlignment.Left,
+                            Event: {
+                              Activated: () => {
+                                setActiveScene(scene.key);
+                              },
+                            },
+                          }) as Record<string, unknown>)}
+                        >
+                          <uipadding
+                            PaddingLeft={new UDim(0, theme.space[10])}
+                            PaddingRight={new UDim(0, theme.space[10])}
+                          />
+                          <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                          <uistroke
+                            Color={selected ? theme.colors.accent : theme.colors.border}
+                            Thickness={1}
+                            Transparency={selected ? 0.2 : 0.45}
+                          />
+                        </textbutton>
+                      );
+                    })}
+                  </frame>
+                ))}
+              </scrollingframe>
+            </frame>
+
+            <frame
+              {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
+                Position: UDim2.fromOffset(navWidth + panelGap, 0),
+                Size: new UDim2(1, -(navWidth + panelGap), 1, 0),
+              }) as Record<string, unknown>)}
+            >
+              <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
+              <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.35} />
+              <uipadding
+                PaddingBottom={new UDim(0, theme.space[12])}
+                PaddingLeft={new UDim(0, theme.space[12])}
+                PaddingRight={new UDim(0, theme.space[12])}
+                PaddingTop={new UDim(0, theme.space[12])}
+              />
+              <frame BackgroundTransparency={1} Size={new UDim2(1, 0, 0, 62)}>
+                <Text
+                  BackgroundTransparency={1}
+                  Size={new UDim2(1, -150, 0, 26)}
+                  Text={activeSceneMeta.label}
+                  TextColor3={theme.colors.textPrimary}
+                  TextSize={theme.typography.titleMd.textSize}
+                  TextXAlignment={Enum.TextXAlignment.Left}
+                />
+                <Text
+                  BackgroundTransparency={1}
+                  Position={UDim2.fromOffset(0, 28)}
+                  Size={new UDim2(1, -12, 0, 18)}
+                  Text={activeSceneMeta.description}
+                  TextColor3={theme.colors.textSecondary}
+                  TextSize={theme.typography.bodyMd.textSize}
+                  TextTruncate={Enum.TextTruncate.AtEnd}
+                  TextXAlignment={Enum.TextXAlignment.Left}
+                />
+                <frame
+                  BackgroundColor3={theme.colors.surfaceElevated}
+                  BorderSizePixel={0}
+                  Position={new UDim2(1, -144, 0, 0)}
+                  Size={UDim2.fromOffset(144, 26)}
+                >
+                  <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                  <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.4} />
+                  <Text
+                    BackgroundTransparency={1}
+                    Size={UDim2.fromScale(1, 1)}
+                    Text={activeSceneMeta.category}
+                    TextColor3={theme.colors.textSecondary}
+                    TextSize={theme.typography.labelSm.textSize}
+                  />
+                </frame>
+              </frame>
+
+              <frame
+                BackgroundColor3={theme.colors.surface}
+                BorderSizePixel={0}
+                Position={UDim2.fromOffset(0, 70)}
+                Size={new UDim2(1, 0, 1, -70)}
+              >
+                <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
+                <frame BackgroundTransparency={1} Size={UDim2.fromScale(1, 1)}>
+                  <ActiveScene />
+                </frame>
+              </frame>
+            </frame>
           </frame>
         </frame>
       </screengui>

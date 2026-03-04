@@ -1,10 +1,10 @@
 import { CheckboxIndicator } from "./Checkbox/CheckboxIndicator";
 import { CheckboxRoot } from "./Checkbox/CheckboxRoot";
 
-export const Checkbox = Object.assign(CheckboxRoot, {
+export const Checkbox = {
   Root: CheckboxRoot,
   Indicator: CheckboxIndicator,
-}) as typeof CheckboxRoot & {
+} as const satisfies {
   Root: typeof CheckboxRoot;
   Indicator: typeof CheckboxIndicator;
 };

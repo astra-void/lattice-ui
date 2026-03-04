@@ -8,7 +8,7 @@ import { SelectSeparator } from "./Select/SelectSeparator";
 import { SelectTrigger } from "./Select/SelectTrigger";
 import { SelectValue } from "./Select/SelectValue";
 
-export const Select = Object.assign(SelectRoot, {
+export const Select = {
   Root: SelectRoot,
   Trigger: SelectTrigger,
   Value: SelectValue,
@@ -18,7 +18,7 @@ export const Select = Object.assign(SelectRoot, {
   Group: SelectGroup,
   Label: SelectLabel,
   Separator: SelectSeparator,
-}) as typeof SelectRoot & {
+} as const satisfies {
   Root: typeof SelectRoot;
   Trigger: typeof SelectTrigger;
   Value: typeof SelectValue;

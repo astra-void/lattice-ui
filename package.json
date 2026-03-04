@@ -1,7 +1,7 @@
 {
   "name": "unnamed-ui-package",
   "version": "0.1.1",
-  "private": false,
+  "private": true,
   "description": "",
   "scripts": {
     "package:new": "node --import tsx ./scripts/create-package.ts",

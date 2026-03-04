@@ -6,6 +6,7 @@ include
 *.rbxlx
 *.rbxm
 *.rbxmx
+*.rbxlx.lock
 
 .pnpm-store
 .pnpm_store
