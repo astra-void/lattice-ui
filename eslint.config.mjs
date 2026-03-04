@@ -19,7 +19,7 @@ const compat = new FlatCompat({
 export default defineConfig([
   globalIgnores(["**/node_modules/**", "**/out/**", "**/include/**", "tests/vitest/**"]),
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["{packages,apps}/**/*.{ts,tsx}"],
     extends: compat.extends(
       "eslint:recommended",
       "plugin:@typescript-eslint/recommended",
@@ -52,6 +52,31 @@ export default defineConfig([
       "@typescript-eslint/no-unsafe-member-access": "error",
       "@typescript-eslint/no-unsafe-return": "error",
       "@typescript-eslint/no-unsafe-argument": "error",
+    },
+  },
+  {
+    files: ["scripts/**/*.ts"],
+    extends: compat.extends(
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended",
+    ),
+
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
+      prettier,
+    },
+
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        tsconfigRootDir: __dirname,
+      },
+    },
+
+    rules: {
+      "prettier/prettier": "warn",
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ]);

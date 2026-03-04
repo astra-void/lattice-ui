@@ -14,15 +14,30 @@ export function useControllableState<T>({ value, defaultValue, onChange }: Props
   const [inner, setInner] = React.useState(defaultValue);
   const controlled = value !== undefined;
   const state = value !== undefined ? value : inner;
+  const stateRef = React.useRef(state);
+  const controlledRef = React.useRef(controlled);
+  const onChangeRef = React.useRef(onChange);
 
-  const setState = React.useCallback(
-    (nextValue: T | ((prev: T) => T)) => {
-      const computed = isUpdater(nextValue) ? nextValue(state) : nextValue;
-      if (!controlled) setInner(computed);
-      onChange?.(computed);
-    },
-    [controlled, onChange, state],
-  );
+  stateRef.current = state;
+  controlledRef.current = controlled;
+  onChangeRef.current = onChange;
+
+  const setState = React.useCallback((nextValue: T | ((prev: T) => T)) => {
+    const current = stateRef.current;
+    const computed = isUpdater(nextValue) ? nextValue(current) : nextValue;
+
+    if (computed === current) {
+      return;
+    }
+
+    stateRef.current = computed;
+
+    if (!controlledRef.current) {
+      setInner(computed);
+    }
+
+    onChangeRef.current?.(computed);
+  }, []);
 
   return [state, setState] as const;
 }

@@ -122,6 +122,9 @@ importers:
       '@lattice-ui/dialog':
         specifier: workspace:*
         version: link:../../packages/dialog
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../../packages/focus
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../../packages/layer
@@ -131,9 +134,18 @@ importers:
       '@lattice-ui/popover':
         specifier: workspace:*
         version: link:../../packages/popover
+      '@lattice-ui/popper':
+        specifier: workspace:*
+        version: link:../../packages/popper
       '@lattice-ui/radio-group':
         specifier: workspace:*
         version: link:../../packages/radio-group
+      '@lattice-ui/select':
+        specifier: workspace:*
+        version: link:../../packages/select
+      '@lattice-ui/slider':
+        specifier: workspace:*
+        version: link:../../packages/slider
       '@lattice-ui/style':
         specifier: workspace:*
         version: link:../../packages/style
@@ -146,6 +158,9 @@ importers:
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:../../packages/tabs
+      '@lattice-ui/text-field':
+        specifier: workspace:*
+        version: link:../../packages/text-field
       '@lattice-ui/toggle-group':
         specifier: workspace:*
         version: link:../../packages/toggle-group
@@ -189,6 +204,12 @@ importers:
       '@lattice-ui/radio-group':
         specifier: workspace:*
         version: link:../../packages/radio-group
+      '@lattice-ui/select':
+        specifier: workspace:*
+        version: link:../../packages/select
+      '@lattice-ui/slider':
+        specifier: workspace:*
+        version: link:../../packages/slider
       '@lattice-ui/style':
         specifier: workspace:*
         version: link:../../packages/style
@@ -201,6 +222,9 @@ importers:
       '@lattice-ui/tabs':
         specifier: workspace:*
         version: link:../../packages/tabs
+      '@lattice-ui/text-field':
+        specifier: workspace:*
+        version: link:../../packages/text-field
       '@lattice-ui/toggle-group':
         specifier: workspace:*
         version: link:../../packages/toggle-group
@@ -355,6 +379,44 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
+  packages/select:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
+      '@lattice-ui/layer':
+        specifier: workspace:*
+        version: link:../layer
+      '@lattice-ui/popper':
+        specifier: workspace:*
+        version: link:../popper
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/slider:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
   packages/style:
     dependencies:
       '@lattice-ui/core':
@@ -407,6 +469,19 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/text-field:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1

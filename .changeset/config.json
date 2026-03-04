@@ -17,10 +17,13 @@
       "@lattice-ui/popover",
       "@lattice-ui/popper",
       "@lattice-ui/radio-group",
+      "@lattice-ui/select",
+      "@lattice-ui/slider",
       "@lattice-ui/style",
       "@lattice-ui/switch",
       "@lattice-ui/system",
       "@lattice-ui/tabs",
+      "@lattice-ui/text-field",
       "@lattice-ui/toggle-group",
       "@lattice-ui/tooltip"
     ]

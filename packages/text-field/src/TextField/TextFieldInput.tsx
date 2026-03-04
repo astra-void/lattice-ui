@@ -1,0 +1,89 @@
+import { React, Slot } from "@lattice-ui/core";
+import { useTextFieldContext } from "./context";
+import type { TextFieldInputProps } from "./types";
+
+function toTextBox(instance: Instance | undefined) {
+  if (!instance || !instance.IsA("TextBox")) {
+    return undefined;
+  }
+
+  return instance;
+}
+
+export function TextFieldInput(props: TextFieldInputProps) {
+  const textFieldContext = useTextFieldContext();
+  const disabled = textFieldContext.disabled || props.disabled === true;
+  const readOnly = textFieldContext.readOnly || props.readOnly === true;
+
+  const setInputRef = React.useCallback(
+    (instance: Instance | undefined) => {
+      textFieldContext.inputRef.current = toTextBox(instance);
+    },
+    [textFieldContext.inputRef],
+  );
+
+  const handleTextChanged = React.useCallback(
+    (textBox: TextBox) => {
+      if (disabled || readOnly) {
+        if (textBox.Text !== textFieldContext.value) {
+          textBox.Text = textFieldContext.value;
+        }
+
+        return;
+      }
+
+      textFieldContext.setValue(textBox.Text);
+    },
+    [disabled, readOnly, textFieldContext],
+  );
+
+  const handleFocusLost = React.useCallback(
+    (textBox: TextBox) => {
+      if (disabled) {
+        return;
+      }
+
+      textFieldContext.commitValue(textBox.Text);
+    },
+    [disabled, textFieldContext],
+  );
+
+  const sharedProps = {
+    Active: !disabled,
+    ClearTextOnFocus: false,
+    Selectable: !disabled,
+    Text: textFieldContext.value,
+    TextEditable: !disabled && !readOnly,
+    Change: {
+      Text: handleTextChanged,
+    },
+    Event: {
+      FocusLost: handleFocusLost,
+    },
+    ref: setInputRef,
+  };
+
+  if (props.asChild) {
+    const child = props.children;
+    if (!child) {
+      error("[TextFieldInput] `asChild` requires a child element.");
+    }
+
+    return <Slot {...sharedProps}>{child}</Slot>;
+  }
+
+  return (
+    <textbox
+      {...sharedProps}
+      BackgroundColor3={Color3.fromRGB(39, 46, 61)}
+      BorderSizePixel={0}
+      PlaceholderText="Type..."
+      Size={UDim2.fromOffset(240, 36)}
+      TextColor3={disabled ? Color3.fromRGB(137, 145, 162) : Color3.fromRGB(235, 240, 248)}
+      TextSize={15}
+      TextXAlignment={Enum.TextXAlignment.Left}
+    >
+      <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
+    </textbox>
+  );
+}

@@ -22,7 +22,7 @@ function DialogContentImpl(props: DialogContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <FocusScope restoreFocus={props.restoreFocus} trapped={props.trapFocus}>
+      <FocusScope active={props.enabled} restoreFocus={props.restoreFocus} trapped={props.trapFocus}>
         {props.children}
       </FocusScope>
     </DismissableLayer>

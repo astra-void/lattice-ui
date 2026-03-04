@@ -17,10 +17,13 @@
     "@lattice-ui/popover": "workspace:*",
     "@lattice-ui/popper": "workspace:*",
     "@lattice-ui/radio-group": "workspace:*",
+    "@lattice-ui/select": "workspace:*",
+    "@lattice-ui/slider": "workspace:*",
     "@lattice-ui/style": "workspace:*",
     "@lattice-ui/switch": "workspace:*",
     "@lattice-ui/system": "workspace:*",
     "@lattice-ui/tabs": "workspace:*",
+    "@lattice-ui/text-field": "workspace:*",
     "@lattice-ui/toggle-group": "workspace:*",
     "@lattice-ui/tooltip": "workspace:*"
   },

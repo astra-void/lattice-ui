@@ -19,10 +19,13 @@ import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 import { RadioGroupDisabledScene } from "./scenes/RadioGroupDisabledScene";
 import { RadioGroupRovingScene } from "./scenes/RadioGroupRovingScene";
+import { SelectBasicScene } from "./scenes/SelectBasicScene";
+import { SliderBasicScene } from "./scenes/SliderBasicScene";
 import { StackShowcaseScene } from "./scenes/StackShowcaseScene";
 import { SurfaceShowcaseScene } from "./scenes/SurfaceShowcaseScene";
 import { SwitchBasicScene } from "./scenes/SwitchBasicScene";
 import { TabsBasicScene } from "./scenes/TabsBasicScene";
+import { TextFieldBasicScene } from "./scenes/TextFieldBasicScene";
 import { ToggleGroupBasicScene } from "./scenes/ToggleGroupBasicScene";
 import { ToggleGroupRovingScene } from "./scenes/ToggleGroupRovingScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
@@ -39,6 +42,9 @@ type SceneKey =
   | "switch-basic"
   | "radio-roving"
   | "radio-disabled"
+  | "text-field-basic"
+  | "select-basic"
+  | "slider-basic"
   | "toggle-basic"
   | "toggle-roving"
   | "dialog-basic"
@@ -65,6 +71,9 @@ const sceneOptions = [
   { key: "switch-basic", label: "Switch Basic" },
   { key: "radio-roving", label: "Radio Roving" },
   { key: "radio-disabled", label: "Radio Disabled" },
+  { key: "text-field-basic", label: "TextField Basic" },
+  { key: "select-basic", label: "Select Basic" },
+  { key: "slider-basic", label: "Slider Basic" },
   { key: "toggle-basic", label: "Toggle Basic" },
   { key: "toggle-roving", label: "Toggle Roving" },
   { key: "dialog-basic", label: "Dialog Basic" },
@@ -193,6 +202,9 @@ function AppContent(props: AppProps) {
             {activeScene === "switch-basic" ? <SwitchBasicScene /> : undefined}
             {activeScene === "radio-roving" ? <RadioGroupRovingScene /> : undefined}
             {activeScene === "radio-disabled" ? <RadioGroupDisabledScene /> : undefined}
+            {activeScene === "text-field-basic" ? <TextFieldBasicScene /> : undefined}
+            {activeScene === "select-basic" ? <SelectBasicScene /> : undefined}
+            {activeScene === "slider-basic" ? <SliderBasicScene /> : undefined}
             {activeScene === "toggle-basic" ? <ToggleGroupBasicScene /> : undefined}
             {activeScene === "toggle-roving" ? <ToggleGroupRovingScene /> : undefined}
             {activeScene === "dialog-basic" ? <DialogBasicScene /> : undefined}

@@ -14,10 +14,13 @@
       "@lattice-ui/popover": ["popover/src/index.ts"],
       "@lattice-ui/popper": ["popper/src/index.ts"],
       "@lattice-ui/radio-group": ["radio-group/src/index.ts"],
+      "@lattice-ui/select": ["select/src/index.ts"],
+      "@lattice-ui/slider": ["slider/src/index.ts"],
       "@lattice-ui/style": ["style/src/index.ts"],
       "@lattice-ui/switch": ["switch/src/index.ts"],
       "@lattice-ui/system": ["system/src/index.ts"],
       "@lattice-ui/tabs": ["tabs/src/index.ts"],
+      "@lattice-ui/text-field": ["text-field/src/index.ts"],
       "@lattice-ui/toggle-group": ["toggle-group/src/index.ts"],
       "@lattice-ui/tooltip": ["tooltip/src/index.ts"]
     }

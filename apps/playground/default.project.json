@@ -62,6 +62,18 @@
               "$path": "node_modules/@lattice-ui/radio-group/out"
             }
           },
+          "select": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/select/out"
+            }
+          },
+          "slider": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/slider/out"
+            }
+          },
           "style": {
             "$className": "Folder",
             "out": {
@@ -84,6 +96,12 @@
             "$className": "Folder",
             "out": {
               "$path": "node_modules/@lattice-ui/tabs/out"
+            }
+          },
+          "text-field": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/text-field/out"
             }
           },
           "toggle-group": {
