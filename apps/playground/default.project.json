@@ -8,10 +8,28 @@
         "$className": "Folder",
         "@lattice-ui": {
           "$className": "Folder",
+          "accordion": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/accordion/out"
+            }
+          },
+          "avatar": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/avatar/out"
+            }
+          },
           "checkbox": {
             "$className": "Folder",
             "out": {
               "$path": "node_modules/@lattice-ui/checkbox/out"
+            }
+          },
+          "combobox": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/combobox/out"
             }
           },
           "core": {
@@ -56,10 +74,22 @@
               "$path": "node_modules/@lattice-ui/popper/out"
             }
           },
+          "progress": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/progress/out"
+            }
+          },
           "radio-group": {
             "$className": "Folder",
             "out": {
               "$path": "node_modules/@lattice-ui/radio-group/out"
+            }
+          },
+          "scroll-area": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/scroll-area/out"
             }
           },
           "select": {
@@ -102,6 +132,18 @@
             "$className": "Folder",
             "out": {
               "$path": "node_modules/@lattice-ui/text-field/out"
+            }
+          },
+          "textarea": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/textarea/out"
+            }
+          },
+          "toast": {
+            "$className": "Folder",
+            "out": {
+              "$path": "node_modules/@lattice-ui/toast/out"
             }
           },
           "toggle-group": {

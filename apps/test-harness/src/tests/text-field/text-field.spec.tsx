@@ -1,11 +1,5 @@
 import { React } from "@lattice-ui/core";
-import {
-  TextField,
-  TextFieldDescription,
-  TextFieldInput,
-  TextFieldLabel,
-  TextFieldMessage,
-} from "@lattice-ui/text-field";
+import { TextField } from "@lattice-ui/text-field";
 import { findFirstDescendant, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
@@ -23,9 +17,9 @@ export = () => {
     it("uses defaultValue in uncontrolled mode", () => {
       withReactHarness("TextFieldUncontrolled", (harness) => {
         harness.render(
-          <TextField defaultValue="alpha">
-            <TextFieldInput />
-          </TextField>,
+          <TextField.Root defaultValue="alpha">
+            <TextField.Input />
+          </TextField.Root>,
         );
 
         waitForEffects();
@@ -38,9 +32,9 @@ export = () => {
     it("updates rendered value in controlled mode", () => {
       withReactHarness("TextFieldControlled", (harness) => {
         const renderTree = (value: string) => (
-          <TextField value={value}>
-            <TextFieldInput />
-          </TextField>
+          <TextField.Root value={value}>
+            <TextField.Input />
+          </TextField.Root>
         );
 
         harness.render(renderTree("left"));
@@ -60,9 +54,9 @@ export = () => {
     it("propagates disabled and readOnly to input editability", () => {
       withReactHarness("TextFieldDisabledReadOnly", (harness) => {
         harness.render(
-          <TextField defaultValue="disabled" disabled>
-            <TextFieldInput />
-          </TextField>,
+          <TextField.Root defaultValue="disabled" disabled>
+            <TextField.Input />
+          </TextField.Root>,
         );
 
         waitForEffects();
@@ -72,9 +66,9 @@ export = () => {
         assert(disabledInput.Active === false, "Disabled TextField input should not be active.");
 
         harness.render(
-          <TextField defaultValue="readonly" readOnly>
-            <TextFieldInput />
-          </TextField>,
+          <TextField.Root defaultValue="readonly" readOnly>
+            <TextField.Input />
+          </TextField.Root>,
         );
 
         waitForEffects(2);
@@ -88,12 +82,12 @@ export = () => {
     it("forwards invalid state to message styling", () => {
       withReactHarness("TextFieldInvalidMessage", (harness) => {
         harness.render(
-          <TextField invalid>
-            <TextFieldLabel />
-            <TextFieldInput />
-            <TextFieldDescription />
-            <TextFieldMessage />
-          </TextField>,
+          <TextField.Root invalid>
+            <TextField.Label />
+            <TextField.Input />
+            <TextField.Description />
+            <TextField.Message />
+          </TextField.Root>,
         );
 
         waitForEffects();

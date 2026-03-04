@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
+import { Tabs } from "@lattice-ui/tabs";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lattice-ui/tabs";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 type DemoTabKey = "overview" | "activity" | "settings";
@@ -41,16 +41,16 @@ export function TabsBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Tabs
+        <Tabs.Root
           onValueChange={(nextValue) => setAutoValue(nextValue as DemoTabKey)}
           orientation="horizontal"
           value={autoValue}
         >
-          <TabsList asChild>
+          <Tabs.List asChild>
             <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 26)} Size={UDim2.fromOffset(640, 40)}>
               <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
-              <TabsTrigger asChild value="overview">
+              <Tabs.Trigger asChild value="overview">
                 <textbutton
                   {...(mergeGuiProps(
                     buttonRecipe({ intent: autoValue === "overview" ? "primary" : "surface", size: "sm" }, theme),
@@ -59,9 +59,9 @@ export function TabsBasicScene() {
                     },
                   ) as Record<string, unknown>)}
                 />
-              </TabsTrigger>
+              </Tabs.Trigger>
 
-              <TabsTrigger asChild value="activity">
+              <Tabs.Trigger asChild value="activity">
                 <textbutton
                   {...(mergeGuiProps(
                     buttonRecipe({ intent: autoValue === "activity" ? "primary" : "surface", size: "sm" }, theme),
@@ -70,9 +70,9 @@ export function TabsBasicScene() {
                     },
                   ) as Record<string, unknown>)}
                 />
-              </TabsTrigger>
+              </Tabs.Trigger>
 
-              <TabsTrigger asChild disabled value="settings">
+              <Tabs.Trigger asChild disabled value="settings">
                 <textbutton
                   {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                     Active: false,
@@ -81,11 +81,11 @@ export function TabsBasicScene() {
                     TextColor3: theme.colors.textSecondary,
                   }) as Record<string, unknown>)}
                 />
-              </TabsTrigger>
+              </Tabs.Trigger>
             </frame>
-          </TabsList>
+          </Tabs.List>
 
-          <TabsContent asChild value="overview">
+          <Tabs.Content asChild value="overview">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
@@ -103,9 +103,9 @@ export function TabsBasicScene() {
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
             </frame>
-          </TabsContent>
+          </Tabs.Content>
 
-          <TabsContent asChild value="activity">
+          <Tabs.Content asChild value="activity">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
@@ -123,9 +123,9 @@ export function TabsBasicScene() {
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
             </frame>
-          </TabsContent>
+          </Tabs.Content>
 
-          <TabsContent asChild value="settings">
+          <Tabs.Content asChild value="settings">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
@@ -143,8 +143,8 @@ export function TabsBasicScene() {
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
             </frame>
-          </TabsContent>
-        </Tabs>
+          </Tabs.Content>
+        </Tabs.Root>
       </frame>
 
       <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 308)} Size={UDim2.fromOffset(900, 240)}>
@@ -157,18 +157,18 @@ export function TabsBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Tabs
+        <Tabs.Root
           activationMode="manual"
           defaultValue="alpha"
           onValueChange={(nextValue) => setManualValue(nextValue as ManualTabKey)}
           orientation="vertical"
         >
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 26)} Size={UDim2.fromOffset(880, 188)}>
-            <TabsList asChild>
+            <Tabs.List asChild>
               <frame BackgroundTransparency={1} Size={UDim2.fromOffset(180, 168)}>
                 <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
-                <TabsTrigger asChild value="alpha">
+                <Tabs.Trigger asChild value="alpha">
                   <textbutton
                     {...(mergeGuiProps(
                       buttonRecipe({ intent: manualValue === "alpha" ? "primary" : "surface", size: "sm" }, theme),
@@ -178,9 +178,9 @@ export function TabsBasicScene() {
                       },
                     ) as Record<string, unknown>)}
                   />
-                </TabsTrigger>
+                </Tabs.Trigger>
 
-                <TabsTrigger asChild value="beta">
+                <Tabs.Trigger asChild value="beta">
                   <textbutton
                     {...(mergeGuiProps(
                       buttonRecipe({ intent: manualValue === "beta" ? "primary" : "surface", size: "sm" }, theme),
@@ -190,9 +190,9 @@ export function TabsBasicScene() {
                       },
                     ) as Record<string, unknown>)}
                   />
-                </TabsTrigger>
+                </Tabs.Trigger>
 
-                <TabsTrigger asChild value="gamma">
+                <Tabs.Trigger asChild value="gamma">
                   <textbutton
                     {...(mergeGuiProps(
                       buttonRecipe({ intent: manualValue === "gamma" ? "primary" : "surface", size: "sm" }, theme),
@@ -202,11 +202,11 @@ export function TabsBasicScene() {
                       },
                     ) as Record<string, unknown>)}
                   />
-                </TabsTrigger>
+                </Tabs.Trigger>
               </frame>
-            </TabsList>
+            </Tabs.List>
 
-            <TabsContent asChild forceMount value="alpha">
+            <Tabs.Content asChild forceMount value="alpha">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
@@ -224,9 +224,9 @@ export function TabsBasicScene() {
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
               </frame>
-            </TabsContent>
+            </Tabs.Content>
 
-            <TabsContent asChild value="beta">
+            <Tabs.Content asChild value="beta">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
@@ -244,9 +244,9 @@ export function TabsBasicScene() {
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
               </frame>
-            </TabsContent>
+            </Tabs.Content>
 
-            <TabsContent asChild value="gamma">
+            <Tabs.Content asChild value="gamma">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
@@ -264,9 +264,9 @@ export function TabsBasicScene() {
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
               </frame>
-            </TabsContent>
+            </Tabs.Content>
           </frame>
-        </Tabs>
+        </Tabs.Root>
       </frame>
     </frame>
   );

@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Dialog, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogTrigger } from "@lattice-ui/dialog";
+import { Dialog } from "@lattice-ui/dialog";
 
 export function DialogBasicScene() {
   const [open, setOpen] = React.useState(false);
@@ -25,8 +25,8 @@ export function DialogBasicScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <Dialog onOpenChange={setOpen} open={open}>
-        <DialogTrigger asChild>
+      <Dialog.Root onOpenChange={setOpen} open={open}>
+        <Dialog.Trigger asChild>
           <textbutton
             AutoButtonColor={false}
             BackgroundColor3={Color3.fromRGB(43, 105, 196)}
@@ -37,11 +37,11 @@ export function DialogBasicScene() {
             TextColor3={Color3.fromRGB(240, 244, 250)}
             TextSize={16}
           />
-        </DialogTrigger>
+        </Dialog.Trigger>
 
-        <DialogPortal>
-          <DialogContent>
-            <DialogOverlay />
+        <Dialog.Portal>
+          <Dialog.Content>
+            <Dialog.Overlay />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(33, 41, 56)}
@@ -74,7 +74,7 @@ export function DialogBasicScene() {
                 TextYAlignment={Enum.TextYAlignment.Top}
                 ZIndex={11}
               />
-              <DialogClose asChild>
+              <Dialog.Close asChild>
                 <textbutton
                   AutoButtonColor={false}
                   BackgroundColor3={Color3.fromRGB(98, 58, 142)}
@@ -86,11 +86,11 @@ export function DialogBasicScene() {
                   TextSize={16}
                   ZIndex={11}
                 />
-              </DialogClose>
+              </Dialog.Close>
             </frame>
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </frame>
   );
 }

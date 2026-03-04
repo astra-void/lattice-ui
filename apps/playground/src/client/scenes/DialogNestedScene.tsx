@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Dialog, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogTrigger } from "@lattice-ui/dialog";
+import { Dialog } from "@lattice-ui/dialog";
 
 export function DialogNestedScene() {
   const [outerOpen, setOuterOpen] = React.useState(false);
@@ -17,7 +17,7 @@ export function DialogNestedScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <Dialog
+      <Dialog.Root
         onOpenChange={(nextOpen) => {
           setOuterOpen(nextOpen);
           if (!nextOpen) {
@@ -26,7 +26,7 @@ export function DialogNestedScene() {
         }}
         open={outerOpen}
       >
-        <DialogTrigger asChild>
+        <Dialog.Trigger asChild>
           <textbutton
             AutoButtonColor={false}
             BackgroundColor3={Color3.fromRGB(43, 105, 196)}
@@ -37,11 +37,11 @@ export function DialogNestedScene() {
             TextColor3={Color3.fromRGB(240, 244, 250)}
             TextSize={16}
           />
-        </DialogTrigger>
+        </Dialog.Trigger>
 
-        <DialogPortal>
-          <DialogContent>
-            <DialogOverlay />
+        <Dialog.Portal>
+          <Dialog.Content>
+            <Dialog.Overlay />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(25, 38, 56)}
@@ -62,8 +62,8 @@ export function DialogNestedScene() {
                 TextXAlignment={Enum.TextXAlignment.Left}
                 ZIndex={11}
               />
-              <Dialog onOpenChange={setInnerOpen} open={innerOpen}>
-                <DialogTrigger asChild>
+              <Dialog.Root onOpenChange={setInnerOpen} open={innerOpen}>
+                <Dialog.Trigger asChild>
                   <textbutton
                     AutoButtonColor={false}
                     BackgroundColor3={Color3.fromRGB(35, 127, 80)}
@@ -75,11 +75,11 @@ export function DialogNestedScene() {
                     TextSize={16}
                     ZIndex={11}
                   />
-                </DialogTrigger>
+                </Dialog.Trigger>
 
-                <DialogPortal>
-                  <DialogContent>
-                    <DialogOverlay />
+                <Dialog.Portal>
+                  <Dialog.Content>
+                    <Dialog.Overlay />
                     <frame
                       AnchorPoint={new Vector2(0.5, 0.5)}
                       BackgroundColor3={Color3.fromRGB(45, 31, 68)}
@@ -116,7 +116,7 @@ export function DialogNestedScene() {
                         TextYAlignment={Enum.TextYAlignment.Top}
                         ZIndex={21}
                       />
-                      <DialogClose asChild>
+                      <Dialog.Close asChild>
                         <textbutton
                           AutoButtonColor={false}
                           BackgroundColor3={Color3.fromRGB(116, 77, 170)}
@@ -128,13 +128,13 @@ export function DialogNestedScene() {
                           TextSize={15}
                           ZIndex={21}
                         />
-                      </DialogClose>
+                      </Dialog.Close>
                     </frame>
-                  </DialogContent>
-                </DialogPortal>
-              </Dialog>
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
 
-              <DialogClose asChild>
+              <Dialog.Close asChild>
                 <textbutton
                   AutoButtonColor={false}
                   BackgroundColor3={Color3.fromRGB(92, 56, 125)}
@@ -146,11 +146,11 @@ export function DialogNestedScene() {
                   TextSize={16}
                   ZIndex={11}
                 />
-              </DialogClose>
+              </Dialog.Close>
             </frame>
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </frame>
   );
 }

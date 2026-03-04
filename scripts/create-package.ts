@@ -21,7 +21,7 @@ function printUsage() {
   );
 }
 
-function parseArgs(argv) {
+function parseArgs(argv: string[]) {
   const parsed = {
     name: "",
     deps: "",
@@ -66,14 +66,14 @@ function parseArgs(argv) {
   return parsed;
 }
 
-function normalizeInternalName(name) {
+function normalizeInternalName(name: string) {
   if (!name) {
     return "";
   }
   return name.startsWith("@lattice-ui/") ? name : `@lattice-ui/${name}`;
 }
 
-function canonicalAppLink(value) {
+function canonicalAppLink(value: string) {
   const normalized = value.trim();
   const allowed = new Set(["none", "playground", "test-harness", "both"]);
   if (!allowed.has(normalized)) {

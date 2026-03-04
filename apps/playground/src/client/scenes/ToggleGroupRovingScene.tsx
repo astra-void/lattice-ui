@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
+import { ToggleGroup } from "@lattice-ui/toggle-group";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { ToggleGroup, ToggleGroupItem } from "@lattice-ui/toggle-group";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function formatValue(value: string | undefined) {
@@ -50,7 +50,7 @@ export function ToggleGroupRovingScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup
+        <ToggleGroup.Root
           loop
           onValueChange={setHorizontalValue}
           orientation="horizontal"
@@ -60,7 +60,7 @@ export function ToggleGroupRovingScene() {
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(12, 38)} Size={UDim2.fromOffset(860, 40)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
-            <ToggleGroupItem asChild value="one">
+            <ToggleGroup.Item asChild value="one">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: horizontalValue === "one" ? "primary" : "surface", size: "sm" }, theme),
@@ -70,9 +70,9 @@ export function ToggleGroupRovingScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild disabled value="two">
+            <ToggleGroup.Item asChild disabled value="two">
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                   Active: false,
@@ -82,9 +82,9 @@ export function ToggleGroupRovingScene() {
                   TextColor3: theme.colors.textSecondary,
                 }) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="three">
+            <ToggleGroup.Item asChild value="three">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: horizontalValue === "three" ? "primary" : "surface", size: "sm" }, theme),
@@ -94,9 +94,9 @@ export function ToggleGroupRovingScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
           </frame>
-        </ToggleGroup>
+        </ToggleGroup.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -108,7 +108,7 @@ export function ToggleGroupRovingScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup
+        <ToggleGroup.Root
           loop={false}
           onValueChange={setVerticalValue}
           orientation="vertical"
@@ -118,7 +118,7 @@ export function ToggleGroupRovingScene() {
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(12, 136)} Size={UDim2.fromOffset(360, 220)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
-            <ToggleGroupItem asChild value="alpha">
+            <ToggleGroup.Item asChild value="alpha">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: verticalValue === "alpha" ? "primary" : "surface", size: "sm" }, theme),
@@ -128,9 +128,9 @@ export function ToggleGroupRovingScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild disabled value="beta">
+            <ToggleGroup.Item asChild disabled value="beta">
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                   Active: false,
@@ -140,9 +140,9 @@ export function ToggleGroupRovingScene() {
                   TextColor3: theme.colors.textSecondary,
                 }) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="gamma">
+            <ToggleGroup.Item asChild value="gamma">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: verticalValue === "gamma" ? "primary" : "surface", size: "sm" }, theme),
@@ -152,9 +152,9 @@ export function ToggleGroupRovingScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
           </frame>
-        </ToggleGroup>
+        </ToggleGroup.Root>
       </frame>
     </frame>
   );

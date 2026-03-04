@@ -4,12 +4,12 @@ Headless text input primitives for Roblox UI with controlled/uncontrolled state 
 
 ## Exports
 
-- `TextField` (`TextFieldRoot` alias)
-- `TextFieldRoot`
-- `TextFieldInput`
-- `TextFieldLabel`
-- `TextFieldDescription`
-- `TextFieldMessage`
+- `TextField`
+- `TextField.Root`
+- `TextField.Input`
+- `TextField.Label`
+- `TextField.Description`
+- `TextField.Message`
 
 ## Notes
 

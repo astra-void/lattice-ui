@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import path from "node:path";
+import * as path from "node:path";
 import {
   coerceInternalDependencySpec,
   createWorkspacePaths,
@@ -14,14 +14,38 @@ import {
   listApps,
   listPackages,
   normalizePackageManifest,
+  type PackageManifest,
   ROOT_DIR,
   readJson,
   sortRecord,
   writeJson,
-} from "./workspace-utils.ts";
+} from "./workspace-utils";
 
-function buildChangesetConfig(existingConfig, options) {
-  const next = {
+interface ChangesetConfigOptions {
+  access: string;
+  baseBranch: string;
+  ignore: string[];
+  fixed: string[][];
+}
+
+interface ChangesetConfig {
+  $schema?: string;
+  changelog?: boolean;
+  commit?: boolean;
+  access: string;
+  baseBranch: string;
+  updateInternalDependencies?: string;
+  ignore: string[];
+  fixed: string[][];
+  linked: unknown[];
+  ___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH?: unknown;
+}
+
+function buildChangesetConfig(
+  existingConfig: Partial<ChangesetConfig>,
+  options: ChangesetConfigOptions,
+): ChangesetConfig {
+  const next: ChangesetConfig = {
     $schema: existingConfig.$schema ?? "https://unpkg.com/@changesets/config@3.1.1/schema.json",
     changelog: existingConfig.changelog ?? false,
     commit: existingConfig.commit ?? false,
@@ -59,7 +83,7 @@ const internalDependencySpec = policy.internalDependencyVersion ?? "workspace:*"
 
 let manifestUpdates = 0;
 for (const pkg of packages) {
-  const nextManifest = structuredClone(pkg.manifest);
+  const nextManifest: PackageManifest = structuredClone(pkg.manifest);
 
   nextManifest.version = lockedVersion;
 
@@ -90,7 +114,7 @@ for (const pkg of packages) {
   coerceInternalDependencySpec(nextManifest, internalNames, internalDependencySpec);
 
   for (const field of dependencyFields()) {
-    if (nextManifest[field] && typeof nextManifest[field] === "object") {
+    if (nextManifest[field] && typeof nextManifest[field] === "object" && !Array.isArray(nextManifest[field])) {
       nextManifest[field] = sortRecord(nextManifest[field]);
     }
   }
@@ -116,7 +140,7 @@ const expectedTypecheckTsconfig = {
 let typecheckUpdates = 0;
 for (const pkg of packages) {
   const typecheckPath = path.join(pkg.dirPath, "tsconfig.typecheck.json");
-  const currentTypecheck = fileExists(typecheckPath) ? readJson(typecheckPath) : null;
+  const currentTypecheck = fileExists(typecheckPath) ? readJson<unknown>(typecheckPath) : null;
   if (!jsonEqual(currentTypecheck, expectedTypecheckTsconfig)) {
     writeJson(typecheckPath, expectedTypecheckTsconfig);
     typecheckUpdates += 1;
@@ -126,7 +150,9 @@ for (const pkg of packages) {
 const changesetDir = path.join(ROOT_DIR, ".changeset");
 ensureDir(changesetDir);
 const changesetConfigPath = path.join(changesetDir, "config.json");
-const existingChangesetConfig = fileExists(changesetConfigPath) ? readJson(changesetConfigPath) : {};
+const existingChangesetConfig = fileExists(changesetConfigPath)
+  ? readJson<Partial<ChangesetConfig>>(changesetConfigPath)
+  : {};
 
 const publishPackageNames = packages.map((pkg) => pkg.manifest.name).sort((left, right) => left.localeCompare(right));
 const ignoredPackageNames = apps.map((app) => app.manifest.name).sort((left, right) => left.localeCompare(right));

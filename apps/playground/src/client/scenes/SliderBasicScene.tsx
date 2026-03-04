@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Slider, SliderRange, SliderThumb, SliderTrack } from "@lattice-ui/slider";
+import { Slider } from "@lattice-ui/slider";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
@@ -47,7 +47,7 @@ export function SliderBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Slider
+        <Slider.Root
           max={100}
           min={0}
           onValueChange={setHorizontalValue}
@@ -57,7 +57,7 @@ export function SliderBasicScene() {
           step={1}
           value={horizontalValue}
         >
-          <SliderTrack asChild>
+          <Slider.Track asChild>
             <frame
               BackgroundColor3={theme.colors.surfaceElevated}
               BorderSizePixel={0}
@@ -66,13 +66,13 @@ export function SliderBasicScene() {
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
 
-              <SliderRange asChild>
+              <Slider.Range asChild>
                 <frame BackgroundColor3={theme.colors.accent} BorderSizePixel={0}>
                   <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
                 </frame>
-              </SliderRange>
+              </Slider.Range>
 
-              <SliderThumb asChild>
+              <Slider.Thumb asChild>
                 <textbutton
                   AutoButtonColor={false}
                   BackgroundColor3={theme.colors.accentContrast}
@@ -82,10 +82,10 @@ export function SliderBasicScene() {
                 >
                   <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
                 </textbutton>
-              </SliderThumb>
+              </Slider.Thumb>
             </frame>
-          </SliderTrack>
-        </Slider>
+          </Slider.Track>
+        </Slider.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -97,7 +97,7 @@ export function SliderBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Slider
+        <Slider.Root
           max={100}
           min={0}
           onValueChange={setVerticalValue}
@@ -108,7 +108,7 @@ export function SliderBasicScene() {
           step={5}
           value={verticalValue}
         >
-          <SliderTrack asChild>
+          <Slider.Track asChild>
             <frame
               BackgroundColor3={theme.colors.surfaceElevated}
               BorderSizePixel={0}
@@ -117,13 +117,13 @@ export function SliderBasicScene() {
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
 
-              <SliderRange asChild>
+              <Slider.Range asChild>
                 <frame BackgroundColor3={theme.colors.accent} BorderSizePixel={0}>
                   <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
                 </frame>
-              </SliderRange>
+              </Slider.Range>
 
-              <SliderThumb asChild>
+              <Slider.Thumb asChild>
                 <textbutton
                   AutoButtonColor={false}
                   BackgroundColor3={theme.colors.accentContrast}
@@ -133,10 +133,10 @@ export function SliderBasicScene() {
                 >
                   <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
                 </textbutton>
-              </SliderThumb>
+              </Slider.Thumb>
             </frame>
-          </SliderTrack>
-        </Slider>
+          </Slider.Track>
+        </Slider.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -148,8 +148,8 @@ export function SliderBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Slider defaultValue={30} disabled max={100} min={0}>
-          <SliderTrack asChild>
+        <Slider.Root defaultValue={30} disabled max={100} min={0}>
+          <Slider.Track asChild>
             <frame
               BackgroundColor3={theme.colors.surfaceElevated}
               BorderSizePixel={0}
@@ -158,13 +158,13 @@ export function SliderBasicScene() {
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
 
-              <SliderRange asChild>
+              <Slider.Range asChild>
                 <frame BackgroundColor3={theme.colors.textSecondary} BorderSizePixel={0}>
                   <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
                 </frame>
-              </SliderRange>
+              </Slider.Range>
 
-              <SliderThumb asChild>
+              <Slider.Thumb asChild>
                 <textbutton
                   AutoButtonColor={false}
                   BackgroundColor3={theme.colors.textSecondary}
@@ -174,10 +174,10 @@ export function SliderBasicScene() {
                 >
                   <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
                 </textbutton>
-              </SliderThumb>
+              </Slider.Thumb>
             </frame>
-          </SliderTrack>
-        </Slider>
+          </Slider.Track>
+        </Slider.Root>
       </frame>
 
       <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 500)} Size={UDim2.fromOffset(420, 40)}>

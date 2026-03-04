@@ -1,39 +1,100 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
-export const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+export const ROOT_DIR = path.resolve(__dirname, "..");
 
 const PACKAGE_ROOT = path.join(ROOT_DIR, "packages");
 const APP_ROOT = path.join(ROOT_DIR, "apps");
-const DEPENDENCY_FIELDS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
+const DEPENDENCY_FIELDS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"] as const;
 
-export function ensureDir(dirPath) {
+export type DependencyField = (typeof DEPENDENCY_FIELDS)[number];
+
+export interface PackageManifest {
+  name: string;
+  version?: string;
+  private?: boolean;
+  description?: string;
+  main?: string;
+  types?: string;
+  files?: string[];
+  scripts?: Record<string, string>;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+  keywords?: string[];
+  author?: string;
+  license?: string;
+  repository?: string | Record<string, unknown>;
+  homepage?: string;
+  bugs?: string | Record<string, unknown>;
+  engines?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+export interface WorkspaceEntry {
+  dirName: string;
+  dirPath: string;
+  manifestPath: string;
+  manifest: PackageManifest;
+}
+
+interface LockedstepPolicy {
+  enforced?: boolean;
+  major?: number;
+}
+
+interface PackageDefaultsPolicy {
+  private?: boolean;
+  main?: string;
+  types?: string;
+  scripts?: Record<string, string>;
+}
+
+interface ChangesetsPolicy {
+  baseBranch?: string;
+  access?: string;
+}
+
+export interface WorkspacePolicy {
+  internalScope?: string;
+  internalDependencyVersion?: string;
+  lockedVersion?: string;
+  lockedstep?: LockedstepPolicy;
+  packageDefaults?: PackageDefaultsPolicy;
+  defaultPeerDependencies?: Record<string, string>;
+  defaultDevDependencies?: Record<string, string>;
+  requiredFiles?: string[];
+  changesets?: ChangesetsPolicy;
+  [key: string]: unknown;
+}
+
+export function ensureDir(dirPath: string): void {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
-export function fileExists(filePath) {
+export function fileExists(filePath: string): boolean {
   return fs.existsSync(filePath);
 }
 
-export function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+export function readJson<T = unknown>(filePath: string): T {
+  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
 }
 
-export function writeJson(filePath, value) {
+export function writeJson(filePath: string, value: unknown): void {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-export function sortRecord(record) {
+export function sortRecord<T extends Record<string, string> | null | undefined>(record: T): T {
   if (!record || typeof record !== "object" || Array.isArray(record)) {
     return record;
   }
 
   const entries = Object.entries(record).sort(([left], [right]) => left.localeCompare(right));
-  return Object.fromEntries(entries);
+  return Object.fromEntries(entries) as T;
 }
 
-export function sortObject(value) {
+export function sortObject(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => sortObject(item));
   }
@@ -46,7 +107,16 @@ export function sortObject(value) {
   return value;
 }
 
-function listWorkspaceEntries(rootDir) {
+function readPackageManifest(manifestPath: string): PackageManifest {
+  const manifest = readJson<Record<string, unknown>>(manifestPath);
+  if (typeof manifest.name !== "string" || manifest.name.length === 0) {
+    throw new Error(`Invalid package manifest without a name: ${manifestPath}`);
+  }
+
+  return manifest as PackageManifest;
+}
+
+function listWorkspaceEntries(rootDir: string): WorkspaceEntry[] {
   if (!fileExists(rootDir)) {
     return [];
   }
@@ -62,37 +132,43 @@ function listWorkspaceEntries(rootDir) {
         return null;
       }
 
-      const manifest = readJson(manifestPath);
+      const manifest = readPackageManifest(manifestPath);
       return { dirName, dirPath, manifestPath, manifest };
     })
-    .filter((entry) => entry !== null);
+    .filter((entry): entry is WorkspaceEntry => entry !== null);
 
   return entries.sort((left, right) => left.manifest.name.localeCompare(right.manifest.name));
 }
 
-export function listPackages() {
+export function listPackages(): WorkspaceEntry[] {
   return listWorkspaceEntries(PACKAGE_ROOT);
 }
 
-export function listApps() {
+export function listApps(): WorkspaceEntry[] {
   return listWorkspaceEntries(APP_ROOT);
 }
 
-export function getPolicy() {
+export function getPolicy(): WorkspacePolicy {
   const policyPath = path.join(ROOT_DIR, "workspace.policy.json");
   if (!fileExists(policyPath)) {
     throw new Error(`Missing workspace policy: ${policyPath}`);
   }
 
-  return readJson(policyPath);
+  return readJson<WorkspacePolicy>(policyPath);
 }
 
-export function getLockedVersion(policy, packages) {
+export function getLockedVersion(policy: WorkspacePolicy, packages: WorkspaceEntry[]): string {
   if (policy.lockedVersion) {
     return policy.lockedVersion;
   }
 
-  const versions = [...new Set(packages.map((pkg) => pkg.manifest.version).filter(Boolean))];
+  const versions = [
+    ...new Set(
+      packages
+        .map((pkg) => pkg.manifest.version)
+        .filter((version): version is string => typeof version === "string" && version.length > 0),
+    ),
+  ];
   if (versions.length === 0) {
     return "0.1.0";
   }
@@ -100,18 +176,22 @@ export function getLockedVersion(policy, packages) {
   return versions[0];
 }
 
-export function getInternalPackageNames(packages) {
+export function getInternalPackageNames(packages: WorkspaceEntry[]): Set<string> {
   return new Set(packages.map((pkg) => pkg.manifest.name));
 }
 
-export function createWorkspacePaths(packages) {
-  const pairs = packages
-    .map((pkg) => [pkg.manifest.name, [`${pkg.dirName}/src/index.ts`]])
+export function createWorkspacePaths(packages: WorkspaceEntry[]): Record<string, string[]> {
+  const pairs: Array<[string, string[]]> = packages
+    .map((pkg): [string, string[]] => [pkg.manifest.name, [`${pkg.dirName}/src/index.ts`]])
     .sort(([left], [right]) => left.localeCompare(right));
   return Object.fromEntries(pairs);
 }
 
-export function coerceInternalDependencySpec(manifest, internalNames, expectedSpec) {
+export function coerceInternalDependencySpec(
+  manifest: PackageManifest,
+  internalNames: Set<string>,
+  expectedSpec: string,
+): boolean {
   let changed = false;
 
   for (const field of DEPENDENCY_FIELDS) {
@@ -127,7 +207,7 @@ export function coerceInternalDependencySpec(manifest, internalNames, expectedSp
       }
     }
 
-    const sortedDependencies = sortRecord(dependencies);
+    const sortedDependencies = sortRecord(dependencies) as Record<string, string>;
     if (!jsonEqual(sortedDependencies, dependencies)) {
       manifest[field] = sortedDependencies;
       changed = true;
@@ -139,8 +219,8 @@ export function coerceInternalDependencySpec(manifest, internalNames, expectedSp
   return changed;
 }
 
-export function normalizePackageManifest(manifest) {
-  const preferredOrder = [
+export function normalizePackageManifest(manifest: PackageManifest): PackageManifest {
+  const preferredOrder: Array<keyof PackageManifest> = [
     "name",
     "version",
     "private",
@@ -162,7 +242,9 @@ export function normalizePackageManifest(manifest) {
     "engines",
   ];
 
-  const ordered = {};
+  const ordered: PackageManifest = {
+    name: manifest.name,
+  };
   for (const key of preferredOrder) {
     if (manifest[key] !== undefined) {
       ordered[key] = manifest[key];
@@ -177,19 +259,19 @@ export function normalizePackageManifest(manifest) {
   }
 
   if (ordered.scripts && typeof ordered.scripts === "object" && !Array.isArray(ordered.scripts)) {
-    ordered.scripts = sortRecord(ordered.scripts);
+    ordered.scripts = sortRecord(ordered.scripts) as Record<string, string>;
   }
 
   for (const field of DEPENDENCY_FIELDS) {
     if (ordered[field] && typeof ordered[field] === "object" && !Array.isArray(ordered[field])) {
-      ordered[field] = sortRecord(ordered[field]);
+      ordered[field] = sortRecord(ordered[field] as Record<string, string>) as Record<string, string>;
     }
   }
 
   return ordered;
 }
 
-export function parseMajor(version) {
+export function parseMajor(version: string | undefined): number | null {
   const match = /^(\d+)\./.exec(version ?? "");
   if (!match) {
     return null;
@@ -198,10 +280,10 @@ export function parseMajor(version) {
   return Number(match[1]);
 }
 
-export function jsonEqual(left, right) {
+export function jsonEqual(left: unknown, right: unknown): boolean {
   return JSON.stringify(sortObject(left)) === JSON.stringify(sortObject(right));
 }
 
-export function dependencyFields() {
+export function dependencyFields(): readonly DependencyField[] {
   return DEPENDENCY_FIELDS;
 }

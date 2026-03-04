@@ -1,12 +1,47 @@
-export { SelectContent } from "./Select/SelectContent";
-export { SelectGroup } from "./Select/SelectGroup";
-export { SelectItem } from "./Select/SelectItem";
-export { SelectLabel } from "./Select/SelectLabel";
-export { SelectPortal } from "./Select/SelectPortal";
-export { SelectRoot, SelectRoot as Select } from "./Select/SelectRoot";
-export { SelectSeparator } from "./Select/SelectSeparator";
-export { SelectTrigger } from "./Select/SelectTrigger";
-export { SelectValue } from "./Select/SelectValue";
+import { SelectContent } from "./Select/SelectContent";
+import { SelectGroup } from "./Select/SelectGroup";
+import { SelectItem } from "./Select/SelectItem";
+import { SelectLabel } from "./Select/SelectLabel";
+import { SelectPortal } from "./Select/SelectPortal";
+import { SelectRoot } from "./Select/SelectRoot";
+import { SelectSeparator } from "./Select/SelectSeparator";
+import { SelectTrigger } from "./Select/SelectTrigger";
+import { SelectValue } from "./Select/SelectValue";
+
+export const Select = Object.assign(SelectRoot, {
+  Root: SelectRoot,
+  Trigger: SelectTrigger,
+  Value: SelectValue,
+  Portal: SelectPortal,
+  Content: SelectContent,
+  Item: SelectItem,
+  Group: SelectGroup,
+  Label: SelectLabel,
+  Separator: SelectSeparator,
+}) as typeof SelectRoot & {
+  Root: typeof SelectRoot;
+  Trigger: typeof SelectTrigger;
+  Value: typeof SelectValue;
+  Portal: typeof SelectPortal;
+  Content: typeof SelectContent;
+  Item: typeof SelectItem;
+  Group: typeof SelectGroup;
+  Label: typeof SelectLabel;
+  Separator: typeof SelectSeparator;
+};
+
+export {
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectPortal,
+  SelectRoot,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+};
+
 export type {
   SelectContentProps,
   SelectContextValue,

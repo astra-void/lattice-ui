@@ -1,5 +1,11 @@
-export { ToggleGroupItem } from "./ToggleGroup/ToggleGroupItem";
-export { ToggleGroupRoot, ToggleGroupRoot as ToggleGroup } from "./ToggleGroup/ToggleGroupRoot";
+import { ToggleGroupItem } from "./ToggleGroup/ToggleGroupItem";
+import { ToggleGroupRoot } from "./ToggleGroup/ToggleGroupRoot";
+
+export const ToggleGroup = {
+  Root: ToggleGroupRoot,
+  Item: ToggleGroupItem,
+} as const;
+
 export type {
   ToggleGroupCommonProps,
   ToggleGroupContextValue,

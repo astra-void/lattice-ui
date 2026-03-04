@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Dialog, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogTrigger } from "@lattice-ui/dialog";
+import { Dialog } from "@lattice-ui/dialog";
 
 export function DialogModalBlockScene() {
   const [backgroundPresses, setBackgroundPresses] = React.useState(0);
@@ -32,8 +32,8 @@ export function DialogModalBlockScene() {
         TextSize={16}
       />
 
-      <Dialog onOpenChange={setOpen} open={open}>
-        <DialogTrigger asChild>
+      <Dialog.Root onOpenChange={setOpen} open={open}>
+        <Dialog.Trigger asChild>
           <textbutton
             AutoButtonColor={false}
             BackgroundColor3={Color3.fromRGB(35, 127, 80)}
@@ -44,11 +44,11 @@ export function DialogModalBlockScene() {
             TextColor3={Color3.fromRGB(231, 245, 235)}
             TextSize={16}
           />
-        </DialogTrigger>
+        </Dialog.Trigger>
 
-        <DialogPortal>
-          <DialogContent>
-            <DialogOverlay />
+        <Dialog.Portal>
+          <Dialog.Content>
+            <Dialog.Overlay />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(30, 39, 54)}
@@ -81,7 +81,7 @@ export function DialogModalBlockScene() {
                 TextYAlignment={Enum.TextYAlignment.Top}
                 ZIndex={11}
               />
-              <DialogClose asChild>
+              <Dialog.Close asChild>
                 <textbutton
                   AutoButtonColor={false}
                   BackgroundColor3={Color3.fromRGB(109, 71, 160)}
@@ -93,11 +93,11 @@ export function DialogModalBlockScene() {
                   TextSize={16}
                   ZIndex={11}
                 />
-              </DialogClose>
+              </Dialog.Close>
             </frame>
-          </DialogContent>
-        </DialogPortal>
-      </Dialog>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </frame>
   );
 }

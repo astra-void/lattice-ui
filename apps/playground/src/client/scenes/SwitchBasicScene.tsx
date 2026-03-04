@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
+import { Switch } from "@lattice-ui/switch";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Switch, SwitchThumb } from "@lattice-ui/switch";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function toSwitchLabel(checked: boolean) {
@@ -46,7 +46,7 @@ export function SwitchBasicScene() {
         />
         <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
-        <Switch asChild checked={controlled} onCheckedChange={setControlled}>
+        <Switch.Root asChild checked={controlled} onCheckedChange={setControlled}>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
               Size: UDim2.fromOffset(610, 44),
@@ -60,7 +60,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <SwitchThumb asChild forceMount>
+              <Switch.Thumb asChild forceMount>
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
@@ -69,7 +69,7 @@ export function SwitchBasicScene() {
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
                 </frame>
-              </SwitchThumb>
+              </Switch.Thumb>
             </frame>
             <Text
               BackgroundTransparency={1}
@@ -81,9 +81,9 @@ export function SwitchBasicScene() {
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </textbutton>
-        </Switch>
+        </Switch.Root>
 
-        <Switch asChild defaultChecked={true} onCheckedChange={setUncontrolled}>
+        <Switch.Root asChild defaultChecked={true} onCheckedChange={setUncontrolled}>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
               Size: UDim2.fromOffset(610, 44),
@@ -97,7 +97,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <SwitchThumb asChild forceMount>
+              <Switch.Thumb asChild forceMount>
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
@@ -106,7 +106,7 @@ export function SwitchBasicScene() {
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
                 </frame>
-              </SwitchThumb>
+              </Switch.Thumb>
             </frame>
             <Text
               BackgroundTransparency={1}
@@ -118,9 +118,9 @@ export function SwitchBasicScene() {
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </textbutton>
-        </Switch>
+        </Switch.Root>
 
-        <Switch asChild checked={true} disabled>
+        <Switch.Root asChild checked={true} disabled>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
               Size: UDim2.fromOffset(610, 44),
@@ -134,7 +134,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <SwitchThumb asChild>
+              <Switch.Thumb asChild>
                 <frame
                   BackgroundColor3={theme.colors.textSecondary}
                   BorderSizePixel={0}
@@ -143,7 +143,7 @@ export function SwitchBasicScene() {
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
                 </frame>
-              </SwitchThumb>
+              </Switch.Thumb>
             </frame>
             <Text
               BackgroundTransparency={1}
@@ -155,7 +155,7 @@ export function SwitchBasicScene() {
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </textbutton>
-        </Switch>
+        </Switch.Root>
       </frame>
     </frame>
   );

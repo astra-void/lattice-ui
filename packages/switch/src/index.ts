@@ -1,3 +1,9 @@
-export { SwitchRoot, SwitchRoot as Switch } from "./Switch/SwitchRoot";
-export { SwitchThumb } from "./Switch/SwitchThumb";
+import { SwitchRoot } from "./Switch/SwitchRoot";
+import { SwitchThumb } from "./Switch/SwitchThumb";
+
+export const Switch = {
+  Root: SwitchRoot,
+  Thumb: SwitchThumb,
+} as const;
+
 export type { SwitchContextValue, SwitchProps, SwitchThumbProps } from "./Switch/types";

@@ -1,0 +1,24 @@
+{
+  "name": "@lattice-ui/accordion",
+  "version": "0.1.0",
+  "private": false,
+  "main": "out/init.luau",
+  "types": "out/index.d.ts",
+  "scripts": {
+    "build": "rbxtsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "watch": "rbxtsc -p tsconfig.json -w"
+  },
+  "dependencies": {
+    "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/focus": "workspace:*"
+  },
+  "devDependencies": {
+    "@rbxts/react": "17.3.7-ts.1",
+    "@rbxts/react-roblox": "17.3.7-ts.1"
+  },
+  "peerDependencies": {
+    "@rbxts/react": "^17",
+    "@rbxts/react-roblox": "^17"
+  }
+}

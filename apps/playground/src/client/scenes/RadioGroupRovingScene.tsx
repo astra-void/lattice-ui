@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { RadioGroup, RadioGroupIndicator, RadioGroupItem } from "@lattice-ui/radio-group";
+import { RadioGroup } from "@lattice-ui/radio-group";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
@@ -46,11 +46,11 @@ export function RadioGroupRovingScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <RadioGroup loop onValueChange={setVerticalValue} orientation="vertical" value={verticalValue}>
+        <RadioGroup.Root loop onValueChange={setVerticalValue} orientation="vertical" value={verticalValue}>
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(12, 34)} Size={UDim2.fromOffset(300, 150)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
-            <RadioGroupItem asChild value="alpha">
+            <RadioGroup.Item asChild value="alpha">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: verticalValue === "alpha" ? "primary" : "surface", size: "sm" }, theme),
@@ -67,7 +67,7 @@ export function RadioGroupRovingScene() {
                   Size={UDim2.fromOffset(16, 16)}
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
-                  <RadioGroupIndicator asChild forceMount>
+                  <RadioGroup.Indicator asChild forceMount>
                     <frame
                       BackgroundColor3={theme.colors.textPrimary}
                       BorderSizePixel={0}
@@ -76,7 +76,7 @@ export function RadioGroupRovingScene() {
                     >
                       <uicorner CornerRadius={new UDim(1, 0)} />
                     </frame>
-                  </RadioGroupIndicator>
+                  </RadioGroup.Indicator>
                 </frame>
                 <Text
                   BackgroundTransparency={1}
@@ -88,9 +88,9 @@ export function RadioGroupRovingScene() {
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
               </textbutton>
-            </RadioGroupItem>
+            </RadioGroup.Item>
 
-            <RadioGroupItem asChild value="beta">
+            <RadioGroup.Item asChild value="beta">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: verticalValue === "beta" ? "primary" : "surface", size: "sm" }, theme),
@@ -107,7 +107,7 @@ export function RadioGroupRovingScene() {
                   Size={UDim2.fromOffset(16, 16)}
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
-                  <RadioGroupIndicator asChild forceMount>
+                  <RadioGroup.Indicator asChild forceMount>
                     <frame
                       BackgroundColor3={theme.colors.textPrimary}
                       BorderSizePixel={0}
@@ -116,7 +116,7 @@ export function RadioGroupRovingScene() {
                     >
                       <uicorner CornerRadius={new UDim(1, 0)} />
                     </frame>
-                  </RadioGroupIndicator>
+                  </RadioGroup.Indicator>
                 </frame>
                 <Text
                   BackgroundTransparency={1}
@@ -128,9 +128,9 @@ export function RadioGroupRovingScene() {
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
               </textbutton>
-            </RadioGroupItem>
+            </RadioGroup.Item>
 
-            <RadioGroupItem asChild value="gamma">
+            <RadioGroup.Item asChild value="gamma">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: verticalValue === "gamma" ? "primary" : "surface", size: "sm" }, theme),
@@ -147,7 +147,7 @@ export function RadioGroupRovingScene() {
                   Size={UDim2.fromOffset(16, 16)}
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
-                  <RadioGroupIndicator asChild forceMount>
+                  <RadioGroup.Indicator asChild forceMount>
                     <frame
                       BackgroundColor3={theme.colors.textPrimary}
                       BorderSizePixel={0}
@@ -156,7 +156,7 @@ export function RadioGroupRovingScene() {
                     >
                       <uicorner CornerRadius={new UDim(1, 0)} />
                     </frame>
-                  </RadioGroupIndicator>
+                  </RadioGroup.Indicator>
                 </frame>
                 <Text
                   BackgroundTransparency={1}
@@ -168,9 +168,9 @@ export function RadioGroupRovingScene() {
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
               </textbutton>
-            </RadioGroupItem>
+            </RadioGroup.Item>
           </frame>
-        </RadioGroup>
+        </RadioGroup.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -182,11 +182,11 @@ export function RadioGroupRovingScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <RadioGroup loop={false} onValueChange={setHorizontalValue} orientation="horizontal" value={horizontalValue}>
+        <RadioGroup.Root loop={false} onValueChange={setHorizontalValue} orientation="horizontal" value={horizontalValue}>
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(12, 238)} Size={UDim2.fromOffset(650, 44)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
-            <RadioGroupItem asChild value="one">
+            <RadioGroup.Item asChild value="one">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: horizontalValue === "one" ? "primary" : "surface", size: "sm" }, theme),
@@ -196,9 +196,9 @@ export function RadioGroupRovingScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
 
-            <RadioGroupItem asChild value="two">
+            <RadioGroup.Item asChild value="two">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: horizontalValue === "two" ? "primary" : "surface", size: "sm" }, theme),
@@ -208,9 +208,9 @@ export function RadioGroupRovingScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
 
-            <RadioGroupItem asChild value="three">
+            <RadioGroup.Item asChild value="three">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: horizontalValue === "three" ? "primary" : "surface", size: "sm" }, theme),
@@ -220,9 +220,9 @@ export function RadioGroupRovingScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
           </frame>
-        </RadioGroup>
+        </RadioGroup.Root>
       </frame>
     </frame>
   );

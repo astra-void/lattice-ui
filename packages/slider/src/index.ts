@@ -1,7 +1,15 @@
-export { SliderRange } from "./Slider/SliderRange";
-export { SliderRoot, SliderRoot as Slider } from "./Slider/SliderRoot";
-export { SliderThumb } from "./Slider/SliderThumb";
-export { SliderTrack } from "./Slider/SliderTrack";
+import { SliderRange } from "./Slider/SliderRange";
+import { SliderRoot } from "./Slider/SliderRoot";
+import { SliderThumb } from "./Slider/SliderThumb";
+import { SliderTrack } from "./Slider/SliderTrack";
+
+export const Slider = {
+  Root: SliderRoot,
+  Track: SliderTrack,
+  Range: SliderRange,
+  Thumb: SliderThumb,
+} as const;
+
 export type {
   SliderCommitValue,
   SliderContextValue,

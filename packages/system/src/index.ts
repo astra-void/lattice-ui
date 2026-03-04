@@ -1,9 +1,11 @@
 export { DensityProvider, useDensity } from "./density/DensityProvider";
 export { applyDensity, density } from "./density/density";
 export type { DensityContextValue, DensityProviderProps, DensityToken } from "./density/types";
+export { Grid } from "./layout/Grid";
 export { Row } from "./layout/Row";
 export { Stack } from "./layout/Stack";
 export type {
+  GridProps,
   LayoutDirection,
   RowProps,
   SpaceToken,

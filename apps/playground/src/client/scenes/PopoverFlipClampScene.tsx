@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Popover, PopoverAnchor, PopoverContent, PopoverPortal, PopoverTrigger } from "@lattice-ui/popover";
+import { Popover } from "@lattice-ui/popover";
 
 type CornerKey = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
@@ -34,8 +34,8 @@ export function PopoverFlipClampScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <Popover onOpenChange={setOpen} open={open}>
-        <PopoverTrigger asChild>
+      <Popover.Root onOpenChange={setOpen} open={open}>
+        <Popover.Trigger asChild>
           <textbutton
             AutoButtonColor={false}
             BackgroundColor3={Color3.fromRGB(47, 112, 206)}
@@ -46,7 +46,7 @@ export function PopoverFlipClampScene() {
             TextColor3={Color3.fromRGB(237, 245, 252)}
             TextSize={15}
           />
-        </PopoverTrigger>
+        </Popover.Trigger>
 
         <textbutton
           AutoButtonColor={false}
@@ -62,7 +62,7 @@ export function PopoverFlipClampScene() {
           TextSize={15}
         />
 
-        <PopoverAnchor asChild>
+        <Popover.Anchor asChild>
           <frame
             BackgroundColor3={Color3.fromRGB(150, 87, 50)}
             BorderSizePixel={0}
@@ -78,10 +78,10 @@ export function PopoverFlipClampScene() {
               TextSize={14}
             />
           </frame>
-        </PopoverAnchor>
+        </Popover.Anchor>
 
-        <PopoverPortal>
-          <PopoverContent asChild offset={new Vector2(0, 8)} padding={10} placement="bottom">
+        <Popover.Portal>
+          <Popover.Content asChild offset={new Vector2(0, 8)} padding={10} placement="bottom">
             <frame BackgroundColor3={Color3.fromRGB(32, 41, 56)} BorderSizePixel={0} Size={UDim2.fromOffset(230, 120)}>
               <uicorner CornerRadius={new UDim(0, 8)} />
               <uipadding PaddingLeft={new UDim(0, 12)} PaddingRight={new UDim(0, 12)} PaddingTop={new UDim(0, 10)} />
@@ -105,9 +105,9 @@ export function PopoverFlipClampScene() {
                 TextYAlignment={Enum.TextYAlignment.Top}
               />
             </frame>
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
     </frame>
   );
 }

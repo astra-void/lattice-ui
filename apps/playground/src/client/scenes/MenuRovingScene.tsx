@@ -1,14 +1,5 @@
 import { React } from "@lattice-ui/core";
-import {
-  Menu,
-  MenuContent,
-  MenuGroup,
-  MenuItem,
-  MenuLabel,
-  MenuPortal,
-  MenuSeparator,
-  MenuTrigger,
-} from "@lattice-ui/menu";
+import { Menu } from "@lattice-ui/menu";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 
@@ -38,8 +29,8 @@ export function MenuRovingScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <Menu onOpenChange={setOpen} open={open}>
-        <MenuTrigger asChild>
+      <Menu.Root onOpenChange={setOpen} open={open}>
+        <Menu.Trigger asChild>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "primary", size: "md" }, theme), {
               Position: UDim2.fromOffset(0, 72),
@@ -47,10 +38,10 @@ export function MenuRovingScene() {
               Text: "Toggle Menu",
             }) as Record<string, unknown>)}
           />
-        </MenuTrigger>
+        </Menu.Trigger>
 
-        <MenuPortal>
-          <MenuContent asChild loop={true} offset={new Vector2(0, 8)} placement="bottom">
+        <Menu.Portal>
+          <Menu.Content asChild loop={true} offset={new Vector2(0, 8)} placement="bottom">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Size: UDim2.fromOffset(250, 260),
@@ -68,7 +59,7 @@ export function MenuRovingScene() {
                 SortOrder={Enum.SortOrder.LayoutOrder}
               />
 
-              <MenuLabel asChild>
+              <Menu.Label asChild>
                 <Text
                   BackgroundTransparency={1}
                   LayoutOrder={1}
@@ -78,9 +69,9 @@ export function MenuRovingScene() {
                   TextSize={theme.typography.labelSm.textSize}
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
-              </MenuLabel>
+              </Menu.Label>
 
-              <MenuGroup asChild>
+              <Menu.Group asChild>
                 <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(220, 110)}>
                   <uilistlayout
                     FillDirection={Enum.FillDirection.Vertical}
@@ -88,7 +79,7 @@ export function MenuRovingScene() {
                     SortOrder={Enum.SortOrder.LayoutOrder}
                   />
 
-                  <MenuItem
+                  <Menu.Item
                     asChild
                     onSelect={() => {
                       setLastSelect("new-file");
@@ -103,9 +94,9 @@ export function MenuRovingScene() {
                     >
                       <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                     </textbutton>
-                  </MenuItem>
+                  </Menu.Item>
 
-                  <MenuItem asChild disabled={true}>
+                  <Menu.Item asChild disabled={true}>
                     <textbutton
                       {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "true" }, theme), {
                         LayoutOrder: 2,
@@ -115,9 +106,9 @@ export function MenuRovingScene() {
                     >
                       <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                     </textbutton>
-                  </MenuItem>
+                  </Menu.Item>
 
-                  <MenuItem
+                  <Menu.Item
                     asChild
                     onSelect={(event) => {
                       event.preventDefault();
@@ -133,20 +124,20 @@ export function MenuRovingScene() {
                     >
                       <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                     </textbutton>
-                  </MenuItem>
+                  </Menu.Item>
                 </frame>
-              </MenuGroup>
+              </Menu.Group>
 
-              <MenuSeparator asChild>
+              <Menu.Separator asChild>
                 <frame
                   BackgroundColor3={theme.colors.border}
                   BorderSizePixel={0}
                   LayoutOrder={3}
                   Size={UDim2.fromOffset(220, 1)}
                 />
-              </MenuSeparator>
+              </Menu.Separator>
 
-              <MenuItem
+              <Menu.Item
                 asChild
                 onSelect={() => {
                   setLastSelect("delete");
@@ -161,11 +152,11 @@ export function MenuRovingScene() {
                 >
                   <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                 </textbutton>
-              </MenuItem>
+              </Menu.Item>
             </frame>
-          </MenuContent>
-        </MenuPortal>
-      </Menu>
+          </Menu.Content>
+        </Menu.Portal>
+      </Menu.Root>
     </frame>
   );
 }

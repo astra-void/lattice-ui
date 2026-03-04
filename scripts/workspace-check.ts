@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import path from "node:path";
+import * as path from "node:path";
 import {
   createWorkspacePaths,
   dependencyFields,
@@ -14,22 +14,35 @@ import {
   parseMajor,
   ROOT_DIR,
   readJson,
-} from "./workspace-utils.ts";
+} from "./workspace-utils";
 
-function normalizeFixed(fixedValue) {
+interface ChangesetConfig {
+  baseBranch?: string;
+  access?: string;
+  ignore?: string[];
+  fixed?: unknown;
+}
+
+function normalizeFixed(fixedValue: unknown): string[][] {
   if (!Array.isArray(fixedValue)) {
     return [];
   }
 
   return fixedValue
-    .map((group) => (Array.isArray(group) ? [...group].sort((left, right) => left.localeCompare(right)) : []))
+    .map((group) =>
+      Array.isArray(group)
+        ? group
+            .filter((item): item is string => typeof item === "string")
+            .sort((left, right) => left.localeCompare(right))
+        : [],
+    )
     .sort((left, right) => left.join(",").localeCompare(right.join(",")));
 }
 
 const policy = getPolicy();
 const packages = listPackages();
 const apps = listApps();
-const errors = [];
+const errors: string[] = [];
 
 if (packages.length === 0) {
   errors.push("No packages were found in packages/*.");
@@ -51,7 +64,11 @@ const expectedTypecheckTsconfig = {
   },
 };
 
-const versionSet = new Set(packages.map((pkg) => pkg.manifest.version));
+const versionSet = new Set(
+  packages
+    .map((pkg) => pkg.manifest.version)
+    .filter((version): version is string => typeof version === "string" && version.length > 0),
+);
 if (versionSet.size > 1) {
   errors.push(
     `Lockedstep violation: expected exactly one version across packages, found ${[...versionSet].join(", ")}.`,
@@ -136,7 +153,7 @@ for (const pkg of packages) {
 
   const typecheckPath = path.join(pkg.dirPath, "tsconfig.typecheck.json");
   if (fileExists(typecheckPath)) {
-    const typecheckConfig = readJson(typecheckPath);
+    const typecheckConfig = readJson<unknown>(typecheckPath);
     if (!jsonEqual(typecheckConfig, expectedTypecheckTsconfig)) {
       errors.push(`${pkg.manifest.name} has a non-canonical tsconfig.typecheck.json. Run "pnpm workspace:sync".`);
     }
@@ -147,7 +164,7 @@ const changesetConfigPath = path.join(ROOT_DIR, ".changeset", "config.json");
 if (!fileExists(changesetConfigPath)) {
   errors.push("Missing .changeset/config.json.");
 } else {
-  const changesetConfig = readJson(changesetConfigPath);
+  const changesetConfig = readJson<ChangesetConfig>(changesetConfigPath);
   const expectedBaseBranch = policy.changesets?.baseBranch ?? "main";
   const expectedAccess = policy.changesets?.access ?? "public";
 

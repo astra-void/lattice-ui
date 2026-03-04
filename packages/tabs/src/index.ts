@@ -1,7 +1,15 @@
-export { TabsContent } from "./Tabs/TabsContent";
-export { TabsList } from "./Tabs/TabsList";
-export { TabsRoot, TabsRoot as Tabs } from "./Tabs/TabsRoot";
-export { TabsTrigger } from "./Tabs/TabsTrigger";
+import { TabsContent } from "./Tabs/TabsContent";
+import { TabsList } from "./Tabs/TabsList";
+import { TabsRoot } from "./Tabs/TabsRoot";
+import { TabsTrigger } from "./Tabs/TabsTrigger";
+
+export const Tabs = {
+  Root: TabsRoot,
+  List: TabsList,
+  Trigger: TabsTrigger,
+  Content: TabsContent,
+} as const;
+
 export type {
   TabsActivationMode,
   TabsContentProps,

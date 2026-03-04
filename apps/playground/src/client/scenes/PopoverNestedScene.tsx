@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from "@lattice-ui/popover";
+import { Popover } from "@lattice-ui/popover";
 
 export function PopoverNestedScene() {
   const [outerOpen, setOuterOpen] = React.useState(false);
@@ -17,7 +17,7 @@ export function PopoverNestedScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <Popover
+      <Popover.Root
         onOpenChange={(nextOpen) => {
           setOuterOpen(nextOpen);
           if (!nextOpen) {
@@ -26,7 +26,7 @@ export function PopoverNestedScene() {
         }}
         open={outerOpen}
       >
-        <PopoverTrigger asChild>
+        <Popover.Trigger asChild>
           <textbutton
             AutoButtonColor={false}
             BackgroundColor3={Color3.fromRGB(43, 105, 196)}
@@ -37,10 +37,10 @@ export function PopoverNestedScene() {
             TextColor3={Color3.fromRGB(240, 244, 250)}
             TextSize={16}
           />
-        </PopoverTrigger>
+        </Popover.Trigger>
 
-        <PopoverPortal>
-          <PopoverContent asChild offset={new Vector2(0, 10)} placement="bottom">
+        <Popover.Portal>
+          <Popover.Content asChild offset={new Vector2(0, 10)} placement="bottom">
             <frame BackgroundColor3={Color3.fromRGB(31, 42, 58)} BorderSizePixel={0} Size={UDim2.fromOffset(360, 220)}>
               <uicorner CornerRadius={new UDim(0, 9)} />
               <uipadding PaddingLeft={new UDim(0, 12)} PaddingRight={new UDim(0, 12)} PaddingTop={new UDim(0, 10)} />
@@ -53,8 +53,8 @@ export function PopoverNestedScene() {
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
 
-              <Popover onOpenChange={setInnerOpen} open={innerOpen}>
-                <PopoverTrigger asChild>
+              <Popover.Root onOpenChange={setInnerOpen} open={innerOpen}>
+                <Popover.Trigger asChild>
                   <textbutton
                     AutoButtonColor={false}
                     BackgroundColor3={Color3.fromRGB(36, 128, 82)}
@@ -65,10 +65,10 @@ export function PopoverNestedScene() {
                     TextColor3={Color3.fromRGB(231, 246, 236)}
                     TextSize={15}
                   />
-                </PopoverTrigger>
+                </Popover.Trigger>
 
-                <PopoverPortal>
-                  <PopoverContent asChild offset={new Vector2(0, 8)} placement="right">
+                <Popover.Portal>
+                  <Popover.Content asChild offset={new Vector2(0, 8)} placement="right">
                     <frame
                       BackgroundColor3={Color3.fromRGB(56, 36, 80)}
                       BorderSizePixel={0}
@@ -100,13 +100,13 @@ export function PopoverNestedScene() {
                         TextYAlignment={Enum.TextYAlignment.Top}
                       />
                     </frame>
-                  </PopoverContent>
-                </PopoverPortal>
-              </Popover>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
             </frame>
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
     </frame>
   );
 }

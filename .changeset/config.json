@@ -5,10 +5,16 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@lattice-ui/playground", "@lattice-ui/test-harness"],
+  "ignore": [
+    "@lattice-ui/playground",
+    "@lattice-ui/test-harness"
+  ],
   "fixed": [
     [
+      "@lattice-ui/accordion",
+      "@lattice-ui/avatar",
       "@lattice-ui/checkbox",
+      "@lattice-ui/combobox",
       "@lattice-ui/core",
       "@lattice-ui/dialog",
       "@lattice-ui/focus",
@@ -16,7 +22,9 @@
       "@lattice-ui/menu",
       "@lattice-ui/popover",
       "@lattice-ui/popper",
+      "@lattice-ui/progress",
       "@lattice-ui/radio-group",
+      "@lattice-ui/scroll-area",
       "@lattice-ui/select",
       "@lattice-ui/slider",
       "@lattice-ui/style",
@@ -24,6 +32,8 @@
       "@lattice-ui/system",
       "@lattice-ui/tabs",
       "@lattice-ui/text-field",
+      "@lattice-ui/textarea",
+      "@lattice-ui/toast",
       "@lattice-ui/toggle-group",
       "@lattice-ui/tooltip"
     ]

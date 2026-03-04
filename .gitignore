@@ -12,3 +12,4 @@ include
 .DS_Store
 
 pnpm-publish-summary.json
+run-in-roblox.log

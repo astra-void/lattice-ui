@@ -3,11 +3,15 @@ import { PortalProvider } from "@lattice-ui/layer";
 import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text } from "@lattice-ui/style";
 import type { DensityToken } from "@lattice-ui/system";
 import { SystemProvider, useSystemTheme } from "@lattice-ui/system";
+import { AccordionBasicScene } from "./scenes/AccordionBasicScene";
+import { AvatarBasicScene } from "./scenes/AvatarBasicScene";
 import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";
+import { ComboboxBasicScene } from "./scenes/ComboboxBasicScene";
 import { DensityScopeScene } from "./scenes/DensityScopeScene";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
 import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
 import { DialogNestedScene } from "./scenes/DialogNestedScene";
+import { GridShowcaseScene } from "./scenes/GridShowcaseScene";
 import { InsetHitTestScene } from "./scenes/InsetHitTestScene";
 import { LayerDismissScene } from "./scenes/LayerDismissScene";
 import { MenuRovingScene } from "./scenes/MenuRovingScene";
@@ -16,9 +20,11 @@ import { NestedStackScene } from "./scenes/NestedStackScene";
 import { PopoverBasicScene } from "./scenes/PopoverBasicScene";
 import { PopoverFlipClampScene } from "./scenes/PopoverFlipClampScene";
 import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
+import { ProgressBasicScene } from "./scenes/ProgressBasicScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 import { RadioGroupDisabledScene } from "./scenes/RadioGroupDisabledScene";
 import { RadioGroupRovingScene } from "./scenes/RadioGroupRovingScene";
+import { ScrollAreaBasicScene } from "./scenes/ScrollAreaBasicScene";
 import { SelectBasicScene } from "./scenes/SelectBasicScene";
 import { SliderBasicScene } from "./scenes/SliderBasicScene";
 import { StackShowcaseScene } from "./scenes/StackShowcaseScene";
@@ -26,6 +32,8 @@ import { SurfaceShowcaseScene } from "./scenes/SurfaceShowcaseScene";
 import { SwitchBasicScene } from "./scenes/SwitchBasicScene";
 import { TabsBasicScene } from "./scenes/TabsBasicScene";
 import { TextFieldBasicScene } from "./scenes/TextFieldBasicScene";
+import { TextareaBasicScene } from "./scenes/TextareaBasicScene";
+import { ToastBasicScene } from "./scenes/ToastBasicScene";
 import { ToggleGroupBasicScene } from "./scenes/ToggleGroupBasicScene";
 import { ToggleGroupRovingScene } from "./scenes/ToggleGroupRovingScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
@@ -43,8 +51,12 @@ type SceneKey =
   | "radio-roving"
   | "radio-disabled"
   | "text-field-basic"
+  | "textarea-basic"
   | "select-basic"
+  | "combobox-basic"
   | "slider-basic"
+  | "progress-basic"
+  | "avatar-basic"
   | "toggle-basic"
   | "toggle-roving"
   | "dialog-basic"
@@ -57,9 +69,13 @@ type SceneKey =
   | "tooltip-delay"
   | "tooltip-follow"
   | "menu-roving"
+  | "toast-basic"
   | "density-scope"
+  | "scroll-area-basic"
   | "surface-showcase"
-  | "stack-showcase";
+  | "stack-showcase"
+  | "grid-showcase"
+  | "accordion-basic";
 
 const sceneOptions = [
   { key: "dismiss", label: "Layer Dismiss" },
@@ -72,8 +88,12 @@ const sceneOptions = [
   { key: "radio-roving", label: "Radio Roving" },
   { key: "radio-disabled", label: "Radio Disabled" },
   { key: "text-field-basic", label: "TextField Basic" },
+  { key: "textarea-basic", label: "Textarea Basic" },
   { key: "select-basic", label: "Select Basic" },
+  { key: "combobox-basic", label: "Combobox Basic" },
   { key: "slider-basic", label: "Slider Basic" },
+  { key: "progress-basic", label: "Progress Basic" },
+  { key: "avatar-basic", label: "Avatar Basic" },
   { key: "toggle-basic", label: "Toggle Basic" },
   { key: "toggle-roving", label: "Toggle Roving" },
   { key: "dialog-basic", label: "Dialog Basic" },
@@ -86,9 +106,13 @@ const sceneOptions = [
   { key: "tooltip-delay", label: "Tooltip Delay" },
   { key: "tooltip-follow", label: "Tooltip Follow" },
   { key: "menu-roving", label: "Menu Roving" },
+  { key: "toast-basic", label: "Toast Basic" },
   { key: "density-scope", label: "Density Scope" },
+  { key: "scroll-area-basic", label: "ScrollArea Basic" },
   { key: "surface-showcase", label: "Surface Showcase" },
   { key: "stack-showcase", label: "Stack Showcase" },
+  { key: "grid-showcase", label: "Grid Showcase" },
+  { key: "accordion-basic", label: "Accordion Basic" },
 ] satisfies ReadonlyArray<{ key: SceneKey; label: string }>;
 
 const densityOrder = ["compact", "comfortable", "spacious"] as const satisfies ReadonlyArray<DensityToken>;
@@ -203,8 +227,12 @@ function AppContent(props: AppProps) {
             {activeScene === "radio-roving" ? <RadioGroupRovingScene /> : undefined}
             {activeScene === "radio-disabled" ? <RadioGroupDisabledScene /> : undefined}
             {activeScene === "text-field-basic" ? <TextFieldBasicScene /> : undefined}
+            {activeScene === "textarea-basic" ? <TextareaBasicScene /> : undefined}
             {activeScene === "select-basic" ? <SelectBasicScene /> : undefined}
+            {activeScene === "combobox-basic" ? <ComboboxBasicScene /> : undefined}
             {activeScene === "slider-basic" ? <SliderBasicScene /> : undefined}
+            {activeScene === "progress-basic" ? <ProgressBasicScene /> : undefined}
+            {activeScene === "avatar-basic" ? <AvatarBasicScene /> : undefined}
             {activeScene === "toggle-basic" ? <ToggleGroupBasicScene /> : undefined}
             {activeScene === "toggle-roving" ? <ToggleGroupRovingScene /> : undefined}
             {activeScene === "dialog-basic" ? <DialogBasicScene /> : undefined}
@@ -217,9 +245,13 @@ function AppContent(props: AppProps) {
             {activeScene === "tooltip-delay" ? <TooltipDelayScene /> : undefined}
             {activeScene === "tooltip-follow" ? <TooltipFollowScene /> : undefined}
             {activeScene === "menu-roving" ? <MenuRovingScene /> : undefined}
+            {activeScene === "toast-basic" ? <ToastBasicScene /> : undefined}
             {activeScene === "density-scope" ? <DensityScopeScene /> : undefined}
+            {activeScene === "scroll-area-basic" ? <ScrollAreaBasicScene /> : undefined}
             {activeScene === "surface-showcase" ? <SurfaceShowcaseScene /> : undefined}
             {activeScene === "stack-showcase" ? <StackShowcaseScene /> : undefined}
+            {activeScene === "grid-showcase" ? <GridShowcaseScene /> : undefined}
+            {activeScene === "accordion-basic" ? <AccordionBasicScene /> : undefined}
           </frame>
         </frame>
       </screengui>

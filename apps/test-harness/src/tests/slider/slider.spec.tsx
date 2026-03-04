@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Slider, SliderRange, SliderThumb, SliderTrack } from "@lattice-ui/slider";
+import { Slider } from "@lattice-ui/slider";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
@@ -29,19 +29,19 @@ function renderSlider(
   disabled = false,
 ) {
   return (
-    <Slider disabled={disabled} max={100} min={0} orientation={orientation} value={value}>
-      <SliderTrack asChild>
+    <Slider.Root disabled={disabled} max={100} min={0} orientation={orientation} value={value}>
+      <Slider.Track asChild>
         <frame
           BackgroundColor3={Color3.fromRGB(52, 59, 76)}
           BorderSizePixel={0}
           Size={orientation === "horizontal" ? UDim2.fromOffset(240, 12) : UDim2.fromOffset(12, 240)}
         >
-          <SliderRange asChild>
+          <Slider.Range asChild>
             <frame BackgroundColor3={Color3.fromRGB(98, 153, 255)} BorderSizePixel={0}>
               <textlabel BackgroundTransparency={1} Text={rangeMarkerText} TextTransparency={1} />
             </frame>
-          </SliderRange>
-          <SliderThumb asChild>
+          </Slider.Range>
+          <Slider.Thumb asChild>
             <textbutton
               AutoButtonColor={false}
               BackgroundColor3={Color3.fromRGB(241, 246, 253)}
@@ -49,10 +49,10 @@ function renderSlider(
               Text={thumbMarkerText}
               TextTransparency={1}
             />
-          </SliderThumb>
+          </Slider.Thumb>
         </frame>
-      </SliderTrack>
-    </Slider>
+      </Slider.Track>
+    </Slider.Root>
   );
 }
 

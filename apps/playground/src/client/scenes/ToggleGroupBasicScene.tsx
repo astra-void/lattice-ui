@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
+import { ToggleGroup } from "@lattice-ui/toggle-group";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { ToggleGroup, ToggleGroupItem } from "@lattice-ui/toggle-group";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function formatSingleValue(value: string | undefined) {
@@ -74,11 +74,11 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup onValueChange={setSingleControlled} type="single" value={singleControlled}>
+        <ToggleGroup.Root onValueChange={setSingleControlled} type="single" value={singleControlled}>
           <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
-            <ToggleGroupItem asChild value="alpha">
+            <ToggleGroup.Item asChild value="alpha">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: singleControlled === "alpha" ? "primary" : "surface", size: "sm" }, theme),
@@ -88,9 +88,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="beta">
+            <ToggleGroup.Item asChild value="beta">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: singleControlled === "beta" ? "primary" : "surface", size: "sm" }, theme),
@@ -100,9 +100,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="gamma">
+            <ToggleGroup.Item asChild value="gamma">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: singleControlled === "gamma" ? "primary" : "surface", size: "sm" }, theme),
@@ -112,9 +112,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
           </frame>
-        </ToggleGroup>
+        </ToggleGroup.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -126,11 +126,11 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup defaultValue="beta" onValueChange={setSingleUncontrolledMirror} type="single">
+        <ToggleGroup.Root defaultValue="beta" onValueChange={setSingleUncontrolledMirror} type="single">
           <frame BackgroundTransparency={1} LayoutOrder={4} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
-            <ToggleGroupItem asChild value="alpha">
+            <ToggleGroup.Item asChild value="alpha">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -143,9 +143,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="beta">
+            <ToggleGroup.Item asChild value="beta">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -158,9 +158,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="gamma">
+            <ToggleGroup.Item asChild value="gamma">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -173,9 +173,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
           </frame>
-        </ToggleGroup>
+        </ToggleGroup.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -187,11 +187,11 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup onValueChange={setMultipleControlled} type="multiple" value={multipleControlled}>
+        <ToggleGroup.Root onValueChange={setMultipleControlled} type="multiple" value={multipleControlled}>
           <frame BackgroundTransparency={1} LayoutOrder={6} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
-            <ToggleGroupItem asChild value="bold">
+            <ToggleGroup.Item asChild value="bold">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -204,9 +204,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="italic">
+            <ToggleGroup.Item asChild value="italic">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -219,9 +219,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="underline">
+            <ToggleGroup.Item asChild value="underline">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -234,9 +234,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
           </frame>
-        </ToggleGroup>
+        </ToggleGroup.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -248,11 +248,11 @@ export function ToggleGroupBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <ToggleGroup defaultValue={["left"]} onValueChange={setMultipleUncontrolledMirror} type="multiple">
+        <ToggleGroup.Root defaultValue={["left"]} onValueChange={setMultipleUncontrolledMirror} type="multiple">
           <frame BackgroundTransparency={1} LayoutOrder={8} Size={UDim2.fromOffset(860, 38)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
 
-            <ToggleGroupItem asChild value="left">
+            <ToggleGroup.Item asChild value="left">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -265,9 +265,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="center">
+            <ToggleGroup.Item asChild value="center">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -280,9 +280,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
 
-            <ToggleGroupItem asChild value="right">
+            <ToggleGroup.Item asChild value="right">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe(
@@ -295,9 +295,9 @@ export function ToggleGroupBasicScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </ToggleGroupItem>
+            </ToggleGroup.Item>
           </frame>
-        </ToggleGroup>
+        </ToggleGroup.Root>
       </frame>
     </frame>
   );

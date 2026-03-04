@@ -1,12 +1,6 @@
 import { React } from "@lattice-ui/core";
+import { TextField } from "@lattice-ui/text-field";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import {
-  TextField,
-  TextFieldDescription,
-  TextFieldInput,
-  TextFieldLabel,
-  TextFieldMessage,
-} from "@lattice-ui/text-field";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 export function TextFieldBasicScene() {
@@ -52,7 +46,7 @@ export function TextFieldBasicScene() {
         />
         <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[12])} />
 
-        <TextField
+        <TextField.Root
           invalid={invalid}
           onValueChange={setControlledValue}
           onValueCommit={(value) => {
@@ -64,7 +58,7 @@ export function TextFieldBasicScene() {
           <frame BackgroundTransparency={1} LayoutOrder={1} Size={UDim2.fromOffset(860, 98)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[4])} />
 
-            <TextFieldLabel asChild>
+            <TextField.Label asChild>
               <textbutton
                 AutoButtonColor={false}
                 BackgroundTransparency={1}
@@ -75,9 +69,9 @@ export function TextFieldBasicScene() {
                 TextSize={theme.typography.labelSm.textSize}
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
-            </TextFieldLabel>
+            </TextField.Label>
 
-            <TextFieldInput asChild>
+            <TextField.Input asChild>
               <textbox
                 BackgroundColor3={theme.colors.surfaceElevated}
                 BorderSizePixel={0}
@@ -90,9 +84,9 @@ export function TextFieldBasicScene() {
                 <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
                 <uipadding PaddingLeft={new UDim(0, theme.space[10])} PaddingRight={new UDim(0, theme.space[10])} />
               </textbox>
-            </TextFieldInput>
+            </TextField.Input>
 
-            <TextFieldDescription asChild>
+            <TextField.Description asChild>
               <Text
                 BackgroundTransparency={1}
                 Size={UDim2.fromOffset(860, 16)}
@@ -101,9 +95,9 @@ export function TextFieldBasicScene() {
                 TextSize={theme.typography.labelSm.textSize}
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
-            </TextFieldDescription>
+            </TextField.Description>
 
-            <TextFieldMessage asChild>
+            <TextField.Message asChild>
               <Text
                 BackgroundTransparency={1}
                 Size={UDim2.fromOffset(860, 16)}
@@ -112,15 +106,15 @@ export function TextFieldBasicScene() {
                 TextSize={theme.typography.labelSm.textSize}
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
-            </TextFieldMessage>
+            </TextField.Message>
           </frame>
-        </TextField>
+        </TextField.Root>
 
-        <TextField defaultValue="uncontrolled value">
+        <TextField.Root defaultValue="uncontrolled value">
           <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(860, 82)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[4])} />
 
-            <TextFieldLabel asChild>
+            <TextField.Label asChild>
               <textbutton
                 AutoButtonColor={false}
                 BackgroundTransparency={1}
@@ -131,9 +125,9 @@ export function TextFieldBasicScene() {
                 TextSize={theme.typography.labelSm.textSize}
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
-            </TextFieldLabel>
+            </TextField.Label>
 
-            <TextFieldInput asChild>
+            <TextField.Input asChild>
               <textbox
                 BackgroundColor3={theme.colors.surfaceElevated}
                 BorderSizePixel={0}
@@ -146,9 +140,9 @@ export function TextFieldBasicScene() {
                 <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
                 <uipadding PaddingLeft={new UDim(0, theme.space[10])} PaddingRight={new UDim(0, theme.space[10])} />
               </textbox>
-            </TextFieldInput>
+            </TextField.Input>
 
-            <TextFieldDescription asChild>
+            <TextField.Description asChild>
               <Text
                 BackgroundTransparency={1}
                 Size={UDim2.fromOffset(860, 16)}
@@ -157,15 +151,15 @@ export function TextFieldBasicScene() {
                 TextSize={theme.typography.labelSm.textSize}
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
-            </TextFieldDescription>
+            </TextField.Description>
           </frame>
-        </TextField>
+        </TextField.Root>
 
-        <TextField defaultValue="disabled value" disabled>
+        <TextField.Root defaultValue="disabled value" disabled>
           <frame BackgroundTransparency={1} LayoutOrder={3} Size={UDim2.fromOffset(860, 64)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[4])} />
 
-            <TextFieldLabel asChild>
+            <TextField.Label asChild>
               <textbutton
                 AutoButtonColor={false}
                 BackgroundTransparency={1}
@@ -176,9 +170,9 @@ export function TextFieldBasicScene() {
                 TextSize={theme.typography.labelSm.textSize}
                 TextXAlignment={Enum.TextXAlignment.Left}
               />
-            </TextFieldLabel>
+            </TextField.Label>
 
-            <TextFieldInput asChild>
+            <TextField.Input asChild>
               <textbox
                 BackgroundColor3={theme.colors.surfaceElevated}
                 BorderSizePixel={0}
@@ -191,9 +185,9 @@ export function TextFieldBasicScene() {
                 <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
                 <uipadding PaddingLeft={new UDim(0, theme.space[10])} PaddingRight={new UDim(0, theme.space[10])} />
               </textbox>
-            </TextFieldInput>
+            </TextField.Input>
           </frame>
-        </TextField>
+        </TextField.Root>
       </frame>
 
       <textbutton

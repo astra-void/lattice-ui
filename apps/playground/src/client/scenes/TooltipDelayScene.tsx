@@ -1,11 +1,11 @@
 import { React } from "@lattice-ui/core";
-import { Tooltip, TooltipContent, TooltipPortal, TooltipProvider, TooltipTrigger } from "@lattice-ui/tooltip";
+import { Tooltip } from "@lattice-ui/tooltip";
 
 export function TooltipDelayScene() {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <TooltipProvider delayDuration={700} skipDelayDuration={300}>
+    <Tooltip.Provider delayDuration={700} skipDelayDuration={300}>
       <frame BackgroundTransparency={1} Size={UDim2.fromOffset(920, 520)}>
         <textlabel
           BackgroundTransparency={1}
@@ -26,8 +26,8 @@ export function TooltipDelayScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Tooltip onOpenChange={setOpen}>
-          <TooltipTrigger asChild>
+        <Tooltip.Root onOpenChange={setOpen}>
+          <Tooltip.Trigger asChild>
             <textbutton
               AutoButtonColor={false}
               BackgroundColor3={Color3.fromRGB(43, 105, 196)}
@@ -38,10 +38,10 @@ export function TooltipDelayScene() {
               TextColor3={Color3.fromRGB(240, 244, 250)}
               TextSize={16}
             />
-          </TooltipTrigger>
+          </Tooltip.Trigger>
 
-          <TooltipPortal>
-            <TooltipContent asChild offset={new Vector2(0, 8)} placement="bottom">
+          <Tooltip.Portal>
+            <Tooltip.Content asChild offset={new Vector2(0, 8)} placement="bottom">
               <frame BackgroundColor3={Color3.fromRGB(28, 33, 48)} BorderSizePixel={0} Size={UDim2.fromOffset(250, 80)}>
                 <uicorner CornerRadius={new UDim(0, 8)} />
                 <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} PaddingTop={new UDim(0, 8)} />
@@ -56,10 +56,10 @@ export function TooltipDelayScene() {
                   TextYAlignment={Enum.TextYAlignment.Top}
                 />
               </frame>
-            </TooltipContent>
-          </TooltipPortal>
-        </Tooltip>
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
       </frame>
-    </TooltipProvider>
+    </Tooltip.Provider>
   );
 }

@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
+import { Select } from "@lattice-ui/select";
 import { PortalProvider } from "@lattice-ui/layer";
-import { Select, SelectContent, SelectItem, SelectPortal, SelectTrigger, SelectValue } from "@lattice-ui/select";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
@@ -16,28 +16,28 @@ type SelectRenderOptions = {
 function renderSelectTree(options: SelectRenderOptions, playerGui: PlayerGui) {
   return (
     <PortalProvider container={playerGui}>
-      <Select defaultValue={options.defaultValue} open={options.open} value={options.value}>
-        <SelectTrigger asChild>
+      <Select.Root defaultValue={options.defaultValue} open={options.open} value={options.value}>
+        <Select.Trigger asChild>
           <textbutton Text="select-trigger" />
-        </SelectTrigger>
-        <SelectValue asChild placeholder="Pick one">
+        </Select.Trigger>
+        <Select.Value asChild placeholder="Pick one">
           <textlabel />
-        </SelectValue>
+        </Select.Value>
 
-        <SelectPortal>
-          <SelectContent asChild forceMount={options.forceMount === true}>
+        <Select.Portal>
+          <Select.Content asChild forceMount={options.forceMount === true}>
             <frame>
-              <SelectItem asChild textValue="Alpha Option" value="alpha">
+              <Select.Item asChild textValue="Alpha Option" value="alpha">
                 <textbutton Text="select-item-alpha" />
-              </SelectItem>
-              <SelectItem asChild disabled={options.disableBeta === true} textValue="Beta Option" value="beta">
+              </Select.Item>
+              <Select.Item asChild disabled={options.disableBeta === true} textValue="Beta Option" value="beta">
                 <textbutton Text="select-item-beta" />
-              </SelectItem>
+              </Select.Item>
               <textlabel Text={options.markerText} />
             </frame>
-          </SelectContent>
-        </SelectPortal>
-      </Select>
+          </Select.Content>
+        </Select.Portal>
+      </Select.Root>
     </PortalProvider>
   );
 }

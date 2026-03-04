@@ -32,3 +32,16 @@ export type StackProps = {
   StyleProps;
 
 export type RowProps = Omit<StackProps, "direction">;
+
+export type GridProps = {
+  columns?: number;
+  minColumnWidth?: SpaceValue;
+  cellHeight?: SpaceValue;
+  gap?: SpaceValue;
+  rowGap?: SpaceValue;
+  columnGap?: SpaceValue;
+  autoSize?: StackAutoSize;
+  sx?: Sx<StyleProps>;
+  children?: React.ReactNode;
+} & StackPadding &
+  StyleProps;

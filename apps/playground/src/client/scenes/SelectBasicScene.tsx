@@ -1,15 +1,5 @@
 import { React } from "@lattice-ui/core";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectPortal,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@lattice-ui/select";
+import { Select } from "@lattice-ui/select";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 
@@ -65,13 +55,13 @@ export function SelectBasicScene() {
             TextXAlignment={Enum.TextXAlignment.Left}
           />
 
-          <Select
+          <Select.Root
             onOpenChange={setControlledOpen}
             onValueChange={setControlledValue}
             open={controlledOpen}
             value={controlledValue}
           >
-            <SelectTrigger asChild>
+            <Select.Trigger asChild>
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
                   Size: UDim2.fromOffset(320, 40),
@@ -87,7 +77,7 @@ export function SelectBasicScene() {
                   TextSize={theme.typography.labelSm.textSize}
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
-                <SelectValue asChild placeholder="Pick a mode">
+                <Select.Value asChild placeholder="Pick a mode">
                   <textlabel
                     BackgroundTransparency={1}
                     Position={UDim2.fromOffset(88, 0)}
@@ -96,12 +86,12 @@ export function SelectBasicScene() {
                     TextSize={theme.typography.bodyMd.textSize}
                     TextXAlignment={Enum.TextXAlignment.Left}
                   />
-                </SelectValue>
+                </Select.Value>
               </textbutton>
-            </SelectTrigger>
+            </Select.Trigger>
 
-            <SelectPortal>
-              <SelectContent asChild offset={new Vector2(0, 8)} placement="bottom">
+            <Select.Portal>
+              <Select.Content asChild offset={new Vector2(0, 8)} placement="bottom">
                 <frame
                   {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                     Size: UDim2.fromOffset(320, 176),
@@ -116,7 +106,7 @@ export function SelectBasicScene() {
                   />
                   <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[6])} />
 
-                  <SelectLabel asChild>
+                  <Select.Label asChild>
                     <Text
                       BackgroundTransparency={1}
                       Size={UDim2.fromOffset(300, 18)}
@@ -125,13 +115,13 @@ export function SelectBasicScene() {
                       TextSize={theme.typography.labelSm.textSize}
                       TextXAlignment={Enum.TextXAlignment.Left}
                     />
-                  </SelectLabel>
+                  </Select.Label>
 
-                  <SelectGroup asChild>
+                  <Select.Group asChild>
                     <frame BackgroundTransparency={1} Size={UDim2.fromOffset(300, 104)}>
                       <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[4])} />
 
-                      <SelectItem asChild textValue="alpha" value="alpha">
+                      <Select.Item asChild textValue="alpha" value="alpha">
                         <textbutton
                           {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
                             Size: UDim2.fromOffset(300, 30),
@@ -140,9 +130,9 @@ export function SelectBasicScene() {
                         >
                           <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                         </textbutton>
-                      </SelectItem>
+                      </Select.Item>
 
-                      <SelectItem asChild textValue="beta" value="beta">
+                      <Select.Item asChild textValue="beta" value="beta">
                         <textbutton
                           {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
                             Size: UDim2.fromOffset(300, 30),
@@ -151,9 +141,9 @@ export function SelectBasicScene() {
                         >
                           <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                         </textbutton>
-                      </SelectItem>
+                      </Select.Item>
 
-                      <SelectItem asChild disabled textValue="gamma" value="gamma">
+                      <Select.Item asChild disabled textValue="gamma" value="gamma">
                         <textbutton
                           {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "true" }, theme), {
                             Size: UDim2.fromOffset(300, 30),
@@ -162,17 +152,17 @@ export function SelectBasicScene() {
                         >
                           <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                         </textbutton>
-                      </SelectItem>
+                      </Select.Item>
                     </frame>
-                  </SelectGroup>
+                  </Select.Group>
 
-                  <SelectSeparator asChild>
+                  <Select.Separator asChild>
                     <frame BackgroundColor3={theme.colors.border} BorderSizePixel={0} Size={UDim2.fromOffset(300, 1)} />
-                  </SelectSeparator>
+                  </Select.Separator>
                 </frame>
-              </SelectContent>
-            </SelectPortal>
-          </Select>
+              </Select.Content>
+            </Select.Portal>
+          </Select.Root>
         </frame>
 
         <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(860, 140)}>
@@ -187,8 +177,8 @@ export function SelectBasicScene() {
             TextXAlignment={Enum.TextXAlignment.Left}
           />
 
-          <Select defaultValue="beta">
-            <SelectTrigger asChild>
+          <Select.Root defaultValue="beta">
+            <Select.Trigger asChild>
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
                   Size: UDim2.fromOffset(320, 40),
@@ -204,7 +194,7 @@ export function SelectBasicScene() {
                   TextSize={theme.typography.labelSm.textSize}
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
-                <SelectValue asChild placeholder="Pick quality">
+                <Select.Value asChild placeholder="Pick quality">
                   <textlabel
                     BackgroundTransparency={1}
                     Position={UDim2.fromOffset(88, 0)}
@@ -213,12 +203,12 @@ export function SelectBasicScene() {
                     TextSize={theme.typography.bodyMd.textSize}
                     TextXAlignment={Enum.TextXAlignment.Left}
                   />
-                </SelectValue>
+                </Select.Value>
               </textbutton>
-            </SelectTrigger>
+            </Select.Trigger>
 
-            <SelectPortal>
-              <SelectContent asChild offset={new Vector2(0, 8)} placement="bottom">
+            <Select.Portal>
+              <Select.Content asChild offset={new Vector2(0, 8)} placement="bottom">
                 <frame
                   {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                     Size: UDim2.fromOffset(320, 126),
@@ -233,7 +223,7 @@ export function SelectBasicScene() {
                   />
                   <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[4])} />
 
-                  <SelectItem asChild textValue="low" value="low">
+                  <Select.Item asChild textValue="low" value="low">
                     <textbutton
                       {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
                         Size: UDim2.fromOffset(300, 30),
@@ -242,9 +232,9 @@ export function SelectBasicScene() {
                     >
                       <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                     </textbutton>
-                  </SelectItem>
+                  </Select.Item>
 
-                  <SelectItem asChild textValue="beta" value="beta">
+                  <Select.Item asChild textValue="beta" value="beta">
                     <textbutton
                       {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
                         Size: UDim2.fromOffset(300, 30),
@@ -253,9 +243,9 @@ export function SelectBasicScene() {
                     >
                       <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                     </textbutton>
-                  </SelectItem>
+                  </Select.Item>
 
-                  <SelectItem asChild textValue="high" value="high">
+                  <Select.Item asChild textValue="high" value="high">
                     <textbutton
                       {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
                         Size: UDim2.fromOffset(300, 30),
@@ -264,11 +254,11 @@ export function SelectBasicScene() {
                     >
                       <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
                     </textbutton>
-                  </SelectItem>
+                  </Select.Item>
                 </frame>
-              </SelectContent>
-            </SelectPortal>
-          </Select>
+              </Select.Content>
+            </Select.Portal>
+          </Select.Root>
         </frame>
       </frame>
     </frame>

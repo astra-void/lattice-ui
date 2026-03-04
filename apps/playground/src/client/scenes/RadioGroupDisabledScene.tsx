@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { RadioGroup, RadioGroupItem } from "@lattice-ui/radio-group";
+import { RadioGroup } from "@lattice-ui/radio-group";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
@@ -50,11 +50,11 @@ export function RadioGroupDisabledScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <RadioGroup onValueChange={setValue} orientation="vertical" value={value}>
+        <RadioGroup.Root onValueChange={setValue} orientation="vertical" value={value}>
           <frame BackgroundTransparency={1} Size={UDim2.fromOffset(580, 124)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[6])} />
 
-            <RadioGroupItem asChild value="file">
+            <RadioGroup.Item asChild value="file">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: value === "file" ? "primary" : "surface", size: "sm" }, theme),
@@ -64,9 +64,9 @@ export function RadioGroupDisabledScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
 
-            <RadioGroupItem asChild disabled value="edit">
+            <RadioGroup.Item asChild disabled value="edit">
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                   Active: false,
@@ -76,9 +76,9 @@ export function RadioGroupDisabledScene() {
                   TextColor3: theme.colors.textSecondary,
                 }) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
 
-            <RadioGroupItem asChild value="view">
+            <RadioGroup.Item asChild value="view">
               <textbutton
                 {...(mergeGuiProps(
                   buttonRecipe({ intent: value === "view" ? "primary" : "surface", size: "sm" }, theme),
@@ -88,9 +88,9 @@ export function RadioGroupDisabledScene() {
                   },
                 ) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
           </frame>
-        </RadioGroup>
+        </RadioGroup.Root>
 
         <Text
           BackgroundTransparency={1}
@@ -101,11 +101,11 @@ export function RadioGroupDisabledScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <RadioGroup defaultValue="fixed" disabled>
+        <RadioGroup.Root defaultValue="fixed" disabled>
           <frame BackgroundTransparency={1} Size={UDim2.fromOffset(580, 34)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[6])} />
 
-            <RadioGroupItem asChild value="fixed">
+            <RadioGroup.Item asChild value="fixed">
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                   Active: false,
@@ -115,9 +115,9 @@ export function RadioGroupDisabledScene() {
                   TextColor3: theme.colors.textSecondary,
                 }) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
 
-            <RadioGroupItem asChild value="other">
+            <RadioGroup.Item asChild value="other">
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                   Active: false,
@@ -127,9 +127,9 @@ export function RadioGroupDisabledScene() {
                   TextColor3: theme.colors.textSecondary,
                 }) as Record<string, unknown>)}
               />
-            </RadioGroupItem>
+            </RadioGroup.Item>
           </frame>
-        </RadioGroup>
+        </RadioGroup.Root>
       </frame>
     </frame>
   );

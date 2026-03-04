@@ -1,8 +1,17 @@
-export { TextFieldDescription } from "./TextField/TextFieldDescription";
-export { TextFieldInput } from "./TextField/TextFieldInput";
-export { TextFieldLabel } from "./TextField/TextFieldLabel";
-export { TextFieldMessage } from "./TextField/TextFieldMessage";
-export { TextFieldRoot, TextFieldRoot as TextField } from "./TextField/TextFieldRoot";
+import { TextFieldDescription } from "./TextField/TextFieldDescription";
+import { TextFieldInput } from "./TextField/TextFieldInput";
+import { TextFieldLabel } from "./TextField/TextFieldLabel";
+import { TextFieldMessage } from "./TextField/TextFieldMessage";
+import { TextFieldRoot } from "./TextField/TextFieldRoot";
+
+export const TextField = {
+  Root: TextFieldRoot,
+  Input: TextFieldInput,
+  Label: TextFieldLabel,
+  Description: TextFieldDescription,
+  Message: TextFieldMessage,
+} as const;
+
 export type {
   TextFieldCommitValue,
   TextFieldContextValue,

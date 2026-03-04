@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Popover, PopoverClose, PopoverContent, PopoverPortal, PopoverTrigger } from "@lattice-ui/popover";
+import { Popover } from "@lattice-ui/popover";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
@@ -28,8 +28,8 @@ export function PopoverBasicScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <Popover onOpenChange={setOpen} open={open}>
-        <PopoverTrigger asChild>
+      <Popover.Root onOpenChange={setOpen} open={open}>
+        <Popover.Trigger asChild>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "primary", size: "md" }, theme), {
               Position: UDim2.fromOffset(0, 72),
@@ -37,10 +37,10 @@ export function PopoverBasicScene() {
               Text: open ? "Opened" : "Toggle Popover",
             }) as Record<string, unknown>)}
           />
-        </PopoverTrigger>
+        </Popover.Trigger>
 
-        <PopoverPortal>
-          <PopoverContent asChild offset={new Vector2(0, 10)} placement="bottom">
+        <Popover.Portal>
+          <Popover.Content asChild offset={new Vector2(0, 10)} placement="bottom">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Size: UDim2.fromOffset(300, 180),
@@ -71,7 +71,7 @@ export function PopoverBasicScene() {
                 TextXAlignment={Enum.TextXAlignment.Left}
                 TextYAlignment={Enum.TextYAlignment.Top}
               />
-              <PopoverClose asChild>
+              <Popover.Close asChild>
                 <textbutton
                   {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                     Position: UDim2.fromOffset(0, 112),
@@ -79,11 +79,11 @@ export function PopoverBasicScene() {
                     Text: "Close",
                   }) as Record<string, unknown>)}
                 />
-              </PopoverClose>
+              </Popover.Close>
             </frame>
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
     </frame>
   );
 }

@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { Dialog, DialogContent, DialogPortal } from "@lattice-ui/dialog";
+import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
@@ -10,13 +10,13 @@ export = () => {
       withReactHarness("DialogClosed", (harness) => {
         harness.render(
           <PortalProvider container={harness.playerGui}>
-            <Dialog open={false}>
-              <DialogPortal>
-                <DialogContent>
+            <Dialog.Root open={false}>
+              <Dialog.Portal>
+                <Dialog.Content>
                   <textlabel Text="dialog-closed-marker" />
-                </DialogContent>
-              </DialogPortal>
-            </Dialog>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
           </PortalProvider>,
         );
 
@@ -30,13 +30,13 @@ export = () => {
       withReactHarness("DialogDefaultOpen", (harness) => {
         harness.render(
           <PortalProvider container={harness.playerGui}>
-            <Dialog defaultOpen={true}>
-              <DialogPortal>
-                <DialogContent>
+            <Dialog.Root defaultOpen={true}>
+              <Dialog.Portal>
+                <Dialog.Content>
                   <textlabel Text="dialog-open-marker" />
-                </DialogContent>
-              </DialogPortal>
-            </Dialog>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
           </PortalProvider>,
         );
 
@@ -50,13 +50,13 @@ export = () => {
       withReactHarness("DialogForceMount", (harness) => {
         harness.render(
           <PortalProvider container={harness.playerGui}>
-            <Dialog open={false}>
-              <DialogPortal>
-                <DialogContent forceMount={true}>
+            <Dialog.Root open={false}>
+              <Dialog.Portal>
+                <Dialog.Content forceMount={true}>
                   <textlabel Text="dialog-force-mount-marker" />
-                </DialogContent>
-              </DialogPortal>
-            </Dialog>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
           </PortalProvider>,
         );
 

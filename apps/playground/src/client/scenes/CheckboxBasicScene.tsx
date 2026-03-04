@@ -1,6 +1,6 @@
-import type { CheckedState } from "@lattice-ui/checkbox";
-import { Checkbox, CheckboxIndicator } from "@lattice-ui/checkbox";
 import { React } from "@lattice-ui/core";
+import { Checkbox } from "@lattice-ui/checkbox";
+import type { CheckedState } from "@lattice-ui/checkbox";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
@@ -47,7 +47,7 @@ export function CheckboxBasicScene() {
         />
         <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
-        <Checkbox asChild checked={controlled} onCheckedChange={setControlled}>
+        <Checkbox.Root asChild checked={controlled} onCheckedChange={setControlled}>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
               Size: UDim2.fromOffset(610, 44),
@@ -61,7 +61,7 @@ export function CheckboxBasicScene() {
               Size={UDim2.fromOffset(24, 24)}
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
-              <CheckboxIndicator asChild forceMount>
+              <Checkbox.Indicator asChild forceMount>
                 <Text
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(0, 0)}
@@ -70,7 +70,7 @@ export function CheckboxBasicScene() {
                   TextColor3={theme.colors.textPrimary}
                   TextSize={theme.typography.bodyMd.textSize}
                 />
-              </CheckboxIndicator>
+              </Checkbox.Indicator>
             </frame>
             <Text
               BackgroundTransparency={1}
@@ -82,9 +82,9 @@ export function CheckboxBasicScene() {
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </textbutton>
-        </Checkbox>
+        </Checkbox.Root>
 
-        <Checkbox asChild defaultChecked="indeterminate" onCheckedChange={setUncontrolled}>
+        <Checkbox.Root asChild defaultChecked="indeterminate" onCheckedChange={setUncontrolled}>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
               Size: UDim2.fromOffset(610, 44),
@@ -98,7 +98,7 @@ export function CheckboxBasicScene() {
               Size={UDim2.fromOffset(24, 24)}
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
-              <CheckboxIndicator asChild forceMount>
+              <Checkbox.Indicator asChild forceMount>
                 <Text
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(0, 0)}
@@ -107,7 +107,7 @@ export function CheckboxBasicScene() {
                   TextColor3={theme.colors.textPrimary}
                   TextSize={theme.typography.bodyMd.textSize}
                 />
-              </CheckboxIndicator>
+              </Checkbox.Indicator>
             </frame>
             <Text
               BackgroundTransparency={1}
@@ -119,9 +119,9 @@ export function CheckboxBasicScene() {
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </textbutton>
-        </Checkbox>
+        </Checkbox.Root>
 
-        <Checkbox asChild checked={true} disabled>
+        <Checkbox.Root asChild checked={true} disabled>
           <textbutton
             {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "md" }, theme), {
               Size: UDim2.fromOffset(610, 44),
@@ -135,7 +135,7 @@ export function CheckboxBasicScene() {
               Size={UDim2.fromOffset(24, 24)}
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
-              <CheckboxIndicator asChild>
+              <Checkbox.Indicator asChild>
                 <Text
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(0, 0)}
@@ -144,7 +144,7 @@ export function CheckboxBasicScene() {
                   TextColor3={theme.colors.textSecondary}
                   TextSize={theme.typography.bodyMd.textSize}
                 />
-              </CheckboxIndicator>
+              </Checkbox.Indicator>
             </frame>
             <Text
               BackgroundTransparency={1}
@@ -156,7 +156,7 @@ export function CheckboxBasicScene() {
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </textbutton>
-        </Checkbox>
+        </Checkbox.Root>
       </frame>
 
       <textbutton

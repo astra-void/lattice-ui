@@ -4,16 +4,16 @@ Headless single-select primitives built for Roblox UI.
 
 ## Exports
 
-- `Select` (`SelectRoot` alias)
-- `SelectRoot`
-- `SelectTrigger`
-- `SelectValue`
-- `SelectPortal`
-- `SelectContent`
-- `SelectItem`
-- `SelectGroup`
-- `SelectLabel`
-- `SelectSeparator`
+- `Select`
+- `Select.Root`
+- `Select.Trigger`
+- `Select.Value`
+- `Select.Portal`
+- `Select.Content`
+- `Select.Item`
+- `Select.Group`
+- `Select.Label`
+- `Select.Separator`
 
 ## Notes
 

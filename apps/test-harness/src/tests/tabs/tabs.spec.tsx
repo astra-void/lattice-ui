@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "@lattice-ui/tabs";
+import { Tabs } from "@lattice-ui/tabs";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
@@ -8,22 +8,22 @@ export = () => {
     it("selects the first enabled trigger when defaultValue is not provided", () => {
       withReactHarness("TabsDefaultSelection", (harness) => {
         harness.render(
-          <TabsRoot>
-            <TabsList>
-              <TabsTrigger asChild value="alpha">
+          <Tabs.Root>
+            <Tabs.List>
+              <Tabs.Trigger asChild value="alpha">
                 <textbutton Text="tabs-trigger-alpha-default" />
-              </TabsTrigger>
-              <TabsTrigger asChild value="beta">
+              </Tabs.Trigger>
+              <Tabs.Trigger asChild value="beta">
                 <textbutton Text="tabs-trigger-beta-default" />
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent asChild value="alpha">
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content asChild value="alpha">
               <textlabel Text="tabs-content-alpha-default" />
-            </TabsContent>
-            <TabsContent asChild value="beta">
+            </Tabs.Content>
+            <Tabs.Content asChild value="beta">
               <textlabel Text="tabs-content-beta-default" />
-            </TabsContent>
-          </TabsRoot>,
+            </Tabs.Content>
+          </Tabs.Root>,
         );
 
         waitForEffects();
@@ -41,22 +41,22 @@ export = () => {
     it("falls back to the next enabled tab when the selected tab becomes disabled", () => {
       withReactHarness("TabsDisabledFallback", (harness) => {
         const renderTabs = (disableBeta: boolean) => (
-          <TabsRoot defaultValue="beta">
-            <TabsList>
-              <TabsTrigger asChild value="alpha">
+          <Tabs.Root defaultValue="beta">
+            <Tabs.List>
+              <Tabs.Trigger asChild value="alpha">
                 <textbutton Text="tabs-trigger-alpha-fallback" />
-              </TabsTrigger>
-              <TabsTrigger asChild disabled={disableBeta} value="beta">
+              </Tabs.Trigger>
+              <Tabs.Trigger asChild disabled={disableBeta} value="beta">
                 <textbutton Text="tabs-trigger-beta-fallback" />
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent asChild value="alpha">
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content asChild value="alpha">
               <textlabel Text="tabs-content-alpha-fallback" />
-            </TabsContent>
-            <TabsContent asChild value="beta">
+            </Tabs.Content>
+            <Tabs.Content asChild value="beta">
               <textlabel Text="tabs-content-beta-fallback" />
-            </TabsContent>
-          </TabsRoot>
+            </Tabs.Content>
+          </Tabs.Root>
         );
 
         harness.render(renderTabs(false));
@@ -77,22 +77,22 @@ export = () => {
     it("switches visible content when controlled value changes", () => {
       withReactHarness("TabsContentSwitch", (harness) => {
         const renderControlledTabs = (value: string) => (
-          <TabsRoot value={value}>
-            <TabsList>
-              <TabsTrigger asChild value="left">
+          <Tabs.Root value={value}>
+            <Tabs.List>
+              <Tabs.Trigger asChild value="left">
                 <textbutton Text="tabs-trigger-left-controlled" />
-              </TabsTrigger>
-              <TabsTrigger asChild value="right">
+              </Tabs.Trigger>
+              <Tabs.Trigger asChild value="right">
                 <textbutton Text="tabs-trigger-right-controlled" />
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent asChild value="left">
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content asChild value="left">
               <textlabel Text="tabs-content-left-controlled" />
-            </TabsContent>
-            <TabsContent asChild value="right">
+            </Tabs.Content>
+            <Tabs.Content asChild value="right">
               <textlabel Text="tabs-content-right-controlled" />
-            </TabsContent>
-          </TabsRoot>
+            </Tabs.Content>
+          </Tabs.Root>
         );
 
         harness.render(renderControlledTabs("left"));

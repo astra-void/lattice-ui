@@ -4,8 +4,8 @@ Behavior-only Tabs primitives for Roblox UI, aligned with the lattice compound p
 
 ## Exports
 
-- `Tabs` (`TabsRoot` alias)
-- `TabsRoot`
-- `TabsList`
-- `TabsTrigger`
-- `TabsContent`
+- `Tabs`
+- `Tabs.Root`
+- `Tabs.List`
+- `Tabs.Trigger`
+- `Tabs.Content`

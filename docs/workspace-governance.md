@@ -36,6 +36,28 @@
 4. Publish with `pnpm release:publish`.
 5. Inspect `pnpm-publish-summary.json` if needed.
 
+## Local Release Checklist (No CI)
+
+Run this sequence from the repository root before a release:
+
+1. `pnpm run verify:workspace`
+2. `pnpm test`
+3. `pnpm run test:rbx`
+4. `pnpm run changeset:status`
+5. `pnpm run release:prepare`
+6. `pnpm run release:publish:dry-run`
+7. `pnpm run publish:summary`
+
+Optional/manual RBX execution (not part of the official release chain):
+
+1. `pnpm run test:rbx:headless` (requires environment write access to `~/Documents/Roblox/Plugins`)
+2. If headless fails with `Operation not permitted (os error 1)`, run `pnpm run test:rbx:run` and execute in Roblox Studio manually.
+
+Recommended commit split:
+
+1. Commit test infrastructure and documentation changes first.
+2. Commit `release:prepare` outputs (version/changelog/lockfile updates) separately.
+
 ## v1.0.0 Upgrade Plan
 
 - Stay on lockedstep `0.x` until the v1 milestone is ready.

@@ -4,11 +4,11 @@ Headless single-thumb slider primitives for Roblox UI.
 
 ## Exports
 
-- `Slider` (`SliderRoot` alias)
-- `SliderRoot`
-- `SliderTrack`
-- `SliderRange`
-- `SliderThumb`
+- `Slider`
+- `Slider.Root`
+- `Slider.Track`
+- `Slider.Range`
+- `Slider.Thumb`
 
 ## Notes
 

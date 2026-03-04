@@ -1,22 +1,22 @@
 import { React } from "@lattice-ui/core";
+import { Popover } from "@lattice-ui/popover";
 import { PortalProvider } from "@lattice-ui/layer";
-import { Popover, PopoverAnchor, PopoverContent, PopoverPortal } from "@lattice-ui/popover";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
 function renderPopoverTestTree(open: boolean, forceMount: boolean, markerText: string, playerGui: PlayerGui) {
   return (
     <PortalProvider container={playerGui}>
-      <Popover open={open}>
-        <PopoverAnchor asChild>
+      <Popover.Root open={open}>
+        <Popover.Anchor asChild>
           <frame />
-        </PopoverAnchor>
-        <PopoverPortal>
-          <PopoverContent asChild forceMount={forceMount}>
+        </Popover.Anchor>
+        <Popover.Portal>
+          <Popover.Content asChild forceMount={forceMount}>
             <textlabel Text={markerText} />
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
     </PortalProvider>
   );
 }
