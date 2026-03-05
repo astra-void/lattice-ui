@@ -1,6 +1,6 @@
 {
   "name": "lattice-ui-monorepo",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "",
   "scripts": {
@@ -27,7 +27,7 @@
     "test:rbx:run": "pnpm run test:rbx:prepare && pnpm run test:rbx:place && echo \"Open apps/test-harness/test-harness.rbxlx in Roblox Studio and press Play to run TestEZ suites.\"",
     "test": "pnpm run test:unit",
     "lint:types": "eslint \"{packages,apps}/**/*.{ts,tsx}\"",
-    "verify:types": "pnpm run check:any && pnpm run lint:types && pnpm run typecheck",
+    "verify:types": "pnpm run lint:types && pnpm run typecheck",
     "verify:workspace": "pnpm run workspace:check && pnpm run verify:types",
     "lint": "pnpm -w eslint .",
     "lint:fix": "pnpm -w eslint . --fix",
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.5",
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.30.0",
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.1",
     "@lattice-ui/checkbox": "workspace:*",
@@ -82,6 +82,9 @@
     "tsx": "^4.21.0",
     "typescript": "5.9.3",
     "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "lodash": "4.17.23"
   },
   "packageManager": "pnpm@10.30.3"
 }

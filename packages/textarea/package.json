@@ -1,6 +1,6 @@
 {
   "name": "@lattice-ui/textarea",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "main": "out/init.luau",
   "types": "out/index.d.ts",

@@ -119,7 +119,7 @@ describe("command behavior", () => {
     await runAddCommand(ctx, { names: [], presets: ["overlay"] });
 
     expect(add).toHaveBeenCalledTimes(1);
-    const specs = (add.mock.calls[0] as unknown as unknown[])?.[1] as unknown as string[] ?? [];
+    const specs = ((add.mock.calls[0] as unknown as unknown[])?.[1] as unknown as string[]) ?? [];
     expect(specs).toEqual(["@lattice-ui/popover", "@rbxts/react", "@rbxts/react-roblox"]);
     expect(specs).not.toContain("@lattice-ui/layer");
   });
