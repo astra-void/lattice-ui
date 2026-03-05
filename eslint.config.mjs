@@ -83,6 +83,7 @@ export default defineConfig([
   },
   {
     files: ["packages/cli/**/*.ts"],
+    ignores: ["packages/cli/templates/**/*.ts"],
     extends: compat.extends(
       "eslint:recommended",
       "plugin:@typescript-eslint/recommended",
