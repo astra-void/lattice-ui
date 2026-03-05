@@ -1,0 +1,38 @@
+---
+title: "Popper"
+description: "Initial skeleton package for popper-style positioning."
+draft: false
+sidebar:
+  order: 11
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add popper
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add popper
+```
+
+## Package
+
+- npm: `@lattice-ui/popper`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `usePopper`
+- `compute placement utilities`
+- `Popper types`
+
+## Notes
+
+- Provides the positioning core used by anchored overlays like Select, Tooltip, and Popover.
+- Pair with `@lattice-ui/layer` portals for predictable overlay placement.

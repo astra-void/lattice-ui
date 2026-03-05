@@ -5,12 +5,13 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@lattice-ui/playground", "@lattice-ui/test-harness"],
+  "ignore": ["@lattice-ui/docs", "@lattice-ui/playground", "@lattice-ui/test-harness"],
   "fixed": [
     [
       "@lattice-ui/accordion",
       "@lattice-ui/avatar",
       "@lattice-ui/checkbox",
+      "@lattice-ui/cli",
       "@lattice-ui/combobox",
       "@lattice-ui/core",
       "@lattice-ui/dialog",

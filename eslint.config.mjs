@@ -17,9 +17,10 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules/**", "**/out/**", "**/include/**", "tests/vitest/**"]),
+  globalIgnores(["**/node_modules/**", "**/out/**", "**/dist/**", "**/.astro/**", "**/include/**", "tests/vitest/**"]),
   {
     files: ["{packages,apps}/**/*.{ts,tsx}"],
+    ignores: ["packages/cli/**"],
     extends: compat.extends(
       "eslint:recommended",
       "plugin:@typescript-eslint/recommended",
@@ -39,6 +40,38 @@ export default defineConfig([
         jsx: true,
         useJSXTextNode: true,
         project: "./tsconfig.eslint.json",
+        tsconfigRootDir: __dirname,
+      },
+    },
+
+    rules: {
+      "prettier/prettier": "warn",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+    },
+  },
+  {
+    files: ["packages/cli/**/*.ts"],
+    extends: compat.extends(
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended",
+    ),
+
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
+      prettier,
+    },
+
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: "./packages/cli/tsconfig.json",
         tsconfigRootDir: __dirname,
       },
     },

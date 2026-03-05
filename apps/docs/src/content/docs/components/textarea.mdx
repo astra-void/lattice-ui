@@ -1,0 +1,42 @@
+---
+title: "Textarea"
+description: "Headless multi-line text input primitives for Roblox UI with optional auto-resize behavior."
+draft: false
+sidebar:
+  order: 22
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add textarea
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add textarea
+```
+
+## Package
+
+- npm: `@lattice-ui/textarea`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `Textarea`
+- `Textarea.Root`
+- `Textarea.Input`
+- `Textarea.Label`
+- `Textarea.Description`
+- `Textarea.Message`
+
+## Notes
+
+- Supports controlled/uncontrolled `value`.
+- `autoResize` is enabled by default and respects `minRows`/`maxRows`.
+- `onValueCommit` fires on `FocusLost` commit moments.

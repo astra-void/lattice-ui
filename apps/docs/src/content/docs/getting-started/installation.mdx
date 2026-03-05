@@ -1,0 +1,68 @@
+---
+title: Installation
+description: Install and run the Lattice UI CLI in global and monorepo-local workflows.
+draft: false
+sidebar:
+  order: 1
+---
+
+## Prerequisites
+
+- Node.js 20+
+- pnpm 10+
+- A Roblox TS project using `@rbxts/react` and `@rbxts/react-roblox`
+
+## Choose CLI Execution Mode
+
+Use one of these two supported modes:
+
+- Global CLI: suitable for app projects outside this monorepo.
+- Monorepo local script: suitable when working inside this repository.
+
+### Global CLI
+
+```bash
+npm i -g @lattice-ui/cli
+lattice --help
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice --help
+```
+
+## Package Manager Strategy
+
+The CLI auto-detects package manager from lockfiles. Override explicitly when needed:
+
+```bash
+lattice --pm pnpm doctor
+pnpm lattice --pm pnpm doctor
+```
+
+## Install Core and Feature Packages via CLI
+
+### Global CLI
+
+```bash
+lattice add core,style,system
+lattice add accordion,dialog,toast
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add core,style,system
+pnpm lattice add accordion,dialog,toast
+```
+
+## Peer Dependencies
+
+Make sure your project includes compatible peer dependencies:
+
+```bash
+pnpm add @rbxts/react @rbxts/react-roblox
+```
+
+Next: continue with the end-to-end workflow in [/getting-started/quick-start/](/getting-started/quick-start/).

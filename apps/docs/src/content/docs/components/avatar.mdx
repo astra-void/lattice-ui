@@ -1,0 +1,40 @@
+---
+title: "Avatar"
+description: "Headless avatar primitives for Roblox UI with delayed fallback rendering."
+draft: false
+sidebar:
+  order: 2
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add avatar
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add avatar
+```
+
+## Package
+
+- npm: `@lattice-ui/avatar`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `Avatar`
+- `Avatar.Root`
+- `Avatar.Image`
+- `Avatar.Fallback`
+
+## Notes
+
+- `delayMs` controls fallback reveal timing (default: `250`).
+- Missing image sources immediately show fallback content.
+- Fallback visibility logic is exported for unit testing.

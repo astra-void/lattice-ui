@@ -1,65 +1,13 @@
-# Workspace Governance
+# Workspace Governance (Moved)
 
-## Goals
+This root file is no longer the source of truth.
 
-- Keep package structure modular without increasing maintenance cost.
-- Enforce lockedstep versioning for publishable packages.
-- Prevent dependency and metadata drift with deterministic scripts.
+Use `apps/docs` docs content instead:
 
-## Create a New Package
+- Source page: `apps/docs/src/content/docs/reference/workspace-governance.mdx`
+- Published route: `/reference/workspace-governance/`
 
-1. Run `pnpm package:new --name <kebab-name>`.
-2. Optionally include deps and app linking:
-   `pnpm package:new --name slider --deps core,focus --app-link playground`
-3. Implement code in `packages/<name>/src`.
-4. Verify policy with `pnpm workspace:check`.
+For app-level dependency workflows (`lattice init/add/upgrade/doctor`), see:
 
-## Dependency Rules
-
-- Internal workspace dependencies must always use `workspace:*`.
-- Publishable packages must include peer deps:
-  - `@rbxts/react: ^17`
-  - `@rbxts/react-roblox: ^17`
-- Canonical metadata and typecheck paths are auto-fixed by `pnpm workspace:sync`.
-
-## Changeset Rules
-
-- Public package changes require a changeset (`pnpm changeset:add`).
-- `apps/*` workspaces are ignored from publish versioning.
-- Publishable `packages/*` are locked in one fixed version group.
-
-## Manual Release Steps
-
-1. Ensure there is at least one pending changeset.
-2. Run `pnpm release:prepare`.
-3. Review changed package versions and changelog entries.
-4. Publish with `pnpm release:publish`.
-5. Inspect `pnpm-publish-summary.json` if needed.
-
-## Local Release Checklist (No CI)
-
-Run this sequence from the repository root before a release:
-
-1. `pnpm run verify:workspace`
-2. `pnpm test`
-3. `pnpm run test:rbx`
-4. `pnpm run changeset:status`
-5. `pnpm run release:prepare`
-6. `pnpm run release:publish:dry-run`
-7. `pnpm run publish:summary`
-
-Optional/manual RBX execution (not part of the official release chain):
-
-1. `pnpm run test:rbx:headless` (requires environment write access to `~/Documents/Roblox/Plugins`)
-2. If headless fails with `Operation not permitted (os error 1)`, run `pnpm run test:rbx:run` and execute in Roblox Studio manually.
-
-Recommended commit split:
-
-1. Commit test infrastructure and documentation changes first.
-2. Commit `release:prepare` outputs (version/changelog/lockfile updates) separately.
-
-## v1.0.0 Upgrade Plan
-
-- Stay on lockedstep `0.x` until the v1 milestone is ready.
-- Add one coordinated major changeset.
-- Run `pnpm release:prepare` and publish all packages together.
+- `/cli/`
+- `/cli/commands/`

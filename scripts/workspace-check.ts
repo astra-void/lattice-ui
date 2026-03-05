@@ -8,6 +8,7 @@ import {
   getInternalPackageNames,
   getLockedVersion,
   getPolicy,
+  isToolingPackage,
   jsonEqual,
   listApps,
   listPackages,
@@ -54,13 +55,14 @@ const lockedVersion = getLockedVersion(policy, packages);
 const requiredFiles = policy.requiredFiles ?? ["src/index.ts", "tsconfig.json", "tsconfig.typecheck.json"];
 const defaultPeerDependencies = policy.defaultPeerDependencies ?? {};
 const requiredScripts = policy.packageDefaults?.scripts ?? {};
+const typecheckPathPackages = packages.filter((pkg) => !isToolingPackage(policy, pkg.manifest.name));
 const expectedTypecheckTsconfig = {
   extends: "./tsconfig.json",
   compilerOptions: {
     noEmit: true,
     baseUrl: "..",
     rootDir: "..",
-    paths: createWorkspacePaths(packages),
+    paths: createWorkspacePaths(typecheckPathPackages),
   },
 };
 
@@ -95,40 +97,47 @@ if (typeof policy.lockedstep?.major === "number") {
 }
 
 for (const pkg of packages) {
-  for (const requiredFile of requiredFiles) {
-    const targetPath = path.join(pkg.dirPath, requiredFile);
-    if (!fileExists(targetPath)) {
-      errors.push(`${pkg.manifest.name} is missing required file: ${requiredFile}.`);
+  const toolingPackage = isToolingPackage(policy, pkg.manifest.name);
+
+  if (!toolingPackage) {
+    for (const requiredFile of requiredFiles) {
+      const targetPath = path.join(pkg.dirPath, requiredFile);
+      if (!fileExists(targetPath)) {
+        errors.push(`${pkg.manifest.name} is missing required file: ${requiredFile}.`);
+      }
     }
   }
 
   const defaults = policy.packageDefaults ?? {};
-  if (defaults.main && pkg.manifest.main !== defaults.main) {
-    errors.push(`${pkg.manifest.name} has main="${pkg.manifest.main}" but expected "${defaults.main}".`);
-  }
-  if (defaults.types && pkg.manifest.types !== defaults.types) {
-    errors.push(`${pkg.manifest.name} has types="${pkg.manifest.types}" but expected "${defaults.types}".`);
-  }
   if (typeof defaults.private === "boolean" && pkg.manifest.private !== defaults.private) {
     errors.push(`${pkg.manifest.name} has private=${pkg.manifest.private} but expected ${defaults.private}.`);
   }
 
-  for (const [scriptName, scriptCommand] of Object.entries(requiredScripts)) {
-    if (!pkg.manifest.scripts?.[scriptName]) {
-      errors.push(`${pkg.manifest.name} is missing required script "${scriptName}".`);
-      continue;
+  if (!toolingPackage) {
+    if (defaults.main && pkg.manifest.main !== defaults.main) {
+      errors.push(`${pkg.manifest.name} has main="${pkg.manifest.main}" but expected "${defaults.main}".`);
+    }
+    if (defaults.types && pkg.manifest.types !== defaults.types) {
+      errors.push(`${pkg.manifest.name} has types="${pkg.manifest.types}" but expected "${defaults.types}".`);
     }
 
-    if (scriptName === "typecheck" && pkg.manifest.scripts[scriptName] !== scriptCommand) {
-      errors.push(
-        `${pkg.manifest.name} has typecheck script "${pkg.manifest.scripts[scriptName]}" but expected "${scriptCommand}".`,
-      );
-    }
-  }
+    for (const [scriptName, scriptCommand] of Object.entries(requiredScripts)) {
+      if (!pkg.manifest.scripts?.[scriptName]) {
+        errors.push(`${pkg.manifest.name} is missing required script "${scriptName}".`);
+        continue;
+      }
 
-  for (const [peerName, peerVersion] of Object.entries(defaultPeerDependencies)) {
-    if (pkg.manifest.peerDependencies?.[peerName] !== peerVersion) {
-      errors.push(`${pkg.manifest.name} must define peerDependencies.${peerName} as "${peerVersion}".`);
+      if (scriptName === "typecheck" && pkg.manifest.scripts[scriptName] !== scriptCommand) {
+        errors.push(
+          `${pkg.manifest.name} has typecheck script "${pkg.manifest.scripts[scriptName]}" but expected "${scriptCommand}".`,
+        );
+      }
+    }
+
+    for (const [peerName, peerVersion] of Object.entries(defaultPeerDependencies)) {
+      if (pkg.manifest.peerDependencies?.[peerName] !== peerVersion) {
+        errors.push(`${pkg.manifest.name} must define peerDependencies.${peerName} as "${peerVersion}".`);
+      }
     }
   }
 
@@ -151,11 +160,13 @@ for (const pkg of packages) {
     }
   }
 
-  const typecheckPath = path.join(pkg.dirPath, "tsconfig.typecheck.json");
-  if (fileExists(typecheckPath)) {
-    const typecheckConfig = readJson<unknown>(typecheckPath);
-    if (!jsonEqual(typecheckConfig, expectedTypecheckTsconfig)) {
-      errors.push(`${pkg.manifest.name} has a non-canonical tsconfig.typecheck.json. Run "pnpm workspace:sync".`);
+  if (!toolingPackage) {
+    const typecheckPath = path.join(pkg.dirPath, "tsconfig.typecheck.json");
+    if (fileExists(typecheckPath)) {
+      const typecheckConfig = readJson<unknown>(typecheckPath);
+      if (!jsonEqual(typecheckConfig, expectedTypecheckTsconfig)) {
+        errors.push(`${pkg.manifest.name} has a non-canonical tsconfig.typecheck.json. Run "pnpm workspace:sync".`);
+      }
     }
   }
 }

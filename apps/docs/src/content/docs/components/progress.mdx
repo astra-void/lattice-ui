@@ -1,0 +1,40 @@
+---
+title: "Progress"
+description: "Headless progress and spinner primitives for Roblox UI."
+draft: false
+sidebar:
+  order: 12
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add progress
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add progress
+```
+
+## Package
+
+- npm: `@lattice-ui/progress`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `Progress`
+- `Progress.Root`
+- `Progress.Indicator`
+- `Progress.Spinner`
+
+## Notes
+
+- `Progress` supports `value`/`max` and clamps out-of-range values.
+- `indeterminate` mode uses a fixed indicator ratio.
+- `Spinner` defaults to `spinning=true` and rotates on heartbeat.

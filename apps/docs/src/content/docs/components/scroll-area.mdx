@@ -1,0 +1,42 @@
+---
+title: "Scroll Area"
+description: "Headless scroll area primitives for Roblox UI with custom scrollbars and thumbs."
+draft: false
+sidebar:
+  order: 14
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add scroll-area
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add scroll-area
+```
+
+## Package
+
+- npm: `@lattice-ui/scroll-area`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `ScrollArea`
+- `ScrollArea.Root`
+- `ScrollArea.Viewport`
+- `ScrollArea.Scrollbar`
+- `ScrollArea.Thumb`
+- `ScrollArea.Corner`
+
+## Notes
+
+- Supports vertical and horizontal scrollbar primitives.
+- `type` supports `auto`, `always`, and `scroll` visibility policies.
+- Thumb/canvas math helpers are exported for unit testing.

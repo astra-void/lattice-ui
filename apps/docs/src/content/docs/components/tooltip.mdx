@@ -1,0 +1,42 @@
+---
+title: "Tooltip"
+description: "Headless tooltip primitives for contextual hover/focus hints."
+draft: false
+sidebar:
+  order: 25
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add tooltip
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add tooltip
+```
+
+## Package
+
+- npm: `@lattice-ui/tooltip`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`, `@lattice-ui/layer`, `@lattice-ui/popper`
+
+## Primary Exports
+
+- `Tooltip`
+- `Tooltip.Provider`
+- `Tooltip.Root`
+- `Tooltip.Trigger`
+- `Tooltip.Portal`
+- `Tooltip.Content`
+
+## Notes
+
+- `Tooltip.Provider` coordinates timing behavior across nested or sibling tooltips.
+- `Tooltip.Content` is portal-friendly for reliable overlap behavior.
+- Tooltip content can be portal-mounted for better overlap behavior.

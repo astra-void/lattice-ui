@@ -1,0 +1,47 @@
+---
+title: "Style"
+description: "Theme tokens, style primitives, and sx helpers for Lattice UI."
+draft: false
+sidebar:
+  order: 17
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add style
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add style
+```
+
+## Package
+
+- npm: `@lattice-ui/style`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `ThemeProvider`
+- `useTheme`
+- `useThemeValue`
+- `createTheme`
+- `defaultLightTheme`
+- `defaultDarkTheme`
+- `Box`
+- `Text`
+- `createRecipe`
+- `mergeGuiProps`
+- `mergeSx`
+- `resolveSx`
+
+## Notes
+
+- Use `ThemeProvider` plus token creators to drive consistent visual language.
+- `createRecipe` and `sx` helpers reduce repeated style object composition.

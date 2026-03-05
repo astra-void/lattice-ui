@@ -11,6 +11,7 @@ include
 .pnpm-store
 .pnpm_store
 .DS_Store
+.astro
 
 pnpm-publish-summary.json
 run-in-roblox.log

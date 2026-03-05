@@ -1,0 +1,6 @@
+{
+  "presets": {
+    "overlay": ["popover", "tooltip", "dialog", "toast"],
+    "form": ["checkbox", "radio-group", "switch", "text-field", "textarea"]
+  }
+}

@@ -10,6 +10,7 @@ import {
   getInternalPackageNames,
   getLockedVersion,
   getPolicy,
+  isToolingPackage,
   jsonEqual,
   listApps,
   listPackages,
@@ -83,6 +84,7 @@ const internalDependencySpec = policy.internalDependencyVersion ?? "workspace:*"
 
 let manifestUpdates = 0;
 for (const pkg of packages) {
+  const toolingPackage = isToolingPackage(policy, pkg.manifest.name);
   const nextManifest: PackageManifest = structuredClone(pkg.manifest);
 
   nextManifest.version = lockedVersion;
@@ -90,26 +92,39 @@ for (const pkg of packages) {
   if (typeof defaults.private === "boolean") {
     nextManifest.private = defaults.private;
   }
-  if (defaults.main) {
-    nextManifest.main = defaults.main;
-  }
-  if (defaults.types) {
-    nextManifest.types = defaults.types;
+
+  if (!toolingPackage) {
+    if (defaults.main) {
+      nextManifest.main = defaults.main;
+    }
+    if (defaults.types) {
+      nextManifest.types = defaults.types;
+    }
   }
 
   nextManifest.scripts = nextManifest.scripts ?? {};
-  for (const [scriptName, scriptCommand] of Object.entries(defaultScripts)) {
-    if (!nextManifest.scripts[scriptName]) {
-      nextManifest.scripts[scriptName] = scriptCommand;
+  if (!toolingPackage) {
+    for (const [scriptName, scriptCommand] of Object.entries(defaultScripts)) {
+      if (!nextManifest.scripts[scriptName]) {
+        nextManifest.scripts[scriptName] = scriptCommand;
+      }
     }
   }
   nextManifest.scripts = sortRecord(nextManifest.scripts);
 
-  nextManifest.peerDependencies = nextManifest.peerDependencies ?? {};
-  for (const [peerName, peerVersion] of Object.entries(defaultPeerDependencies)) {
-    nextManifest.peerDependencies[peerName] = peerVersion;
+  if (!toolingPackage) {
+    nextManifest.peerDependencies = nextManifest.peerDependencies ?? {};
+    for (const [peerName, peerVersion] of Object.entries(defaultPeerDependencies)) {
+      nextManifest.peerDependencies[peerName] = peerVersion;
+    }
+    nextManifest.peerDependencies = sortRecord(nextManifest.peerDependencies);
+  } else if (
+    nextManifest.peerDependencies &&
+    typeof nextManifest.peerDependencies === "object" &&
+    !Array.isArray(nextManifest.peerDependencies)
+  ) {
+    nextManifest.peerDependencies = sortRecord(nextManifest.peerDependencies);
   }
-  nextManifest.peerDependencies = sortRecord(nextManifest.peerDependencies);
 
   coerceInternalDependencySpec(nextManifest, internalNames, internalDependencySpec);
 
@@ -126,7 +141,8 @@ for (const pkg of packages) {
   }
 }
 
-const expectedPaths = createWorkspacePaths(packages);
+const typecheckPathPackages = packages.filter((pkg) => !isToolingPackage(policy, pkg.manifest.name));
+const expectedPaths = createWorkspacePaths(typecheckPathPackages);
 const expectedTypecheckTsconfig = {
   extends: "./tsconfig.json",
   compilerOptions: {
@@ -139,6 +155,10 @@ const expectedTypecheckTsconfig = {
 
 let typecheckUpdates = 0;
 for (const pkg of packages) {
+  if (isToolingPackage(policy, pkg.manifest.name)) {
+    continue;
+  }
+
   const typecheckPath = path.join(pkg.dirPath, "tsconfig.typecheck.json");
   const currentTypecheck = fileExists(typecheckPath) ? readJson<unknown>(typecheckPath) : null;
   if (!jsonEqual(currentTypecheck, expectedTypecheckTsconfig)) {

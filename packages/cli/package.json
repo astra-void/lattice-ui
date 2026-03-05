@@ -1,0 +1,25 @@
+{
+  "name": "@lattice-ui/cli",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Lattice UI CLI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "registry",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "watch": "tsc -p tsconfig.json -w"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "lattice": "dist/index.js"
+  }
+}

@@ -1,0 +1,39 @@
+---
+title: CLI Overview
+description: Use the Lattice UI CLI to initialize projects and manage component dependencies.
+draft: false
+sidebar:
+  order: 1
+---
+
+Audience: app developers integrating Lattice UI into project codebases.
+
+The `lattice` CLI is the recommended way to scaffold and maintain Lattice UI dependencies.
+
+## When to Use CLI
+
+- Initialize a new project baseline (`init`)
+- Install component dependencies by name or preset (`add`)
+- Upgrade installed `@lattice-ui/*` packages (`upgrade`)
+- Diagnose package manager and dependency issues (`doctor`)
+
+## Execution Modes
+
+### Global CLI
+
+```bash
+npm i -g @lattice-ui/cli
+lattice --help
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice --help
+```
+
+## Next Steps
+
+- Command reference: [/cli/commands/](/cli/commands/)
+- Components and presets: [/cli/components-and-presets/](/cli/components-and-presets/)
+- Troubleshooting: [/cli/troubleshooting/](/cli/troubleshooting/)

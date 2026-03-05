@@ -1,0 +1,38 @@
+---
+title: "Focus"
+description: "Focus and directional navigation primitives for Roblox UI."
+draft: false
+sidebar:
+  order: 7
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add focus
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add focus
+```
+
+## Package
+
+- npm: `@lattice-ui/focus`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `FocusScope`
+- `RovingFocusGroup`
+- `RovingFocusItem`
+
+## Notes
+
+- `RovingFocusGroup` and `RovingFocusItem` provide arrow/Home/End keyboard navigation.
+- `FocusScope` can trap and restore `GuiService.SelectedObject` across scope lifecycle.

@@ -24,6 +24,7 @@
     "@rbxts/react": "17.3.7-ts.1",
     "@rbxts/react-roblox": "17.3.7-ts.1"
   },
+  "toolingPackages": ["@lattice-ui/cli"],
   "requiredFiles": ["src/index.ts", "tsconfig.json", "tsconfig.typecheck.json"],
   "changesets": {
     "baseBranch": "main",

@@ -1,0 +1,60 @@
+---
+title: Troubleshooting
+description: Diagnose common lattice CLI issues around package manager detection and dependency health.
+draft: false
+sidebar:
+  order: 4
+---
+
+## Package Manager Mismatch
+
+Symptom: CLI chooses a package manager you did not expect.
+
+Actions:
+
+1. Check lockfiles in the project root.
+2. Override explicitly with `--pm`.
+3. Re-run diagnostics with `doctor`.
+
+```bash
+lattice --pm pnpm doctor
+pnpm lattice --pm pnpm doctor
+```
+
+## Multiple Lockfiles Detected
+
+Symptom: warnings about mixed lockfiles.
+
+Actions:
+
+1. Keep only one lockfile format for the target project.
+2. Reinstall dependencies with your selected package manager.
+3. Re-run `doctor`.
+
+## Unknown Component or Preset
+
+Symptom: CLI reports `Unknown component` or `Unknown preset`.
+
+Actions:
+
+1. Use names from [/cli/components-and-presets/](/cli/components-and-presets/).
+2. Prefer comma-separated or repeated values that match registry keys exactly.
+
+## Peer and Provider Warnings
+
+Symptom: `doctor` reports missing peers/providers.
+
+Actions:
+
+1. Install missing peer dependencies (`@rbxts/react`, `@rbxts/react-roblox`).
+2. Add optional providers when needed by your selected components.
+3. Re-run `doctor`.
+
+## Safe Validation with Dry Run
+
+Use dry-run before applying dependency changes:
+
+```bash
+lattice --dry-run add dialog,toast --preset overlay
+pnpm lattice --dry-run add dialog,toast --preset overlay
+```

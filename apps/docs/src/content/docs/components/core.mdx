@@ -1,0 +1,40 @@
+---
+title: "Core"
+description: "Core React and state utilities shared by Lattice UI packages."
+draft: false
+sidebar:
+  order: 5
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add core
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add core
+```
+
+## Package
+
+- npm: `@lattice-ui/core`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `None`
+
+## Primary Exports
+
+- `createContextScope and context helpers`
+- `Slot and Slottable primitives`
+- `composeRefs and ref helpers`
+- `useControllableState`
+- `React and ReactRoblox bindings`
+
+## Notes
+
+- This package is shared infrastructure used by all other component packages.
+- Use it directly when building custom compound components or low-level primitives.

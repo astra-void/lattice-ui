@@ -1,0 +1,43 @@
+---
+title: "Popover"
+description: "Headless popover primitives anchored to trigger or anchor elements."
+draft: false
+sidebar:
+  order: 10
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add popover
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add popover
+```
+
+## Package
+
+- npm: `@lattice-ui/popover`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`, `@lattice-ui/layer`, `@lattice-ui/popper`
+
+## Primary Exports
+
+- `Popover`
+- `Popover.Root`
+- `Popover.Trigger`
+- `Popover.Portal`
+- `Popover.Content`
+- `Popover.Anchor`
+- `Popover.Close`
+
+## Notes
+
+- Use `Popover.Anchor` when the positioning reference differs from the trigger element.
+- `Popover.Close` gives an explicit close action from inside content.
+- Popover.Content can safely manage displayOrder with PortalProvider.

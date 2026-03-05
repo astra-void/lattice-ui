@@ -64,6 +64,7 @@ export interface WorkspacePolicy {
   packageDefaults?: PackageDefaultsPolicy;
   defaultPeerDependencies?: Record<string, string>;
   defaultDevDependencies?: Record<string, string>;
+  toolingPackages?: string[];
   requiredFiles?: string[];
   changesets?: ChangesetsPolicy;
   [key: string]: unknown;
@@ -155,6 +156,14 @@ export function getPolicy(): WorkspacePolicy {
   }
 
   return readJson<WorkspacePolicy>(policyPath);
+}
+
+export function isToolingPackage(policy: WorkspacePolicy, packageName: string): boolean {
+  if (!Array.isArray(policy.toolingPackages)) {
+    return false;
+  }
+
+  return policy.toolingPackages.includes(packageName);
 }
 
 export function getLockedVersion(policy: WorkspacePolicy, packages: WorkspaceEntry[]): string {

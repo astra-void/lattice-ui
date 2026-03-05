@@ -1,0 +1,38 @@
+---
+title: "Switch"
+description: "Headless switch primitives for boolean state toggles."
+draft: false
+sidebar:
+  order: 18
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add switch
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add switch
+```
+
+## Package
+
+- npm: `@lattice-ui/switch`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `Switch`
+- `Switch.Root`
+- `Switch.Thumb`
+
+## Notes
+
+- `Switch.Root` manages checked state and interaction handling.
+- `Switch.Thumb` reads context state so visuals and behavior stay coupled.

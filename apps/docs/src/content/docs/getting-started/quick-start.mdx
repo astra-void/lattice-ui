@@ -1,0 +1,69 @@
+---
+title: Quick Start
+description: Scaffold and manage a Lattice UI app project with the new CLI workflow.
+draft: false
+sidebar:
+  order: 2
+---
+
+Audience: app developers integrating Lattice UI in their own project.
+
+## 1. Initialize a Project
+
+### Global CLI
+
+```bash
+lattice init --pm pnpm
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice init --pm pnpm
+```
+
+## 2. Add Packages by Preset and Name
+
+### Global CLI
+
+```bash
+lattice add --preset form
+lattice add dialog,toast --preset overlay
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add --preset form
+pnpm lattice add dialog,toast --preset overlay
+```
+
+## 3. Validate Environment and Dependencies
+
+### Global CLI
+
+```bash
+lattice doctor
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice doctor
+```
+
+## 4. Upgrade Installed Lattice Packages
+
+### Global CLI
+
+```bash
+lattice upgrade
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice upgrade
+```
+
+For full command behavior and options, see [/cli/commands/](/cli/commands/).

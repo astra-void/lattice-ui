@@ -1,0 +1,118 @@
+{
+  "packages": {
+    "accordion": {
+      "npm": "@lattice-ui/accordion",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "avatar": {
+      "npm": "@lattice-ui/avatar",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "checkbox": {
+      "npm": "@lattice-ui/checkbox",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "combobox": {
+      "npm": "@lattice-ui/combobox",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/layer:PortalProvider?"],
+      "notes": ["Combobox content can be portal-mounted via PortalProvider."]
+    },
+    "core": {
+      "npm": "@lattice-ui/core",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "dialog": {
+      "npm": "@lattice-ui/dialog",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/layer:PortalProvider?"],
+      "notes": ["Dialog.Content can use PortalProvider for predictable layering."]
+    },
+    "focus": {
+      "npm": "@lattice-ui/focus",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "layer": {
+      "npm": "@lattice-ui/layer",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "menu": {
+      "npm": "@lattice-ui/menu",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/layer:PortalProvider?"],
+      "notes": ["Menu.Content can use PortalProvider for display order control."]
+    },
+    "popover": {
+      "npm": "@lattice-ui/popover",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/layer:PortalProvider?"],
+      "notes": ["Popover.Content can safely manage displayOrder with PortalProvider."]
+    },
+    "popper": {
+      "npm": "@lattice-ui/popper",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "progress": {
+      "npm": "@lattice-ui/progress",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "radio-group": {
+      "npm": "@lattice-ui/radio-group",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "scroll-area": {
+      "npm": "@lattice-ui/scroll-area",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "select": {
+      "npm": "@lattice-ui/select",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/layer:PortalProvider?"],
+      "notes": ["Select.Content can use PortalProvider for robust overlays."]
+    },
+    "slider": {
+      "npm": "@lattice-ui/slider",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "style": {
+      "npm": "@lattice-ui/style",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "switch": {
+      "npm": "@lattice-ui/switch",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "system": {
+      "npm": "@lattice-ui/system",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "tabs": {
+      "npm": "@lattice-ui/tabs",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "text-field": {
+      "npm": "@lattice-ui/text-field",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "textarea": {
+      "npm": "@lattice-ui/textarea",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "toast": {
+      "npm": "@lattice-ui/toast",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/layer:PortalProvider?"],
+      "notes": ["Toast viewport can be mounted with PortalProvider for layering."]
+    },
+    "toggle-group": {
+      "npm": "@lattice-ui/toggle-group",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "tooltip": {
+      "npm": "@lattice-ui/tooltip",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/layer:PortalProvider?"],
+      "notes": ["Tooltip content can be portal-mounted for better overlap behavior."]
+    }
+  }
+}

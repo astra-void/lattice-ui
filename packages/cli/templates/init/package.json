@@ -1,0 +1,21 @@
+{
+  "name": "__PROJECT_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "rbxtsc -p tsconfig.json",
+    "watch": "rbxtsc -p tsconfig.json -w",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@lattice-ui/style": "^0.1.0",
+    "@rbxts/react": "17.3.7-ts.1",
+    "@rbxts/react-roblox": "17.3.7-ts.1"
+  },
+  "devDependencies": {
+    "@rbxts/compiler-types": "3.0.0-types.0",
+    "@rbxts/types": "^1.0.910",
+    "roblox-ts": "^3.0.0",
+    "typescript": "^5.9.3"
+  }
+}

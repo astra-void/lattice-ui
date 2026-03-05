@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
+    "jsx": "react",
+    "jsxFactory": "React.createElement",
+    "jsxFragmentFactory": "React.Fragment",
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "noLib": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "strict": true,
+    "target": "ESNext",
+    "rootDir": "src",
+    "outDir": "out",
+    "declaration": true,
+    "typeRoots": ["node_modules/@rbxts", "node_modules/@lattice-ui"],
+    "types": ["types", "compiler-types"]
+  },
+  "include": ["src"]
+}

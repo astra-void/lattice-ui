@@ -1,0 +1,94 @@
+---
+title: CLI Commands
+description: Full command reference for lattice init, add, upgrade, and doctor.
+draft: false
+sidebar:
+  order: 2
+---
+
+## Global Options
+
+Supported options:
+
+- `--cwd <path>`
+- `--pm <pnpm|npm|yarn>`
+- `--verbose`
+- `--dry-run`
+- `--yes`
+- `--help`
+- `--version`
+
+## `init`
+
+Initialize template files in the target project.
+
+### Global CLI
+
+```bash
+lattice init --pm pnpm
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice init --pm pnpm
+```
+
+## `add`
+
+Add components by name and/or preset.
+
+### Global CLI
+
+```bash
+lattice add dialog,toast --preset overlay
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add dialog,toast --preset overlay
+```
+
+## `upgrade`
+
+Upgrade installed Lattice UI packages in the current project.
+
+### Global CLI
+
+```bash
+lattice upgrade
+lattice upgrade --preset form
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice upgrade
+pnpm lattice upgrade --preset form
+```
+
+## `doctor`
+
+Run diagnostics for lockfile/package manager consistency, missing peers, and provider expectations.
+
+### Global CLI
+
+```bash
+lattice doctor
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice doctor
+```
+
+## Practical Example with `--cwd`
+
+Use `--cwd` when you are not running from the target project root.
+
+```bash
+lattice --cwd ./my-game add select,combobox --pm pnpm
+pnpm lattice --cwd ./apps/my-game add select,combobox --pm pnpm
+```

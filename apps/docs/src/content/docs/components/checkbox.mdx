@@ -1,0 +1,38 @@
+---
+title: "Checkbox"
+description: "Headless checkbox primitives for Roblox UI."
+draft: false
+sidebar:
+  order: 3
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add checkbox
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add checkbox
+```
+
+## Package
+
+- npm: `@lattice-ui/checkbox`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`
+
+## Primary Exports
+
+- `Checkbox`
+- `Checkbox.Root`
+- `Checkbox.Indicator`
+
+## Notes
+
+- `Checkbox.Root` owns interaction and checked-state behavior.
+- `Checkbox.Indicator` reads checkbox state from context so visuals stay in sync.

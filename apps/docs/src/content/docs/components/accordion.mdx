@@ -1,0 +1,42 @@
+---
+title: "Accordion"
+description: "Headless accordion primitives for Roblox UI with single and multiple disclosure modes."
+draft: false
+sidebar:
+  order: 1
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add accordion
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add accordion
+```
+
+## Package
+
+- npm: `@lattice-ui/accordion`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`, `@lattice-ui/focus`
+
+## Primary Exports
+
+- `Accordion`
+- `Accordion.Root`
+- `Accordion.Item`
+- `Accordion.Header`
+- `Accordion.Trigger`
+- `Accordion.Content`
+
+## Notes
+
+- Supports `type="single" | "multiple"`.
+- Supports controlled/uncontrolled `value`.
+- Keyboard navigation is integrated with roving focus.

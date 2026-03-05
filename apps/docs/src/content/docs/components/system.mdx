@@ -1,0 +1,44 @@
+---
+title: "System"
+description: "System-level providers and layout/surface primitives for app scaffolding."
+draft: false
+sidebar:
+  order: 19
+---
+
+## Install
+
+### Global CLI
+
+```bash
+lattice add system
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add system
+```
+
+## Package
+
+- npm: `@lattice-ui/system`
+- peer dependencies: `@rbxts/react`, `@rbxts/react-roblox`
+- internal dependencies: `@lattice-ui/core`, `@lattice-ui/style`
+
+## Primary Exports
+
+- `SystemProvider`
+- `useSystemTheme`
+- `DensityProvider`
+- `useDensity`
+- `Stack`
+- `Row`
+- `Grid`
+- `Surface`
+- `surface token helpers`
+
+## Notes
+
+- `SystemProvider` and density/theme helpers provide app-level UI context.
+- Layout primitives (`Stack`, `Row`, `Grid`) and `Surface` compose base screen scaffolding.
