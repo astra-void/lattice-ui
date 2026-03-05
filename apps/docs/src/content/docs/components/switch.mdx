@@ -32,7 +32,30 @@ pnpm lattice add switch
 - `Switch.Root`
 - `Switch.Thumb`
 
+## Usage Snippet
+
+```tsx
+import { Switch } from "@lattice-ui/switch";
+
+export function AudioSwitch() {
+  return (
+    <Switch.Root defaultChecked={true}>
+      <Switch.Thumb />
+    </Switch.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - `Switch.Root` manages checked state and interaction handling.
 - `Switch.Thumb` reads context state so visuals and behavior stay coupled.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: `form`
+- Related components: [checkbox](/components/checkbox/), [toggle-group](/components/toggle-group/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

@@ -33,7 +33,39 @@ pnpm lattice add radio-group
 - `RadioGroup.Item`
 - `RadioGroup.Indicator`
 
+## Usage Snippet
+
+```tsx
+import { RadioGroup } from "@lattice-ui/radio-group";
+
+export function DifficultyRadio() {
+  return (
+    <RadioGroup.Root defaultValue="normal" orientation="horizontal">
+      <RadioGroup.Item value="easy">
+        <RadioGroup.Indicator asChild>
+          <textlabel Text="●" />
+        </RadioGroup.Indicator>
+      </RadioGroup.Item>
+      <RadioGroup.Item value="normal">
+        <RadioGroup.Indicator asChild>
+          <textlabel Text="●" />
+        </RadioGroup.Indicator>
+      </RadioGroup.Item>
+    </RadioGroup.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - `RadioGroup.Root` owns the selected value and registration of items.
 - `RadioGroup.Indicator` allows custom visuals while preserving accessibility semantics.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: `form`
+- Related components: [checkbox](/components/checkbox/), [toggle-group](/components/toggle-group/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

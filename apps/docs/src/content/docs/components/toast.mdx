@@ -38,9 +38,43 @@ pnpm lattice add toast
 - `Toast.Close`
 - `useToast`
 
+## Usage Snippet
+
+```tsx
+import { PortalProvider } from "@lattice-ui/layer";
+import { Toast } from "@lattice-ui/toast";
+
+export function SaveToast({ playerGui }: { playerGui: PlayerGui }) {
+  return (
+    <PortalProvider container={playerGui}>
+      <Toast.Provider>
+        <Toast.Viewport />
+        <Toast.Root>
+          <Toast.Title asChild>
+            <textlabel Text="Saved" />
+          </Toast.Title>
+          <Toast.Description asChild>
+            <textlabel Text="Settings updated." />
+          </Toast.Description>
+        </Toast.Root>
+      </Toast.Provider>
+    </PortalProvider>
+  );
+}
+```
+
+
 ## Notes
 
 - Imperative API is provided through `useToast()`.
 - Default toast timing is `durationMs=4000` with `maxVisible=3`.
 - Queue helpers are exported for deterministic unit testing.
 - Toast viewport can be mounted with PortalProvider for layering.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: `overlay`
+- Related components: [dialog](/components/dialog/), [layer](/components/layer/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

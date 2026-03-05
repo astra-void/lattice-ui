@@ -93,7 +93,8 @@ export async function copyTemplateSafe(
       continue;
     }
 
-    const templateJson = await readJsonFile<unknown>(templateFilePath);
+    const templateRaw = await fs.readFile(templateFilePath, "utf8");
+    const templateJson = JSON.parse(applyReplacements(templateRaw, options.replacements)) as unknown;
     const currentJson = await readJsonFile<unknown>(targetFilePath);
     const mergedJson = mergeMissing(templateJson, currentJson);
 

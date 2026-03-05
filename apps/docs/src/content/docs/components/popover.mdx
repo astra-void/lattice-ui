@@ -36,8 +36,41 @@ pnpm lattice add popover
 - `Popover.Anchor`
 - `Popover.Close`
 
+## Usage Snippet
+
+```tsx
+import { Popover } from "@lattice-ui/popover";
+import { PortalProvider } from "@lattice-ui/layer";
+
+export function HelpPopover({ playerGui }: { playerGui: PlayerGui }) {
+  return (
+    <PortalProvider container={playerGui}>
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <textbutton Text="Show help" />
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content asChild>
+            <textlabel Text="Popover content" />
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    </PortalProvider>
+  );
+}
+```
+
+
 ## Notes
 
 - Use `Popover.Anchor` when the positioning reference differs from the trigger element.
 - `Popover.Close` gives an explicit close action from inside content.
 - Popover.Content can safely manage displayOrder with PortalProvider.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: `overlay`
+- Related components: [dialog](/components/dialog/), [tooltip](/components/tooltip/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

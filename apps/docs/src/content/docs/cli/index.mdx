@@ -6,16 +6,18 @@ sidebar:
   order: 1
 ---
 
-Audience: app developers integrating Lattice UI into project codebases.
+Audience: app developers integrating Lattice UI in project repositories.
 
-The `lattice` CLI is the recommended way to scaffold and maintain Lattice UI dependencies.
+The `lattice` CLI is the recommended way to scaffold and maintain Lattice dependencies.
+It supports both interactive flows and explicit non-interactive runs.
 
-## When to Use CLI
+## What the CLI Covers
 
-- Create a new project baseline (`create`)
-- Install component dependencies by name or preset (`add`)
-- Upgrade installed `@lattice-ui/*` packages (`upgrade`)
-- Diagnose package manager and dependency issues (`doctor`)
+- `create`: scaffold a new rbxts-based project
+- `add`: install components by name and/or preset
+- `remove`: remove selected component packages
+- `upgrade`: update installed `@lattice-ui/*` packages
+- `doctor`: validate lockfiles, peers, providers, and registry alignment
 
 ## Execution Modes
 
@@ -32,8 +34,9 @@ lattice --help
 pnpm lattice --help
 ```
 
-## Next Steps
+## Learn the Workflow
 
-- Command reference: [/cli/commands/](/cli/commands/)
-- Components and presets: [/cli/components-and-presets/](/cli/components-and-presets/)
-- Troubleshooting: [/cli/troubleshooting/](/cli/troubleshooting/)
+- Full command signatures: [CLI Commands](/cli/commands/)
+- Registry component names and presets: [Components and Presets](/cli/components-and-presets/)
+- Interactive and output model: [Execution and Output](/cli/execution-and-output/)
+- Failure recovery patterns: [Troubleshooting](/cli/troubleshooting/)

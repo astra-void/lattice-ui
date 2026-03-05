@@ -40,9 +40,56 @@ pnpm lattice add combobox
 - `Combobox.Label`
 - `Combobox.Separator`
 
+## Usage Snippet
+
+```tsx
+import { Combobox } from "@lattice-ui/combobox";
+import { PortalProvider } from "@lattice-ui/layer";
+
+export function WeaponCombobox({ playerGui }: { playerGui: PlayerGui }) {
+  return (
+    <PortalProvider container={playerGui}>
+      <Combobox.Root defaultValue="sword" defaultInputValue="" open={false}>
+        <Combobox.Trigger asChild>
+          <textbutton Text="Choose weapon" />
+        </Combobox.Trigger>
+        <Combobox.Input asChild>
+          <textbox />
+        </Combobox.Input>
+        <Combobox.Value asChild>
+          <textlabel />
+        </Combobox.Value>
+
+        <Combobox.Portal>
+          <Combobox.Content asChild forceMount>
+            <frame>
+              <Combobox.Item asChild textValue="Sword" value="sword">
+                <textbutton Text="Sword" />
+              </Combobox.Item>
+              <Combobox.Item asChild textValue="Bow" value="bow">
+                <textbutton Text="Bow" />
+              </Combobox.Item>
+            </frame>
+          </Combobox.Content>
+        </Combobox.Portal>
+      </Combobox.Root>
+    </PortalProvider>
+  );
+}
+```
+
+
 ## Notes
 
 - Supports controlled/uncontrolled `value`, `inputValue`, and `open`.
 - Input text is synchronized back to selected option text when the list closes.
 - Filtering defaults to case-insensitive substring matching and can be customized with `filterFn`.
 - Combobox content can be portal-mounted via PortalProvider.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [select](/components/select/), [menu](/components/menu/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

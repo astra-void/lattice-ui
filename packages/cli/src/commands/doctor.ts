@@ -1,5 +1,7 @@
 import { validationError } from "../core/errors";
 import { getDependencyNames } from "../core/fs/patch";
+import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
+import type { PackageManagerName } from "../core/pm/types";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { parseProviderRequirement } from "../core/registry/schema";
 import type { CliContext } from "../ctx";
@@ -22,34 +24,35 @@ type Issue = {
   message: string;
 };
 
-function collectRecommendations(issues: Issue[]): string[] {
+const LATTICE_TOOLING_PACKAGES = new Set<string>(["@lattice-ui/cli"]);
+
+function collectRecommendations(issues: Issue[], pmName: PackageManagerName): string[] {
   const recommendationSet = new Set<string>();
+  const localLattice = resolveLocalLatticeCommand(pmName);
 
   for (const issue of issues) {
     switch (issue.code) {
       case "missing-lockfile":
-        recommendationSet.add("Run your package manager install command to generate a lockfile.");
+        recommendationSet.add(`${pmName} install`);
         break;
       case "multiple-lockfiles":
-        recommendationSet.add("Keep only one lockfile in the project root to avoid package manager drift.");
+        recommendationSet.add("Remove extra lockfiles and keep exactly one package manager lockfile.");
         break;
       case "package-manager-mismatch":
-        recommendationSet.add("Align packageManager in package.json with the lockfile manager used by the project.");
+        recommendationSet.add("Update package.json packageManager to match the active lockfile manager.");
         break;
       case "missing-lattice-packages":
-        recommendationSet.add(
-          "Install Lattice packages with lattice add <component> or lattice add --preset <preset>.",
-        );
+        recommendationSet.add(`${localLattice} add <component>`);
         break;
       case "unknown-lattice-package":
-        recommendationSet.add("Run lattice upgrade to align installed package names with the current registry.");
+        recommendationSet.add(`${localLattice} upgrade`);
         break;
       case "missing-peer":
       case "missing-required-provider":
-        recommendationSet.add("Run lattice add <component> to install missing peers/providers for the component.");
+        recommendationSet.add(`${localLattice} add <component>`);
         break;
       case "missing-optional-provider":
-        recommendationSet.add("Install optional providers only when the related runtime provider is required.");
+        recommendationSet.add(`${localLattice} add <component>`);
         break;
       default:
         break;
@@ -60,6 +63,9 @@ function collectRecommendations(issues: Issue[]): string[] {
 }
 
 export async function runDoctorCommand(ctx: CliContext): Promise<void> {
+  ctx.logger.section("Checking");
+  ctx.logger.kv("Project", ctx.projectRoot);
+
   const manifest = await readPackageJson(ctx.projectRoot);
   const installedDependencies = getDependencyNames(manifest);
 
@@ -95,12 +101,13 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
   const installedLattice = [...installedDependencies]
     .filter((name) => name.startsWith("@lattice-ui/"))
     .sort((left, right) => left.localeCompare(right));
+  const installedLatticeComponents = installedLattice.filter((name) => !LATTICE_TOOLING_PACKAGES.has(name));
 
-  if (installedLattice.length === 0) {
+  if (installedLatticeComponents.length === 0) {
     issues.push({
       code: "missing-lattice-packages",
       level: "warn",
-      message: "No @lattice-ui/* dependencies are installed.",
+      message: "No @lattice-ui component packages are installed.",
     });
   }
 
@@ -109,7 +116,7 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
     componentByNpm.set(entry.npm, componentName);
   }
 
-  for (const npmPackage of installedLattice) {
+  for (const npmPackage of installedLatticeComponents) {
     const componentName = componentByNpm.get(npmPackage);
     if (!componentName) {
       issues.push({
@@ -157,34 +164,35 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
   const warnings = issues.filter((issue) => issue.level === "warn");
   const errors = issues.filter((issue) => issue.level === "error");
 
-  ctx.logger.info("doctor summary:");
-  ctx.logger.info(`  errors: ${errors.length}`);
-  ctx.logger.info(`  warnings: ${warnings.length}`);
-
-  if (errors.length > 0) {
-    ctx.logger.info("Errors:");
-    for (const issue of errors) {
-      ctx.logger.error(issue.message);
-    }
-  }
+  ctx.logger.section("Summary");
+  ctx.logger.kv("Errors", String(errors.length));
+  ctx.logger.kv("Warnings", String(warnings.length));
 
   if (warnings.length > 0) {
-    ctx.logger.info("Warnings:");
-    for (const issue of warnings) {
-      ctx.logger.warn(issue.message);
-    }
-  }
-
-  const recommendations = collectRecommendations(issues);
-  if (recommendations.length > 0) {
-    ctx.logger.info("Recommended next steps:");
-    for (const recommendation of recommendations) {
-      ctx.logger.info(`- ${recommendation}`);
-    }
+    ctx.logger.section("Warnings");
+    ctx.logger.list(warnings.map((issue) => issue.message));
   }
 
   if (errors.length > 0) {
-    throw validationError(`doctor found ${errors.length} error(s) and ${warnings.length} warning(s).`);
+    ctx.logger.section("Errors");
+    ctx.logger.list(errors.map((issue) => issue.message));
+  }
+
+  const recommendations = collectRecommendations(issues, ctx.pmName);
+  if (recommendations.length > 0) {
+    ctx.logger.section("Recommended Commands");
+    const recommendationSummary = summarizeItems(recommendations);
+    ctx.logger.list(recommendationSummary.visible);
+    if (recommendationSummary.hidden > 0) {
+      ctx.logger.step(`...and ${recommendationSummary.hidden} more`);
+    }
+  }
+
+  ctx.logger.section("Result");
+  if (errors.length > 0) {
+    const message = `doctor found ${errors.length} error(s) and ${warnings.length} warning(s).`;
+    ctx.logger.error(message);
+    throw validationError(message);
   }
 
   if (warnings.length > 0) {

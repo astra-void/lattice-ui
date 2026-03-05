@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "__ESLINT_ESLINTRC_VERSION__",
+    "@eslint/js": "__ESLINT_JS_VERSION__",
+    "@typescript-eslint/eslint-plugin": "__TYPESCRIPT_ESLINT_PLUGIN_VERSION__",
+    "@typescript-eslint/parser": "__TYPESCRIPT_ESLINT_PARSER_VERSION__",
+    "eslint": "__ESLINT_VERSION__",
+    "eslint-config-prettier": "__ESLINT_CONFIG_PRETTIER_VERSION__",
+    "eslint-plugin-prettier": "__ESLINT_PLUGIN_PRETTIER_VERSION__",
+    "eslint-plugin-roblox-ts": "__ESLINT_PLUGIN_ROBLOX_TS_VERSION__",
+    "prettier": "__PRETTIER_VERSION__"
+  }
+}

@@ -35,8 +35,43 @@ pnpm lattice add tooltip
 - `Tooltip.Portal`
 - `Tooltip.Content`
 
+## Usage Snippet
+
+```tsx
+import { PortalProvider } from "@lattice-ui/layer";
+import { Tooltip } from "@lattice-ui/tooltip";
+
+export function HintTooltip({ playerGui }: { playerGui: PlayerGui }) {
+  return (
+    <PortalProvider container={playerGui}>
+      <Tooltip.Provider>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <textbutton Text="Hover me" />
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content asChild>
+              <textlabel Text="Tooltip content" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
+    </PortalProvider>
+  );
+}
+```
+
+
 ## Notes
 
 - `Tooltip.Provider` coordinates timing behavior across nested or sibling tooltips.
 - `Tooltip.Content` is portal-friendly for reliable overlap behavior.
 - Tooltip content can be portal-mounted for better overlap behavior.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: `overlay`
+- Related components: [popover](/components/popover/), [menu](/components/menu/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

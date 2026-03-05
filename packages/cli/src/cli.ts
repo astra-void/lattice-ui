@@ -3,23 +3,49 @@ import * as path from "node:path";
 import { runAddCommand } from "./commands/add";
 import { runCreateCommand } from "./commands/create";
 import { runDoctorCommand } from "./commands/doctor";
+import { runRemoveCommand } from "./commands/remove";
 import { runUpgradeCommand } from "./commands/upgrade";
 import { usageError } from "./core/errors";
 import { createContext } from "./ctx";
 
-const HELP_TEXT = `Usage: lattice <command> [options]
+const HELP_TEXT = `Lattice CLI
+
+Usage:
+  lattice <command> [options]
 
 Commands:
-  create <project-path> [--yes] [--pm <pnpm|npm|yarn>] [--git] [--template rbxts]
+  create [project-path] [--yes] [--pm <pnpm|npm|yarn>] [--git] [--template rbxts] [--lint] [--no-lint]
+    Create a new project from the rbxts template.
+
   add [name...] [--preset <preset...>] [--yes] [--dry-run]
+    Install component packages and their required peers.
+
+  remove [name...] [--preset <preset...>] [--yes] [--dry-run]
+    Remove selected component packages.
+
   upgrade [name...] [--preset <preset...>] [--yes] [--dry-run]
+    Upgrade installed @lattice-ui/* packages.
+
   doctor
+    Check lockfiles, peers, and provider expectations.
+
   help
+    Show this help message.
+
   version
+    Print CLI version.
 
 Global options:
   --help
   --version
+
+Examples:
+  npx lattice create
+  npx lattice create my-game --pm npm --git --no-lint
+  npx lattice add dialog,toast --preset overlay
+  npx lattice remove dialog --dry-run
+  npx lattice upgrade --dry-run
+  npx lattice doctor
 `;
 
 interface ParsedCommandLine {
@@ -30,11 +56,12 @@ interface ParsedCommandLine {
 }
 
 interface ParsedCreateArgs {
-  projectPath: string;
+  projectPath?: string;
   yes: boolean;
   pm?: string;
   git?: boolean;
   template?: string;
+  lint?: boolean;
 }
 
 interface ParsedSelectionArgs {
@@ -95,6 +122,7 @@ function parseCreateArgs(args: string[]): ParsedCreateArgs {
   let pm: string | undefined;
   let git: boolean | undefined;
   let template: string | undefined;
+  let lint: boolean | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const token = args[index];
@@ -124,6 +152,22 @@ function parseCreateArgs(args: string[]): ParsedCreateArgs {
       continue;
     }
 
+    if (token === "--lint") {
+      if (lint === false) {
+        throw usageError("Cannot use --lint and --no-lint together.");
+      }
+      lint = true;
+      continue;
+    }
+
+    if (token === "--no-lint") {
+      if (lint === true) {
+        throw usageError("Cannot use --lint and --no-lint together.");
+      }
+      lint = false;
+      continue;
+    }
+
     if (token === "--template") {
       const value = args[index + 1];
       if (!value) {
@@ -146,8 +190,8 @@ function parseCreateArgs(args: string[]): ParsedCreateArgs {
     positionals.push(token);
   }
 
-  if (positionals.length !== 1) {
-    throw usageError("create requires exactly one <project-path> argument.");
+  if (positionals.length > 1) {
+    throw usageError("create accepts at most one [project-path] argument.");
   }
 
   return {
@@ -156,10 +200,11 @@ function parseCreateArgs(args: string[]): ParsedCreateArgs {
     pm,
     git,
     template,
+    lint,
   };
 }
 
-function parseSelectionArgs(args: string[], command: "add" | "upgrade"): ParsedSelectionArgs {
+function parseSelectionArgs(args: string[], command: "add" | "remove" | "upgrade"): ParsedSelectionArgs {
   const names: string[] = [];
   const presets: string[] = [];
   let yes = false;
@@ -240,7 +285,7 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   if (parsed.command === "init") {
-    throw usageError("The init command has been removed. Use: lattice create <project-path>");
+    throw usageError("The init command has been removed. Use: lattice create [project-path]");
   }
 
   if (parsed.command === "create") {
@@ -275,6 +320,19 @@ export async function runCli(argv: string[]): Promise<void> {
       verbose: false,
     });
     await runUpgradeCommand(ctx, { names: selection.names, presets: selection.presets });
+    return;
+  }
+
+  if (parsed.command === "remove") {
+    const selection = parseSelectionArgs(parsed.commandArgs, "remove");
+    const ctx = await createContext({
+      cwd: process.cwd(),
+      pm: undefined,
+      dryRun: selection.dryRun,
+      yes: selection.yes,
+      verbose: false,
+    });
+    await runRemoveCommand(ctx, { names: selection.names, presets: selection.presets });
     return;
   }
 

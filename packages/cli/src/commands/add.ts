@@ -1,43 +1,11 @@
 import { usageError } from "../core/errors";
 import { getDependencyNames, toPackageName } from "../core/fs/patch";
+import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import { parseProviderRequirement } from "../core/registry/schema";
 import type { CliContext } from "../ctx";
-
-export interface SelectionInput {
-  names: string[];
-  presets: string[];
-}
-
-export function resolveComponentSelection(ctx: CliContext, input: SelectionInput): string[] {
-  const selected = new Set<string>();
-
-  for (const name of input.names) {
-    if (!ctx.registry.packages[name]) {
-      throw usageError(`Unknown component: ${name}`);
-    }
-    selected.add(name);
-  }
-
-  for (const preset of input.presets) {
-    const presetMembers = ctx.registry.presets[preset];
-    if (!presetMembers) {
-      throw usageError(`Unknown preset: ${preset}`);
-    }
-
-    for (const member of presetMembers) {
-      selected.add(member);
-    }
-  }
-
-  const sorted = [...selected].sort((left, right) => left.localeCompare(right));
-  if (sorted.length === 0) {
-    throw usageError("No components selected. Provide component names or --preset.");
-  }
-
-  return sorted;
-}
+import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 async function resolveSelectionInput(ctx: CliContext, input: SelectionInput): Promise<SelectionInput> {
   if (input.names.length > 0 || input.presets.length > 0) {
@@ -113,38 +81,90 @@ export async function runAddCommand(ctx: CliContext, input: SelectionInput): Pro
   const plannedSpecs = [...specs]
     .filter((spec) => !installed.has(toPackageName(spec)))
     .sort((left, right) => left.localeCompare(right));
+  const localLattice = resolveLocalLatticeCommand(ctx.pmName);
 
-  if (plannedSpecs.length === 0) {
-    ctx.logger.success("All requested packages are already present.");
+  ctx.logger.section("Selecting");
+  ctx.logger.kv("Project", ctx.projectRoot);
+
+  ctx.logger.section("Planning");
+  const componentSummary = summarizeItems(components);
+  ctx.logger.kv("Components", String(componentSummary.total));
+  if (componentSummary.total > 0) {
+    ctx.logger.list(componentSummary.visible);
+    if (componentSummary.hidden > 0) {
+      ctx.logger.step(`...and ${componentSummary.hidden} more`);
+    }
+  }
+  const plannedSummary = summarizeItems(plannedSpecs);
+  ctx.logger.kv("Packages to install", String(plannedSummary.total));
+  if (plannedSummary.total > 0) {
+    ctx.logger.list(plannedSummary.visible);
+    if (plannedSummary.hidden > 0) {
+      ctx.logger.step(`...and ${plannedSummary.hidden} more`);
+    }
+  }
+
+  if (ctx.options.dryRun) {
+    ctx.logger.section("Dry Run");
+    if (plannedSpecs.length > 0) {
+      ctx.logger.step(`[dry-run] ${ctx.pmName} add ${plannedSpecs.join(" ")}`);
+    } else {
+      ctx.logger.step("[dry-run] No install actions required.");
+    }
+    ctx.logger.step("No files were changed.");
   } else {
-    if (!ctx.options.dryRun) {
-      const confirmed = await ctx.logger.confirm(
-        `Install ${plannedSpecs.length} package(s) in ${ctx.projectRoot} with ${ctx.pmName}?`,
-      );
+    ctx.logger.section("Applying");
+    if (plannedSpecs.length > 0) {
+      ctx.logger.step(`${ctx.pmName} add ${plannedSpecs.join(" ")}`);
+      const confirmed = await ctx.logger.confirm(`Install ${plannedSpecs.length} package(s) in ${ctx.projectRoot}?`);
       if (!confirmed) {
+        ctx.logger.section("Result");
         ctx.logger.warn("Add command cancelled.");
+        ctx.logger.section("Next Steps");
+        ctx.logger.step(`${localLattice} doctor`);
         return;
       }
-    }
 
-    if (ctx.options.dryRun) {
-      ctx.logger.info(`[dry-run] ${ctx.pmName} add ${plannedSpecs.join(" ")}`);
-    } else {
       const spinner = ctx.logger.spinner(`Installing ${plannedSpecs.length} package(s)...`);
       await ctx.pm.add(false, plannedSpecs, ctx.projectRoot);
       spinner.succeed("Dependencies installed.");
+    } else {
+      ctx.logger.step("No installation required.");
     }
-
-    ctx.logger.success(`Added components: ${components.join(", ")}`);
   }
 
+  ctx.logger.section("Result");
+  if (plannedSpecs.length === 0) {
+    ctx.logger.success("No new packages were needed.");
+  } else {
+    ctx.logger.success(`Added components: ${components.join(", ")}`);
+  }
+  ctx.logger.kv("Installed packages", String(plannedSpecs.length));
+
   if (optionalProviders.size > 0) {
-    ctx.logger.warn(`Optional providers: ${[...optionalProviders].sort().join(", ")}`);
+    const optionalSummary = summarizeItems([...optionalProviders].sort((left, right) => left.localeCompare(right)));
+    ctx.logger.warn(`Optional providers available: ${optionalSummary.total}`);
+    ctx.logger.list(optionalSummary.visible);
+    if (optionalSummary.hidden > 0) {
+      ctx.logger.step(`...and ${optionalSummary.hidden} more`);
+    }
   }
 
   if (notes.length > 0) {
-    for (const note of notes) {
-      ctx.logger.info(`note: ${note}`);
+    const noteSummary = summarizeItems(notes);
+    ctx.logger.info(`Notes: ${noteSummary.total}`);
+    ctx.logger.list(noteSummary.visible);
+    if (noteSummary.hidden > 0) {
+      ctx.logger.step(`...and ${noteSummary.hidden} more`);
     }
+  }
+
+  ctx.logger.section("Next Steps");
+  ctx.logger.step(`${localLattice} doctor`);
+  if (optionalProviders.size > 0) {
+    ctx.logger.step(`${localLattice} add <component>`);
+  }
+  if (notes.length > 0) {
+    ctx.logger.step("Review notes above before integrating components.");
   }
 }

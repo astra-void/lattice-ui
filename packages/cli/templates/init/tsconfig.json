@@ -10,13 +10,18 @@
     "noLib": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleDetection": "force",
     "strict": true,
     "target": "ESNext",
+    "typeRoots": ["node_modules/@rbxts", "node_modules/@lattice-ui"],
+    "types": ["types", "compiler-types"],
+
     "rootDir": "src",
     "outDir": "out",
-    "declaration": true,
-    "typeRoots": ["node_modules/@rbxts", "node_modules/@lattice-ui"],
-    "types": ["types", "compiler-types"]
+    "baseUrl": "src",
+    "incremental": true,
+    "tsBuildInfoFile": "out/tsconfig.tsbuildinfo"
   },
   "include": ["src"]
 }

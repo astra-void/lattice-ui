@@ -12,6 +12,41 @@ export interface PromptOption<T> {
   value: T;
 }
 
+const ANSI = {
+  reset: "\u001b[0m",
+  cyan: "\u001b[36m",
+  magenta: "\u001b[35m",
+  gray: "\u001b[90m",
+  bold: "\u001b[1m",
+} as const;
+
+const ICONS = {
+  tty: {
+    question: "?",
+    guide: "›",
+  },
+  plain: {
+    question: "[?]",
+    guide: "[>]",
+  },
+} as const;
+
+function supportsColor(stdout: NodeJS.WriteStream): boolean {
+  return Boolean(stdout.isTTY);
+}
+
+function supportsUnicodeIcons(stdout: NodeJS.WriteStream): boolean {
+  return Boolean(stdout.isTTY);
+}
+
+function colorize(enabled: boolean, color: string, text: string): string {
+  if (!enabled) {
+    return text;
+  }
+
+  return `${color}${text}${ANSI.reset}`;
+}
+
 function getRuntimeStreams(runtime: PromptRuntime): {
   stdin: NodeJS.ReadStream;
   stdout: NodeJS.WriteStream;
@@ -20,6 +55,14 @@ function getRuntimeStreams(runtime: PromptRuntime): {
   const stdout = runtime.stdout ?? process.stdout;
 
   return { stdin, stdout };
+}
+
+function getPromptIcon(stdout: NodeJS.WriteStream, kind: keyof typeof ICONS.tty): string {
+  if (supportsUnicodeIcons(stdout)) {
+    return ICONS.tty[kind];
+  }
+
+  return ICONS.plain[kind];
 }
 
 function ensureInteractive(runtime: PromptRuntime): {
@@ -37,6 +80,20 @@ function ensureInteractive(runtime: PromptRuntime): {
   }
 
   return { stdin, stdout };
+}
+
+function printPromptHeader(stdout: NodeJS.WriteStream, message: string) {
+  const useColor = supportsColor(stdout);
+  const icon = colorize(useColor, ANSI.magenta, getPromptIcon(stdout, "question"));
+  const heading = colorize(useColor, ANSI.bold, message);
+  stdout.write(`\n${icon} ${heading}\n`);
+}
+
+function printPromptGuide(stdout: NodeJS.WriteStream, message: string) {
+  const useColor = supportsColor(stdout);
+  const icon = colorize(useColor, ANSI.cyan, getPromptIcon(stdout, "guide"));
+  const text = colorize(useColor, ANSI.gray, message);
+  stdout.write(`${icon} ${text}\n`);
 }
 
 function parseCsvIndices(input: string, optionCount: number): number[] {
@@ -86,10 +143,12 @@ export async function promptInput(
   }
 
   const { stdin, stdout } = ensureInteractive(runtime);
+  printPromptHeader(stdout, message);
+
   const rl = createInterface({ input: stdin, output: stdout });
   try {
-    const suffix = defaultValue !== undefined ? ` (${defaultValue})` : "";
-    const answer = await rl.question(`${message}${suffix}: `);
+    const suffix = defaultValue !== undefined ? ` (default: ${defaultValue})` : "";
+    const answer = await rl.question(`${getPromptIcon(stdout, "guide")} Value${suffix}: `);
     const trimmed = answer.trim();
 
     if (trimmed.length > 0) {
@@ -122,10 +181,12 @@ export async function promptConfirm(
   }
 
   const { stdin, stdout } = ensureInteractive(runtime);
+  printPromptHeader(stdout, message);
+
   const rl = createInterface({ input: stdin, output: stdout });
   try {
     const hint = defaultValue ? "Y/n" : "y/N";
-    const answer = (await rl.question(`${message} [${hint}] `)).trim().toLowerCase();
+    const answer = (await rl.question(`${getPromptIcon(stdout, "guide")} Confirm (${hint}): `)).trim().toLowerCase();
 
     if (answer.length === 0) {
       return defaultValue;
@@ -165,14 +226,16 @@ export async function promptSelect<T>(
   }
 
   const { stdin, stdout } = ensureInteractive(runtime);
-  stdout.write(`${message}\n`);
+  printPromptHeader(stdout, message);
+
   options.forEach((option, index) => {
-    stdout.write(`  ${index + 1}. ${option.label}\n`);
+    stdout.write(`  ${index + 1}) ${option.label}\n`);
   });
+  printPromptGuide(stdout, `Enter a number (default: ${defaultIndex + 1})`);
 
   const rl = createInterface({ input: stdin, output: stdout });
   try {
-    const answer = (await rl.question(`Select one [${defaultIndex + 1}]: `)).trim();
+    const answer = (await rl.question(`${getPromptIcon(stdout, "guide")} Select one: `)).trim();
     const indices = parseCsvIndices(answer, options.length);
 
     if (indices.length === 0) {
@@ -207,21 +270,23 @@ export async function promptMultiSelect<T>(
   }
 
   const { stdin, stdout } = ensureInteractive(runtime);
-  stdout.write(`${message}\n`);
+  printPromptHeader(stdout, message);
+
   options.forEach((option, index) => {
-    stdout.write(`  ${index + 1}. ${option.label}\n`);
+    stdout.write(`  ${index + 1}) ${option.label}\n`);
   });
 
   const defaultText =
     defaultIndices.length > 0
-      ? ` [${defaultIndices.map((index) => index + 1).join(",")}]`
+      ? `default: ${defaultIndices.map((index) => index + 1).join(",")}`
       : allowEmpty
-        ? " [enter to skip]"
-        : "";
+        ? "press enter to skip"
+        : "select at least one item";
+  printPromptGuide(stdout, `Enter comma-separated numbers (${defaultText})`);
 
   const rl = createInterface({ input: stdin, output: stdout });
   try {
-    const answer = (await rl.question(`Select one or more (comma-separated)${defaultText}: `)).trim();
+    const answer = (await rl.question(`${getPromptIcon(stdout, "guide")} Select one or more: `)).trim();
     const indices = answer.length > 0 ? parseCsvIndices(answer, options.length) : defaultIndices;
 
     if (indices.length === 0 && !allowEmpty) {

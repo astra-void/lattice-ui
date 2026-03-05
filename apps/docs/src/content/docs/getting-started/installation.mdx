@@ -9,15 +9,19 @@ sidebar:
 ## Prerequisites
 
 - Node.js 20+
-- pnpm 10+
+- One package manager: `npm`, `pnpm`, or `yarn`
 - A Roblox TS project using `@rbxts/react` and `@rbxts/react-roblox`
 
-## Choose CLI Execution Mode
+## Execution Mode Matrix
 
-Use one of these two supported modes:
+| Mode | Best for | First setup | Command style |
+| --- | --- | --- | --- |
+| Global CLI | App repositories outside this monorepo | `npm i -g @lattice-ui/cli` | `lattice <command>` |
+| Monorepo Local Script | Working inside this repository | No global install required | `pnpm lattice <command>` |
 
-- Global CLI: suitable for app projects outside this monorepo.
-- Monorepo local script: suitable when working inside this repository.
+If you do not want a global install, you can also run one-off commands with `npx lattice <command>`.
+
+## Verify CLI Access
 
 ### Global CLI
 
@@ -32,38 +36,85 @@ lattice --help
 pnpm lattice --help
 ```
 
-## Package Manager Strategy
+## Project Creation
 
-The CLI auto-detects package manager from lockfiles for dependency commands.
-Set package manager explicitly when creating new projects:
+### Global CLI
 
 ```bash
-lattice create my-game --pm npm
-pnpm lattice create my-game --pm npm
+lattice create
 ```
 
-## Install Core and Feature Packages via CLI
+### Monorepo Local Script
+
+```bash
+pnpm lattice create
+```
+
+`create` is interactive by default.
+Use optional flags like `--pm`, `--git`, `--lint`, and `--no-lint` only when you need explicit non-default behavior.
+
+After `create`, generated projects include `@lattice-ui/cli` in `devDependencies`, so local command execution is immediately available:
+
+```bash
+npx lattice --help
+pnpm lattice --help
+yarn lattice --help
+```
+
+## Install Component Packages
 
 ### Global CLI
 
 ```bash
 lattice add core,style,system
-lattice add accordion,dialog,toast
+lattice add dialog,toast --preset overlay
 ```
 
 ### Monorepo Local Script
 
 ```bash
 pnpm lattice add core,style,system
-pnpm lattice add accordion,dialog,toast
+pnpm lattice add dialog,toast --preset overlay
+```
+
+## Remove Component Packages
+
+### Global CLI
+
+```bash
+lattice remove dialog
+lattice remove --preset overlay --dry-run
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice remove dialog
+pnpm lattice remove --preset overlay --dry-run
+```
+
+## Validate and Upgrade
+
+### Global CLI
+
+```bash
+lattice doctor
+lattice upgrade --preset form
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice doctor
+pnpm lattice upgrade --preset form
 ```
 
 ## Peer Dependencies
 
-Make sure your project includes compatible peer dependencies:
+Ensure compatible peers are installed:
 
 ```bash
 pnpm add @rbxts/react @rbxts/react-roblox
 ```
 
-Next: continue with the end-to-end workflow in [/getting-started/quick-start/](/getting-started/quick-start/).
+Next: [Quick Start](/getting-started/quick-start/).

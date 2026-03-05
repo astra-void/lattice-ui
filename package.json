@@ -1,13 +1,14 @@
 {
   "name": "lattice-ui-monorepo",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "private": true,
   "description": "",
   "scripts": {
+    "dev": "pnpm run docs:dev",
+    "lattice": "node --import tsx ./packages/cli/src/index.ts",
     "package:new": "node --import tsx ./scripts/create-package.ts",
     "workspace:sync": "node --import tsx ./scripts/workspace-sync.ts",
     "workspace:check": "node --import tsx ./scripts/workspace-check.ts",
-    "lattice": "node --import tsx ./packages/cli/src/index.ts",
     "build": "pnpm -r build",
     "build:single": "pnpm -r --workspace-concurrency=1 build",
     "watch": "pnpm -r watch",
@@ -16,8 +17,9 @@
     "docs:build": "pnpm --filter @lattice-ui/docs build",
     "docs:preview": "pnpm --filter @lattice-ui/docs preview",
     "docs:typecheck": "pnpm --filter @lattice-ui/docs typecheck",
+    "test": "pnpm run test:unit",
     "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
+    "test:unit:watch": "vitest --watch",
     "test:rbx:build": "pnpm --filter @lattice-ui/test-harness build",
     "test:rbx:typecheck": "pnpm --filter @lattice-ui/test-harness typecheck",
     "test:rbx:prepare": "pnpm run test:rbx:typecheck && pnpm run test:rbx:build",
@@ -25,15 +27,15 @@
     "test:rbx": "pnpm run test:rbx:prepare",
     "test:rbx:headless": "pnpm run test:rbx:prepare && pnpm run test:rbx:place && run-in-roblox --place apps/test-harness/test-harness.rbxlx --script apps/test-harness/scripts/headless.lua",
     "test:rbx:run": "pnpm run test:rbx:prepare && pnpm run test:rbx:place && echo \"Open apps/test-harness/test-harness.rbxlx in Roblox Studio and press Play to run TestEZ suites.\"",
-    "test": "pnpm run test:unit",
-    "lint:types": "eslint \"{packages,apps}/**/*.{ts,tsx}\"",
-    "verify:types": "pnpm run lint:types && pnpm run typecheck",
-    "verify:workspace": "pnpm run workspace:check && pnpm run verify:types",
     "lint": "pnpm -w eslint .",
     "lint:fix": "pnpm -w eslint . --fix",
     "format": "pnpm -w prettier . --write",
     "format:check": "pnpm -w prettier . --check",
     "biome:fix": "pnpm -w biome check --fix --unsafe",
+    "check:fast": "pnpm run workspace:check && pnpm run lint && pnpm run typecheck",
+    "check": "pnpm run check:fast && pnpm run test:unit",
+    "verify:types": "pnpm run lint && pnpm run typecheck",
+    "verify:workspace": "pnpm run workspace:check && pnpm run verify:types",
     "changeset:add": "changeset",
     "changeset:version": "changeset version",
     "changeset:status": "changeset status --verbose",
@@ -42,8 +44,6 @@
     "release:publish": "pnpm -r --filter \"./packages/*\" publish --access public --tag latest --report-summary",
     "release:publish:dry-run": "pnpm -r --filter \"./packages/*\" publish --dry-run --access public --tag latest --report-summary",
     "release": "pnpm run release:prepare && pnpm run release:publish",
-    "publish:packages:dry-run": "pnpm run release:publish:dry-run",
-    "publish:packages": "pnpm run release",
     "publish:summary": "cat pnpm-publish-summary.json"
   },
   "devDependencies": {
@@ -83,8 +83,10 @@
     "typescript": "5.9.3",
     "vitest": "^4.0.18"
   },
-  "overrides": {
-    "lodash": "4.17.23"
+  "pnpm": {
+    "overrides": {
+      "lodash": "4.17.23"
+    }
   },
   "packageManager": "pnpm@10.30.3"
 }

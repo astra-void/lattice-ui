@@ -33,8 +33,33 @@ pnpm lattice add progress
 - `Progress.Indicator`
 - `Progress.Spinner`
 
+## Usage Snippet
+
+```tsx
+import { Progress } from "@lattice-ui/progress";
+
+export function UploadProgress() {
+  return (
+    <Progress.Root max={100} value={45}>
+      <Progress.Indicator asChild>
+        <frame Size={UDim2.fromScale(1, 1)} />
+      </Progress.Indicator>
+    </Progress.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - `Progress` supports `value`/`max` and clamps out-of-range values.
 - `indeterminate` mode uses a fixed indicator ratio.
 - `Spinner` defaults to `spinning=true` and rotates on heartbeat.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [slider](/components/slider/), [toast](/components/toast/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

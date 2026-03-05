@@ -35,8 +35,33 @@ pnpm lattice add textarea
 - `Textarea.Description`
 - `Textarea.Message`
 
+## Usage Snippet
+
+```tsx
+import { Textarea } from "@lattice-ui/textarea";
+
+export function BioTextarea() {
+  return (
+    <Textarea.Root defaultValue={"line 1\nline 2"}>
+      <Textarea.Label />
+      <Textarea.Input />
+      <Textarea.Description />
+    </Textarea.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - Supports controlled/uncontrolled `value`.
 - `autoResize` is enabled by default and respects `minRows`/`maxRows`.
 - `onValueCommit` fires on `FocusLost` commit moments.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: `form`
+- Related components: [text-field](/components/text-field/), [scroll-area](/components/scroll-area/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

@@ -34,9 +34,41 @@ pnpm lattice add slider
 - `Slider.Range`
 - `Slider.Thumb`
 
+## Usage Snippet
+
+```tsx
+import { Slider } from "@lattice-ui/slider";
+
+export function VolumeSlider() {
+  return (
+    <Slider.Root min={0} max={100} value={35}>
+      <Slider.Track asChild>
+        <frame Size={UDim2.fromOffset(220, 12)}>
+          <Slider.Range asChild>
+            <frame />
+          </Slider.Range>
+          <Slider.Thumb asChild>
+            <textbutton Text="" />
+          </Slider.Thumb>
+        </frame>
+      </Slider.Track>
+    </Slider.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - Single-thumb only in this release.
 - Supports controlled/uncontrolled `value`.
 - Pointer drag and keyboard adjustments are both supported.
 - Values are clamped to `[min, max]` and snapped to `step`.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [progress](/components/progress/), [switch](/components/switch/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

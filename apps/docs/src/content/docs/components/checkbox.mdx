@@ -32,7 +32,32 @@ pnpm lattice add checkbox
 - `Checkbox.Root`
 - `Checkbox.Indicator`
 
+## Usage Snippet
+
+```tsx
+import { Checkbox } from "@lattice-ui/checkbox";
+
+export function TermsCheckbox() {
+  return (
+    <Checkbox.Root defaultChecked={false}>
+      <Checkbox.Indicator asChild>
+        <textlabel Text="✓" />
+      </Checkbox.Indicator>
+    </Checkbox.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - `Checkbox.Root` owns interaction and checked-state behavior.
 - `Checkbox.Indicator` reads checkbox state from context so visuals stay in sync.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: `form`
+- Related components: [radio-group](/components/radio-group/), [switch](/components/switch/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

@@ -1,9 +1,9 @@
 import { usageError } from "../core/errors";
+import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
-import type { SelectionInput } from "./add";
-import { resolveComponentSelection } from "./add";
+import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 function getSelectedRegistryPackages(ctx: CliContext, input: SelectionInput): string[] {
   const components = resolveComponentSelection(ctx, input);
@@ -24,6 +24,7 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
   );
 
   let targets: string[];
+  let missingRequested: string[] = [];
   if (input.names.length === 0 && input.presets.length === 0) {
     if (ctx.options.yes) {
       targets = installedLattice;
@@ -42,57 +43,126 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
     const requestedRegistryPackages = getSelectedRegistryPackages(ctx, input);
     const installedSet = new Set(installedLattice);
     targets = normalizeList(requestedRegistryPackages.filter((pkg) => installedSet.has(pkg)));
+    missingRequested = normalizeList(requestedRegistryPackages.filter((pkg) => !installedSet.has(pkg)));
+  }
 
-    const missing = requestedRegistryPackages.filter((pkg) => !installedSet.has(pkg));
-    if (missing.length > 0) {
-      ctx.logger.warn(`Requested package(s) not currently installed: ${normalizeList(missing).join(", ")}`);
+  const localLattice = resolveLocalLatticeCommand(ctx.pmName);
+
+  ctx.logger.section("Selecting");
+  ctx.logger.kv("Project", ctx.projectRoot);
+
+  let dependencySpecs: string[] = [];
+  let devDependencySpecs: string[] = [];
+  if (targets.length > 0) {
+    dependencySpecs = normalizeList(
+      targets.filter((pkg) => dependencies[pkg] !== undefined).map((pkg) => `${pkg}@latest`),
+    );
+    devDependencySpecs = normalizeList(
+      targets
+        .filter((pkg) => dependencies[pkg] === undefined && devDependencies[pkg] !== undefined)
+        .map((pkg) => `${pkg}@latest`),
+    );
+    if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
+      throw usageError("No upgradable dependency targets were found.");
     }
   }
 
-  if (targets.length === 0) {
-    ctx.logger.warn("No installed @lattice-ui/* package matched upgrade selection.");
-    return;
+  ctx.logger.section("Planning");
+  const selectedSummary = summarizeItems(targets);
+  ctx.logger.kv("Selected", String(selectedSummary.total));
+  if (selectedSummary.total > 0) {
+    ctx.logger.list(selectedSummary.visible);
+    if (selectedSummary.hidden > 0) {
+      ctx.logger.step(`...and ${selectedSummary.hidden} more`);
+    }
   }
-
-  const dependencySpecs = normalizeList(
-    targets.filter((pkg) => dependencies[pkg] !== undefined).map((pkg) => `${pkg}@latest`),
-  );
-  const devDependencySpecs = normalizeList(
-    targets
-      .filter((pkg) => dependencies[pkg] === undefined && devDependencies[pkg] !== undefined)
-      .map((pkg) => `${pkg}@latest`),
-  );
-
-  if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
-    throw usageError("No upgradable dependency targets were found.");
+  if (missingRequested.length > 0) {
+    const missingSummary = summarizeItems(missingRequested);
+    ctx.logger.kv("Missing requested", String(missingSummary.total));
+    ctx.logger.list(missingSummary.visible);
+    if (missingSummary.hidden > 0) {
+      ctx.logger.step(`...and ${missingSummary.hidden} more`);
+    }
   }
-
-  if (!ctx.options.dryRun) {
-    const confirmed = await ctx.logger.confirm(
-      `Upgrade ${targets.length} package(s) in ${ctx.projectRoot} with ${ctx.pmName}?`,
-    );
-    if (!confirmed) {
-      ctx.logger.warn("Upgrade cancelled.");
-      return;
+  const dependencySummary = summarizeItems(dependencySpecs);
+  const devDependencySummary = summarizeItems(devDependencySpecs);
+  ctx.logger.kv("Dependency upgrades", String(dependencySummary.total));
+  if (dependencySummary.total > 0) {
+    ctx.logger.list(dependencySummary.visible);
+    if (dependencySummary.hidden > 0) {
+      ctx.logger.step(`...and ${dependencySummary.hidden} more`);
+    }
+  }
+  ctx.logger.kv("Dev dependency upgrades", String(devDependencySummary.total));
+  if (devDependencySummary.total > 0) {
+    ctx.logger.list(devDependencySummary.visible);
+    if (devDependencySummary.hidden > 0) {
+      ctx.logger.step(`...and ${devDependencySummary.hidden} more`);
     }
   }
 
   if (ctx.options.dryRun) {
-    if (dependencySpecs.length > 0) {
-      ctx.logger.info(`[dry-run] ${ctx.pmName} add ${dependencySpecs.join(" ")}`);
+    ctx.logger.section("Dry Run");
+    if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
+      ctx.logger.step("[dry-run] No install actions required.");
+    } else {
+      if (dependencySpecs.length > 0) {
+        ctx.logger.step(`[dry-run] ${ctx.pmName} add ${dependencySpecs.join(" ")}`);
+      }
+      if (devDependencySpecs.length > 0) {
+        ctx.logger.step(`[dry-run] ${ctx.pmName} add -D ${devDependencySpecs.join(" ")}`);
+      }
     }
-    if (devDependencySpecs.length > 0) {
-      ctx.logger.info(`[dry-run] ${ctx.pmName} add -D ${devDependencySpecs.join(" ")}`);
+    ctx.logger.step("No files were changed.");
+  } else {
+    ctx.logger.section("Applying");
+    if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
+      ctx.logger.step("No installation required.");
+    } else {
+      if (dependencySpecs.length > 0) {
+        ctx.logger.step(`${ctx.pmName} add ${dependencySpecs.join(" ")}`);
+      }
+      if (devDependencySpecs.length > 0) {
+        ctx.logger.step(`${ctx.pmName} add -D ${devDependencySpecs.join(" ")}`);
+      }
+
+      const confirmed = await ctx.logger.confirm(`Upgrade ${targets.length} package(s) in ${ctx.projectRoot}?`);
+      if (!confirmed) {
+        ctx.logger.section("Result");
+        ctx.logger.warn("Upgrade cancelled.");
+        ctx.logger.section("Next Steps");
+        ctx.logger.step(`${localLattice} doctor`);
+        return;
+      }
+
+      const spinner = ctx.logger.spinner("Upgrading packages...");
+      if (dependencySpecs.length > 0) {
+        await ctx.pm.add(false, dependencySpecs, ctx.projectRoot);
+      }
+      if (devDependencySpecs.length > 0) {
+        await ctx.pm.add(true, devDependencySpecs, ctx.projectRoot);
+      }
+      spinner.succeed(`Upgraded ${targets.length} package(s).`);
     }
+  }
+
+  if (targets.length === 0) {
+    ctx.logger.section("Result");
+    ctx.logger.warn("No installed @lattice-ui/* package matched upgrade selection.");
+    ctx.logger.section("Next Steps");
+    ctx.logger.step(`${localLattice} doctor`);
     return;
   }
 
-  const spinner = ctx.logger.spinner("Upgrading packages...");
-  if (dependencySpecs.length > 0) {
-    await ctx.pm.add(false, dependencySpecs, ctx.projectRoot);
+  ctx.logger.section("Result");
+  if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
+    ctx.logger.success("No package upgrades were needed.");
+  } else {
+    ctx.logger.success("Upgrade completed.");
   }
-  if (devDependencySpecs.length > 0) {
-    await ctx.pm.add(true, devDependencySpecs, ctx.projectRoot);
-  }
-  spinner.succeed(`Upgraded ${targets.length} package(s).`);
+  ctx.logger.kv("Dependency upgrades", String(dependencySpecs.length));
+  ctx.logger.kv("Dev dependency upgrades", String(devDependencySpecs.length));
+
+  ctx.logger.section("Next Steps");
+  ctx.logger.step(`${localLattice} doctor`);
 }

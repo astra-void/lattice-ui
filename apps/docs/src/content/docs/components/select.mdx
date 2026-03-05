@@ -39,6 +39,42 @@ pnpm lattice add select
 - `Select.Label`
 - `Select.Separator`
 
+## Usage Snippet
+
+```tsx
+import { Select } from "@lattice-ui/select";
+import { PortalProvider } from "@lattice-ui/layer";
+
+export function RegionSelect({ playerGui }: { playerGui: PlayerGui }) {
+  return (
+    <PortalProvider container={playerGui}>
+      <Select.Root defaultValue="na">
+        <Select.Trigger asChild>
+          <textbutton Text="Select region" />
+        </Select.Trigger>
+        <Select.Value asChild placeholder="Pick one">
+          <textlabel />
+        </Select.Value>
+
+        <Select.Portal>
+          <Select.Content asChild>
+            <frame>
+              <Select.Item asChild textValue="North America" value="na">
+                <textbutton Text="North America" />
+              </Select.Item>
+              <Select.Item asChild textValue="Europe" value="eu">
+                <textbutton Text="Europe" />
+              </Select.Item>
+            </frame>
+          </Select.Content>
+        </Select.Portal>
+      </Select.Root>
+    </PortalProvider>
+  );
+}
+```
+
+
 ## Notes
 
 - Single value only in this release.
@@ -46,3 +82,11 @@ pnpm lattice add select
 - Content uses dismissable-layer semantics (outside pointer / escape dismiss).
 - Item navigation uses roving focus and includes typeahead matching.
 - Select.Content can use PortalProvider for robust overlays.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [combobox](/components/combobox/), [menu](/components/menu/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

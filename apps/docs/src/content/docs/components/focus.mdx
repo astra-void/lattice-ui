@@ -32,7 +32,40 @@ pnpm lattice add focus
 - `RovingFocusGroup`
 - `RovingFocusItem`
 
+## Usage Snippet
+
+```tsx
+import { FocusScope, RovingFocusGroup, RovingFocusItem } from "@lattice-ui/focus";
+
+export function FocusToolbar() {
+  return (
+    <FocusScope trapped restoreFocus>
+      <RovingFocusGroup orientation="horizontal" loop>
+        <RovingFocusItem asChild>
+          <textbutton Text="Left" />
+        </RovingFocusItem>
+        <RovingFocusItem asChild>
+          <textbutton Text="Center" />
+        </RovingFocusItem>
+        <RovingFocusItem asChild>
+          <textbutton Text="Right" />
+        </RovingFocusItem>
+      </RovingFocusGroup>
+    </FocusScope>
+  );
+}
+```
+
+
 ## Notes
 
 - `RovingFocusGroup` and `RovingFocusItem` provide arrow/Home/End keyboard navigation.
 - `FocusScope` can trap and restore `GuiService.SelectedObject` across scope lifecycle.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [tabs](/components/tabs/), [menu](/components/menu/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

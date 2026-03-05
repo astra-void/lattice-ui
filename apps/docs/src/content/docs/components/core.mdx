@@ -34,7 +34,37 @@ pnpm lattice add core
 - `useControllableState`
 - `React and ReactRoblox bindings`
 
+## Usage Snippet
+
+```tsx
+import { React, useControllableState } from "@lattice-ui/core";
+
+export function ControllableExample() {
+  const [value, setValue] = useControllableState({
+    defaultValue: "alpha",
+  });
+
+  return (
+    <textbutton
+      Text={value}
+      Event={{
+        Activated: () => setValue((current) => (current === "alpha" ? "beta" : "alpha")),
+      }}
+    />
+  );
+}
+```
+
+
 ## Notes
 
 - This package is shared infrastructure used by all other component packages.
 - Use it directly when building custom compound components or low-level primitives.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [style](/components/style/), [system](/components/system/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

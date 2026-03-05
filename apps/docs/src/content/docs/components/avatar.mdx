@@ -33,8 +33,36 @@ pnpm lattice add avatar
 - `Avatar.Image`
 - `Avatar.Fallback`
 
+## Usage Snippet
+
+```tsx
+import { Avatar } from "@lattice-ui/avatar";
+
+export function ProfileAvatar() {
+  return (
+    <Avatar.Root delayMs={250}>
+      <Avatar.Image asChild>
+        <imagelabel />
+      </Avatar.Image>
+      <Avatar.Fallback asChild>
+        <textlabel Text="AB" />
+      </Avatar.Fallback>
+    </Avatar.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - `delayMs` controls fallback reveal timing (default: `250`).
 - Missing image sources immediately show fallback content.
 - Fallback visibility logic is exported for unit testing.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [text-field](/components/text-field/), [system](/components/system/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

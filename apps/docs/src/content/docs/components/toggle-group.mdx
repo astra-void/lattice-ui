@@ -32,7 +32,38 @@ pnpm lattice add toggle-group
 - `ToggleGroup.Root`
 - `ToggleGroup.Item`
 
+## Usage Snippet
+
+```tsx
+import { ToggleGroup } from "@lattice-ui/toggle-group";
+
+export function TextStyleToggle() {
+  return (
+    <ToggleGroup.Root type="multiple" defaultValue={["bold"]}>
+      <ToggleGroup.Item asChild value="bold">
+        <textbutton Text="B" />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item asChild value="italic">
+        <textbutton Text="I" />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item asChild value="underline">
+        <textbutton Text="U" />
+      </ToggleGroup.Item>
+    </ToggleGroup.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - Supports grouped toggle interactions through shared root context.
 - Use for segmented controls and multi-select button groups.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [radio-group](/components/radio-group/), [tabs](/components/tabs/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

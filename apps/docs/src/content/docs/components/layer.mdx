@@ -33,7 +33,36 @@ pnpm lattice add layer
 - `PortalProvider`
 - `Presence`
 
+## Usage Snippet
+
+```tsx
+import { DismissableLayer, Portal, PortalProvider, Presence } from "@lattice-ui/layer";
+
+export function LayeredPanel({ playerGui }: { playerGui: PlayerGui }) {
+  return (
+    <PortalProvider container={playerGui}>
+      <Presence present>
+        <Portal>
+          <DismissableLayer>
+            <textlabel Text="Overlay content" />
+          </DismissableLayer>
+        </Portal>
+      </Presence>
+    </PortalProvider>
+  );
+}
+```
+
+
 ## Notes
 
 - `PortalProvider` helps centralize overlay mounting and display-order management.
 - `DismissableLayer` and `Presence` are shared by overlay components such as dialog/popover.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [dialog](/components/dialog/), [popover](/components/popover/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)

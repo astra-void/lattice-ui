@@ -5,35 +5,52 @@ import { packageManagerFailedError, usageError } from "../core/errors";
 import { copyTemplateSafe } from "../core/fs/copy";
 import { createLogger } from "../core/logger";
 import { resolveLatestVersions } from "../core/npm/latest";
+import { resolveLocalLatticeCommand } from "../core/output";
 import { detectPackageManager } from "../core/pm/detect";
 import type { PackageManagerName } from "../core/pm/types";
-import { type PromptRuntime, promptConfirm, promptSelect } from "../core/prompt";
+import { type PromptRuntime, promptConfirm, promptInput, promptSelect } from "../core/prompt";
 
 export interface CreateCommandInput {
   cwd: string;
-  projectPath: string;
+  projectPath?: string;
   pm?: string;
   yes: boolean;
   git?: boolean;
   template?: string;
+  lint?: boolean;
 }
 
 interface CreateCommandRuntimeOverrides {
   detectPackageManagerFn?: typeof detectPackageManager;
   resolveLatestVersionsFn?: typeof resolveLatestVersions;
   runProcessFn?: (command: string, args: string[], cwd: string) => Promise<void>;
+  createLoggerFn?: typeof createLogger;
+  promptInputFn?: typeof promptInput;
 }
 
 const SUPPORTED_TEMPLATE = "rbxts";
 
-const VERSION_PACKAGES = {
+const CORE_VERSION_PACKAGES = {
   latticeStyle: "@lattice-ui/style",
+  latticeCli: "@lattice-ui/cli",
   rbxtsReact: "@rbxts/react",
   rbxtsReactRoblox: "@rbxts/react-roblox",
   rbxtsCompilerTypes: "@rbxts/compiler-types",
   rbxtsTypes: "@rbxts/types",
   robloxTs: "roblox-ts",
   typescript: "typescript",
+} as const;
+
+const LINT_VERSION_PACKAGES = {
+  eslint: "eslint",
+  eslintEslintrc: "@eslint/eslintrc",
+  eslintJs: "@eslint/js",
+  eslintConfigPrettier: "eslint-config-prettier",
+  eslintPluginPrettier: "eslint-plugin-prettier",
+  eslintPluginRobloxTs: "eslint-plugin-roblox-ts",
+  typescriptEslintPlugin: "@typescript-eslint/eslint-plugin",
+  typescriptEslintParser: "@typescript-eslint/parser",
+  prettier: "prettier",
 } as const;
 
 const GITIGNORE_CONTENT = "node_modules\nout\n";
@@ -135,20 +152,14 @@ function normalizePackageManager(pm: string | undefined): PackageManagerName | u
   throw usageError(`Invalid --pm value "${pm}". Use pnpm, npm, or yarn.`);
 }
 
-async function selectTemplate(runtime: PromptRuntime, providedTemplate: string | undefined): Promise<string> {
+async function selectTemplate(providedTemplate: string | undefined): Promise<string> {
   const normalized = normalizeTemplate(providedTemplate);
 
   if (normalized !== SUPPORTED_TEMPLATE) {
     throw usageError(`Unknown template: ${normalized}. Supported template: ${SUPPORTED_TEMPLATE}.`);
   }
 
-  if (providedTemplate) {
-    return normalized;
-  }
-
-  return promptSelect(runtime, "Select a template", [{ label: "rbxts", value: SUPPORTED_TEMPLATE }], {
-    defaultIndex: 0,
-  });
+  return normalized;
 }
 
 async function selectPackageManager(
@@ -180,6 +191,35 @@ async function selectGitEnabled(runtime: PromptRuntime, providedGit: boolean | u
   return promptConfirm(runtime, "Initialize a git repository?", { defaultValue: false });
 }
 
+async function selectLintEnabled(runtime: PromptRuntime, providedLint: boolean | undefined): Promise<boolean> {
+  if (providedLint !== undefined) {
+    return providedLint;
+  }
+
+  if (runtime.yes) {
+    return true;
+  }
+
+  return promptConfirm(runtime, "Set up ESLint + Prettier?", { defaultValue: true });
+}
+
+async function resolveProjectPath(
+  runtime: PromptRuntime,
+  projectPath: string | undefined,
+  promptInputFn: typeof promptInput,
+): Promise<string> {
+  const value = projectPath?.trim();
+  if (value && value.length > 0) {
+    return value;
+  }
+
+  if (runtime.yes) {
+    throw usageError("create requires [project-path] when using --yes.");
+  }
+
+  return promptInputFn(runtime, "What is your project named?", { required: true });
+}
+
 export async function runCreateCommand(
   input: CreateCommandInput,
   runtimeOverrides?: CreateCommandRuntimeOverrides,
@@ -187,66 +227,109 @@ export async function runCreateCommand(
   const detectPackageManagerFn = runtimeOverrides?.detectPackageManagerFn ?? detectPackageManager;
   const resolveLatestVersionsFn = runtimeOverrides?.resolveLatestVersionsFn ?? resolveLatestVersions;
   const runProcessFn = runtimeOverrides?.runProcessFn ?? runProcess;
+  const createLoggerFn = runtimeOverrides?.createLoggerFn ?? createLogger;
+  const promptInputFn = runtimeOverrides?.promptInputFn ?? promptInput;
 
   const runtime: PromptRuntime = { yes: input.yes };
 
-  const template = await selectTemplate(runtime, input.template);
+  const template = await selectTemplate(input.template);
   if (template !== SUPPORTED_TEMPLATE) {
     throw usageError(`Unsupported template: ${template}`);
   }
 
   const packageManager = await selectPackageManager(runtime, input.pm);
   const gitEnabled = await selectGitEnabled(runtime, input.git);
+  const lintEnabled = await selectLintEnabled(runtime, input.lint);
 
-  const relativeProjectPath = normalizeProjectPath(input.projectPath);
+  const providedProjectPath = await resolveProjectPath(runtime, input.projectPath, promptInputFn);
+  const relativeProjectPath = normalizeProjectPath(providedProjectPath);
   const targetRoot = path.resolve(input.cwd, relativeProjectPath);
 
   await ensureEmptyDirectory(targetRoot);
 
-  const logger = createLogger({
+  const logger = createLoggerFn({
     verbose: false,
     yes: input.yes,
   });
 
   const resolvedPm = await detectPackageManagerFn(targetRoot, packageManager);
+  logger.section("Creating a new Lattice app");
+  logger.kv("Location", targetRoot);
+  logger.kv("Template", template);
+  logger.kv("Package manager", resolvedPm.name);
+  logger.kv("Git", gitEnabled ? "enabled" : "disabled (use --git to enable)");
+  logger.kv("Lint/format", lintEnabled ? "enabled" : "disabled");
 
+  logger.section("Resolving");
   const versionSpinner = logger.spinner("Resolving latest package versions...");
-  const versions = await resolveLatestVersionsFn(Object.values(VERSION_PACKAGES));
-  versionSpinner.succeed("Latest package versions resolved.");
+  const packagesToResolve = [
+    ...Object.values(CORE_VERSION_PACKAGES),
+    ...(lintEnabled ? Object.values(LINT_VERSION_PACKAGES) : []),
+  ];
+  const versions = await resolveLatestVersionsFn(packagesToResolve);
+  versionSpinner.succeed("Package versions resolved.");
 
   const templateDir = path.resolve(__dirname, "../../templates/init");
+  logger.section("Scaffolding");
   const scaffoldSpinner = logger.spinner(`Scaffolding ${template} template...`);
   const report = await copyTemplateSafe(templateDir, targetRoot, {
     dryRun: false,
     logger,
     replacements: {
       __PROJECT_NAME__: inferPackageName(targetRoot),
-      __LATTICE_STYLE_VERSION__: versions[VERSION_PACKAGES.latticeStyle],
-      __RBXTS_REACT_VERSION__: versions[VERSION_PACKAGES.rbxtsReact],
-      __RBXTS_REACT_ROBLOX_VERSION__: versions[VERSION_PACKAGES.rbxtsReactRoblox],
-      __RBXTS_COMPILER_TYPES_VERSION__: versions[VERSION_PACKAGES.rbxtsCompilerTypes],
-      __RBXTS_TYPES_VERSION__: versions[VERSION_PACKAGES.rbxtsTypes],
-      __ROBLOX_TS_VERSION__: versions[VERSION_PACKAGES.robloxTs],
-      __TYPESCRIPT_VERSION__: versions[VERSION_PACKAGES.typescript],
+      __LATTICE_STYLE_VERSION__: versions[CORE_VERSION_PACKAGES.latticeStyle],
+      __LATTICE_CLI_VERSION__: versions[CORE_VERSION_PACKAGES.latticeCli],
+      __RBXTS_REACT_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsReact],
+      __RBXTS_REACT_ROBLOX_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsReactRoblox],
+      __RBXTS_COMPILER_TYPES_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsCompilerTypes],
+      __RBXTS_TYPES_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsTypes],
+      __ROBLOX_TS_VERSION__: versions[CORE_VERSION_PACKAGES.robloxTs],
+      __TYPESCRIPT_VERSION__: versions[CORE_VERSION_PACKAGES.typescript],
     },
   });
-  scaffoldSpinner.succeed(
-    `Template scaffold complete (created=${report.created.length}, merged=${report.merged.length}, skipped=${report.skipped.length}).`,
-  );
+  scaffoldSpinner.succeed(`Scaffold complete (${report.created.length} created, ${report.merged.length} merged).`);
 
+  if (lintEnabled) {
+    logger.section("Configuring");
+    const lintTemplateDir = path.resolve(__dirname, "../../templates/init-lint");
+    const lintSpinner = logger.spinner("Applying ESLint + Prettier configuration...");
+    await copyTemplateSafe(lintTemplateDir, targetRoot, {
+      dryRun: false,
+      logger,
+      replacements: {
+        __ESLINT_VERSION__: versions[LINT_VERSION_PACKAGES.eslint],
+        __ESLINT_ESLINTRC_VERSION__: versions[LINT_VERSION_PACKAGES.eslintEslintrc],
+        __ESLINT_JS_VERSION__: versions[LINT_VERSION_PACKAGES.eslintJs],
+        __ESLINT_CONFIG_PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.eslintConfigPrettier],
+        __ESLINT_PLUGIN_PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.eslintPluginPrettier],
+        __ESLINT_PLUGIN_ROBLOX_TS_VERSION__: versions[LINT_VERSION_PACKAGES.eslintPluginRobloxTs],
+        __TYPESCRIPT_ESLINT_PLUGIN_VERSION__: versions[LINT_VERSION_PACKAGES.typescriptEslintPlugin],
+        __TYPESCRIPT_ESLINT_PARSER_VERSION__: versions[LINT_VERSION_PACKAGES.typescriptEslintParser],
+        __PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.prettier],
+      },
+    });
+    lintSpinner.succeed("Lint and format configuration applied.");
+  }
+
+  logger.section("Installing");
   const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
   await resolvedPm.manager.install(targetRoot);
   installSpinner.succeed("Dependencies installed.");
 
   if (gitEnabled) {
+    logger.section("Git");
     const gitSpinner = logger.spinner("Initializing git repository...");
     await runProcessFn("git", ["init"], targetRoot);
     await fs.writeFile(path.join(targetRoot, ".gitignore"), GITIGNORE_CONTENT, "utf8");
     gitSpinner.succeed("Git repository initialized.");
   }
 
-  logger.success(`Project created at ${targetRoot}`);
-  logger.info("Next steps:");
-  logger.info(`  cd ${relativeProjectPath}`);
-  logger.info(`  ${resolvedPm.name} run build`);
+  logger.success(`Success! Created ${path.basename(targetRoot)} at ${targetRoot}`);
+  logger.kv("Files created", String(report.created.length));
+  logger.kv("Files merged", String(report.merged.length));
+
+  logger.section("Next Steps");
+  logger.step(`cd ${relativeProjectPath}`);
+  logger.step(`${resolvedPm.name} run build`);
+  logger.step(`${resolveLocalLatticeCommand(resolvedPm.name)} add --preset form`);
 }

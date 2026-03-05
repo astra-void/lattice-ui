@@ -35,8 +35,39 @@ pnpm lattice add scroll-area
 - `ScrollArea.Thumb`
 - `ScrollArea.Corner`
 
+## Usage Snippet
+
+```tsx
+import { ScrollArea } from "@lattice-ui/scroll-area";
+
+export function InventoryList() {
+  return (
+    <ScrollArea.Root>
+      <ScrollArea.Viewport asChild>
+        <scrollingframe Size={UDim2.fromOffset(220, 140)}>
+          <frame Size={UDim2.fromOffset(220, 420)} />
+        </scrollingframe>
+      </ScrollArea.Viewport>
+
+      <ScrollArea.Scrollbar orientation="vertical">
+        <ScrollArea.Thumb orientation="vertical" />
+      </ScrollArea.Scrollbar>
+    </ScrollArea.Root>
+  );
+}
+```
+
+
 ## Notes
 
 - Supports vertical and horizontal scrollbar primitives.
 - `type` supports `auto`, `always`, and `scroll` visibility policies.
 - Thumb/canvas math helpers are exported for unit testing.
+
+## Related
+
+- CLI commands: [CLI Commands](/cli/commands/)
+- Registry and presets: [Components and Presets](/cli/components-and-presets/)
+- Preset membership: None (install by explicit component name)
+- Related components: [select](/components/select/), [menu](/components/menu/)
+- Troubleshooting: [Troubleshooting](/cli/troubleshooting/)
