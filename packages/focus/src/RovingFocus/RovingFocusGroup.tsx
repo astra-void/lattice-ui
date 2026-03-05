@@ -69,7 +69,7 @@ function resolveArrowDirection(keyCode: Enum.KeyCode, orientation: RovingOrienta
 export function RovingFocusGroup(props: RovingFocusGroupProps) {
   const loop = props.loop ?? true;
   const orientation = props.orientation ?? "both";
-  const active = props.active ?? true;
+  const active = props.active ?? false;
   const autoFocus = props.autoFocus ?? "none";
 
   const itemEntriesRef = React.useRef<Array<RovingItemRegistration>>([]);
@@ -166,8 +166,9 @@ export function RovingFocusGroup(props: RovingFocusGroupProps) {
   const contextValue = React.useMemo(
     () => ({
       registerItem,
+      navigationEnabled: active,
     }),
-    [registerItem],
+    [active, registerItem],
   );
 
   return <RovingFocusProvider value={contextValue}>{props.children}</RovingFocusProvider>;

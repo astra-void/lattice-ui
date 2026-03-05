@@ -18,6 +18,7 @@ export type TabsContextValue = {
   setValue: TabsSetValue;
   orientation: TabsOrientation;
   activationMode: TabsActivationMode;
+  keyboardNavigation: boolean;
   registerTrigger: (trigger: TabsTriggerRegistration) => () => void;
 };
 
@@ -27,6 +28,7 @@ export type TabsProps = {
   onValueChange?: (value: string) => void;
   orientation?: TabsOrientation;
   activationMode?: TabsActivationMode;
+  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

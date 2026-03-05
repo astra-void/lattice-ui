@@ -23,4 +23,15 @@ describe("textarea auto-resize", () => {
 
     expect(height).toBe(60);
   });
+
+  it("uses measuredRows for wrapped content without explicit newlines", () => {
+    const height = resolveTextareaHeight("wrapped text", {
+      minRows: 1,
+      lineHeight: 18,
+      verticalPadding: 0,
+      measuredRows: 4,
+    });
+
+    expect(height).toBe(72);
+  });
 });

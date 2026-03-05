@@ -32,13 +32,21 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     [disabled, props.value, radioGroupContext],
   );
 
+  const handleSelectionGained = React.useCallback(() => {
+    if (!radioGroupContext.keyboardNavigation) {
+      return;
+    }
+
+    handleSelect();
+  }, [handleSelect, radioGroupContext.keyboardNavigation]);
+
   const eventHandlers = React.useMemo(
     () => ({
       Activated: handleSelect,
-      SelectionGained: handleSelect,
+      SelectionGained: handleSelectionGained,
       InputBegan: handleInputBegan,
     }),
-    [handleInputBegan, handleSelect],
+    [handleInputBegan, handleSelect, handleSelectionGained],
   );
 
   const itemContextValue = React.useMemo(

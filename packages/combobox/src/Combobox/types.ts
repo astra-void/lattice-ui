@@ -29,6 +29,7 @@ export type ComboboxContextValue = {
   readOnly: boolean;
   required: boolean;
   loop: boolean;
+  keyboardNavigation: boolean;
   filterFn: ComboboxFilterFn;
   triggerRef: React.MutableRefObject<GuiObject | undefined>;
   inputRef: React.MutableRefObject<TextBox | undefined>;
@@ -53,6 +54,7 @@ export type ComboboxProps = {
   readOnly?: boolean;
   required?: boolean;
   loop?: boolean;
+  keyboardNavigation?: boolean;
   filterFn?: ComboboxFilterFn;
   children?: React.ReactNode;
 };

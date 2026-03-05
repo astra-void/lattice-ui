@@ -13,6 +13,7 @@ function toGuiObject(instance: Instance | undefined) {
 export function SelectTrigger(props: SelectTriggerProps) {
   const selectContext = useSelectContext();
   const disabled = selectContext.disabled || props.disabled === true;
+  const keyboardNavigation = selectContext.keyboardNavigation;
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -41,11 +42,11 @@ export function SelectTrigger(props: SelectTriggerProps) {
         return;
       }
 
-      if (keyCode === Enum.KeyCode.Down || keyCode === Enum.KeyCode.Up) {
+      if (keyboardNavigation && (keyCode === Enum.KeyCode.Down || keyCode === Enum.KeyCode.Up)) {
         selectContext.setOpen(true);
       }
     },
-    [disabled, selectContext],
+    [disabled, keyboardNavigation, selectContext],
   );
 
   const eventHandlers = React.useMemo(
@@ -63,7 +64,7 @@ export function SelectTrigger(props: SelectTriggerProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setTriggerRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled && keyboardNavigation} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -76,7 +77,7 @@ export function SelectTrigger(props: SelectTriggerProps) {
       BackgroundColor3={Color3.fromRGB(41, 48, 63)}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={!disabled}
+      Selectable={!disabled && keyboardNavigation}
       Size={UDim2.fromOffset(220, 36)}
       Text="Select"
       TextColor3={disabled ? Color3.fromRGB(140, 148, 164) : Color3.fromRGB(235, 241, 248)}

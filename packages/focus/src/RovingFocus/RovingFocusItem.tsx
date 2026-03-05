@@ -14,6 +14,7 @@ function toGuiObject(instance: Instance | undefined) {
 
 export function RovingFocusItem(props: RovingFocusItemProps) {
   const rovingFocusContext = useRovingFocusContext();
+  const navigationEnabled = rovingFocusContext.navigationEnabled;
   const itemRef = React.useRef<GuiObject>();
   const disabledRef = React.useRef(props.disabled === true);
 
@@ -39,6 +40,15 @@ export function RovingFocusItem(props: RovingFocusItemProps) {
     itemRef.current = toGuiObject(instance);
   }, []);
 
+  React.useEffect(() => {
+    const node = itemRef.current;
+    if (!node) {
+      return;
+    }
+
+    node.Selectable = navigationEnabled && props.disabled !== true;
+  });
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
@@ -46,7 +56,7 @@ export function RovingFocusItem(props: RovingFocusItemProps) {
     }
 
     return (
-      <Slot Active={props.disabled !== true} Selectable={props.disabled !== true} ref={setItemRef}>
+      <Slot Active={props.disabled !== true} Selectable={navigationEnabled && props.disabled !== true} ref={setItemRef}>
         {child}
       </Slot>
     );
@@ -58,7 +68,7 @@ export function RovingFocusItem(props: RovingFocusItemProps) {
       AutoButtonColor={false}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Selectable={props.disabled !== true}
+      Selectable={navigationEnabled && props.disabled !== true}
       Size={UDim2.fromOffset(140, 30)}
       Text="Item"
       TextColor3={Color3.fromRGB(240, 244, 250)}

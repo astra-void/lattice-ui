@@ -7,6 +7,7 @@ import type { AccordionProps } from "./types";
 export function AccordionRoot(props: AccordionProps) {
   const accordionType = props.type ?? "single";
   const loop = props.loop ?? true;
+  const keyboardNavigation = props.keyboardNavigation === true;
   const collapsible = props.collapsible ?? false;
 
   const defaultValue = props.defaultValue ?? (accordionType === "single" ? "" : []);
@@ -44,7 +45,7 @@ export function AccordionRoot(props: AccordionProps) {
 
   return (
     <AccordionContextProvider value={contextValue}>
-      <RovingFocusGroup active autoFocus="none" loop={loop} orientation="vertical">
+      <RovingFocusGroup active={keyboardNavigation} autoFocus="none" loop={loop} orientation="vertical">
         {props.children}
       </RovingFocusGroup>
     </AccordionContextProvider>

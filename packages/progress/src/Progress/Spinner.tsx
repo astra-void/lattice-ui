@@ -1,7 +1,10 @@
-import { React, Slot } from "@lattice-ui/core";
+import { composeRefs, React } from "@lattice-ui/core";
+import type ReactTypes from "@rbxts/react";
 import type { SpinnerProps } from "./types";
 
 const RunService = game.GetService("RunService");
+
+type GuiPropBag = React.Attributes & Record<string, unknown>;
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -9,6 +12,26 @@ function toGuiObject(instance: Instance | undefined) {
   }
 
   return instance;
+}
+
+function toGuiPropBag(value: unknown): GuiPropBag {
+  return typeIs(value, "table") ? (value as GuiPropBag) : {};
+}
+
+function toInstanceRef(value: unknown): ReactTypes.Ref<Instance> | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeIs(value, "function")) {
+    return value as (instance: Instance | undefined) => void;
+  }
+
+  if (typeIs(value, "table")) {
+    return value as ReactTypes.MutableRefObject<Instance | undefined>;
+  }
+
+  return undefined;
 }
 
 export function Spinner(props: SpinnerProps) {
@@ -46,11 +69,14 @@ export function Spinner(props: SpinnerProps) {
       error("[Spinner] `asChild` requires a child element.");
     }
 
-    return (
-      <Slot Visible={spinning} ref={setSpinnerRef}>
-        {child}
-      </Slot>
-    );
+    const childProps = toGuiPropBag((child as { props?: unknown }).props);
+    const mergedProps: GuiPropBag = {
+      ...childProps,
+      Visible: spinning,
+      ref: composeRefs(toInstanceRef((childProps as { ref?: unknown }).ref), setSpinnerRef),
+    };
+
+    return React.cloneElement(child as React.ReactElement<GuiPropBag>, mergedProps);
   }
 
   return (
@@ -62,7 +88,16 @@ export function Spinner(props: SpinnerProps) {
       ref={setSpinnerRef}
     >
       <uicorner CornerRadius={new UDim(1, 0)} />
-      <uistroke Color={Color3.fromRGB(102, 156, 255)} Thickness={2} />
+      <uistroke Color={Color3.fromRGB(102, 156, 255)} Thickness={2} Transparency={0.35} />
+      <frame
+        AnchorPoint={new Vector2(0.5, 0.5)}
+        BackgroundColor3={Color3.fromRGB(102, 156, 255)}
+        BorderSizePixel={0}
+        Position={UDim2.fromScale(0.5, 0.1)}
+        Size={UDim2.fromOffset(4, 4)}
+      >
+        <uicorner CornerRadius={new UDim(1, 0)} />
+      </frame>
     </frame>
   );
 }

@@ -26,5 +26,6 @@ export type RovingItemRegistration = {
 
 export type RovingFocusContextValue = {
   registerItem: (item: RovingItemRegistration) => () => void;
+  navigationEnabled: boolean;
   children?: React.ReactNode;
 };

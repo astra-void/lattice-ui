@@ -86,7 +86,11 @@
   "pnpm": {
     "overrides": {
       "lodash": "4.17.23"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   },
   "packageManager": "pnpm@10.30.3"
 }

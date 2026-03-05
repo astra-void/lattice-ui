@@ -21,6 +21,7 @@ export type AccordionProps = {
   onValueChange?: (value: string | Array<string>) => void;
   collapsible?: boolean;
   loop?: boolean;
+  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

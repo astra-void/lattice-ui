@@ -11,11 +11,39 @@ function toTextBox(instance: Instance | undefined) {
   return instance;
 }
 
+function resolveVerticalPadding(textBox: TextBox) {
+  let verticalPadding = 0;
+
+  for (const child of textBox.GetChildren()) {
+    if (!child.IsA("UIPadding")) {
+      continue;
+    }
+
+    verticalPadding += child.PaddingTop.Offset + child.PaddingBottom.Offset;
+    verticalPadding += math.floor(child.PaddingTop.Scale * textBox.AbsoluteSize.Y);
+    verticalPadding += math.floor(child.PaddingBottom.Scale * textBox.AbsoluteSize.Y);
+  }
+
+  return verticalPadding > 0 ? verticalPadding : 14;
+}
+
+function resolveLineHeight(textBox: TextBox, explicitLineHeight: number | undefined) {
+  if (explicitLineHeight !== undefined) {
+    return math.max(1, explicitLineHeight);
+  }
+
+  return math.max(1, math.ceil(textBox.TextSize * 1.2));
+}
+
+function resolveMeasuredRows(textBox: TextBox, lineHeight: number) {
+  const textBoundsHeight = math.max(lineHeight, textBox.TextBounds.Y);
+  return math.max(1, math.ceil(textBoundsHeight / lineHeight));
+}
+
 export function TextareaInput(props: TextareaInputProps) {
   const textareaContext = useTextareaContext();
   const disabled = textareaContext.disabled || props.disabled === true;
   const readOnly = textareaContext.readOnly || props.readOnly === true;
-  const lineHeight = props.lineHeight ?? 18;
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -30,11 +58,16 @@ export function TextareaInput(props: TextareaInputProps) {
         return;
       }
 
+      const lineHeight = resolveLineHeight(textBox, props.lineHeight);
+      const verticalPadding = resolveVerticalPadding(textBox);
+      const measuredRows = resolveMeasuredRows(textBox, lineHeight);
+
       const height = resolveTextareaHeight(textBox.Text, {
         lineHeight,
         minRows: textareaContext.minRows,
         maxRows: textareaContext.maxRows,
-        verticalPadding: 14,
+        verticalPadding,
+        measuredRows,
       });
 
       const currentSize = textBox.Size;
@@ -42,7 +75,7 @@ export function TextareaInput(props: TextareaInputProps) {
         textBox.Size = UDim2.fromOffset(currentSize.X.Offset, height);
       }
     },
-    [lineHeight, textareaContext.autoResize, textareaContext.maxRows, textareaContext.minRows],
+    [props.lineHeight, textareaContext.autoResize, textareaContext.maxRows, textareaContext.minRows],
   );
 
   const handleTextChanged = React.useCallback(
@@ -58,6 +91,11 @@ export function TextareaInput(props: TextareaInputProps) {
 
       textareaContext.setValue(textBox.Text);
       applyAutoResize(textBox);
+      task.defer(() => {
+        if (textareaContext.inputRef.current === textBox) {
+          applyAutoResize(textBox);
+        }
+      });
     },
     [applyAutoResize, disabled, readOnly, textareaContext],
   );
@@ -80,6 +118,11 @@ export function TextareaInput(props: TextareaInputProps) {
     }
 
     applyAutoResize(input);
+    task.defer(() => {
+      if (textareaContext.inputRef.current === input) {
+        applyAutoResize(input);
+      }
+    });
   }, [applyAutoResize, textareaContext.inputRef, textareaContext.value]);
 
   const sharedProps = {

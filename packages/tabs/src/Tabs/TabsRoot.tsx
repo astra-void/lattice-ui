@@ -52,6 +52,7 @@ export function TabsRoot(props: TabsProps) {
 
   const orientation = props.orientation ?? "horizontal";
   const activationMode = props.activationMode ?? "automatic";
+  const keyboardNavigation = props.keyboardNavigation === true;
 
   const triggerRegistryRef = React.useRef<Array<TabsTriggerRegistration>>([]);
   const lastSelectedOrderRef = React.useRef<number>();
@@ -102,9 +103,10 @@ export function TabsRoot(props: TabsProps) {
       setValue,
       orientation,
       activationMode,
+      keyboardNavigation,
       registerTrigger,
     }),
-    [activationMode, orientation, registerTrigger, setValue, value],
+    [activationMode, keyboardNavigation, orientation, registerTrigger, setValue, value],
   );
 
   return <TabsContextProvider value={contextValue}>{props.children}</TabsContextProvider>;

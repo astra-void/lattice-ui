@@ -43,6 +43,22 @@ pnpm lattice add --preset form
 pnpm lattice add dialog,toast --preset overlay
 ```
 
+## Recommended Styling Baseline
+
+When you start designing product UI, use `@lattice-ui/style` as your default styling baseline and pair it with `@lattice-ui/system` for layout and app-level UI context.
+
+### Global CLI
+
+```bash
+lattice add style system
+```
+
+### Monorepo Local Script
+
+```bash
+pnpm lattice add style system
+```
+
 ## 3. Remove Packages You No Longer Need
 
 ### Global CLI
@@ -90,3 +106,5 @@ pnpm lattice upgrade --preset form
 ```
 
 For command signatures and edge cases, see [CLI Commands](/cli/commands/).
+
+Next step: [Design with Style + System](/getting-started/design-with-style-system/).

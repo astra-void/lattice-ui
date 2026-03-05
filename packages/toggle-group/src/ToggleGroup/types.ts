@@ -8,6 +8,7 @@ export type ToggleGroupCommonProps = {
   disabled?: boolean;
   loop?: boolean;
   orientation?: ToggleGroupOrientation;
+  keyboardNavigation?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
 };

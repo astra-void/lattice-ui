@@ -8,6 +8,7 @@ export type MenuContextValue = {
   open: boolean;
   setOpen: MenuSetOpen;
   modal: boolean;
+  keyboardNavigation: boolean;
   triggerRef: React.MutableRefObject<GuiObject | undefined>;
   contentRef: React.MutableRefObject<GuiObject | undefined>;
 };
@@ -17,6 +18,7 @@ export type MenuProps = {
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   modal?: boolean;
+  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

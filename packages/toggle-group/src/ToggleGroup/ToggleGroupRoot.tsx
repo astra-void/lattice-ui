@@ -31,6 +31,7 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
   const disabled = props.disabled === true;
   const loop = props.loop ?? true;
   const orientation = props.orientation ?? "horizontal";
+  const keyboardNavigation = props.keyboardNavigation === true;
 
   const [singleValue, setSingleValueState] = useControllableState<string | undefined>({
     value: props.type === "single" ? props.value : undefined,
@@ -113,7 +114,7 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
 
   return (
     <ToggleGroupContextProvider value={contextValue}>
-      <RovingFocusGroup active={!disabled} autoFocus="none" loop={loop} orientation={orientation}>
+      <RovingFocusGroup active={!disabled && keyboardNavigation} autoFocus="none" loop={loop} orientation={orientation}>
         {groupNode}
       </RovingFocusGroup>
     </ToggleGroupContextProvider>

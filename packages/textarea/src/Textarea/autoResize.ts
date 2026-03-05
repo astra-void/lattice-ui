@@ -3,6 +3,7 @@ export type TextareaAutoResizeOptions = {
   maxRows?: number;
   lineHeight: number;
   verticalPadding?: number;
+  measuredRows?: number;
 };
 
 function countLines(text: string) {
@@ -19,7 +20,10 @@ export function resolveTextareaHeight(text: string, options: TextareaAutoResizeO
   const lineHeight = math.max(1, options.lineHeight);
   const verticalPadding = math.max(0, options.verticalPadding ?? 0);
 
-  const naturalRows = countLines(text);
+  const newlineRows = countLines(text);
+  const measuredRows =
+    options.measuredRows !== undefined ? math.max(1, math.floor(options.measuredRows)) : newlineRows;
+  const naturalRows = math.max(newlineRows, measuredRows);
   const clampedRows =
     maxRows !== undefined ? math.clamp(naturalRows, minRows, maxRows) : math.max(minRows, naturalRows);
 

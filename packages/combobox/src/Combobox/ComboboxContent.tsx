@@ -25,6 +25,7 @@ function toGuiObject(instance: Instance | undefined) {
 
 function ComboboxContentImpl(props: ComboboxContentImplProps) {
   const comboboxContext = useComboboxContext();
+  const keyboardNavigation = comboboxContext.keyboardNavigation;
 
   const popper = usePopper({
     anchorRef: comboboxContext.triggerRef,
@@ -78,7 +79,7 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <RovingFocusGroup active={props.enabled} autoFocus="first" loop={comboboxContext.loop} orientation="vertical">
+      <RovingFocusGroup active={props.enabled && keyboardNavigation} autoFocus="first" loop={comboboxContext.loop} orientation="vertical">
         {contentNode}
       </RovingFocusGroup>
     </DismissableLayer>
@@ -140,3 +141,4 @@ export function ComboboxContent(props: ComboboxContentProps) {
     />
   );
 }
+

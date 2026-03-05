@@ -22,6 +22,7 @@ export type SelectContextValue = {
   disabled: boolean;
   required: boolean;
   loop: boolean;
+  keyboardNavigation: boolean;
   triggerRef: React.MutableRefObject<GuiObject | undefined>;
   contentRef: React.MutableRefObject<GuiObject | undefined>;
   registerItem: (item: SelectItemRegistration) => () => void;
@@ -39,6 +40,7 @@ export type SelectProps = {
   disabled?: boolean;
   required?: boolean;
   loop?: boolean;
+  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

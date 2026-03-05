@@ -59,10 +59,19 @@ export function ProgressBasicScene() {
           </frame>
         </Progress.Root>
 
-        <Progress.Spinner asChild spinning>
+        <Progress.Spinner asChild speedDegPerSecond={240} spinning>
           <frame BackgroundTransparency={1} BorderSizePixel={0} LayoutOrder={3} Size={UDim2.fromOffset(22, 22)}>
             <uicorner CornerRadius={new UDim(1, 0)} />
-            <uistroke Color={theme.colors.accent} Thickness={2} />
+            <uistroke Color={theme.colors.accent} Thickness={2} Transparency={0.35} />
+            <frame
+              AnchorPoint={new Vector2(0.5, 0.5)}
+              BackgroundColor3={theme.colors.accent}
+              BorderSizePixel={0}
+              Position={UDim2.fromScale(0.5, 0.1)}
+              Size={UDim2.fromOffset(4, 4)}
+            >
+              <uicorner CornerRadius={new UDim(1, 0)} />
+            </frame>
           </frame>
         </Progress.Spinner>
 
@@ -93,3 +102,4 @@ export function ProgressBasicScene() {
     </frame>
   );
 }
+

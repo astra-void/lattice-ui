@@ -9,6 +9,7 @@ export type RadioGroupContextValue = {
   setValue: RadioGroupSetValue;
   disabled: boolean;
   required: boolean;
+  keyboardNavigation: boolean;
 };
 
 export type RadioGroupItemContextValue = {
@@ -24,6 +25,7 @@ export type RadioGroupProps = {
   required?: boolean;
   loop?: boolean;
   orientation?: RadioGroupOrientation;
+  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

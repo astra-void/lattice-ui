@@ -1,11 +1,6 @@
 import { React, useControllableState } from "@lattice-ui/core";
 import { ComboboxContextProvider } from "./context";
-import {
-  type ComboboxOption,
-  defaultComboboxFilter,
-  resolveComboboxInputValue,
-  resolveForcedComboboxValue,
-} from "./logic";
+import { type ComboboxOption, defaultComboboxFilter, resolveForcedComboboxValue } from "./logic";
 import type { ComboboxItemRegistration, ComboboxProps } from "./types";
 
 function getOrderedItems(items: Array<ComboboxItemRegistration>) {
@@ -49,6 +44,7 @@ export function ComboboxRoot(props: ComboboxProps) {
   const readOnly = props.readOnly === true;
   const required = props.required === true;
   const loop = props.loop ?? true;
+  const keyboardNavigation = props.keyboardNavigation === true;
   const filterFn = props.filterFn ?? defaultComboboxFilter;
 
   const triggerRef = React.useRef<GuiObject>();
@@ -56,10 +52,12 @@ export function ComboboxRoot(props: ComboboxProps) {
   const contentRef = React.useRef<GuiObject>();
 
   const itemEntriesRef = React.useRef<Array<ComboboxItemRegistration>>([]);
+  const itemTextCacheRef = React.useRef<Record<string, string>>({});
   const [registryRevision, setRegistryRevision] = React.useState(0);
 
   const registerItem = React.useCallback((item: ComboboxItemRegistration) => {
     itemEntriesRef.current.push(item);
+    itemTextCacheRef.current[item.value] = item.getTextValue();
     setRegistryRevision((revision) => revision + 1);
 
     return () => {
@@ -78,15 +76,21 @@ export function ComboboxRoot(props: ComboboxProps) {
   const getItemText = React.useCallback(
     (candidateValue: string) => {
       const selected = resolveOrderedItems().find((item) => item.value === candidateValue);
-      return selected?.getTextValue();
+      if (selected) {
+        const textValue = selected.getTextValue();
+        itemTextCacheRef.current[candidateValue] = textValue;
+        return textValue;
+      }
+
+      return itemTextCacheRef.current[candidateValue];
     },
     [resolveOrderedItems],
   );
 
   const syncInputFromValue = React.useCallback(() => {
-    const nextInputValue = resolveComboboxInputValue(value, toOptions(resolveOrderedItems()), "");
+    const nextInputValue = value !== undefined ? getItemText(value) ?? "" : "";
     setInputValueState(nextInputValue);
-  }, [resolveOrderedItems, setInputValueState, value]);
+  }, [getItemText, setInputValueState, value]);
 
   const setOpen = React.useCallback(
     (nextOpen: boolean) => {
@@ -95,12 +99,8 @@ export function ComboboxRoot(props: ComboboxProps) {
       }
 
       setOpenState(nextOpen);
-
-      if (!nextOpen) {
-        syncInputFromValue();
-      }
     },
-    [disabled, setOpenState, syncInputFromValue],
+    [disabled, setOpenState],
   );
 
   const setValue = React.useCallback(
@@ -139,12 +139,20 @@ export function ComboboxRoot(props: ComboboxProps) {
   }, [filterFn, inputValue, resolveOrderedItems]);
 
   React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+
     const orderedItems = resolveOrderedItems();
+    if (orderedItems.size() === 0) {
+      return;
+    }
+
     const nextValue = resolveForcedComboboxValue(value, toOptions(orderedItems));
-    if (nextValue !== value) {
+    if (nextValue !== undefined && nextValue !== value) {
       setValueState(nextValue);
     }
-  }, [registryRevision, resolveOrderedItems, setValueState, value]);
+  }, [open, registryRevision, resolveOrderedItems, setValueState, value]);
 
   React.useEffect(() => {
     if (open) {
@@ -167,6 +175,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       readOnly,
       required,
       loop,
+      keyboardNavigation,
       filterFn,
       triggerRef,
       inputRef,
@@ -183,6 +192,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       getItemText,
       inputValue,
       loop,
+      keyboardNavigation,
       open,
       readOnly,
       registerItem,

@@ -1,0 +1,218 @@
+---
+title: Design with Style + System
+description: Design principles built on style tokens and system layout primitives.
+draft: false
+sidebar:
+  order: 3
+---
+
+Use this guide when you are defining product UI patterns, not just consuming a single package API.
+
+Recommended baseline for new UI styling:
+
+- Start with `@lattice-ui/style` for tokens, `sx`, primitives, and reusable recipes.
+- Use `@lattice-ui/system` for app-level layout, density, and runtime UI context.
+
+`@lattice-ui/style` and `@lattice-ui/system` are meant to be used together:
+
+- `style`: tokens, `sx`, primitives (`Box`, `Text`), and recipe composition.
+- `system`: app-level providers, density scaling, layout primitives, and decorated surfaces.
+
+## Roles: Style vs System
+
+| Package | Primary job | Typical usage |
+| --- | --- | --- |
+| `@lattice-ui/style` | Tokenized styling and style composition | Theme values, `sx`, reusable recipes |
+| `@lattice-ui/system` | App scaffolding and layout behavior | `SystemProvider`, density, `Stack`/`Row`/`Grid`, `Surface` |
+
+Use `style` for visual language definition and `system` for screen structure and global UI behavior.
+
+## Provider Rule
+
+At app root, prefer `SystemProvider` as the single entry point. It wires density and theme into `ThemeProvider` internally.
+
+```tsx
+import type React from "@rbxts/react";
+import { defaultDarkTheme } from "@lattice-ui/style";
+import { SystemProvider } from "@lattice-ui/system";
+
+type AppRootProps = {
+  children?: React.ReactNode;
+};
+
+export function AppRoot(props: AppRootProps) {
+  return (
+    <SystemProvider defaultTheme={defaultDarkTheme} defaultDensity="comfortable">
+      {props.children}
+    </SystemProvider>
+  );
+}
+```
+
+When updating runtime theme/density, use `useSystemTheme`:
+
+```tsx
+import { defaultDarkTheme, defaultLightTheme } from "@lattice-ui/style";
+import { useSystemTheme } from "@lattice-ui/system";
+
+export function ThemeAndDensityControls() {
+  const { density, setDensity, setBaseTheme } = useSystemTheme();
+
+  return (
+    <>
+      <textbutton
+        Text="Toggle Theme"
+        Event={{
+          Activated: () => {
+            setBaseTheme(density === "compact" ? defaultLightTheme : defaultDarkTheme);
+          },
+        }}
+      />
+      <textbutton
+        Text={`Density: ${density}`}
+        Event={{
+          Activated: () => {
+            setDensity(density === "spacious" ? "compact" : "spacious");
+          },
+        }}
+      />
+    </>
+  );
+}
+```
+
+## Token Rules
+
+- Prefer theme tokens for color, spacing, radius, and typography values.
+- Avoid hardcoded visual values when a token exists (`theme.colors.*`, `theme.space[*]`, `theme.radius.*`, `theme.typography.*`).
+- Hardcoded values are acceptable for structural constraints that are not design language decisions (for example fixed debug panel widths or strict asset dimensions).
+
+## `sx` and `mergeGuiProps` Rules
+
+`mergeGuiProps` is left-to-right (`base -> variant -> user`), and later values win for the same prop key.
+`Event` and `Change` handler tables are composed instead of replaced.
+
+```tsx
+import type React from "@rbxts/react";
+import { mergeGuiProps } from "@lattice-ui/style";
+
+type StyleProps = React.Attributes & Record<string, unknown>;
+
+const baseProps: Partial<StyleProps> = { BorderSizePixel: 0 };
+const variantProps: Partial<StyleProps> = {
+  Event: {
+    Activated: () => print("variant"),
+  },
+};
+const userProps: Partial<StyleProps> = {
+  Event: {
+    Activated: () => print("user"),
+  },
+};
+
+const merged = mergeGuiProps(baseProps, variantProps, userProps);
+```
+
+If both variant and user provide `Event.Activated`, both run in order.
+
+## Recipe Pattern (`createRecipe`)
+
+Prefer recipe variants over ad-hoc branchy style objects:
+
+```tsx
+import type React from "@rbxts/react";
+import type { Sx } from "@lattice-ui/style";
+import { createRecipe, mergeSx } from "@lattice-ui/style";
+import { surface } from "@lattice-ui/system";
+
+type StyleProps = React.Attributes & Record<string, unknown>;
+
+type ButtonVariants = {
+  intent: {
+    primary: Sx<StyleProps>;
+    surface: Sx<StyleProps>;
+    danger: Sx<StyleProps>;
+  };
+  disabled: {
+    true: Sx<StyleProps>;
+    false: Sx<StyleProps>;
+  };
+};
+
+export const buttonRecipe = createRecipe<StyleProps, ButtonVariants>({
+  base: (theme) => ({
+    AutoButtonColor: false,
+    BorderSizePixel: 0,
+    TextSize: theme.typography.bodyMd.textSize,
+  }),
+  variants: {
+    intent: {
+      primary: (theme) => ({
+        BackgroundColor3: theme.colors.accent,
+        TextColor3: theme.colors.accentContrast,
+      }),
+      surface: mergeSx(surface<StyleProps>("surface"), (theme) => ({
+        TextColor3: theme.colors.textPrimary,
+      })),
+      danger: (theme) => ({
+        BackgroundColor3: theme.colors.danger,
+        TextColor3: theme.colors.dangerContrast,
+      }),
+    },
+    disabled: {
+      true: (theme) => ({
+        Active: false,
+        TextColor3: theme.colors.textSecondary,
+      }),
+      false: () => ({
+        Active: true,
+      }),
+    },
+  },
+  defaultVariants: {
+    intent: "surface",
+    disabled: "false",
+  },
+});
+```
+
+Use `defaultVariants` for baseline behavior and add `compoundVariants` when multi-variant intersections need explicit overrides.
+
+## Choosing Surface and Layout Primitives
+
+- Use `surface(token)` when you only need host props.
+- Use `Surface` when you want decorated container rendering (corner/stroke handling).
+- Use `Stack` for one-dimensional layout flows.
+- Use `Row` as a shorthand for horizontal `Stack`.
+- Use `Grid` for responsive multi-column content where column count/width changes with container size.
+- Use density tokens to scale UI globally by context:
+  - `compact`: dense controls and tighter spacing.
+  - `comfortable`: default baseline.
+  - `spacious`: larger tap/read targets.
+
+## Do / Don't
+
+### Do
+
+- Build reusable style behavior with `createRecipe` + variants.
+- Keep screen structure in `system` primitives and visual semantics in tokenized `style` values.
+- Route app-wide visual changes through `SystemProvider` and `useSystemTheme`.
+
+### Don't
+
+- Mix one-off hardcoded colors with tokenized colors in the same component tree.
+- Rebuild spacing/radius scales outside theme tokens.
+- Bypass `SystemProvider` at root when your app uses density-aware components.
+
+## Review Checklist
+
+- Is root composition using `SystemProvider`?
+- Are colors/spacing/radius/typography token-driven where possible?
+- Are reusable variants modeled with `createRecipe` instead of conditional prop duplication?
+- Are `surface`/`Surface` and `Stack`/`Row`/`Grid` choices aligned with intended behavior?
+- Are density changes done via `useSystemTheme` (`setDensity`, `setBaseTheme`)?
+
+Next references:
+
+- [Style package reference](/components/style/)
+- [System package reference](/components/system/)

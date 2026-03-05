@@ -19,7 +19,8 @@ export function ComboboxItem(props: ComboboxItemProps) {
   const itemRef = React.useRef<GuiObject>();
 
   const itemQueryMatch = comboboxContext.filterFn(props.textValue ?? props.value, comboboxContext.inputValue);
-  const disabled = comboboxContext.disabled || props.disabled === true || !itemQueryMatch;
+  const disabled = comboboxContext.disabled || props.disabled === true;
+  const interactionDisabled = disabled || !itemQueryMatch;
   const textValue = props.textValue ?? props.value;
 
   const disabledRef = React.useRef(disabled);
@@ -61,17 +62,17 @@ export function ComboboxItem(props: ComboboxItemProps) {
   }, []);
 
   const handleSelect = React.useCallback(() => {
-    if (disabled) {
+    if (interactionDisabled) {
       return;
     }
 
     comboboxContext.setValue(props.value);
     comboboxContext.setOpen(false);
-  }, [comboboxContext, disabled, props.value]);
+  }, [comboboxContext, interactionDisabled, props.value]);
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {
-      if (disabled) {
+      if (interactionDisabled) {
         return;
       }
 
@@ -83,7 +84,7 @@ export function ComboboxItem(props: ComboboxItemProps) {
       comboboxContext.setValue(props.value);
       comboboxContext.setOpen(false);
     },
-    [comboboxContext, disabled, props.value],
+    [comboboxContext, interactionDisabled, props.value],
   );
 
   const eventHandlers = React.useMemo(
@@ -101,8 +102,14 @@ export function ComboboxItem(props: ComboboxItemProps) {
     }
 
     return (
-      <RovingFocusItem asChild disabled={disabled}>
-        <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} Visible={itemQueryMatch} ref={setItemRef}>
+      <RovingFocusItem asChild disabled={interactionDisabled}>
+        <Slot
+          Active={!interactionDisabled}
+          Event={eventHandlers}
+          Selectable={!interactionDisabled}
+          Visible={itemQueryMatch}
+          ref={setItemRef}
+        >
           {child}
         </Slot>
       </RovingFocusItem>
@@ -110,17 +117,17 @@ export function ComboboxItem(props: ComboboxItemProps) {
   }
 
   return (
-    <RovingFocusItem asChild disabled={disabled}>
+    <RovingFocusItem asChild disabled={interactionDisabled}>
       <textbutton
-        Active={!disabled}
+        Active={!interactionDisabled}
         AutoButtonColor={false}
         BackgroundColor3={Color3.fromRGB(47, 53, 68)}
         BorderSizePixel={0}
         Event={eventHandlers}
-        Selectable={!disabled}
+        Selectable={!interactionDisabled}
         Size={UDim2.fromOffset(220, 32)}
         Text={textValue}
-        TextColor3={disabled ? Color3.fromRGB(134, 141, 156) : Color3.fromRGB(234, 239, 247)}
+        TextColor3={interactionDisabled ? Color3.fromRGB(134, 141, 156) : Color3.fromRGB(234, 239, 247)}
         TextSize={15}
         TextXAlignment={Enum.TextXAlignment.Left}
         Visible={itemQueryMatch}

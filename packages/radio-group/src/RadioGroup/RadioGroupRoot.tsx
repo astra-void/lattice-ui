@@ -18,6 +18,7 @@ export function RadioGroupRoot(props: RadioGroupProps) {
   const required = props.required === true;
   const loop = props.loop ?? true;
   const orientation = props.orientation ?? "vertical";
+  const keyboardNavigation = props.keyboardNavigation === true;
 
   const setValue = React.useCallback(
     (nextValue: string) => {
@@ -36,13 +37,14 @@ export function RadioGroupRoot(props: RadioGroupProps) {
       setValue,
       disabled,
       required,
+      keyboardNavigation,
     }),
-    [disabled, required, setValue, value],
+    [disabled, keyboardNavigation, required, setValue, value],
   );
 
   return (
     <RadioGroupContextProvider value={contextValue}>
-      <RovingFocusGroup active={!disabled} autoFocus="none" loop={loop} orientation={orientation}>
+      <RovingFocusGroup active={!disabled && keyboardNavigation} autoFocus="none" loop={loop} orientation={orientation}>
         {props.children}
       </RovingFocusGroup>
     </RadioGroupContextProvider>

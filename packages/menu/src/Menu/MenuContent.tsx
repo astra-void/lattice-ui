@@ -10,6 +10,7 @@ type MenuContentImplProps = {
   visible: boolean;
   onDismiss: () => void;
   loop: boolean;
+  keyboardNavigation: boolean;
   asChild?: boolean;
   placement?: MenuContentProps["placement"];
   offset?: MenuContentProps["offset"];
@@ -79,7 +80,7 @@ function MenuContentImpl(props: MenuContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <RovingFocusGroup active={props.enabled} autoFocus="first" loop={props.loop} orientation="vertical">
+      <RovingFocusGroup active={props.enabled && props.keyboardNavigation} autoFocus="first" loop={props.loop} orientation="vertical">
         {contentNode}
       </RovingFocusGroup>
     </DismissableLayer>
@@ -106,6 +107,7 @@ export function MenuContent(props: MenuContentProps) {
         asChild={props.asChild}
         enabled={open}
         loop={loop}
+        keyboardNavigation={menuContext.keyboardNavigation}
         offset={props.offset}
         onDismiss={handleDismiss}
         onEscapeKeyDown={props.onEscapeKeyDown}
@@ -129,6 +131,7 @@ export function MenuContent(props: MenuContentProps) {
           asChild={props.asChild}
           enabled={state.isPresent}
           loop={loop}
+          keyboardNavigation={menuContext.keyboardNavigation}
           offset={props.offset}
           onDismiss={handleDismiss}
           onEscapeKeyDown={props.onEscapeKeyDown}
