@@ -7,19 +7,19 @@ import { findRoot } from "./core/project/findRoot";
 import { loadRegistry } from "./core/registry/load";
 import type { Registry } from "./core/registry/schema";
 
-export interface GlobalOptions {
+export interface ContextOptions {
   cwd: string;
   pm?: string;
-  verbose: boolean;
   dryRun: boolean;
   yes: boolean;
+  verbose?: boolean;
 }
 
 export interface CliContext {
   cwd: string;
   projectRoot: string;
   packageJsonPath: string;
-  options: GlobalOptions;
+  options: ContextOptions;
   logger: Logger;
   pm: PackageManager;
   pmName: PackageManagerName;
@@ -28,7 +28,7 @@ export interface CliContext {
 }
 
 export async function createContext(
-  options: GlobalOptions,
+  options: ContextOptions,
   config?: { allowMissingProject?: boolean },
 ): Promise<CliContext> {
   const cwd = path.resolve(options.cwd);
@@ -40,7 +40,7 @@ export async function createContext(
   }
 
   const logger = createLogger({
-    verbose: options.verbose,
+    verbose: options.verbose ?? false,
     yes: options.yes,
   });
 

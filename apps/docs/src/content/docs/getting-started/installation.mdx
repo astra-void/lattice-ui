@@ -34,11 +34,12 @@ pnpm lattice --help
 
 ## Package Manager Strategy
 
-The CLI auto-detects package manager from lockfiles. Override explicitly when needed:
+The CLI auto-detects package manager from lockfiles for dependency commands.
+Set package manager explicitly when creating new projects:
 
 ```bash
-lattice --pm pnpm doctor
-pnpm lattice --pm pnpm doctor
+lattice create my-game --pm npm
+pnpm lattice create my-game --pm npm
 ```
 
 ## Install Core and Feature Packages via CLI

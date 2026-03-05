@@ -1,6 +1,7 @@
 import { usageError } from "../core/errors";
 import { getDependencyNames, toPackageName } from "../core/fs/patch";
 import { readPackageJson } from "../core/project/readPackageJson";
+import { promptMultiSelect } from "../core/prompt";
 import { parseProviderRequirement } from "../core/registry/schema";
 import type { CliContext } from "../ctx";
 
@@ -38,8 +39,49 @@ export function resolveComponentSelection(ctx: CliContext, input: SelectionInput
   return sorted;
 }
 
+async function resolveSelectionInput(ctx: CliContext, input: SelectionInput): Promise<SelectionInput> {
+  if (input.names.length > 0 || input.presets.length > 0) {
+    return input;
+  }
+
+  if (ctx.options.yes) {
+    throw usageError("No components selected. Provide component names or --preset when using --yes.");
+  }
+
+  const runtime = {
+    yes: ctx.options.yes,
+  };
+
+  const presetOptions = Object.keys(ctx.registry.presets)
+    .sort((left, right) => left.localeCompare(right))
+    .map((presetName) => ({
+      label: `${presetName} (${ctx.registry.presets[presetName].join(", ")})`,
+      value: presetName,
+    }));
+
+  const componentOptions = Object.keys(ctx.registry.packages)
+    .sort((left, right) => left.localeCompare(right))
+    .map((componentName) => ({
+      label: componentName,
+      value: componentName,
+    }));
+
+  const selectedPresets = await promptMultiSelect(runtime, "Select presets (optional)", presetOptions, {
+    allowEmpty: true,
+  });
+  const selectedComponents = await promptMultiSelect(runtime, "Select components (optional)", componentOptions, {
+    allowEmpty: true,
+  });
+
+  return {
+    names: selectedComponents,
+    presets: selectedPresets,
+  };
+}
+
 export async function runAddCommand(ctx: CliContext, input: SelectionInput): Promise<void> {
-  const components = resolveComponentSelection(ctx, input);
+  const resolvedInput = await resolveSelectionInput(ctx, input);
+  const components = resolveComponentSelection(ctx, resolvedInput);
   const specs = new Set<string>();
   const optionalProviders = new Set<string>();
   const notes: string[] = [];

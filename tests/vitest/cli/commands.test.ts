@@ -3,8 +3,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runAddCommand } from "../../../packages/cli/src/commands/add";
+import { runCreateCommand } from "../../../packages/cli/src/commands/create";
 import { runDoctorCommand } from "../../../packages/cli/src/commands/doctor";
-import { runInitCommand } from "../../../packages/cli/src/commands/init";
 import { runUpgradeCommand } from "../../../packages/cli/src/commands/upgrade";
 import type { Logger } from "../../../packages/cli/src/core/logger";
 import type { PackageManager } from "../../../packages/cli/src/core/pm/types";
@@ -41,6 +41,17 @@ function createLogger(overrides?: Partial<Logger>): Logger {
   };
 }
 
+function createPackageManager(overrides?: Partial<PackageManager>): PackageManager {
+  return {
+    name: "npm",
+    add: vi.fn(async () => undefined),
+    remove: vi.fn(async () => undefined),
+    install: vi.fn(async () => undefined),
+    exec: vi.fn(async () => undefined),
+    ...overrides,
+  };
+}
+
 function createContext(params: {
   projectRoot: string;
   registry: Registry;
@@ -49,14 +60,7 @@ function createContext(params: {
   logger?: Logger;
   detectedLockfiles?: CliContext["detectedLockfiles"];
 }): CliContext {
-  const pm: PackageManager = {
-    name: "npm",
-    add: vi.fn(async () => undefined),
-    remove: vi.fn(async () => undefined),
-    install: vi.fn(async () => undefined),
-    exec: vi.fn(async () => undefined),
-    ...params.pm,
-  };
+  const pm = createPackageManager(params.pm);
 
   return {
     cwd: params.projectRoot,
@@ -65,9 +69,9 @@ function createContext(params: {
     options: {
       cwd: params.projectRoot,
       pm: undefined,
-      verbose: false,
       dryRun: false,
       yes: true,
+      verbose: false,
       ...params.options,
     },
     logger: params.logger ?? createLogger(),
@@ -79,19 +83,75 @@ function createContext(params: {
 }
 
 describe("command behavior", () => {
-  it("init --dry-run does not create files", async () => {
+  it("create scaffolds a new project and installs dependencies", async () => {
     const dir = await createTempDir();
+    const projectRoot = path.join(dir, "my-game");
+    const install = vi.fn(async () => undefined);
 
-    const ctx = createContext({
-      projectRoot: dir,
-      options: { dryRun: true },
-      registry: { packages: {}, presets: {} },
-    });
+    await runCreateCommand(
+      {
+        cwd: dir,
+        projectPath: "my-game",
+        yes: true,
+        pm: "npm",
+        template: "rbxts",
+        git: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "npm",
+          manager: createPackageManager({ install }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: vi.fn(async (packages) =>
+          Object.fromEntries(packages.map((packageName) => [packageName, "9.9.9"])),
+        ),
+      },
+    );
 
-    await runInitCommand(ctx);
+    const packageJson = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8")) as {
+      dependencies: Record<string, string>;
+      devDependencies: Record<string, string>;
+    };
 
-    await expect(readFile(path.join(dir, "package.json"), "utf8")).rejects.toThrow();
-    expect(ctx.pm.install).not.toHaveBeenCalled();
+    expect(packageJson.dependencies["@rbxts/react"]).toBe("9.9.9");
+    expect(packageJson.dependencies["@rbxts/react-roblox"]).toBe("9.9.9");
+    expect(packageJson.dependencies["@lattice-ui/style"]).toBe("9.9.9");
+    expect(packageJson.devDependencies["roblox-ts"]).toBe("9.9.9");
+    expect(install).toHaveBeenCalledWith(projectRoot);
+  });
+
+  it("create with --git initializes repository and writes .gitignore", async () => {
+    const dir = await createTempDir();
+    const projectRoot = path.join(dir, "my-game");
+    const runProcess = vi.fn(async () => undefined);
+
+    await runCreateCommand(
+      {
+        cwd: dir,
+        projectPath: "my-game",
+        yes: true,
+        pm: "npm",
+        template: "rbxts",
+        git: true,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "npm",
+          manager: createPackageManager(),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: vi.fn(async (packages) =>
+          Object.fromEntries(packages.map((packageName) => [packageName, "1.0.0"])),
+        ),
+        runProcessFn: runProcess,
+      },
+    );
+
+    expect(runProcess).toHaveBeenCalledWith("git", ["init"], projectRoot);
+    const gitignore = await readFile(path.join(projectRoot, ".gitignore"), "utf8");
+    expect(gitignore).toContain("node_modules");
+    expect(gitignore).toContain("out");
   });
 
   it("add expands presets and installs peers, excluding optional providers", async () => {
@@ -122,6 +182,26 @@ describe("command behavior", () => {
     const specs = ((add.mock.calls[0] as unknown as unknown[])?.[1] as unknown as string[]) ?? [];
     expect(specs).toEqual(["@lattice-ui/popover", "@rbxts/react", "@rbxts/react-roblox"]);
     expect(specs).not.toContain("@lattice-ui/layer");
+  });
+
+  it("add requires explicit selection in --yes mode", async () => {
+    const dir = await createTempDir();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp", dependencies: {} }, null, 2), "utf8");
+
+    const ctx = createContext({
+      projectRoot: dir,
+      options: { yes: true },
+      registry: {
+        packages: {
+          style: {
+            npm: "@lattice-ui/style",
+          },
+        },
+        presets: {},
+      },
+    });
+
+    await expect(runAddCommand(ctx, { names: [], presets: [] })).rejects.toThrow(/when using --yes/i);
   });
 
   it("upgrade preserves dependency field intent", async () => {

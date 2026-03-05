@@ -1,6 +1,6 @@
 ---
 title: CLI Commands
-description: Full command reference for lattice init, add, upgrade, and doctor.
+description: Full command reference for lattice create, add, upgrade, and doctor.
 draft: false
 sidebar:
   order: 2
@@ -10,28 +10,23 @@ sidebar:
 
 Supported options:
 
-- `--cwd <path>`
-- `--pm <pnpm|npm|yarn>`
-- `--verbose`
-- `--dry-run`
-- `--yes`
 - `--help`
 - `--version`
 
-## `init`
+## `create`
 
-Initialize template files in the target project.
+Create a new project from the rbxts starter template.
 
 ### Global CLI
 
 ```bash
-lattice init --pm pnpm
+lattice create my-game --pm npm
 ```
 
 ### Monorepo Local Script
 
 ```bash
-pnpm lattice init --pm pnpm
+pnpm lattice create my-game --pm npm
 ```
 
 ## `add`
@@ -82,13 +77,4 @@ lattice doctor
 
 ```bash
 pnpm lattice doctor
-```
-
-## Practical Example with `--cwd`
-
-Use `--cwd` when you are not running from the target project root.
-
-```bash
-lattice --cwd ./my-game add select,combobox --pm pnpm
-pnpm lattice --cwd ./apps/my-game add select,combobox --pm pnpm
 ```

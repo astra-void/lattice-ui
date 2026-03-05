@@ -13,12 +13,12 @@ Symptom: CLI chooses a package manager you did not expect.
 Actions:
 
 1. Check lockfiles in the project root.
-2. Override explicitly with `--pm`.
+2. Remove extra lockfiles so only one manager is implied.
 3. Re-run diagnostics with `doctor`.
 
 ```bash
-lattice --pm pnpm doctor
-pnpm lattice --pm pnpm doctor
+lattice doctor
+pnpm lattice doctor
 ```
 
 ## Multiple Lockfiles Detected
@@ -55,6 +55,6 @@ Actions:
 Use dry-run before applying dependency changes:
 
 ```bash
-lattice --dry-run add dialog,toast --preset overlay
-pnpm lattice --dry-run add dialog,toast --preset overlay
+lattice add dialog,toast --preset overlay --dry-run
+pnpm lattice add dialog,toast --preset overlay --dry-run
 ```

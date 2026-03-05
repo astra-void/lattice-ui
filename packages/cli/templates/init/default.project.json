@@ -18,6 +18,15 @@
       },
       "TS": {
         "$path": "include"
+      },
+      "Shared": {
+        "$path": "out/shared"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Server": {
+        "$path": "out/server"
       }
     },
     "StarterPlayer": {

@@ -1,5 +1,6 @@
 import { usageError } from "../core/errors";
 import { readPackageJson } from "../core/project/readPackageJson";
+import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
 import type { SelectionInput } from "./add";
 import { resolveComponentSelection } from "./add";
@@ -24,7 +25,19 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
 
   let targets: string[];
   if (input.names.length === 0 && input.presets.length === 0) {
-    targets = installedLattice;
+    if (ctx.options.yes) {
+      targets = installedLattice;
+    } else {
+      targets = await promptMultiSelect(
+        { yes: ctx.options.yes },
+        "Select installed @lattice-ui/* packages to upgrade",
+        installedLattice.map((name) => ({ label: name, value: name })),
+        {
+          allowEmpty: false,
+          defaultIndices: installedLattice.map((_, index) => index),
+        },
+      );
+    }
   } else {
     const requestedRegistryPackages = getSelectedRegistryPackages(ctx, input);
     const installedSet = new Set(installedLattice);
