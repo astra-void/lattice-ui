@@ -27,6 +27,10 @@ type PreviewModuleNamespace = PreviewModule & {
   default?: PreviewModule;
 };
 
+const dynamicImport = new Function("specifier", "return import(specifier);") as (
+  specifier: string,
+) => Promise<PreviewModuleNamespace>;
+
 const PREVIEW_HELP_TEXT = `Lattice Preview
 
 Usage:
@@ -69,7 +73,7 @@ function normalizePreviewModule(module: unknown): PreviewModule {
 }
 
 async function loadPreviewModuleFromImport(specifier: string): Promise<PreviewModule> {
-  const importedModule = (await import(specifier)) as PreviewModuleNamespace;
+  const importedModule = await dynamicImport(specifier);
   return normalizePreviewModule(importedModule);
 }
 

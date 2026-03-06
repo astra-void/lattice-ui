@@ -137,6 +137,9 @@ describe("command behavior", () => {
       "@typescript-eslint/parser",
     );
     await expect(readFile(path.join(projectRoot, ".prettierrc"), "utf8")).resolves.toContain('"printWidth": 120');
+    const gitignore = await readFile(path.join(projectRoot, ".gitignore"), "utf8");
+    expect(gitignore).toContain("node_modules");
+    expect(gitignore).toContain("out");
   });
 
   it("create resolves project path from interactive prompt when omitted", async () => {
@@ -269,7 +272,7 @@ describe("command behavior", () => {
     await expect(readFile(path.join(projectRoot, ".prettierrc"), "utf8")).rejects.toThrow();
   });
 
-  it("create with --git initializes repository and writes .gitignore", async () => {
+  it("create with --git initializes repository and keeps .gitignore", async () => {
     const dir = await createTempDir();
     const projectRoot = path.join(dir, "my-game");
     const runProcess = vi.fn(async () => undefined);

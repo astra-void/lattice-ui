@@ -16,8 +16,9 @@ import {
   UIStroke,
 } from "./domHost";
 import { FocusScope } from "./focusScope";
-import { Color3, error, isPreviewElement, pairs, typeIs, UDim, UDim2 } from "./helpers";
+import { Color3, error, isPreviewElement, pairs, typeIs, UDim, UDim2, Vector2 } from "./helpers";
 import { Portal, PortalProvider, usePortalContext } from "./portal";
+import { Box, Text } from "./stylePrimitives";
 import { Presence } from "./presence";
 import { Slot } from "./slot";
 import { useControllableState } from "./useControllableState";
@@ -39,8 +40,9 @@ export {
   UIGridLayout,
   UIStroke,
 };
-export { Color3, UDim, UDim2, typeIs, pairs, error, isPreviewElement };
+export { Color3, UDim, UDim2, Vector2, typeIs, pairs, error, isPreviewElement };
 export { __rbxStyle } from "./style";
+export { Box, Text };
 export type { LayerInteractEvent };
 
 export type PreviewRuntime = {
@@ -62,6 +64,7 @@ export type PreviewRuntime = {
     Color3: typeof Color3;
     UDim: typeof UDim;
     UDim2: typeof UDim2;
+    Vector2: typeof Vector2;
     typeIs: typeof typeIs;
     pairs: typeof pairs;
     error: typeof error;
@@ -98,6 +101,7 @@ export const previewRuntime: PreviewRuntime = {
     Color3,
     UDim,
     UDim2,
+    Vector2,
     typeIs,
     pairs,
     error,

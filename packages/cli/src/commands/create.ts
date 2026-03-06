@@ -131,6 +131,16 @@ async function runProcess(command: string, args: string[], cwd: string): Promise
   });
 }
 
+async function ensureGitignoreExists(targetRoot: string): Promise<void> {
+  const gitignorePath = path.join(targetRoot, ".gitignore");
+
+  try {
+    await fs.access(gitignorePath);
+  } catch {
+    await fs.writeFile(gitignorePath, GITIGNORE_CONTENT, "utf8");
+  }
+}
+
 function normalizeTemplate(template: string | undefined): string {
   const value = template?.trim();
   if (!value || value.length === 0) {
@@ -311,6 +321,8 @@ export async function runCreateCommand(
     lintSpinner.succeed("Lint and format configuration applied.");
   }
 
+  await ensureGitignoreExists(targetRoot);
+
   logger.section("Installing");
   const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
   await resolvedPm.manager.install(targetRoot);
@@ -320,7 +332,6 @@ export async function runCreateCommand(
     logger.section("Git");
     const gitSpinner = logger.spinner("Initializing git repository...");
     await runProcessFn("git", ["init"], targetRoot);
-    await fs.writeFile(path.join(targetRoot, ".gitignore"), GITIGNORE_CONTENT, "utf8");
     gitSpinner.succeed("Git repository initialized.");
   }
 

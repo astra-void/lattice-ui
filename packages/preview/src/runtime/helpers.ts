@@ -14,6 +14,16 @@ export class UDim {
   }
 }
 
+export class Vector2 {
+  readonly X: number;
+  readonly Y: number;
+
+  constructor(x: number, y: number) {
+    this.X = x;
+    this.Y = y;
+  }
+}
+
 export type UDim2Value = {
   X: UDim;
   Y: UDim;

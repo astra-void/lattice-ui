@@ -25,7 +25,12 @@ function isUnderRoot(rootPath: string, filePath: string) {
 }
 
 function resolveRuntimeEntryPath() {
-  const candidates = [path.resolve(__dirname, "../runtime/index.ts"), path.resolve(__dirname, "../runtime/index.js")];
+  const candidates = [
+    path.resolve(__dirname, "../runtime/index.ts"),
+    path.resolve(__dirname, "../../src/runtime/index.ts"),
+    path.resolve(__dirname, "../runtime/index.mjs"),
+    path.resolve(__dirname, "../runtime/index.js"),
+  ];
   const candidate = candidates.find((filePath) => fs.existsSync(filePath));
   if (!candidate) {
     throw new Error("Unable to resolve @lattice-ui/preview runtime entry.");
