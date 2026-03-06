@@ -18,8 +18,9 @@ npx lattice preview
 
 1. Run `lattice preview` from a package root.
 2. The preview shell discovers real `src/**/*.tsx` files and renders them directly in the browser.
-3. Files with one unambiguous component export auto-render.
-4. Files that need composition can opt in with `export const preview = { title?, props?, render? }`.
+3. Files with one unambiguous component export auto-render, even without `export const preview`.
+4. Files that need composition or disambiguation can opt in with `export const preview = { title?, props?, render? }`.
+5. This package only exposes the source-first preview server and the preview runtime. The browser shell itself is internal.
 
 ## Preview Contract
 
@@ -36,15 +37,6 @@ export const preview = {
 - `title` overrides the sidebar/display title.
 - `props` feeds the default auto-render path when the file already has one unambiguous component export.
 - `render` is the escape hatch for custom harnesses and composed demos.
-
-## Legacy Generation
-
-These legacy commands remain available for compatibility:
-
-```bash
-npx lattice preview init --target checkbox=packages/checkbox/src --app-dir preview
-npx lattice preview generate --target checkbox=packages/checkbox/src --app-dir preview
-```
 
 ## Supported Preview Transform Surface
 

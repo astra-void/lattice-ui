@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { buildPreviewModules } from "../../../packages/preview/src";
+import { buildPreviewModules } from "../../../packages/preview/src/compiler/buildPreviewTargets";
 
 let generationPromise: Promise<string> | undefined;
 
 export function ensurePreviewGenerated() {
   if (!generationPromise) {
-    const outDir = path.resolve(__dirname, ".generated-legacy");
+    const outDir = path.resolve(__dirname, ".generated-preview");
     fs.mkdirSync(outDir, { recursive: true });
     generationPromise = buildPreviewModules({
       targets: [

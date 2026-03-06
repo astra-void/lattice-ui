@@ -7,8 +7,43 @@ import { runCli } from "../../../packages/cli/src/cli";
 import { parsePreviewArgs, resolvePreviewDevContext } from "../../../packages/cli/src/commands/preview";
 
 const workspaceRoot = path.resolve(__dirname, "../../..");
-const richHostsSourceRoot = path.resolve(__dirname, "../preview/fixtures/rich-hosts/src");
-const unsupportedSourceRoot = path.resolve(__dirname, "../preview/fixtures/unsupported/src");
+
+function buildPreviewPackage() {
+  execFileSync("pnpm", ["--filter", "@lattice-ui/preview", "build"], {
+    cwd: workspaceRoot,
+    stdio: "pipe",
+  });
+}
+
+function buildCliPackage() {
+  execFileSync("pnpm", ["--filter", "@lattice-ui/cli", "build"], {
+    cwd: workspaceRoot,
+    stdio: "pipe",
+  });
+}
+
+function readPreviewPackageJson() {
+  return JSON.parse(fs.readFileSync(path.join(workspaceRoot, "packages/preview/package.json"), "utf8")) as {
+    exports?: Record<string, unknown>;
+  };
+}
+
+function readCommandFailure(command: string[], cwd: string) {
+  try {
+    execFileSync(command[0], command.slice(1), {
+      cwd,
+      stdio: "pipe",
+    });
+  } catch (error) {
+    const failure = error as Error & {
+      stderr?: Buffer;
+      stdout?: Buffer;
+    };
+    return `${failure.stdout?.toString() ?? ""}${failure.stderr?.toString() ?? ""}`;
+  }
+
+  throw new Error(`Expected command to fail: ${command.join(" ")}`);
+}
 
 describe("preview command", () => {
   it("parses the source-first dev command from the current package root", () => {
@@ -30,27 +65,6 @@ describe("preview command", () => {
     });
   });
 
-  it("parses repeated targets and app dir for legacy preview generation", () => {
-    const args = parsePreviewArgs(
-      [
-        "generate",
-        "--app-dir",
-        "preview-app",
-        "--target",
-        "one=packages/checkbox/src",
-        "--target=two=packages/switch/src",
-      ],
-      workspaceRoot,
-    );
-
-    expect(args).toMatchObject({
-      appDir: path.resolve(workspaceRoot, "preview-app"),
-      command: "generate",
-      mode: "legacy",
-    });
-    expect(args.mode === "legacy" ? args.targets.map((target) => target.name) : []).toEqual(["one", "two"]);
-  });
-
   it("rejects package roots without src for the source-first command", () => {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-missing-src-"));
     fs.writeFileSync(path.join(tempRoot, "package.json"), JSON.stringify({ name: "@fixtures/missing-src" }, null, 2));
@@ -58,7 +72,23 @@ describe("preview command", () => {
     expect(() => resolvePreviewDevContext(tempRoot)).toThrow("Preview source directory does not exist");
   });
 
-  it("prints preview help", async () => {
+  it("allows running source-first preview from the preview package and harness roots", () => {
+    expect(resolvePreviewDevContext(path.join(workspaceRoot, "packages/preview"))).toMatchObject({
+      packageName: "@lattice-ui/preview",
+    });
+    expect(resolvePreviewDevContext(path.join(workspaceRoot, "apps/preview-harness"))).toMatchObject({
+      packageName: "@lattice-ui/preview-harness",
+    });
+  });
+
+  it("rejects removed init and generate subcommands with migration guidance", () => {
+    expect(() => parsePreviewArgs(["init"], workspaceRoot)).toThrow("Source-first preview replaced legacy scaffolding");
+    expect(() => parsePreviewArgs(["generate"], workspaceRoot)).toThrow(
+      "Source-first preview replaced legacy scaffolding",
+    );
+  });
+
+  it("prints preview help without legacy subcommands", async () => {
     let output = "";
     const write = process.stdout.write.bind(process.stdout);
     const spy = (chunk: string | Uint8Array) => {
@@ -75,8 +105,9 @@ describe("preview command", () => {
 
     expect(output).toContain("lattice preview");
     expect(output).toContain("src/**/*.tsx");
-    expect(output).toContain("init");
-    expect(output).toContain("generate");
+    expect(output).toContain("only supported workflow");
+    expect(output).not.toContain("init");
+    expect(output).not.toContain("generate");
   });
 
   it("accepts a leading script separator token", async () => {
@@ -97,74 +128,15 @@ describe("preview command", () => {
     expect(output).toContain("lattice preview");
   });
 
-  it("scaffolds a preview app", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-init-"));
-    const appDir = path.join(tempRoot, "preview");
-
-    await runCli(["preview", "init", "--app-dir", appDir, "--target", `rich-hosts=${richHostsSourceRoot}`]);
-
-    expect(fs.existsSync(path.join(appDir, "package.json"))).toBe(true);
-    expect(fs.existsSync(path.join(appDir, "src/scenes/rich-hosts.tsx"))).toBe(true);
-    expect(fs.readFileSync(path.join(appDir, "package.json"), "utf8")).toContain(
-      "lattice preview generate --app-dir .",
-    );
-    expect(fs.readFileSync(path.join(appDir, "package.json"), "utf8")).toContain("@lattice-ui/cli");
-  });
-
-  it("generates transformed modules into src/generated", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-generate-"));
-    const appDir = path.join(tempRoot, "preview");
-    fs.mkdirSync(appDir, { recursive: true });
-
-    await runCli(["preview", "generate", "--app-dir", appDir, "--target", `rich-hosts=${richHostsSourceRoot}`]);
-
-    expect(fs.existsSync(path.join(appDir, "src/generated/rich-hosts/index.tsx"))).toBe(true);
-  });
-
-  it("loads @lattice-ui/preview from the built cli dist output", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-dist-generate-"));
-    const appDir = path.join(tempRoot, "preview");
-    fs.mkdirSync(appDir, { recursive: true });
-
-    execFileSync("pnpm", ["--filter", "@lattice-ui/preview", "build"], {
-      cwd: workspaceRoot,
-      stdio: "pipe",
-    });
-    execFileSync("pnpm", ["--filter", "@lattice-ui/cli", "build"], {
-      cwd: workspaceRoot,
-      stdio: "pipe",
-    });
-    execFileSync(
-      "node",
-      [
-        "packages/cli/dist/index.js",
-        "preview",
-        "generate",
-        "--app-dir",
-        appDir,
-        "--target",
-        `rich-hosts=${richHostsSourceRoot}`,
-      ],
-      {
-        cwd: workspaceRoot,
-        stdio: "pipe",
-      },
-    );
-
-    expect(fs.existsSync(path.join(appDir, "src/generated/rich-hosts/index.tsx"))).toBe(true);
-  });
-
-  it("keeps the built @lattice-ui/preview root entry node-safe", () => {
-    execFileSync("pnpm", ["--filter", "@lattice-ui/preview", "build"], {
-      cwd: workspaceRoot,
-      stdio: "pipe",
-    });
+  it("publishes an ESM-first preview root entry with only the server API", () => {
+    buildPreviewPackage();
 
     const output = execFileSync(
       "node",
       [
+        "--input-type=module",
         "-e",
-        "const mod=require('./packages/preview/dist/index.js'); console.log(JSON.stringify({ hasBuild: typeof mod.buildPreviewModules === 'function', hasServer: typeof mod.startPreviewServer === 'function', hasWorkspaceApp: 'PreviewWorkspaceApp' in mod }));",
+        "const mod = await import('./packages/preview/dist/index.mjs'); console.log(JSON.stringify({ keys: Object.keys(mod).sort(), hasStart: typeof mod.startPreviewServer === 'function', hasDefaultStart: typeof mod.default?.startPreviewServer === 'function' }));",
       ],
       {
         cwd: workspaceRoot,
@@ -175,59 +147,35 @@ describe("preview command", () => {
       .trim();
 
     expect(JSON.parse(output)).toEqual({
-      hasBuild: true,
-      hasServer: true,
-      hasWorkspaceApp: false,
+      hasDefaultStart: true,
+      hasStart: true,
+      keys: ["default", "startPreviewServer"],
     });
   });
 
-  it("loads @lattice-ui/preview from the source cli tsx fallback", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-source-generate-"));
-    const appDir = path.join(tempRoot, "preview");
-    fs.mkdirSync(appDir, { recursive: true });
+  it("drops public ui and build subpath exports from the preview package", () => {
+    const packageJson = readPreviewPackageJson();
 
-    execFileSync(
-      "node",
-      [
-        "--import",
-        "tsx",
-        "./packages/cli/src/index.ts",
-        "preview",
-        "generate",
-        "--app-dir",
-        appDir,
-        "--target",
-        `rich-hosts=${richHostsSourceRoot}`,
-      ],
-      {
-        cwd: workspaceRoot,
-        stdio: "pipe",
-      },
-    );
-
-    expect(fs.existsSync(path.join(appDir, "src/generated/rich-hosts/index.tsx"))).toBe(true);
+    expect(packageJson.exports).not.toHaveProperty("./ui");
+    expect(packageJson.exports).not.toHaveProperty("./ui/styles.css");
+    expect(packageJson.exports).not.toHaveProperty("./build");
   });
 
-  it("rejects invalid target names", async () => {
-    await expect(runCli(["preview", "generate", "--target", "BadName=packages/checkbox/src"])).rejects.toThrow(
-      "Invalid preview target name",
-    );
+  it("keeps the built cli dist on the removed-subcommand migration path", () => {
+    buildPreviewPackage();
+    buildCliPackage();
+
+    const output = readCommandFailure(["node", "packages/cli/dist/index.js", "preview", "generate"], workspaceRoot);
+
+    expect(output).toContain("Source-first preview replaced legacy scaffolding");
   });
 
-  it("fails generation for unsupported globals with structured diagnostics", async () => {
-    await expect(
-      runCli(["preview", "generate", "--app-dir", "preview", "--target", `unsupported=${unsupportedSourceRoot}`]),
-    ).rejects.toMatchObject({
-      name: "PreviewBuildError",
-    });
-  });
-
-  it("typechecks and builds apps/preview without preview generate", () => {
-    execFileSync("pnpm", ["--dir", "apps/preview", "exec", "tsc", "-p", "tsconfig.json", "--noEmit"], {
+  it("typechecks and builds the preview harness as a non-product smoke app", () => {
+    execFileSync("pnpm", ["--dir", "apps/preview-harness", "exec", "tsc", "-p", "tsconfig.json", "--noEmit"], {
       cwd: workspaceRoot,
       stdio: "pipe",
     });
-    execFileSync("pnpm", ["--dir", "apps/preview", "exec", "vite", "build"], {
+    execFileSync("pnpm", ["--dir", "apps/preview-harness", "exec", "vite", "build"], {
       cwd: workspaceRoot,
       stdio: "pipe",
     });

@@ -15,6 +15,7 @@
     "@lattice-ui/preview": "workspace:*"
   },
   "scripts": {
+    "prebuild": "node ./scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc -p tsconfig.json -w"

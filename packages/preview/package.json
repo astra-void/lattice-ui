@@ -2,31 +2,25 @@
   "name": "@lattice-ui/preview",
   "version": "0.3.2",
   "private": false,
-  "description": "Lattice UI web preview toolkit and runtime.",
-  "main": "dist/index.js",
+  "description": "Lattice UI source-first preview server and runtime.",
+  "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "app",
     "README.md"
   ],
   "scripts": {
+    "prebuild": "node ./scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.json",
+    "postbuild": "node ./scripts/copy-assets.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc -p tsconfig.json -w"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./build": {
-      "types": "./dist/build.d.ts",
-      "default": "./dist/build.js"
-    },
-    "./ui": {
-      "types": "./dist/ui/index.d.ts",
-      "default": "./dist/ui/index.js"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",

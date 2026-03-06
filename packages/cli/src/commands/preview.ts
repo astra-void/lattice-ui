@@ -2,15 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { usageError, validationError } from "../core/errors";
-import { createPreviewAppFiles, ensureAppDirectoryIsEmpty, writePreviewAppFiles } from "./previewScaffold";
-import {
-  ensureUniqueTargetNames,
-  type PreviewTargetSpec,
-  parseTargetSpec,
-  validatePreviewTargets,
-} from "./previewShared";
-
-type LegacyPreviewSubcommand = "init" | "generate";
 
 type ParsedPreviewArgs =
   | {
@@ -21,19 +12,9 @@ type ParsedPreviewArgs =
     }
   | {
       mode: "help";
-    }
-  | {
-      appDir: string;
-      command: LegacyPreviewSubcommand;
-      mode: "legacy";
-      targets: PreviewTargetSpec[];
     };
 
 type PreviewModule = {
-  buildPreviewModules: (options: {
-    outDir?: string;
-    targets: Array<{ name: string; sourceRoot: string }>;
-  }) => Promise<{ outDir: string; writtenFiles: string[] }>;
   startPreviewServer: (options: {
     packageName: string;
     packageRoot: string;
@@ -50,17 +31,13 @@ const PREVIEW_HELP_TEXT = `Lattice Preview
 
 Usage:
   lattice preview
-  lattice preview init --target <name=srcDir>... [--app-dir preview]
-  lattice preview generate --target <name=srcDir>... [--app-dir preview]
 
 Notes:
   Run \`lattice preview\` from a package root to preview that package's real src/**/*.tsx files in a web shell.
-  \`init\` and \`generate\` remain available as legacy compatibility commands.
+  Source-first preview is the only supported workflow.
 
 Examples:
   npx lattice preview
-  npx lattice preview init --target checkbox=packages/checkbox/src --app-dir preview
-  npx lattice preview generate --target checkbox=packages/checkbox/src --app-dir preview
 `;
 
 function canImportTypeScriptSource() {
@@ -71,8 +48,6 @@ function isPreviewModule(value: unknown): value is PreviewModule {
   return (
     typeof value === "object" &&
     value !== null &&
-    "buildPreviewModules" in value &&
-    typeof value.buildPreviewModules === "function" &&
     "startPreviewServer" in value &&
     typeof value.startPreviewServer === "function"
   );
@@ -93,15 +68,8 @@ function normalizePreviewModule(module: unknown): PreviewModule {
   throw new Error("Unable to load a valid @lattice-ui/preview module.");
 }
 
-function loadPreviewModuleFromRequire(specifier: string): PreviewModule {
-  return normalizePreviewModule(require(specifier));
-}
-
 async function loadPreviewModuleFromImport(specifier: string): Promise<PreviewModule> {
-  const dynamicImport = new Function("specifier", "return import(specifier);") as (
-    specifier: string,
-  ) => Promise<unknown>;
-  const importedModule = (await dynamicImport(specifier)) as PreviewModuleNamespace;
+  const importedModule = (await import(specifier)) as PreviewModuleNamespace;
   return normalizePreviewModule(importedModule);
 }
 
@@ -111,19 +79,13 @@ async function loadPreviewModule(): Promise<PreviewModule> {
     return loadPreviewModuleFromImport(pathToFileURL(localSourcePath).href);
   }
 
-  const localDistPath = path.resolve(__dirname, "../../../preview/dist/index.js");
+  const localDistPath = path.resolve(__dirname, "../../../preview/dist/index.mjs");
   if (fs.existsSync(localDistPath)) {
-    return loadPreviewModuleFromRequire(localDistPath);
+    return loadPreviewModuleFromImport(pathToFileURL(localDistPath).href);
   }
 
   const previewModuleId = "@lattice-ui/preview";
-  return loadPreviewModuleFromRequire(previewModuleId);
-}
-
-function readPackageVersion(relativePackageJsonPath: string) {
-  const packageJsonPath = path.resolve(__dirname, relativePackageJsonPath);
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { version?: string };
-  return packageJson.version ?? "latest";
+  return loadPreviewModuleFromImport(previewModuleId);
 }
 
 function printPreviewHelp() {
@@ -144,70 +106,19 @@ export function resolvePreviewDevContext(cwd: string) {
   }
 
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { name?: string };
+  const packageName = packageJson.name ?? path.basename(packageRoot);
 
   return {
-    packageName: packageJson.name ?? path.basename(packageRoot),
+    packageName,
     packageRoot,
     sourceRoot,
   };
 }
 
-function parseLegacyArgs(commandToken: LegacyPreviewSubcommand, argv: string[], cwd: string): ParsedPreviewArgs {
-  const targets: PreviewTargetSpec[] = [];
-  let appDir = path.resolve(cwd, "preview");
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-
-    if (token === "--help" || token === "-h") {
-      return { mode: "help" };
-    }
-
-    if (token === "--app-dir") {
-      const value = argv[index + 1];
-      if (!value) {
-        throw usageError("Missing value for --app-dir.");
-      }
-      appDir = path.resolve(cwd, value);
-      index += 1;
-      continue;
-    }
-
-    if (token.startsWith("--app-dir=")) {
-      appDir = path.resolve(cwd, token.slice("--app-dir=".length));
-      continue;
-    }
-
-    if (token === "--target") {
-      const value = argv[index + 1];
-      if (!value) {
-        throw usageError("Missing value for --target.");
-      }
-      targets.push(parseTargetSpec(value, cwd));
-      index += 1;
-      continue;
-    }
-
-    if (token.startsWith("--target=")) {
-      targets.push(parseTargetSpec(token.slice("--target=".length), cwd));
-      continue;
-    }
-
-    throw usageError(`Unknown option for preview ${commandToken}: ${token}`);
-  }
-
-  if (targets.length === 0) {
-    throw usageError("preview legacy commands require at least one --target <name=srcDir>.");
-  }
-
-  ensureUniqueTargetNames(targets);
-
-  return {
-    appDir,
-    command: commandToken,
-    mode: "legacy",
-    targets,
-  };
+function removedPreviewSubcommandError(command: "generate" | "init") {
+  return validationError(
+    `lattice preview ${command} was removed. Source-first preview replaced legacy scaffolding. Run \`lattice preview\` from the package root instead.`,
+  );
 }
 
 export function parsePreviewArgs(argv: string[], cwd = process.cwd()): ParsedPreviewArgs {
@@ -224,7 +135,11 @@ export function parsePreviewArgs(argv: string[], cwd = process.cwd()): ParsedPre
   }
 
   if (first === "init" || first === "generate") {
-    return parseLegacyArgs(first, rest, cwd);
+    if (rest.includes("--help") || rest.includes("-h")) {
+      throw removedPreviewSubcommandError(first);
+    }
+
+    throw removedPreviewSubcommandError(first);
   }
 
   throw usageError(`Unknown preview command: ${first}`);
@@ -241,30 +156,5 @@ export async function runPreviewCommand(argv: string[], cwd = process.cwd()) {
   if (parsed.mode === "dev") {
     const previewModule = await loadPreviewModule();
     await previewModule.startPreviewServer(parsed);
-    return;
   }
-
-  validatePreviewTargets(parsed.targets);
-
-  if (parsed.command === "init") {
-    ensureAppDirectoryIsEmpty(parsed.appDir);
-    const cliVersion = readPackageVersion("../../package.json");
-    const previewVersion = readPackageVersion("../../../preview/package.json");
-    const files = createPreviewAppFiles({
-      appDir: parsed.appDir,
-      cliVersion,
-      previewVersion,
-      targets: parsed.targets,
-    });
-    writePreviewAppFiles(parsed.appDir, files);
-    process.stdout.write(`Created preview app in ${parsed.appDir}.\n`);
-    return;
-  }
-
-  const previewModule = await loadPreviewModule();
-  const result = await previewModule.buildPreviewModules({
-    outDir: path.join(parsed.appDir, "src", "generated"),
-    targets: parsed.targets,
-  });
-  process.stdout.write(`Generated ${result.writtenFiles.length} preview file(s) into ${result.outDir}.\n`);
 }

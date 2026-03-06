@@ -29,7 +29,7 @@ const generatedImports = {
   switch: () => import(/* @vite-ignore */ toRelativeSpecifier(path.join(generatedOutDir, "switch/index.ts"))),
 };
 
-describe("legacy generated preview components", () => {
+describe("generated preview components", () => {
   it("updates checkbox controlled state", async () => {
     const user = userEvent.setup();
     const { CheckboxRoot } = await generatedImports.checkboxRoot();

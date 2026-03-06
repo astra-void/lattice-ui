@@ -247,7 +247,7 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  apps/preview:
+  apps/preview-harness:
     dependencies:
       '@lattice-ui/preview':
         specifier: workspace:*

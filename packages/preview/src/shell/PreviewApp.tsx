@@ -311,7 +311,8 @@ export function PreviewApp(props: PreviewAppProps) {
                   <p className="preview-empty-eyebrow">Needs harness</p>
                   <h2>This file is not directly previewable yet.</h2>
                   <p>
-                    Add <code>export const preview = {`{ render: ... }`}</code> when a composed wrapper is required.
+                    Add a default export or <code>export const preview = {`{ render: ... }`}</code> when the file
+                    needs explicit disambiguation.
                   </p>
                 </div>
               ) : (

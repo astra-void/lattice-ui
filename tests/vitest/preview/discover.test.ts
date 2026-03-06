@@ -1,9 +1,14 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { discoverPreviewProject, discoverPreviewWorkspace } from "../../../packages/preview/src";
+import {
+  discoverPreviewProject,
+  discoverPreviewWorkspace,
+} from "../../../packages/preview/src/source/discover";
 
 const fixtureRoot = path.resolve(__dirname, "fixtures/source-preview");
 const fixtureSourceRoot = path.join(fixtureRoot, "src");
+const checkboxPackageRoot = path.resolve(__dirname, "../../../packages/checkbox");
+const previewPackageRoot = path.resolve(__dirname, "../../../packages/preview");
 
 describe("discoverPreviewProject", () => {
   it("indexes source-first entries with auto render, harness, and diagnostics states", () => {
@@ -59,6 +64,41 @@ describe("discoverPreviewProject", () => {
     expect(nestedEntry?.diagnostics.map((diagnostic) => diagnostic.relativeFile)).toContain(
       "src/support/nestedLabel.ts",
     );
+  });
+
+  it("allows context-dependent subcomponents to auto-render without a preview export", () => {
+    const project = discoverPreviewProject({
+      packageName: "@lattice-ui/checkbox",
+      packageRoot: checkboxPackageRoot,
+      sourceRoot: path.join(checkboxPackageRoot, "src"),
+    });
+
+    expect(project.entries.find((entry) => entry.relativePath === "Checkbox/CheckboxRoot.tsx")).toMatchObject({
+      status: "ready",
+      render: {
+        exportName: "CheckboxRoot",
+        mode: "auto",
+      },
+    });
+
+    expect(project.entries.find((entry) => entry.relativePath === "Checkbox/CheckboxIndicator.tsx")).toMatchObject({
+      status: "ready",
+      render: {
+        exportName: "CheckboxIndicator",
+        mode: "auto",
+        usesPreviewProps: false,
+      },
+    });
+  });
+
+  it("hides preview package shell and runtime internals from the entry list", () => {
+    const project = discoverPreviewProject({
+      packageName: "@lattice-ui/preview",
+      packageRoot: previewPackageRoot,
+      sourceRoot: path.join(previewPackageRoot, "src"),
+    });
+
+    expect(project.entries).toEqual([]);
   });
 });
 

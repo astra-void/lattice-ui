@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { createPreviewVitePlugin } from "./plugin";
 import type { PreviewSourceTarget } from "./types";
@@ -12,14 +13,26 @@ export type StartPreviewServerOptions = {
   sourceRoot: string;
 };
 
-function resolveAppRoot() {
-  return path.resolve(__dirname, "../../app");
+function resolvePreviewPackageEntry(candidates: string[], label: string) {
+  const matchedPath = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!matchedPath) {
+    throw new Error(`Unable to resolve ${label} entry.`);
+  }
+
+  return matchedPath;
+}
+
+function resolveShellRoot() {
+  return resolvePreviewPackageEntry(
+    [path.resolve(__dirname, "../shell"), path.resolve(__dirname, "../../src/shell")],
+    "preview shell root",
+  );
 }
 
 export async function startPreviewServer(options: StartPreviewServerOptions) {
   const vite = (await import("vite")) as unknown as ViteModule;
   const reactPlugin = ((await import("@vitejs/plugin-react")) as unknown as ReactPluginModule).default;
-  const appRoot = resolveAppRoot();
+  const shellRoot = resolveShellRoot();
   const targets: PreviewSourceTarget[] = [
     {
       name: options.packageName,
@@ -36,11 +49,11 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
     appType: "spa",
     configFile: false,
     plugins: [previewPlugin, reactPlugin()],
-    root: appRoot,
+    root: shellRoot,
     server: {
       fs: {
         allow: [
-          appRoot,
+          shellRoot,
           ...targets.flatMap((target) => [target.packageRoot, target.sourceRoot]),
           vite.searchForWorkspaceRoot(options.packageRoot),
         ],

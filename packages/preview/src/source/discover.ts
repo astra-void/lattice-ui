@@ -42,6 +42,8 @@ type DiscoverPreviewWorkspaceOptions = {
   targets: PreviewSourceTarget[];
 };
 
+const PREVIEW_PACKAGE_ENTRY_EXCLUDES = ["runtime/", "shell/"];
+
 function listSourceFiles(dirPath: string): string[] {
   if (!fs.existsSync(dirPath)) {
     return [];
@@ -389,6 +391,15 @@ function getRenderTarget(record: SourceModuleRecord): PreviewRenderTarget {
   return { mode: "none" };
 }
 
+function isPreviewPackageInternalEntry(packageRoot: string, relativePath: string) {
+  const previewPackageRoot = path.resolve(__dirname, "../..");
+  if (path.resolve(packageRoot) !== previewPackageRoot) {
+    return false;
+  }
+
+  return PREVIEW_PACKAGE_ENTRY_EXCLUDES.some((prefix) => relativePath.startsWith(prefix));
+}
+
 function createRegistryItem(
   record: SourceModuleRecord,
   recordsByPath: Map<string, SourceModuleRecord>,
@@ -440,6 +451,7 @@ export function discoverPreviewProject(options: DiscoverPreviewProjectOptions): 
   const recordsByPath = new Map(records.map((record) => [record.filePath, record] as const));
   const entries = records
     .filter((record) => record.isTsx)
+    .filter((record) => !isPreviewPackageInternalEntry(options.packageRoot, record.relativePath))
     .map((record) => createRegistryItem(record, recordsByPath, packageName, packageName))
     .sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 

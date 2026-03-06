@@ -24,12 +24,12 @@ export default defineConfig([
     "**/.astro/**",
     "**/include/**",
     "tests/vitest/**",
-    "apps/preview/src/generated/**",
+    "apps/preview-harness/src/generated/**",
     "packages/preview/generated/**",
   ]),
   {
     files: ["{packages,apps}/**/*.{ts,tsx}"],
-    ignores: ["packages/cli/**", "packages/preview/**", "apps/docs/**", "apps/preview/**"],
+    ignores: ["packages/cli/**", "packages/preview/**", "apps/docs/**", "apps/preview-harness/**"],
     extends: compat.extends(
       "eslint:recommended",
       "plugin:@typescript-eslint/recommended",
@@ -124,7 +124,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/preview/**/*.{ts,tsx}", "apps/preview/**/*.{ts,tsx}"],
+    files: ["packages/preview/**/*.{ts,tsx}", "apps/preview-harness/**/*.{ts,tsx}"],
     extends: compat.extends(
       "eslint:recommended",
       "plugin:@typescript-eslint/recommended",
@@ -141,8 +141,7 @@ export default defineConfig([
       parserOptions: {
         project: [
           "./packages/preview/tsconfig.json",
-          "./packages/preview/app/tsconfig.eslint.json",
-          "./apps/preview/tsconfig.json",
+          "./apps/preview-harness/tsconfig.json",
         ],
         tsconfigRootDir: __dirname,
       },

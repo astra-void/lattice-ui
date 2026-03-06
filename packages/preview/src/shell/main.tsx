@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { PreviewWorkspaceApp } from "../src/ui/PreviewWorkspaceApp";
-import "../src/ui/styles.css";
+import { PreviewWorkspaceApp } from "./PreviewWorkspaceApp";
 
 const rootElement = document.getElementById("root");
 
