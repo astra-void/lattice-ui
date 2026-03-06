@@ -6,7 +6,8 @@ include
 *.rbxlx
 *.rbxm
 *.rbxmx
-*.rbxlx.lock
+
+test-harness.rbxlx.lock
 
 .pnpm-store
 .pnpm_store

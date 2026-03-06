@@ -40,6 +40,7 @@ export {
   UIStroke,
 };
 export { Color3, UDim, UDim2, typeIs, pairs, error, isPreviewElement };
+export { __rbxStyle } from "./style";
 export type { LayerInteractEvent };
 
 export type PreviewRuntime = {

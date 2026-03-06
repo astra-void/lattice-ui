@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { compile_tsx } from "@lattice-ui/compiler";
 import { transformPreviewSource } from "../compiler/transformSource";
 import { discoverPreviewWorkspace } from "./discover";
 import type { PreviewSourceTarget } from "./types";
@@ -10,6 +11,7 @@ const RESOLVED_REGISTRY_MODULE_ID = `\0${REGISTRY_MODULE_ID}`;
 const RUNTIME_MODULE_ID = "virtual:lattice-preview-runtime";
 const RESOLVED_RUNTIME_MODULE_ID = `\0${RUNTIME_MODULE_ID}`;
 const ENTRY_MODULE_ID_PREFIX = "virtual:lattice-preview-entry:";
+const RBX_STYLE_IMPORT = 'import { __rbxStyle } from "@lattice-ui/preview/runtime";\n';
 
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
@@ -150,8 +152,14 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
         target: target.name,
       });
 
+      let transformedCode = compile_tsx(transformed.code);
+
+      if (transformedCode.includes("__rbxStyle") && !transformedCode.includes(RBX_STYLE_IMPORT.trim())) {
+        transformedCode = `${RBX_STYLE_IMPORT}${transformedCode}`;
+      }
+
       return {
-        code: transformed.code,
+        code: transformedCode,
         map: null,
       };
     },

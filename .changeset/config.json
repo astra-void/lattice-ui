@@ -13,6 +13,7 @@
       "@lattice-ui/checkbox",
       "@lattice-ui/cli",
       "@lattice-ui/combobox",
+      "@lattice-ui/compiler",
       "@lattice-ui/core",
       "@lattice-ui/dialog",
       "@lattice-ui/focus",
