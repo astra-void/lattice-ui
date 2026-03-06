@@ -1,9 +1,5 @@
-declare module "vite" {
-  const vite: unknown;
-  export = vite;
-}
-
 declare module "@vitejs/plugin-react" {
-  const reactPlugin: unknown;
-  export default reactPlugin;
+  import type { PluginOption } from "vite";
+
+  export default function reactPlugin(options?: unknown): PluginOption[];
 }

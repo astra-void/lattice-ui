@@ -13,7 +13,8 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@lattice-ui/preview": ["../../packages/preview/src/ui/index.ts"],
+      "@lattice-ui/preview": ["../../packages/preview/src/index.ts"],
+      "@lattice-ui/preview/ui": ["../../packages/preview/src/ui/index.ts"],
       "@lattice-ui/preview/runtime": ["../../packages/preview/src/runtime/index.ts"]
     }
   },
