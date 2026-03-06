@@ -11,7 +11,8 @@ const RESOLVED_REGISTRY_MODULE_ID = `\0${REGISTRY_MODULE_ID}`;
 const RUNTIME_MODULE_ID = "virtual:lattice-preview-runtime";
 const RESOLVED_RUNTIME_MODULE_ID = `\0${RUNTIME_MODULE_ID}`;
 const ENTRY_MODULE_ID_PREFIX = "virtual:lattice-preview-entry:";
-const RBX_STYLE_IMPORT = 'import { __rbxStyle } from "@lattice-ui/preview/runtime";\n';
+const RBX_STYLE_HELPER_NAME = "__rbxStyle";
+const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/preview/runtime";\n`;
 
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
@@ -154,7 +155,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
 
       let transformedCode = compile_tsx(transformed.code);
 
-      if (transformedCode.includes("__rbxStyle") && !transformedCode.includes(RBX_STYLE_IMPORT.trim())) {
+      if (transformedCode.includes(RBX_STYLE_HELPER_NAME) && !transformedCode.includes(RBX_STYLE_IMPORT.trim())) {
         transformedCode = `${RBX_STYLE_IMPORT}${transformedCode}`;
       }
 

@@ -17,6 +17,8 @@ use swc_core::{
 #[derive(Default)]
 struct LatticeUITransformer;
 
+const RBX_STYLE_HELPER_NAME: &str = "__rbxStyle";
+
 fn map_roblox_host_tag(tag: &str) -> Option<&'static str> {
     match tag {
         // Buttons
@@ -171,7 +173,7 @@ impl VisitMut for LatticeUITransformer {
                         span: DUMMY_SP,
                         ctxt: Default::default(),
                         callee: Callee::Expr(Box::new(Expr::Ident(Ident::new_no_ctxt(
-                            "__rbxStyle".into(),
+                            RBX_STYLE_HELPER_NAME.into(),
                             DUMMY_SP,
                         )))),
                         args: vec![ExprOrSpread {
