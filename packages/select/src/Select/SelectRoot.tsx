@@ -119,7 +119,19 @@ export function SelectRoot(props: SelectProps) {
       getOrderedItems: resolveOrderedItems,
       getItemText,
     }),
-    [disabled, getItemText, keyboardNavigation, loop, open, registerItem, required, resolveOrderedItems, setOpen, setValue, value],
+    [
+      disabled,
+      getItemText,
+      keyboardNavigation,
+      loop,
+      open,
+      registerItem,
+      required,
+      resolveOrderedItems,
+      setOpen,
+      setValue,
+      value,
+    ],
   );
 
   return <SelectContextProvider value={contextValue}>{props.children}</SelectContextProvider>;

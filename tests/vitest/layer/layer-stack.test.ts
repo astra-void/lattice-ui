@@ -140,11 +140,9 @@ describe("layerStack dismiss key handling", () => {
     const dismissHandler = harness.getDismissHandler();
     expect(dismissHandler).toBeTypeOf("function");
 
-    const beginResult = dismissHandler?.(
-      "LatticeUiDismissLayerAction",
-      Enum.UserInputState.Begin,
-      { KeyCode: Enum.KeyCode.Backspace },
-    );
+    const beginResult = dismissHandler?.("LatticeUiDismissLayerAction", Enum.UserInputState.Begin, {
+      KeyCode: Enum.KeyCode.Backspace,
+    });
 
     expect(beginResult).toBe(Enum.ContextActionResult.Sink);
     expect(dismissCalls).toBe(1);
@@ -152,11 +150,9 @@ describe("layerStack dismiss key handling", () => {
     harness.layerStack.unregisterLayer(registration.id);
     expect(harness.unbindAction).not.toHaveBeenCalled();
 
-    const releaseResult = dismissHandler?.(
-      "LatticeUiDismissLayerAction",
-      Enum.UserInputState.End,
-      { KeyCode: Enum.KeyCode.Backspace },
-    );
+    const releaseResult = dismissHandler?.("LatticeUiDismissLayerAction", Enum.UserInputState.End, {
+      KeyCode: Enum.KeyCode.Backspace,
+    });
 
     expect(releaseResult).toBe(Enum.ContextActionResult.Sink);
     expect(harness.unbindAction).toHaveBeenCalledWith("LatticeUiDismissLayerAction");
@@ -177,11 +173,9 @@ describe("layerStack dismiss key handling", () => {
 
     harness.getFocusedTextBox.mockReturnValue({});
 
-    const result = harness.getDismissHandler()?.(
-      "LatticeUiDismissLayerAction",
-      Enum.UserInputState.Begin,
-      { KeyCode: Enum.KeyCode.Backspace },
-    );
+    const result = harness.getDismissHandler()?.("LatticeUiDismissLayerAction", Enum.UserInputState.Begin, {
+      KeyCode: Enum.KeyCode.Backspace,
+    });
 
     expect(result).toBe(Enum.ContextActionResult.Pass);
     expect(dismissCalls).toBe(0);
@@ -202,11 +196,9 @@ describe("layerStack dismiss key handling", () => {
       },
     });
 
-    const result = harness.getDismissHandler()?.(
-      "LatticeUiDismissLayerAction",
-      Enum.UserInputState.Begin,
-      { KeyCode: Enum.KeyCode.Escape },
-    );
+    const result = harness.getDismissHandler()?.("LatticeUiDismissLayerAction", Enum.UserInputState.Begin, {
+      KeyCode: Enum.KeyCode.Escape,
+    });
 
     expect(result).toBe(Enum.ContextActionResult.Pass);
     expect(dismissCalls).toBe(0);

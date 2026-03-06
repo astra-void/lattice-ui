@@ -322,7 +322,12 @@ function SelectContentImpl(props: SelectContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <RovingFocusGroup active={props.enabled && keyboardNavigation} autoFocus="first" loop={selectContext.loop} orientation="vertical">
+      <RovingFocusGroup
+        active={props.enabled && keyboardNavigation}
+        autoFocus="first"
+        loop={selectContext.loop}
+        orientation="vertical"
+      >
         {contentNode}
       </RovingFocusGroup>
     </DismissableLayer>

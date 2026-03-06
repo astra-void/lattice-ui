@@ -102,4 +102,3 @@ export function ProgressBasicScene() {
     </frame>
   );
 }
-

@@ -17,10 +17,19 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules/**", "**/out/**", "**/dist/**", "**/.astro/**", "**/include/**", "tests/vitest/**"]),
+  globalIgnores([
+    "**/node_modules/**",
+    "**/out/**",
+    "**/dist/**",
+    "**/.astro/**",
+    "**/include/**",
+    "tests/vitest/**",
+    "apps/preview/src/generated/**",
+    "packages/preview/generated/**",
+  ]),
   {
     files: ["{packages,apps}/**/*.{ts,tsx}"],
-    ignores: ["packages/cli/**", "apps/docs/**"],
+    ignores: ["packages/cli/**", "packages/preview/**", "apps/docs/**", "apps/preview/**"],
     extends: compat.extends(
       "eslint:recommended",
       "plugin:@typescript-eslint/recommended",
@@ -99,6 +108,42 @@ export default defineConfig([
       parser: tsParser,
       parserOptions: {
         project: "./packages/cli/tsconfig.json",
+        tsconfigRootDir: __dirname,
+      },
+    },
+
+    rules: {
+      "prettier/prettier": "warn",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+    },
+  },
+  {
+    files: ["packages/preview/**/*.{ts,tsx}", "apps/preview/**/*.{ts,tsx}"],
+    extends: compat.extends(
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended",
+    ),
+
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
+      prettier,
+    },
+
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: [
+          "./packages/preview/tsconfig.json",
+          "./packages/preview/app/tsconfig.eslint.json",
+          "./apps/preview/tsconfig.json",
+        ],
         tsconfigRootDir: __dirname,
       },
     },

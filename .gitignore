@@ -15,3 +15,5 @@ include
 
 pnpm-publish-summary.json
 run-in-roblox.log
+apps/preview/src/generated
+tests/vitest/preview/.generated-legacy

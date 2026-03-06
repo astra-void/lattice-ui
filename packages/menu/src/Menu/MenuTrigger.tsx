@@ -36,7 +36,11 @@ export function MenuTrigger(props: MenuTriggerProps) {
     }
 
     return (
-      <Slot Event={{ Activated: handleActivated }} Selectable={props.disabled !== true && keyboardNavigation} ref={setTriggerRef}>
+      <Slot
+        Event={{ Activated: handleActivated }}
+        Selectable={props.disabled !== true && keyboardNavigation}
+        ref={setTriggerRef}
+      >
         {child}
       </Slot>
     );

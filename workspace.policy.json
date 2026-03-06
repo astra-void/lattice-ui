@@ -1,7 +1,7 @@
 {
   "internalScope": "@lattice-ui",
   "internalDependencyVersion": "workspace:*",
-  "lockedVersion": "0.3.2",
+  "lockedVersion": "0.4.0",
   "lockedstep": {
     "enforced": true,
     "major": 0
@@ -24,7 +24,7 @@
     "@rbxts/react": "17.3.7-ts.1",
     "@rbxts/react-roblox": "17.3.7-ts.1"
   },
-  "toolingPackages": ["@lattice-ui/cli"],
+  "toolingPackages": ["@lattice-ui/cli", "@lattice-ui/preview"],
   "requiredFiles": ["src/index.ts", "tsconfig.json", "tsconfig.typecheck.json"],
   "changesets": {
     "baseBranch": "main",

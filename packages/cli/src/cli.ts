@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { runAddCommand } from "./commands/add";
 import { runCreateCommand } from "./commands/create";
 import { runDoctorCommand } from "./commands/doctor";
+import { runPreviewCommand } from "./commands/preview";
 import { runRemoveCommand } from "./commands/remove";
 import { runUpgradeCommand } from "./commands/upgrade";
 import { usageError } from "./core/errors";
@@ -26,6 +27,9 @@ Commands:
   upgrade [name...] [--preset <preset...>] [--yes] [--dry-run]
     Upgrade installed @lattice-ui/* packages.
 
+  preview
+    Run a source-first web preview for the current package's real src/**/*.tsx files.
+
   doctor
     Check lockfiles, peers, and provider expectations.
 
@@ -46,6 +50,7 @@ Examples:
   npx lattice remove dialog --dry-run
   npx lattice upgrade --dry-run
   npx lattice doctor
+  npx lattice preview
 `;
 
 interface ParsedCommandLine {
@@ -272,7 +277,8 @@ function printHelp() {
 }
 
 export async function runCli(argv: string[]): Promise<void> {
-  const parsed = parseTopLevel(argv);
+  const normalizedArgv = argv[0] === "--" ? argv.slice(1) : argv;
+  const parsed = parseTopLevel(normalizedArgv);
 
   if (parsed.showVersion) {
     process.stdout.write(`${await readCliVersion()}\n`);
@@ -346,6 +352,11 @@ export async function runCli(argv: string[]): Promise<void> {
       verbose: false,
     });
     await runDoctorCommand(ctx);
+    return;
+  }
+
+  if (parsed.command === "preview") {
+    await runPreviewCommand(parsed.commandArgs, process.cwd());
     return;
   }
 

@@ -88,7 +88,7 @@ export function ComboboxRoot(props: ComboboxProps) {
   );
 
   const syncInputFromValue = React.useCallback(() => {
-    const nextInputValue = value !== undefined ? getItemText(value) ?? "" : "";
+    const nextInputValue = value !== undefined ? (getItemText(value) ?? "") : "";
     setInputValueState(nextInputValue);
   }, [getItemText, setInputValueState, value]);
 

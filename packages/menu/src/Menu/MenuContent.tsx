@@ -80,7 +80,12 @@ function MenuContentImpl(props: MenuContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <RovingFocusGroup active={props.enabled && props.keyboardNavigation} autoFocus="first" loop={props.loop} orientation="vertical">
+      <RovingFocusGroup
+        active={props.enabled && props.keyboardNavigation}
+        autoFocus="first"
+        loop={props.loop}
+        orientation="vertical"
+      >
         {contentNode}
       </RovingFocusGroup>
     </DismissableLayer>

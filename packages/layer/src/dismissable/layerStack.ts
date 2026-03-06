@@ -139,11 +139,7 @@ function unbindDismissAction() {
   dismissActionBound = false;
 }
 
-function handleDismissAction(
-  _actionName: string,
-  inputState: Enum.UserInputState,
-  inputObject: InputObject,
-) {
+function handleDismissAction(_actionName: string, inputState: Enum.UserInputState, inputObject: InputObject) {
   if (inputState === Enum.UserInputState.Begin) {
     if (dismissTopLayerFromKey(inputObject)) {
       sinkDismissKeyUntilRelease = inputObject.KeyCode;

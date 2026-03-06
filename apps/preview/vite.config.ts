@@ -1,0 +1,57 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import { createPreviewVitePlugin } from "../../packages/preview/src/source/plugin";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const workspaceRoot = path.resolve(__dirname, "../..");
+const previewTargets = [
+  {
+    name: "checkbox",
+    packageName: "@lattice-ui/checkbox",
+    packageRoot: path.resolve(workspaceRoot, "packages/checkbox"),
+    sourceRoot: path.resolve(workspaceRoot, "packages/checkbox/src"),
+  },
+  {
+    name: "switch",
+    packageName: "@lattice-ui/switch",
+    packageRoot: path.resolve(workspaceRoot, "packages/switch"),
+    sourceRoot: path.resolve(workspaceRoot, "packages/switch/src"),
+  },
+  {
+    name: "dialog",
+    packageName: "@lattice-ui/dialog",
+    packageRoot: path.resolve(workspaceRoot, "packages/dialog"),
+    sourceRoot: path.resolve(workspaceRoot, "packages/dialog/src"),
+  },
+] as const;
+
+export default defineConfig({
+  plugins: [
+    createPreviewVitePlugin({
+      projectName: "Lattice Preview",
+      targets: [...previewTargets],
+    }),
+    react(),
+  ],
+  resolve: {
+    alias: [
+      {
+        find: "@lattice-ui/preview/runtime",
+        replacement: path.resolve(workspaceRoot, "packages/preview/src/runtime/index.ts"),
+      },
+      {
+        find: "@lattice-ui/preview",
+        replacement: path.resolve(workspaceRoot, "packages/preview/src/ui/index.ts"),
+      },
+    ],
+  },
+  server: {
+    fs: {
+      allow: [workspaceRoot, ...previewTargets.flatMap((target) => [target.packageRoot, target.sourceRoot])],
+    },
+    port: 4174,
+  },
+});

@@ -22,7 +22,12 @@ export function TabsList(props: TabsListProps) {
   );
 
   return (
-    <RovingFocusGroup active={tabsContext.keyboardNavigation} autoFocus="none" loop orientation={tabsContext.orientation}>
+    <RovingFocusGroup
+      active={tabsContext.keyboardNavigation}
+      autoFocus="none"
+      loop
+      orientation={tabsContext.orientation}
+    >
       {listNode}
     </RovingFocusGroup>
   );

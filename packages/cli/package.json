@@ -11,6 +11,9 @@
     "registry",
     "templates"
   ],
+  "dependencies": {
+    "@lattice-ui/preview": "workspace:*"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
