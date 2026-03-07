@@ -17,6 +17,7 @@ import {
 } from "./domHost";
 import { FocusScope } from "./focusScope";
 import { Color3, error, isPreviewElement, pairs, typeIs, UDim, UDim2, Vector2 } from "./helpers";
+import { LayoutProvider, useLayoutEngineStatus, useRobloxLayout } from "./LayoutProvider";
 import { Portal, PortalProvider, usePortalContext } from "./portal";
 import { Presence } from "./presence";
 import { Slot } from "./slot";
@@ -26,6 +27,7 @@ import { useControllableState } from "./useControllableState";
 export { React };
 export { createStrictContext, useControllableState, Slot };
 export { Portal, PortalProvider, usePortalContext, Presence, DismissableLayer, FocusScope };
+export { LayoutProvider, useRobloxLayout, useLayoutEngineStatus };
 export {
   Frame,
   TextButton,
@@ -72,6 +74,9 @@ export type PreviewRuntime = {
   };
   primitives: {
     Slot: typeof Slot;
+    LayoutProvider: typeof LayoutProvider;
+    useRobloxLayout: typeof useRobloxLayout;
+    useLayoutEngineStatus: typeof useLayoutEngineStatus;
     Portal: typeof Portal;
     PortalProvider: typeof PortalProvider;
     Presence: typeof Presence;
@@ -109,6 +114,9 @@ export const previewRuntime: PreviewRuntime = {
   },
   primitives: {
     Slot,
+    LayoutProvider,
+    useRobloxLayout,
+    useLayoutEngineStatus,
     Portal,
     PortalProvider,
     Presence,

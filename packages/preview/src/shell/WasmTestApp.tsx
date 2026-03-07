@@ -151,7 +151,7 @@ export function WasmTestApp() {
           );
         }
 
-        await initLayoutEngine(bytes);
+        await initLayoutEngine({ module_or_path: bytes });
 
         if (cancelled) {
           return;

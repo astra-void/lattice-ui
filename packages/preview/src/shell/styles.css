@@ -238,6 +238,11 @@ code,
   position: relative;
 }
 
+.preview-stage-viewport {
+  min-height: 360px;
+  position: relative;
+  width: 100%;
+}
 .preview-empty {
   display: grid;
   gap: 10px;
@@ -328,4 +333,9 @@ code,
     min-height: 320px;
     padding: 18px;
   }
+
+  .preview-stage-viewport {
+    min-height: 240px;
+  }
 }
+

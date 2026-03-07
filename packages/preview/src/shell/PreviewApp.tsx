@@ -1,4 +1,5 @@
 import React from "react";
+import { LayoutProvider } from "../runtime/LayoutProvider";
 import type { PreviewDefinition, PreviewRegistryItem } from "../source/types";
 
 type PreviewModule = Record<string, unknown> & {
@@ -26,6 +27,11 @@ type PreviewErrorBoundaryProps = {
 
 type PreviewErrorBoundaryState = {
   errorMessage: string | null;
+};
+
+type ViewportSize = {
+  height: number;
+  width: number;
 };
 
 class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, PreviewErrorBoundaryState> {
@@ -159,8 +165,51 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
   return null;
 }
 
+function usePreviewViewport() {
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
+  const [viewport, setViewport] = React.useState<ViewportSize>({
+    width: 0,
+    height: 0,
+  });
+
+  React.useEffect(() => {
+    const element = viewportRef.current;
+    if (!element) {
+      return;
+    }
+
+    const update = () => {
+      setViewport({
+        width: element.clientWidth,
+        height: element.clientHeight,
+      });
+    };
+
+    update();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => update());
+      observer.observe(element);
+      return () => {
+        observer.disconnect();
+      };
+    }
+
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  return {
+    viewport,
+    viewportRef,
+  };
+}
+
 function PreviewCanvas(props: PreviewCanvasProps) {
   const preview = readPreviewDefinition(props.module);
+  const { viewport, viewportRef } = usePreviewViewport();
   const subtitle =
     props.entry.render.mode === "preview-render"
       ? "Custom harness"
@@ -189,9 +238,11 @@ function PreviewCanvas(props: PreviewCanvasProps) {
         </div>
       </div>
       <div className="preview-stage">
-        <PreviewErrorBoundary onError={props.onRenderError}>
-          {createPreviewNode(props.entry, props.module)}
-        </PreviewErrorBoundary>
+        <div className="preview-stage-viewport" ref={viewportRef}>
+          <LayoutProvider viewportHeight={viewport.height} viewportWidth={viewport.width}>
+            <PreviewErrorBoundary onError={props.onRenderError}>{createPreviewNode(props.entry, props.module)}</PreviewErrorBoundary>
+          </LayoutProvider>
+        </div>
       </div>
     </>
   );

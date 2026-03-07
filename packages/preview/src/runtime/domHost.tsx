@@ -1,7 +1,7 @@
 import * as React from "react";
-import type { Color3Value, UDim2Value, UDim, Vector2 } from "./helpers";
-import { toCssColor, toCssLength } from "./helpers";
-import { type LayoutRect, computeNodeRectWithWasm } from "./layoutEngine";
+import type { Color3Value, UDim2Value, Vector2 } from "./helpers";
+import { toCssColor } from "./helpers";
+import { LayoutNodeParentProvider, type ComputedRect, useRobloxLayout } from "./LayoutProvider";
 
 export type PreviewEventTable = {
   Activated?: (event: Event) => void;
@@ -13,6 +13,29 @@ type ForwardedDomProps = React.HTMLAttributes<HTMLElement> &
   React.ImgHTMLAttributes<HTMLImageElement>;
 
 type Vector2Like = Vector2 | { X?: number; Y?: number; x?: number; y?: number };
+
+type HostName =
+  | "frame"
+  | "textbutton"
+  | "screengui"
+  | "textlabel"
+  | "textbox"
+  | "imagelabel"
+  | "scrollingframe"
+  | "uicorner"
+  | "uipadding"
+  | "uilistlayout"
+  | "uigridlayout"
+  | "uistroke";
+
+type LayoutHostName =
+  | "frame"
+  | "textbutton"
+  | "screengui"
+  | "textlabel"
+  | "textbox"
+  | "imagelabel"
+  | "scrollingframe";
 
 export type PreviewDomProps = {
   Active?: boolean;
@@ -30,15 +53,18 @@ export type PreviewDomProps = {
   Event?: PreviewEventTable;
   FillDirection?: string;
   HorizontalAlignment?: string;
+  Id?: string;
   Image?: string;
   ImageColor3?: Color3Value;
   ImageTransparency?: number;
   Modal?: boolean;
+  Name?: string;
   PaddingBottom?: unknown;
   PaddingLeft?: unknown;
   PaddingRight?: unknown;
   PaddingTop?: unknown;
   Padding?: unknown;
+  ParentId?: string;
   PlaceholderText?: string;
   Position?: UDim2Value;
   ScrollBarThickness?: number;
@@ -91,21 +117,31 @@ const DOM_PROP_NAMES = new Set([
   "value",
 ]);
 
-const LayoutRectContext = React.createContext<LayoutRect | null>(null);
+type ResolveOptions = {
+  applyComputedLayout?: boolean;
+  computed: ComputedRect | null;
+  host: HostName;
+  nodeId: string;
+};
 
-type HostName =
-  | "frame"
-  | "textbutton"
-  | "screengui"
-  | "textlabel"
-  | "textbox"
-  | "imagelabel"
-  | "scrollingframe"
-  | "uicorner"
-  | "uipadding"
-  | "uilistlayout"
-  | "uigridlayout"
-  | "uistroke";
+type LayoutInput = {
+  anchorPoint?: Vector2Like;
+  id?: string;
+  name?: string;
+  parentId?: string;
+  position?: UDim2Value;
+  size?: UDim2Value;
+};
+
+const layoutHostNodeType: Record<LayoutHostName, string> = {
+  frame: "Frame",
+  textbutton: "TextButton",
+  screengui: "ScreenGui",
+  textlabel: "TextLabel",
+  textbox: "TextBox",
+  imagelabel: "ImageLabel",
+  scrollingframe: "ScrollingFrame",
+};
 
 function mergeHandlers<T>(a?: (event: T) => void, b?: (event: T) => void) {
   if (!a) {
@@ -156,185 +192,80 @@ function pickForwardedDomProps(props: PreviewDomProps) {
   return domProps;
 }
 
-type ResolveOptions = {
-  host: HostName;
-  parentRect?: LayoutRect | null;
-  wasmRect?: LayoutRect | null;
-};
-
-function hostToNodeType(host: HostName) {
-  switch (host) {
-    case "frame":
-      return "Frame";
-    case "textbutton":
-      return "TextButton";
-    case "screengui":
-      return "ScreenGui";
-    case "textlabel":
-      return "TextLabel";
-    case "textbox":
-      return "TextBox";
-    case "imagelabel":
-      return "ImageLabel";
-    case "scrollingframe":
-      return "ScrollingFrame";
-    case "uicorner":
-      return "UICorner";
-    case "uipadding":
-      return "UIPadding";
-    case "uilistlayout":
-      return "UIListLayout";
-    case "uigridlayout":
-      return "UIGridLayout";
-    case "uistroke":
-      return "UIStroke";
-    default:
-      return "Frame";
-  }
+function getStringValue(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }
 
-function toSolverUDim(axis: UDim | undefined) {
+function getLayoutInput(props: PreviewDomProps): LayoutInput {
+  const source = props as Record<string, unknown>;
+
   return {
-    scale: Number(axis?.Scale ?? 0),
-    offset: Number(axis?.Offset ?? 0),
+    anchorPoint: source.AnchorPoint as Vector2Like | undefined,
+    id: getStringValue(source.Id),
+    name: getStringValue(source.Name),
+    parentId: getStringValue(source.ParentId),
+    position: source.Position as UDim2Value | undefined,
+    size: source.Size as UDim2Value | undefined,
   };
 }
 
-function toSolverUDim2(value: UDim2Value | undefined) {
-  return {
-    x: toSolverUDim(value?.X),
-    y: toSolverUDim(value?.Y),
-  };
-}
-
-function toSolverVector2(value: Vector2Like | undefined) {
-  return {
-    x: Number((value as { X?: number; x?: number } | undefined)?.X ?? (value as { x?: number } | undefined)?.x ?? 0),
-    y: Number((value as { Y?: number; y?: number } | undefined)?.Y ?? (value as { y?: number } | undefined)?.y ?? 0),
-  };
-}
-
-function hasFiniteLayoutValues(size: UDim2Value | undefined, position: UDim2Value | undefined, anchorPoint: Vector2Like | undefined) {
-  const dimensions = [
-    Number(size?.X?.Scale),
-    Number(size?.X?.Offset),
-    Number(size?.Y?.Scale),
-    Number(size?.Y?.Offset),
-    Number(position?.X?.Scale ?? 0),
-    Number(position?.X?.Offset ?? 0),
-    Number(position?.Y?.Scale ?? 0),
-    Number(position?.Y?.Offset ?? 0),
-    Number((anchorPoint as { X?: number; x?: number } | undefined)?.X ?? (anchorPoint as { x?: number } | undefined)?.x ?? 0),
-    Number((anchorPoint as { Y?: number; y?: number } | undefined)?.Y ?? (anchorPoint as { y?: number } | undefined)?.y ?? 0),
-  ];
-
-  return dimensions.every((value) => Number.isFinite(value));
-}
-
-function useViewportRect() {
-  const [rect, setRect] = React.useState<LayoutRect>(() => ({
-    x: 0,
-    y: 0,
-    width: typeof window === "undefined" ? 0 : window.innerWidth,
-    height: typeof window === "undefined" ? 0 : window.innerHeight,
-  }));
-
-  React.useEffect(() => {
-    const update = () => {
-      setRect({
-        x: 0,
-        y: 0,
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  return rect;
-}
-
-function useWasmLayoutRect(params: {
-  host: HostName;
-  parentRect: LayoutRect | null;
-  size: UDim2Value | undefined;
-  position: UDim2Value | undefined;
-  anchorPoint: Vector2Like | undefined;
-}) {
-  const [rect, setRect] = React.useState<LayoutRect | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-
-    if (!params.parentRect || !params.size) {
-      setRect(null);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (!hasFiniteLayoutValues(params.size, params.position, params.anchorPoint)) {
-      setRect(null);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    void computeNodeRectWithWasm({
-      nodeType: hostToNodeType(params.host),
-      size: toSolverUDim2(params.size),
-      position: toSolverUDim2(params.position),
-      anchorPoint: toSolverVector2(params.anchorPoint),
-      parentRect: params.parentRect,
-    })
-      .then((nextRect) => {
-        if (!cancelled) {
-          setRect(nextRect);
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setRect(null);
-          if (typeof console !== "undefined") {
-            console.warn("Failed to compute preview layout with Wasm:", error);
-          }
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    params.anchorPoint,
-    params.host,
-    params.parentRect?.height,
-    params.parentRect?.width,
-    params.parentRect?.x,
-    params.parentRect?.y,
-    params.position,
-    params.size,
-  ]);
-
-  return rect;
-}
-
-function getLayoutInput(props: PreviewDomProps) {
-  return {
-    size: props.Size as UDim2Value | undefined,
-    position: props.Position as UDim2Value | undefined,
-    anchorPoint: props.AnchorPoint as Vector2Like | undefined,
-  };
-}
-
-function withLayoutContext(children: React.ReactNode, rect: LayoutRect | null) {
-  if (!rect) {
-    return children;
+function resolveNodeId(host: HostName, reactId: string, layoutInput: LayoutInput) {
+  if (layoutInput.id && layoutInput.id.length > 0) {
+    return layoutInput.id;
   }
 
-  return <LayoutRectContext.Provider value={rect}>{children}</LayoutRectContext.Provider>;
+  if (layoutInput.name && layoutInput.name.length > 0) {
+    return `${host}:${layoutInput.name}:${reactId}`;
+  }
+
+  return `${host}:${reactId}`;
+}
+
+function useHostLayout(host: LayoutHostName, props: PreviewDomProps) {
+  const reactId = React.useId();
+  const layoutInput = getLayoutInput(props);
+
+  const nodeId = React.useMemo(
+    () => resolveNodeId(host, reactId, layoutInput),
+    [host, layoutInput.id, layoutInput.name, reactId],
+  );
+
+  const computed = useRobloxLayout({
+    anchorPoint: layoutInput.anchorPoint,
+    id: nodeId,
+    nodeType: layoutHostNodeType[host],
+    parentId: layoutInput.parentId,
+    position: layoutInput.position,
+    size: layoutInput.size,
+  });
+
+  return {
+    computed,
+    nodeId,
+  };
+}
+
+function withNodeParent(nodeId: string, children: React.ReactNode) {
+  return <LayoutNodeParentProvider nodeId={nodeId}>{children}</LayoutNodeParentProvider>;
+}
+
+function applyComputedLayout(style: React.CSSProperties, computed: ComputedRect | null) {
+  style.position = "absolute";
+
+  if (!computed) {
+    style.left = "0px";
+    style.top = "0px";
+    style.width = "0px";
+    style.height = "0px";
+    style.visibility = "hidden";
+    return;
+  }
+
+  style.left = `${computed.x}px`;
+  style.top = `${computed.y}px`;
+  style.width = `${computed.width}px`;
+  style.height = `${computed.height}px`;
+  style.visibility = "visible";
 }
 
 export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveOptions) {
@@ -347,8 +278,11 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
     BorderSizePixel,
     Change,
     Event,
+    Id,
     Image,
     Modal,
+    Name,
+    ParentId,
     PlaceholderText,
     Position,
     Selectable,
@@ -372,9 +306,15 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
     ...rest
   } = props;
 
+  void Active;
   void AnchorPoint;
   void AutoButtonColor;
+  void Id;
   void Modal;
+  void Name;
+  void ParentId;
+  void Position;
+  void Size;
   void TextTransparency;
 
   const forwarded = pickForwardedDomProps(rest);
@@ -382,19 +322,12 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
     ...(style ?? {}),
   };
 
+  if (options.applyComputedLayout !== false) {
+    applyComputedLayout(computedStyle, options.computed);
+  }
+
   if (Visible === false) {
     computedStyle.display = "none";
-  }
-
-  if (Size) {
-    computedStyle.width = toCssLength(Size.X);
-    computedStyle.height = toCssLength(Size.Y);
-  }
-
-  if (Position) {
-    computedStyle.position = "absolute";
-    computedStyle.left = toCssLength(Position.X);
-    computedStyle.top = toCssLength(Position.Y);
   }
 
   if (ZIndex !== undefined) {
@@ -429,10 +362,10 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
   }
 
   if (options.host === "textlabel" || options.host === "textbox") {
-    computedStyle.textAlign = toTextAlign(TextXAlignment);
-    computedStyle.justifyContent = toJustifyContent(TextYAlignment);
     computedStyle.display = computedStyle.display === "none" ? "none" : "flex";
     computedStyle.flexDirection = "column";
+    computedStyle.justifyContent = toJustifyContent(TextYAlignment);
+    computedStyle.textAlign = toTextAlign(TextXAlignment);
   }
 
   if (options.host === "imagelabel") {
@@ -441,26 +374,6 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
 
   if (options.host === "scrollingframe") {
     computedStyle.overflow = "auto";
-  }
-
-  if (options.host === "screengui" && computedStyle.position === undefined) {
-    computedStyle.position = "fixed";
-    computedStyle.inset = 0;
-  }
-
-  if (options.wasmRect && options.parentRect) {
-    const localX = options.wasmRect.x - options.parentRect.x;
-    const localY = options.wasmRect.y - options.parentRect.y;
-
-    computedStyle.position = options.host === "screengui" ? "fixed" : "absolute";
-    computedStyle.left = `${localX}px`;
-    computedStyle.top = `${localY}px`;
-    computedStyle.width = `${options.wasmRect.width}px`;
-    computedStyle.height = `${options.wasmRect.height}px`;
-
-    if (options.host === "screengui") {
-      computedStyle.inset = undefined;
-    }
   }
 
   const mergedClick = mergeHandlers<React.MouseEvent<HTMLElement>>(
@@ -491,19 +404,20 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
   );
 
   return {
+    children,
+    disabled: options.host === "textbutton" ? props.Active === false : TextEditable === false,
     domProps: {
       ...forwarded,
-      className: [`preview-host`, `preview-${options.host}`, className].filter(Boolean).join(" "),
+      "data-preview-host": options.host,
+      "data-preview-node-id": options.nodeId,
+      className: ["preview-host", `preview-${options.host}`, className].filter(Boolean).join(" "),
       onBlur: mergedBlur,
       onChange: mergedChange,
       onClick: mergedClick,
       placeholder: PlaceholderText,
       style: computedStyle,
       tabIndex: Selectable === false ? -1 : (forwarded.tabIndex as number | undefined),
-      "data-preview-host": options.host,
     },
-    children,
-    disabled: options.host === "textbutton" ? Active === false : TextEditable === false,
     image: Image,
     text: Text,
   };
@@ -511,63 +425,57 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
 
 function createDecoratorHost(displayName: string, host: HostName) {
   const Component = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-    const parentRect = React.useContext(LayoutRectContext);
-    const layoutInput = getLayoutInput(props);
-    const wasmRect = useWasmLayoutRect({
-      host,
-      parentRect,
-      ...layoutInput,
-    });
+    const nodeId = React.useId();
     const resolved = resolvePreviewDomProps(props, {
+      applyComputedLayout: false,
+      computed: null,
       host,
-      parentRect,
-      wasmRect,
+      nodeId,
     });
 
-    return <span {...resolved.domProps} aria-hidden="true" ref={forwardedRef as React.Ref<HTMLSpanElement>} />;
+    const style = {
+      ...(resolved.domProps.style as React.CSSProperties),
+      display: "none",
+    };
+
+    return (
+      <span
+        {...resolved.domProps}
+        aria-hidden="true"
+        ref={forwardedRef as React.Ref<HTMLSpanElement>}
+        style={style}
+      />
+    );
   });
+
   Component.displayName = displayName;
   return Component;
 }
 
 export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const parentRect = React.useContext(LayoutRectContext);
-  const layoutInput = getLayoutInput(props);
-  const wasmRect = useWasmLayoutRect({
-    host: "frame",
-    parentRect,
-    ...layoutInput,
-  });
+  const { computed, nodeId } = useHostLayout("frame", props);
   const resolved = resolvePreviewDomProps(props, {
+    computed,
     host: "frame",
-    parentRect,
-    wasmRect,
+    nodeId,
   });
-  const nextRect = wasmRect ?? parentRect;
 
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
       {resolved.text ? <span className="preview-host-text">{resolved.text}</span> : undefined}
-      {withLayoutContext(resolved.children, nextRect)}
+      {withNodeParent(nodeId, resolved.children)}
     </div>
   );
 });
 Frame.displayName = "PreviewFrame";
 
 export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const parentRect = React.useContext(LayoutRectContext);
-  const layoutInput = getLayoutInput(props);
-  const wasmRect = useWasmLayoutRect({
-    host: "textbutton",
-    parentRect,
-    ...layoutInput,
-  });
+  const { computed, nodeId } = useHostLayout("textbutton", props);
   const resolved = resolvePreviewDomProps(props, {
+    computed,
     host: "textbutton",
-    parentRect,
-    wasmRect,
+    nodeId,
   });
-  const nextRect = wasmRect ?? parentRect;
 
   return (
     <button
@@ -577,71 +485,51 @@ export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props,
       type="button"
     >
       {resolved.text ? <span className="preview-host-text">{resolved.text}</span> : undefined}
-      {withLayoutContext(resolved.children, nextRect)}
+      {withNodeParent(nodeId, resolved.children)}
     </button>
   );
 });
 TextButton.displayName = "PreviewTextButton";
 
 export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const viewportRect = useViewportRect();
-  const layoutInput = getLayoutInput(props);
-  const wasmRect = useWasmLayoutRect({
-    host: "screengui",
-    parentRect: viewportRect,
-    ...layoutInput,
-  });
-  const effectiveRect = wasmRect ?? viewportRect;
+  const { computed, nodeId } = useHostLayout("screengui", props);
   const resolved = resolvePreviewDomProps(props, {
+    computed,
     host: "screengui",
-    parentRect: viewportRect,
-    wasmRect: effectiveRect,
+    nodeId,
   });
 
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
-      {withLayoutContext(resolved.children, effectiveRect)}
+      {withNodeParent(nodeId, resolved.children)}
     </div>
   );
 });
 ScreenGui.displayName = "PreviewScreenGui";
 
 export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const parentRect = React.useContext(LayoutRectContext);
-  const layoutInput = getLayoutInput(props);
-  const wasmRect = useWasmLayoutRect({
-    host: "textlabel",
-    parentRect,
-    ...layoutInput,
-  });
+  const { computed, nodeId } = useHostLayout("textlabel", props);
   const resolved = resolvePreviewDomProps(props, {
+    computed,
     host: "textlabel",
-    parentRect,
-    wasmRect,
+    nodeId,
   });
-  const nextRect = wasmRect ?? parentRect;
 
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
       {resolved.text}
-      {withLayoutContext(resolved.children, nextRect)}
+      {withNodeParent(nodeId, resolved.children)}
     </div>
   );
 });
 TextLabel.displayName = "PreviewTextLabel";
 
 export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const parentRect = React.useContext(LayoutRectContext);
-  const layoutInput = getLayoutInput(props);
-  const wasmRect = useWasmLayoutRect({
-    host: "textbox",
-    parentRect,
-    ...layoutInput,
-  });
+  const { computed, nodeId } = useHostLayout("textbox", props);
   const resolved = resolvePreviewDomProps(props, {
+    computed,
     host: "textbox",
-    parentRect,
-    wasmRect,
+    nodeId,
   });
 
   return (
@@ -657,17 +545,11 @@ export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, fo
 TextBox.displayName = "PreviewTextBox";
 
 export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const parentRect = React.useContext(LayoutRectContext);
-  const layoutInput = getLayoutInput(props);
-  const wasmRect = useWasmLayoutRect({
-    host: "imagelabel",
-    parentRect,
-    ...layoutInput,
-  });
+  const { computed, nodeId } = useHostLayout("imagelabel", props);
   const resolved = resolvePreviewDomProps(props, {
+    computed,
     host: "imagelabel",
-    parentRect,
-    wasmRect,
+    nodeId,
   });
 
   return (
@@ -682,23 +564,16 @@ export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props,
 ImageLabel.displayName = "PreviewImageLabel";
 
 export const ScrollingFrame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const parentRect = React.useContext(LayoutRectContext);
-  const layoutInput = getLayoutInput(props);
-  const wasmRect = useWasmLayoutRect({
-    host: "scrollingframe",
-    parentRect,
-    ...layoutInput,
-  });
+  const { computed, nodeId } = useHostLayout("scrollingframe", props);
   const resolved = resolvePreviewDomProps(props, {
+    computed,
     host: "scrollingframe",
-    parentRect,
-    wasmRect,
+    nodeId,
   });
-  const nextRect = wasmRect ?? parentRect;
 
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
-      {withLayoutContext(resolved.children, nextRect)}
+      {withNodeParent(nodeId, resolved.children)}
     </div>
   );
 });
@@ -709,4 +584,3 @@ export const UIPadding = createDecoratorHost("PreviewUIPadding", "uipadding");
 export const UIListLayout = createDecoratorHost("PreviewUIListLayout", "uilistlayout");
 export const UIGridLayout = createDecoratorHost("PreviewUIGridLayout", "uigridlayout");
 export const UIStroke = createDecoratorHost("PreviewUIStroke", "uistroke");
-

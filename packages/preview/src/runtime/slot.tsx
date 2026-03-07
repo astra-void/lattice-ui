@@ -38,6 +38,7 @@ export const Slot = React.forwardRef<HTMLElement, SlotProps>((props, forwardedRe
   const childProps = (child.props ?? {}) as PreviewDomProps;
   const slotEvent = props.Event as PreviewEventTable | undefined;
   const childEvent = childProps.Event as PreviewEventTable | undefined;
+  const slotNodeId = React.useId();
 
   const mergedProps: PreviewDomProps = {
     ...props,
@@ -48,7 +49,10 @@ export const Slot = React.forwardRef<HTMLElement, SlotProps>((props, forwardedRe
   mergedProps.Event = mergeEventTables(slotEvent, childEvent);
 
   const normalized = resolvePreviewDomProps(mergedProps, {
+    applyComputedLayout: false,
+    computed: null,
     host: child.type === "button" ? "textbutton" : "frame",
+    nodeId: `slot:${slotNodeId}`,
   });
 
   return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
