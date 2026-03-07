@@ -211,6 +211,12 @@ code,
   padding: 22px;
 }
 
+.preview-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .canvas-meta {
   display: grid;
   gap: 12px;
@@ -224,22 +230,32 @@ code,
   margin: 0;
 }
 
+.preview-canvas {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .preview-stage {
-  align-items: center;
   background:
     radial-gradient(circle at top left, rgba(163, 72, 42, 0.08), transparent 18rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 242, 237, 0.94));
   border: 1px solid rgba(24, 23, 23, 0.08);
   border-radius: 22px;
-  display: grid;
-  min-height: 420px;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
   padding: 26px;
   position: relative;
 }
 
 .preview-stage-viewport {
-  min-height: 360px;
+  display: block;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 500px;
   position: relative;
   width: 100%;
 }
@@ -335,7 +351,6 @@ code,
   }
 
   .preview-stage-viewport {
-    min-height: 240px;
+    min-height: 500px;
   }
 }
-

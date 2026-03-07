@@ -12,7 +12,30 @@ type ForwardedDomProps = React.HTMLAttributes<HTMLElement> &
   React.InputHTMLAttributes<HTMLInputElement> &
   React.ImgHTMLAttributes<HTMLImageElement>;
 
-type Vector2Like = Vector2 | { X?: number; Y?: number; x?: number; y?: number };
+type UDimLike = { Scale?: number; Offset?: number; scale?: number; offset?: number } | readonly [number, number];
+
+type UDim2Like =
+  | UDim2Value
+  | { X?: UDimLike; Y?: UDimLike; x?: UDimLike; y?: UDimLike }
+  | readonly [number, number, number, number]
+  | readonly [UDimLike, UDimLike];
+
+type Vector2Like = Vector2 | { X?: number; Y?: number; x?: number; y?: number } | readonly [number, number];
+
+type SerializedUDim = {
+  Scale: number;
+  Offset: number;
+};
+
+type SerializedUDim2 = {
+  X: SerializedUDim;
+  Y: SerializedUDim;
+};
+
+type SerializedVector2 = {
+  X: number;
+  Y: number;
+};
 
 type HostName =
   | "frame"
@@ -28,14 +51,9 @@ type HostName =
   | "uigridlayout"
   | "uistroke";
 
-type LayoutHostName =
-  | "frame"
-  | "textbutton"
-  | "screengui"
-  | "textlabel"
-  | "textbox"
-  | "imagelabel"
-  | "scrollingframe";
+type LayoutHostName = "frame" | "textbutton" | "screengui" | "textlabel" | "textbox" | "imagelabel" | "scrollingframe";
+
+let previewNodeIdCounter = 0;
 
 export type PreviewDomProps = {
   Active?: boolean;
@@ -45,7 +63,7 @@ export type PreviewDomProps = {
   BackgroundColor3?: Color3Value;
   BackgroundTransparency?: number;
   BorderSizePixel?: number;
-  CanvasSize?: UDim2Value;
+  CanvasSize?: UDim2Like;
   Change?: {
     Text?: (element: HTMLInputElement) => void;
   };
@@ -66,11 +84,11 @@ export type PreviewDomProps = {
   Padding?: unknown;
   ParentId?: string;
   PlaceholderText?: string;
-  Position?: UDim2Value;
+  Position?: UDim2Like;
   ScrollBarThickness?: number;
   ScrollingDirection?: string;
   Selectable?: boolean;
-  Size?: UDim2Value;
+  Size?: UDim2Like;
   SortOrder?: string;
   Text?: string;
   TextColor3?: Color3Value;
@@ -125,12 +143,12 @@ type ResolveOptions = {
 };
 
 type LayoutInput = {
-  anchorPoint?: Vector2Like;
+  anchorPoint: SerializedVector2;
   id?: string;
   name?: string;
   parentId?: string;
-  position?: UDim2Value;
-  size?: UDim2Value;
+  position: SerializedUDim2;
+  size?: SerializedUDim2;
 };
 
 const layoutHostNodeType: Record<LayoutHostName, string> = {
@@ -141,6 +159,32 @@ const layoutHostNodeType: Record<LayoutHostName, string> = {
   textbox: "TextBox",
   imagelabel: "ImageLabel",
   scrollingframe: "ScrollingFrame",
+};
+
+const ZERO_UDIM: SerializedUDim = {
+  Offset: 0,
+  Scale: 0,
+};
+
+const ZERO_UDIM2: SerializedUDim2 = {
+  X: ZERO_UDIM,
+  Y: ZERO_UDIM,
+};
+
+const FULL_SIZE_UDIM2: SerializedUDim2 = {
+  X: {
+    Offset: 0,
+    Scale: 1,
+  },
+  Y: {
+    Offset: 0,
+    Scale: 1,
+  },
+};
+
+const ZERO_VECTOR2: SerializedVector2 = {
+  X: 0,
+  Y: 0,
 };
 
 function mergeHandlers<T>(a?: (event: T) => void, b?: (event: T) => void) {
@@ -196,48 +240,146 @@ function getStringValue(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
-function getLayoutInput(props: PreviewDomProps): LayoutInput {
-  const source = props as Record<string, unknown>;
+function toFiniteNumber(value: unknown, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
 
+function serializeUDim(value: unknown, fallback: SerializedUDim = ZERO_UDIM): SerializedUDim {
+  if (Array.isArray(value)) {
+    return {
+      Offset: toFiniteNumber(value[1], fallback.Offset),
+      Scale: toFiniteNumber(value[0], fallback.Scale),
+    };
+  }
+
+  if (!value || typeof value !== "object") {
+    return fallback;
+  }
+
+  const record = value as { Offset?: number; Scale?: number; offset?: number; scale?: number };
   return {
-    anchorPoint: source.AnchorPoint as Vector2Like | undefined,
-    id: getStringValue(source.Id),
-    name: getStringValue(source.Name),
-    parentId: getStringValue(source.ParentId),
-    position: source.Position as UDim2Value | undefined,
-    size: source.Size as UDim2Value | undefined,
+    Offset: toFiniteNumber(record.Offset ?? record.offset, fallback.Offset),
+    Scale: toFiniteNumber(record.Scale ?? record.scale, fallback.Scale),
   };
 }
 
-function resolveNodeId(host: HostName, reactId: string, layoutInput: LayoutInput) {
-  if (layoutInput.id && layoutInput.id.length > 0) {
-    return layoutInput.id;
+function serializeUDim2(value: unknown, fallback?: SerializedUDim2): SerializedUDim2 | undefined {
+  if (value === undefined || value === null) {
+    return fallback;
   }
 
-  if (layoutInput.name && layoutInput.name.length > 0) {
-    return `${host}:${layoutInput.name}:${reactId}`;
+  if (Array.isArray(value)) {
+    if (value.length >= 4) {
+      return {
+        X: serializeUDim([value[0], value[1]], fallback?.X ?? ZERO_UDIM),
+        Y: serializeUDim([value[2], value[3]], fallback?.Y ?? ZERO_UDIM),
+      };
+    }
+
+    return {
+      X: serializeUDim(value[0], fallback?.X ?? ZERO_UDIM),
+      Y: serializeUDim(value[1], fallback?.Y ?? ZERO_UDIM),
+    };
   }
 
-  return `${host}:${reactId}`;
+  if (typeof value !== "object") {
+    return fallback;
+  }
+
+  const record = value as { X?: unknown; Y?: unknown; x?: unknown; y?: unknown };
+  return {
+    X: serializeUDim(record.X ?? record.x, fallback?.X ?? ZERO_UDIM),
+    Y: serializeUDim(record.Y ?? record.y, fallback?.Y ?? ZERO_UDIM),
+  };
+}
+
+function serializeVector2(value: unknown, fallback: SerializedVector2 = ZERO_VECTOR2): SerializedVector2 {
+  if (Array.isArray(value)) {
+    return {
+      X: toFiniteNumber(value[0], fallback.X),
+      Y: toFiniteNumber(value[1], fallback.Y),
+    };
+  }
+
+  if (!value || typeof value !== "object") {
+    return fallback;
+  }
+
+  const record = value as { X?: number; Y?: number; x?: number; y?: number };
+  return {
+    X: toFiniteNumber(record.X ?? record.x, fallback.X),
+    Y: toFiniteNumber(record.Y ?? record.y, fallback.Y),
+  };
+}
+
+function getDefaultSize(host: LayoutHostName) {
+  if (host === "frame" || host === "screengui") {
+    return FULL_SIZE_UDIM2;
+  }
+
+  return undefined;
+}
+
+function getLayoutInput(host: LayoutHostName, props: PreviewDomProps): LayoutInput {
+  const source = props as Record<string, unknown>;
+
+  return {
+    anchorPoint: serializeVector2(source.AnchorPoint ?? source.anchorPoint),
+    id: getStringValue(source.Id ?? source.id),
+    name: getStringValue(source.Name ?? source.name),
+    parentId: getStringValue(source.ParentId ?? source.parentId),
+    position: serializeUDim2(source.Position ?? source.position, ZERO_UDIM2) ?? ZERO_UDIM2,
+    size: serializeUDim2(source.Size ?? source.size, getDefaultSize(host)),
+  };
+}
+
+function normalizePreviewNodeId(nodeId: string | undefined) {
+  if (!nodeId) {
+    return undefined;
+  }
+
+  const match = /(?:^|:)(preview-node-\d+)$/.exec(nodeId);
+  return match?.[1] ?? nodeId;
+}
+
+function useGeneratedPreviewNodeId() {
+  const idRef = React.useRef<string | null>(null);
+  if (idRef.current === null) {
+    previewNodeIdCounter += 1;
+    idRef.current = `preview-node-${previewNodeIdCounter}`;
+  }
+
+  return idRef.current;
+}
+
+function resolveNodeId(_host: HostName, generatedId: string, layoutInput: LayoutInput) {
+  return normalizePreviewNodeId(layoutInput.id) ?? generatedId;
 }
 
 function useHostLayout(host: LayoutHostName, props: PreviewDomProps) {
-  const reactId = React.useId();
-  const layoutInput = getLayoutInput(props);
+  const generatedId = useGeneratedPreviewNodeId();
+  const layoutInput = React.useMemo(() => getLayoutInput(host, props), [host, props]);
+  const normalizedParentId = React.useMemo(() => normalizePreviewNodeId(layoutInput.parentId), [layoutInput.parentId]);
 
   const nodeId = React.useMemo(
-    () => resolveNodeId(host, reactId, layoutInput),
-    [host, layoutInput.id, layoutInput.name, reactId],
+    () => resolveNodeId(host, generatedId, layoutInput),
+    [generatedId, host, layoutInput.id],
   );
 
-  const computed = useRobloxLayout({
-    anchorPoint: layoutInput.anchorPoint,
-    id: nodeId,
-    nodeType: layoutHostNodeType[host],
-    parentId: layoutInput.parentId,
-    position: layoutInput.position,
-    size: layoutInput.size,
-  });
+  const nodeData = React.useMemo(
+    () => ({
+      anchorPoint: layoutInput.anchorPoint,
+      id: nodeId,
+      nodeType: layoutHostNodeType[host],
+      parentId: normalizedParentId,
+      position: layoutInput.position,
+      size: layoutInput.size,
+    }),
+    [host, layoutInput.anchorPoint, layoutInput.position, layoutInput.size, nodeId, normalizedParentId],
+  );
+
+  const computed = useRobloxLayout(nodeData);
 
   return {
     computed,
@@ -250,22 +392,31 @@ function withNodeParent(nodeId: string, children: React.ReactNode) {
 }
 
 function applyComputedLayout(style: React.CSSProperties, computed: ComputedRect | null) {
+  delete style.left;
+  delete style.top;
+  delete style.width;
+  delete style.height;
+  delete style.transform;
+  delete style.translate;
+
   style.position = "absolute";
 
   if (!computed) {
-    style.left = "0px";
-    style.top = "0px";
-    style.width = "0px";
-    style.height = "0px";
     style.visibility = "hidden";
     return;
   }
 
+  style.visibility = "visible";
   style.left = `${computed.x}px`;
   style.top = `${computed.y}px`;
   style.width = `${computed.width}px`;
   style.height = `${computed.height}px`;
-  style.visibility = "visible";
+
+  if (computed.debugFallback) {
+    style.backgroundColor = style.backgroundColor ?? "rgba(255, 0, 0, 0.28)";
+    style.outline = "2px solid red";
+    style.outlineOffset = "-1px";
+  }
 }
 
 export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveOptions) {
@@ -425,7 +576,7 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
 
 function createDecoratorHost(displayName: string, host: HostName) {
   const Component = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-    const nodeId = React.useId();
+    const nodeId = useGeneratedPreviewNodeId();
     const resolved = resolvePreviewDomProps(props, {
       applyComputedLayout: false,
       computed: null,
@@ -439,12 +590,7 @@ function createDecoratorHost(displayName: string, host: HostName) {
     };
 
     return (
-      <span
-        {...resolved.domProps}
-        aria-hidden="true"
-        ref={forwardedRef as React.Ref<HTMLSpanElement>}
-        style={style}
-      />
+      <span {...resolved.domProps} aria-hidden="true" ref={forwardedRef as React.Ref<HTMLSpanElement>} style={style} />
     );
   });
 

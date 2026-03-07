@@ -1,4 +1,4 @@
-﻿import initLayoutEngine, { compute_layout } from "@lattice-ui/layout-engine";
+import initLayoutEngine, { compute_layout } from "@lattice-ui/layout-engine";
 
 export type LayoutRect = {
   x: number;
@@ -55,15 +55,14 @@ function isComputedRectLike(value: unknown): value is ComputedRectLike {
 }
 
 function normalizeLayoutMap(raw: unknown): Record<string, ComputedRectLike> {
-  let entries: Array<[string, unknown]> = [];
-
-  if (raw instanceof Map) {
-    entries = Array.from(raw.entries()) as Array<[string, unknown]>;
-  } else if (typeof raw === "object" && raw !== null) {
-    entries = Object.entries(raw as Record<string, unknown>);
-  } else {
+  if (!(raw instanceof Map) && !(typeof raw === "object" && raw !== null)) {
     throw new Error(`Unexpected compute_layout result type: ${typeof raw}`);
   }
+
+  const entries =
+    raw instanceof Map
+      ? (Array.from(raw.entries()) as Array<[string, unknown]>)
+      : Object.entries(raw as Record<string, unknown>);
 
   const normalized: Record<string, ComputedRectLike> = {};
   for (const [key, value] of entries) {

@@ -101,15 +101,14 @@ function isComputedRect(value: unknown): value is ComputedRect {
 }
 
 function normalizeLayoutResult(raw: unknown): Record<string, ComputedRect> {
-  let entries: Array<[string, unknown]> = [];
-
-  if (raw instanceof Map) {
-    entries = Array.from(raw.entries()) as Array<[string, unknown]>;
-  } else if (typeof raw === "object" && raw !== null) {
-    entries = Object.entries(raw as Record<string, unknown>);
-  } else {
+  if (!(raw instanceof Map) && !(typeof raw === "object" && raw !== null)) {
     throw new Error(`Unexpected layout result type: ${typeof raw}`);
   }
+
+  const entries =
+    raw instanceof Map
+      ? (Array.from(raw.entries()) as Array<[string, unknown]>)
+      : Object.entries(raw as Record<string, unknown>);
 
   const normalized: Record<string, ComputedRect> = {};
   for (const [key, value] of entries) {

@@ -26,6 +26,7 @@ export default defineConfig([
     "tests/vitest/**",
     "apps/preview-harness/src/generated/**",
     "packages/preview/generated/**",
+    "packages/layout-engine/pkg/**",
   ]),
   {
     files: ["{packages,apps}/**/*.{ts,tsx}"],

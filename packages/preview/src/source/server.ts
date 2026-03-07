@@ -2,12 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createPreviewVitePlugin } from "./plugin";
 import type { PreviewSourceTarget } from "./types";
-import type {
-  ReactPluginModule,
-  ViteModule,
-  ViteTopLevelAwaitPluginModule,
-  ViteWasmPluginModule,
-} from "./viteTypes";
+import type { ReactPluginModule, ViteModule, ViteTopLevelAwaitPluginModule, ViteWasmPluginModule } from "./viteTypes";
 
 const DEFAULT_PORT = 4174;
 
@@ -38,8 +33,9 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
   const vite = (await import("vite")) as unknown as ViteModule;
   const reactPlugin = ((await import("@vitejs/plugin-react")) as unknown as ReactPluginModule).default;
   const wasmPlugin = ((await import("vite-plugin-wasm")) as unknown as ViteWasmPluginModule).default;
-  const topLevelAwaitPlugin = ((await import("vite-plugin-top-level-await")) as unknown as ViteTopLevelAwaitPluginModule)
-    .default;
+  const topLevelAwaitPlugin = (
+    (await import("vite-plugin-top-level-await")) as unknown as ViteTopLevelAwaitPluginModule
+  ).default;
 
   const shellRoot = resolveShellRoot();
   const targets: PreviewSourceTarget[] = [

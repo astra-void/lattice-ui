@@ -1,5 +1,13 @@
 import React from "react";
 import { LayoutProvider } from "../runtime/LayoutProvider";
+import {
+  areViewportsEqual,
+  createWindowViewport,
+  isViewportLargeEnough,
+  measureElementViewport,
+  pickViewport,
+  type ViewportSize,
+} from "../runtime/viewport";
 import type { PreviewDefinition, PreviewRegistryItem } from "../source/types";
 
 type PreviewModule = Record<string, unknown> & {
@@ -27,11 +35,6 @@ type PreviewErrorBoundaryProps = {
 
 type PreviewErrorBoundaryState = {
   errorMessage: string | null;
-};
-
-type ViewportSize = {
-  height: number;
-  width: number;
 };
 
 class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, PreviewErrorBoundaryState> {
@@ -167,39 +170,51 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
 
 function usePreviewViewport() {
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
-  const [viewport, setViewport] = React.useState<ViewportSize>({
-    width: 0,
-    height: 0,
-  });
+  const [viewport, setViewport] = React.useState<ViewportSize>(() => createWindowViewport());
+  const lastStableViewportRef = React.useRef<ViewportSize>(viewport);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const element = viewportRef.current;
     if (!element) {
       return;
     }
 
     const update = () => {
-      setViewport({
-        width: element.clientWidth,
-        height: element.clientHeight,
-      });
+      const measuredViewport = measureElementViewport(element);
+      const nextViewport = pickViewport([measuredViewport, lastStableViewportRef.current], createWindowViewport());
+
+      if (isViewportLargeEnough(nextViewport)) {
+        lastStableViewportRef.current = nextViewport;
+      }
+
+      setViewport((previous) => (areViewportsEqual(previous, nextViewport) ? previous : nextViewport));
     };
 
     update();
 
     if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver(() => update());
+      const observer = new ResizeObserver(() => {
+        update();
+      });
       observer.observe(element);
       return () => {
         observer.disconnect();
       };
     }
 
-    window.addEventListener("resize", update);
+    const onWindowResize = () => {
+      update();
+    };
+
+    window.addEventListener("resize", onWindowResize);
     return () => {
-      window.removeEventListener("resize", update);
+      window.removeEventListener("resize", onWindowResize);
     };
   }, []);
+
+  React.useEffect(() => {
+    console.log("Measured Canvas Size:", viewport.width, viewport.height);
+  }, [viewport.height, viewport.width]);
 
   return {
     viewport,
@@ -218,7 +233,7 @@ function PreviewCanvas(props: PreviewCanvasProps) {
         : "Auto render";
 
   return (
-    <>
+    <div className="preview-canvas">
       <div className="canvas-meta">
         <div>
           <p className="meta-label">Target</p>
@@ -240,11 +255,13 @@ function PreviewCanvas(props: PreviewCanvasProps) {
       <div className="preview-stage">
         <div className="preview-stage-viewport" ref={viewportRef}>
           <LayoutProvider viewportHeight={viewport.height} viewportWidth={viewport.width}>
-            <PreviewErrorBoundary onError={props.onRenderError}>{createPreviewNode(props.entry, props.module)}</PreviewErrorBoundary>
+            <PreviewErrorBoundary onError={props.onRenderError}>
+              {createPreviewNode(props.entry, props.module)}
+            </PreviewErrorBoundary>
           </LayoutProvider>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

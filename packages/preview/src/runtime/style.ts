@@ -16,6 +16,13 @@ type Color3Like = {
   B?: number;
 };
 
+type RobloxStyleProps = Record<string, unknown> & {
+  Size?: UDim2Like;
+  BackgroundColor3?: Color3Like;
+  BackgroundTransparency?: number;
+  Visible?: boolean;
+};
+
 function toCalcLength(axis: UDimLike | undefined) {
   if (!axis) {
     return undefined;
@@ -37,12 +44,11 @@ function toRgb(color: Color3Like | undefined) {
   return `rgb(${red}, ${green}, ${blue})`;
 }
 
-export function __rbxStyle(props: Record<string, any>): React.CSSProperties {
+export function __rbxStyle(props: RobloxStyleProps): React.CSSProperties {
   const style: React.CSSProperties = {};
 
-  const size = props.Size as UDim2Like | undefined;
-  const width = toCalcLength(size?.X);
-  const height = toCalcLength(size?.Y);
+  const width = toCalcLength(props.Size?.X);
+  const height = toCalcLength(props.Size?.Y);
 
   if (width) {
     style.width = width;
@@ -51,7 +57,7 @@ export function __rbxStyle(props: Record<string, any>): React.CSSProperties {
     style.height = height;
   }
 
-  const backgroundColor = toRgb(props.BackgroundColor3 as Color3Like | undefined);
+  const backgroundColor = toRgb(props.BackgroundColor3);
   if (backgroundColor) {
     style.backgroundColor = backgroundColor;
   }

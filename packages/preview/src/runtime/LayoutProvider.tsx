@@ -2,15 +2,35 @@ import initLayoutEngine, { compute_layout } from "@lattice-ui/layout-engine";
 import layoutEngineWasmUrl from "@lattice-ui/layout-engine/layout_engine_bg.wasm?url";
 import * as React from "react";
 import type { UDim2Value, Vector2 } from "./helpers";
+import {
+  areViewportsEqual,
+  createViewportSize,
+  createWindowViewport,
+  DEFAULT_VIEWPORT_HEIGHT,
+  DEFAULT_VIEWPORT_WIDTH,
+  isViewportLargeEnough,
+  measureElementViewport,
+  pickViewport,
+  type ViewportSize,
+} from "./viewport";
 
 export type ComputedRect = {
   x: number;
   y: number;
   width: number;
   height: number;
+  debugFallback?: boolean;
 };
 
-type Vector2Like = Vector2 | { X?: number; Y?: number; x?: number; y?: number };
+type UDimLike = { Scale?: number; Offset?: number; scale?: number; offset?: number } | readonly [number, number];
+
+type UDim2Like =
+  | UDim2Value
+  | { X?: UDimLike; Y?: UDimLike; x?: UDimLike; y?: UDimLike }
+  | readonly [number, number, number, number]
+  | readonly [UDimLike, UDimLike];
+
+type Vector2Like = Vector2 | { X?: number; Y?: number; x?: number; y?: number } | readonly [number, number];
 
 type SolverUDim = {
   scale: number;
@@ -28,6 +48,7 @@ type SolverVector2 = {
 };
 
 type SolverNode = {
+  Id: string;
   id: string;
   node_type: string;
   size: SolverUDim2;
@@ -49,8 +70,8 @@ export type RobloxLayoutNodeInput = {
   id: string;
   parentId?: string;
   nodeType: string;
-  size?: UDim2Value;
-  position?: UDim2Value;
+  size?: UDim2Like;
+  position?: UDim2Like;
   anchorPoint?: Vector2Like;
 };
 
@@ -67,13 +88,52 @@ type LayoutContextValue = {
   isReady: boolean;
   registerNode: (node: RegisteredNode) => void;
   unregisterNode: (nodeId: string) => void;
+  viewport: ViewportSize;
 };
 
 const SYNTHETIC_ROOT_ID = "__lattice_preview_root__";
 const DEFAULT_DEBOUNCE_MS = 12;
+const DEBUG_FALLBACK_SIZE = 24;
 
 const LayoutContext = React.createContext<LayoutContextValue | null>(null);
 const ParentNodeContext = React.createContext<string | undefined>(undefined);
+const PREVIEW_NODE_ID_PATTERN = /(?:^|:)(preview-node-\d+)$/;
+
+function scheduleMicrotask(callback: () => void) {
+  if (typeof globalThis.queueMicrotask === "function") {
+    globalThis.queueMicrotask(callback);
+    return;
+  }
+
+  void Promise.resolve().then(callback);
+}
+
+function normalizePreviewNodeId(nodeId: string | undefined): string | undefined {
+  if (!nodeId) {
+    return undefined;
+  }
+
+  const match = PREVIEW_NODE_ID_PATTERN.exec(nodeId);
+  return match?.[1] ?? nodeId;
+}
+
+function createFullSizeUDim2(): SolverUDim2 {
+  return {
+    x: { scale: 1, offset: 0 },
+    y: { scale: 1, offset: 0 },
+  };
+}
+
+function createZeroUDim2(): SolverUDim2 {
+  return {
+    x: { scale: 0, offset: 0 },
+    y: { scale: 0, offset: 0 },
+  };
+}
+
+function createZeroVector(): SolverVector2 {
+  return { x: 0, y: 0 };
+}
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -88,45 +148,92 @@ function toFiniteNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function toSolverUDim(axis: { Scale?: number; Offset?: number } | undefined): SolverUDim {
-  return {
-    scale: toFiniteNumber(axis?.Scale, 0),
-    offset: toFiniteNumber(axis?.Offset, 0),
-  };
+function createDefaultNodeSize(nodeType: string): SolverUDim2 {
+  if (nodeType === "ScreenGui") {
+    return createFullSizeUDim2();
+  }
+
+  return createZeroUDim2();
 }
 
-function toSolverUDim2(value: UDim2Value | undefined, nodeType: string): SolverUDim2 {
-  if (!value) {
-    if (nodeType === "ScreenGui") {
-      return {
-        x: { scale: 1, offset: 0 },
-        y: { scale: 1, offset: 0 },
-      };
-    }
-
+function toSolverUDim(axis: UDimLike | undefined, fallback: SolverUDim = { scale: 0, offset: 0 }): SolverUDim {
+  if (Array.isArray(axis)) {
     return {
-      x: { scale: 0, offset: 0 },
-      y: { scale: 0, offset: 0 },
+      scale: toFiniteNumber(axis[0], fallback.scale),
+      offset: toFiniteNumber(axis[1], fallback.offset),
     };
   }
 
+  const record = axis as { Scale?: number; Offset?: number; scale?: number; offset?: number } | undefined;
   return {
-    x: toSolverUDim(value.X),
-    y: toSolverUDim(value.Y),
+    scale: toFiniteNumber(record?.Scale ?? record?.scale, fallback.scale),
+    offset: toFiniteNumber(record?.Offset ?? record?.offset, fallback.offset),
   };
 }
 
+function toSolverUDim2(value: UDim2Like | undefined, fallback: SolverUDim2): SolverUDim2 {
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length >= 4) {
+      return {
+        x: toSolverUDim([value[0], value[1]], fallback.x),
+        y: toSolverUDim([value[2], value[3]], fallback.y),
+      };
+    }
+
+    const axisPair = value as readonly [UDimLike, UDimLike];
+    return {
+      x: toSolverUDim(axisPair[0], fallback.x),
+      y: toSolverUDim(axisPair[1], fallback.y),
+    };
+  }
+
+  const record = value as { X?: UDimLike; Y?: UDimLike; x?: UDimLike; y?: UDimLike };
+  return {
+    x: toSolverUDim(record.X ?? record.x, fallback.x),
+    y: toSolverUDim(record.Y ?? record.y, fallback.y),
+  };
+}
+
+function toSolverVector2(value: Vector2Like | undefined, fallback: SolverVector2 = createZeroVector()): SolverVector2 {
+  if (Array.isArray(value)) {
+    return {
+      x: toFiniteNumber(value[0], fallback.x),
+      y: toFiniteNumber(value[1], fallback.y),
+    };
+  }
+
+  const record = value as { X?: number; Y?: number; x?: number; y?: number } | undefined;
+  return {
+    x: toFiniteNumber(record?.X ?? record?.x, fallback.x),
+    y: toFiniteNumber(record?.Y ?? record?.y, fallback.y),
+  };
+}
+
+// Rust serde expects snake_case node fields and lowercase axis keys.
+function adaptRobloxNodeInput(input: RobloxLayoutNodeInput, parentId: string | undefined): RegisteredNode {
+  return {
+    id: normalizePreviewNodeId(input.id) ?? input.id,
+    parentId: normalizePreviewNodeId(parentId),
+    nodeType: input.nodeType,
+    size: toSolverUDim2(input.size, createDefaultNodeSize(input.nodeType)),
+    position: toSolverUDim2(input.position, createZeroUDim2()),
+    anchorPoint: toSolverVector2(input.anchorPoint),
+  };
+}
 
 function normalizeLayoutMap(raw: unknown): Record<string, ComputedRect> {
-  let entries: Array<[string, unknown]> = [];
-
-  if (raw instanceof Map) {
-    entries = Array.from(raw.entries()) as Array<[string, unknown]>;
-  } else if (raw && typeof raw === "object") {
-    entries = Object.entries(raw as Record<string, unknown>);
-  } else {
+  if (!(raw instanceof Map) && !(raw && typeof raw === "object")) {
     throw new Error(`Unexpected compute_layout result type: ${typeof raw}`);
   }
+
+  const entries =
+    raw instanceof Map
+      ? (Array.from(raw.entries()) as Array<[string, unknown]>)
+      : Object.entries(raw as Record<string, unknown>);
 
   const next: Record<string, ComputedRect> = {};
   for (const [key, value] of entries) {
@@ -142,7 +249,8 @@ function normalizeLayoutMap(raw: unknown): Record<string, ComputedRect> {
       height: toFiniteNumber(record.height, 0),
     };
 
-    next[key] = rect;
+    const normalizedKey = normalizePreviewNodeId(key) ?? key;
+    next[normalizedKey] = rect;
   }
 
   return next;
@@ -166,6 +274,19 @@ function areNodesEqual(a: RegisteredNode, b: RegisteredNode): boolean {
   );
 }
 
+function normalizeRootScreenGuiNode(node: RegisteredNode): RegisteredNode {
+  if (node.nodeType !== "ScreenGui") {
+    return node;
+  }
+
+  return {
+    ...node,
+    anchorPoint: createZeroVector(),
+    position: createZeroUDim2(),
+    size: createFullSizeUDim2(),
+  };
+}
+
 function buildSemanticTree(nodes: Map<string, RegisteredNode>): SolverNode {
   const byParentId = new Map<string, RegisteredNode[]>();
   const roots: RegisteredNode[] = [];
@@ -185,53 +306,49 @@ function buildSemanticTree(nodes: Map<string, RegisteredNode>): SolverNode {
   }
 
   const stack = new Set<string>();
-  const buildNode = (node: RegisteredNode): SolverNode => {
-    if (stack.has(node.id)) {
+  const buildNode = (node: RegisteredNode, isRoot = false): SolverNode => {
+    const normalizedNode = isRoot ? normalizeRootScreenGuiNode(node) : node;
+
+    if (stack.has(normalizedNode.id)) {
       return {
-        id: node.id,
-        node_type: node.nodeType,
-        size: node.size,
-        position: node.position,
-        anchor_point: node.anchorPoint,
+        Id: normalizedNode.id,
+        id: normalizedNode.id,
+        node_type: normalizedNode.nodeType,
+        size: normalizedNode.size,
+        position: normalizedNode.position,
+        anchor_point: normalizedNode.anchorPoint,
         children: [],
       };
     }
 
-    stack.add(node.id);
-    const children = (byParentId.get(node.id) ?? []).map((child) => buildNode(child));
-    stack.delete(node.id);
+    stack.add(normalizedNode.id);
+    const children = (byParentId.get(normalizedNode.id) ?? []).map((child) => buildNode(child));
+    stack.delete(normalizedNode.id);
 
     return {
-      id: node.id,
-      node_type: node.nodeType,
-      size: node.size,
-      position: node.position,
-      anchor_point: node.anchorPoint,
+      Id: normalizedNode.id,
+      id: normalizedNode.id,
+      node_type: normalizedNode.nodeType,
+      size: normalizedNode.size,
+      position: normalizedNode.position,
+      anchor_point: normalizedNode.anchorPoint,
       children,
     };
   };
 
   return {
+    Id: SYNTHETIC_ROOT_ID,
     id: SYNTHETIC_ROOT_ID,
     node_type: "Frame",
-    size: {
-      x: { scale: 1, offset: 0 },
-      y: { scale: 1, offset: 0 },
-    },
-    position: {
-      x: { scale: 0, offset: 0 },
-      y: { scale: 0, offset: 0 },
-    },
-    anchor_point: { x: 0, y: 0 },
-    children: roots.map((root) => buildNode(root)),
+    size: createFullSizeUDim2(),
+    position: createZeroUDim2(),
+    anchor_point: createZeroVector(),
+    children: roots.map((root) => buildNode(root, true)),
   };
 }
 
 function useWindowViewport() {
-  const [viewport, setViewport] = React.useState(() => ({
-    width: typeof window === "undefined" ? 0 : window.innerWidth,
-    height: typeof window === "undefined" ? 0 : window.innerHeight,
-  }));
+  const [viewport, setViewport] = React.useState<ViewportSize>(() => createWindowViewport());
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -239,10 +356,8 @@ function useWindowViewport() {
     }
 
     const update = () => {
-      setViewport({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      const nextViewport = createWindowViewport();
+      setViewport((previous) => (areViewportsEqual(previous, nextViewport) ? previous : nextViewport));
     };
 
     update();
@@ -256,16 +371,87 @@ function useWindowViewport() {
   return viewport;
 }
 
+function useMeasuredViewport(containerRef: React.RefObject<HTMLDivElement | null>) {
+  const [viewport, setViewport] = React.useState<ViewportSize | null>(null);
+
+  React.useLayoutEffect(() => {
+    const element = containerRef.current;
+    if (!element) {
+      return;
+    }
+
+    const update = () => {
+      const nextViewport = measureElementViewport(element);
+      setViewport((previous) => (areViewportsEqual(previous, nextViewport) ? previous : nextViewport));
+    };
+
+    update();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => {
+        update();
+      });
+      observer.observe(element);
+
+      return () => {
+        observer.disconnect();
+      };
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+    };
+  }, [containerRef]);
+
+  return viewport;
+}
+
 export function LayoutProvider(props: LayoutProviderProps) {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
   const fallbackViewport = useWindowViewport();
-  const viewportWidth = props.viewportWidth ?? fallbackViewport.width;
-  const viewportHeight = props.viewportHeight ?? fallbackViewport.height;
+  const measuredViewport = useMeasuredViewport(containerRef);
+  const explicitViewport = React.useMemo(
+    () => createViewportSize(props.viewportWidth, props.viewportHeight),
+    [props.viewportHeight, props.viewportWidth],
+  );
+  const [lastStableViewport, setLastStableViewport] = React.useState<ViewportSize>(() => fallbackViewport);
+  const resolvedViewport = React.useMemo(
+    () => pickViewport([explicitViewport, measuredViewport, lastStableViewport], fallbackViewport),
+    [explicitViewport, fallbackViewport, lastStableViewport, measuredViewport],
+  );
+  const viewportWidth = resolvedViewport.width;
+  const viewportHeight = resolvedViewport.height;
   const debounceMs = props.debounceMs ?? DEFAULT_DEBOUNCE_MS;
 
   const [isReady, setIsReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [registry, setRegistry] = React.useState<Map<string, RegisteredNode>>(() => new Map());
+  const registryRef = React.useRef(registry);
+  const [settledRegistryVersion, setSettledRegistryVersion] = React.useState(0);
   const [computedRects, setComputedRects] = React.useState<Record<string, ComputedRect>>({});
+  const containerStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      display: "block",
+      height: "100%",
+      minHeight: "500px",
+      position: "relative",
+      width: "100%",
+    }),
+    [],
+  );
+
+  React.useEffect(() => {
+    if (!isViewportLargeEnough(resolvedViewport) || areViewportsEqual(lastStableViewport, resolvedViewport)) {
+      return;
+    }
+
+    setLastStableViewport(resolvedViewport);
+  }, [lastStableViewport, resolvedViewport]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -325,38 +511,68 @@ export function LayoutProvider(props: LayoutProviderProps) {
   }, []);
 
   React.useEffect(() => {
+    registryRef.current = registry;
+  }, [registry]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    // Wait one microtask so sibling registrations can settle before Wasm runs.
+    scheduleMicrotask(() => {
+      if (!cancelled) {
+        setSettledRegistryVersion((previous) => previous + 1);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [registry]);
+
+  React.useEffect(() => {
     if (!isReady) {
       setComputedRects({});
       return;
     }
 
-    if (viewportWidth <= 0 || viewportHeight <= 0) {
+    if (!isViewportLargeEnough(resolvedViewport)) {
       setComputedRects({});
       return;
     }
 
-    const timeoutId = globalThis.setTimeout(() => {
-      try {
-        const tree = buildSemanticTree(registry);
-        const rawResult = compute_layout(tree, viewportWidth, viewportHeight) as unknown;
-        const normalized = normalizeLayoutMap(rawResult);
-        delete normalized[SYNTHETIC_ROOT_ID];
-        setComputedRects(normalized);
-        setError(null);
-      } catch (nextError) {
-        setComputedRects({});
-        setError(`Wasm layout failed: ${toErrorMessage(nextError)}`);
-      }
-    }, Math.max(0, debounceMs));
+    if (registryRef.current.size === 0) {
+      setComputedRects({});
+      setError(null);
+      return;
+    }
+
+    const timeoutId = globalThis.setTimeout(
+      () => {
+        try {
+          const tree = buildSemanticTree(registryRef.current);
+          console.log("Tree to Wasm:", JSON.stringify(tree, null, 2));
+          const rawResult = compute_layout(tree, viewportWidth, viewportHeight) as unknown;
+          const computedLayouts = normalizeLayoutMap(rawResult);
+          delete computedLayouts[SYNTHETIC_ROOT_ID];
+          setComputedRects(computedLayouts);
+          setError(null);
+        } catch (nextError) {
+          setComputedRects({});
+          setError(`Wasm layout failed: ${toErrorMessage(nextError)}`);
+        }
+      },
+      Math.max(0, debounceMs),
+    );
 
     return () => {
       globalThis.clearTimeout(timeoutId);
     };
-  }, [debounceMs, error, isReady, registry, viewportHeight, viewportWidth]);
+  }, [debounceMs, isReady, resolvedViewport, settledRegistryVersion, viewportHeight, viewportWidth]);
 
   const getRect = React.useCallback(
     (nodeId: string) => {
-      return computedRects[nodeId] ?? null;
+      const normalizedNodeId = normalizePreviewNodeId(nodeId) ?? nodeId;
+      return computedRects[normalizedNodeId] ?? null;
     },
     [computedRects],
   );
@@ -368,13 +584,16 @@ export function LayoutProvider(props: LayoutProviderProps) {
       isReady,
       registerNode,
       unregisterNode,
+      viewport: resolvedViewport,
     }),
-    [error, getRect, isReady, registerNode, unregisterNode],
+    [error, getRect, isReady, registerNode, resolvedViewport, unregisterNode],
   );
 
   return (
     <LayoutContext.Provider value={contextValue}>
-      <ParentNodeContext.Provider value={undefined}>{props.children}</ParentNodeContext.Provider>
+      <div data-preview-layout-provider="" ref={containerRef} style={containerStyle}>
+        <ParentNodeContext.Provider value={undefined}>{props.children}</ParentNodeContext.Provider>
+      </div>
     </LayoutContext.Provider>
   );
 }
@@ -394,77 +613,53 @@ export function useLayoutEngineStatus() {
 export function useRobloxLayout(input: RobloxLayoutNodeInput): ComputedRect | null {
   const context = React.useContext(LayoutContext);
   const inheritedParentId = React.useContext(ParentNodeContext);
-
   const parentId = input.parentId ?? inheritedParentId;
+  const normalizedNode = React.useMemo(() => adaptRobloxNodeInput(input, parentId), [input, parentId]);
+  const fallbackViewportWidth = context?.viewport.width ?? DEFAULT_VIEWPORT_WIDTH;
+  const fallbackViewportHeight = context?.viewport.height ?? DEFAULT_VIEWPORT_HEIGHT;
 
-  const sizeXScale = toFiniteNumber(input.size?.X?.Scale, 0);
-  const sizeXOffset = toFiniteNumber(input.size?.X?.Offset, 0);
-  const sizeYScale = toFiniteNumber(input.size?.Y?.Scale, 0);
-  const sizeYOffset = toFiniteNumber(input.size?.Y?.Offset, 0);
+  const fallbackRect = React.useMemo<ComputedRect>(() => {
+    if (input.nodeType === "ScreenGui") {
+      return {
+        debugFallback: true,
+        height: fallbackViewportHeight,
+        width: fallbackViewportWidth,
+        x: 0,
+        y: 0,
+      };
+    }
 
-  const positionXScale = toFiniteNumber(input.position?.X?.Scale, 0);
-  const positionXOffset = toFiniteNumber(input.position?.X?.Offset, 0);
-  const positionYScale = toFiniteNumber(input.position?.Y?.Scale, 0);
-  const positionYOffset = toFiniteNumber(input.position?.Y?.Offset, 0);
+    return {
+      debugFallback: true,
+      height: Math.max(normalizedNode.size.y.offset, DEBUG_FALLBACK_SIZE),
+      width: Math.max(normalizedNode.size.x.offset, DEBUG_FALLBACK_SIZE),
+      x: normalizedNode.position.x.offset,
+      y: normalizedNode.position.y.offset,
+    };
+  }, [
+    fallbackViewportHeight,
+    fallbackViewportWidth,
+    input.nodeType,
+    normalizedNode.position.x.offset,
+    normalizedNode.position.y.offset,
+    normalizedNode.size.x.offset,
+    normalizedNode.size.y.offset,
+  ]);
 
-  const anchorSource = input.anchorPoint as { X?: number; Y?: number; x?: number; y?: number } | undefined;
-  const anchorX = toFiniteNumber(anchorSource?.X ?? anchorSource?.x, 0);
-  const anchorY = toFiniteNumber(anchorSource?.Y ?? anchorSource?.y, 0);
+  const registerNode = context?.registerNode;
+  const unregisterNode = context?.unregisterNode;
+  const computed = context && context.isReady && !context.error ? context.getRect(normalizedNode.id) : null;
 
-  const normalizedNode = React.useMemo<RegisteredNode>(
-    () => ({
-      id: input.id,
-      parentId,
-      nodeType: input.nodeType,
-      size:
-        input.size === undefined
-          ? toSolverUDim2(undefined, input.nodeType)
-          : {
-              x: { scale: sizeXScale, offset: sizeXOffset },
-              y: { scale: sizeYScale, offset: sizeYOffset },
-            },
-      position: {
-        x: { scale: positionXScale, offset: positionXOffset },
-        y: { scale: positionYScale, offset: positionYOffset },
-      },
-      anchorPoint: { x: anchorX, y: anchorY },
-    }),
-    [
-      anchorX,
-      anchorY,
-      input.id,
-      input.nodeType,
-      input.size,
-      parentId,
-      positionXOffset,
-      positionXScale,
-      positionYOffset,
-      positionYScale,
-      sizeXOffset,
-      sizeXScale,
-      sizeYOffset,
-      sizeYScale,
-    ],
-  );
-
-  React.useEffect(() => {
-    if (!context) {
+  React.useLayoutEffect(() => {
+    if (!registerNode || !unregisterNode) {
       return;
     }
 
-    context.registerNode(normalizedNode);
+    registerNode(normalizedNode);
     return () => {
-      context.unregisterNode(normalizedNode.id);
+      unregisterNode(normalizedNode.id);
     };
-  }, [context, normalizedNode]);
+  }, [normalizedNode, registerNode, unregisterNode]);
 
-  if (!context || !context.isReady || context.error) {
-    return null;
-  }
-
-  return context.getRect(normalizedNode.id);
+  return computed ?? fallbackRect;
 }
-
-
-
-
