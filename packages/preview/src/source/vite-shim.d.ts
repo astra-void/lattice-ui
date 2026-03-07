@@ -3,3 +3,8 @@ declare module "@vitejs/plugin-react" {
 
   export default function reactPlugin(options?: unknown): PluginOption[];
 }
+
+declare module "*.wasm?url" {
+  const url: string;
+  export default url;
+}

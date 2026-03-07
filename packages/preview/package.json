@@ -29,11 +29,13 @@
   },
   "dependencies": {
     "@lattice-ui/compiler": "workspace:*",
+    "@lattice-ui/layout-engine": "file:../layout-engine/pkg",
     "@vitejs/plugin-react": "^5.0.4",
-    "layout-engine": "file:../layout-engine/pkg",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.10",

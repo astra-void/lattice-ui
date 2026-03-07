@@ -2,7 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { createPreviewVitePlugin } from "./plugin";
 import type { PreviewSourceTarget } from "./types";
-import type { ReactPluginModule, ViteModule } from "./viteTypes";
+import type {
+  ReactPluginModule,
+  ViteModule,
+  ViteTopLevelAwaitPluginModule,
+  ViteWasmPluginModule,
+} from "./viteTypes";
 
 const DEFAULT_PORT = 4174;
 
@@ -32,6 +37,10 @@ function resolveShellRoot() {
 export async function startPreviewServer(options: StartPreviewServerOptions) {
   const vite = (await import("vite")) as unknown as ViteModule;
   const reactPlugin = ((await import("@vitejs/plugin-react")) as unknown as ReactPluginModule).default;
+  const wasmPlugin = ((await import("vite-plugin-wasm")) as unknown as ViteWasmPluginModule).default;
+  const topLevelAwaitPlugin = ((await import("vite-plugin-top-level-await")) as unknown as ViteTopLevelAwaitPluginModule)
+    .default;
+
   const shellRoot = resolveShellRoot();
   const targets: PreviewSourceTarget[] = [
     {
@@ -41,14 +50,20 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
       sourceRoot: options.sourceRoot,
     },
   ];
+
   const previewPlugin = createPreviewVitePlugin({
     projectName: options.packageName,
     targets,
   });
+
   const server = await vite.createServer({
     appType: "spa",
+    assetsInclude: ["**/*.wasm"],
     configFile: false,
-    plugins: [previewPlugin, reactPlugin()],
+    optimizeDeps: {
+      exclude: ["@lattice-ui/layout-engine", "layout-engine"],
+    },
+    plugins: [previewPlugin, reactPlugin(), wasmPlugin(), topLevelAwaitPlugin()],
     root: shellRoot,
     server: {
       fs: {

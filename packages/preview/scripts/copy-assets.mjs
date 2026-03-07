@@ -27,11 +27,15 @@ if (!fs.existsSync(sourceShellStyles)) {
 fs.mkdirSync(distShellRoot, { recursive: true });
 
 await build({
+  assetNames: "assets/[name]-[hash]",
   bundle: true,
   entryPoints: [path.join(sourceShellRoot, "main.tsx")],
   external: ["react", "react-dom", "react-dom/client", "virtual:lattice-preview-registry"],
   format: "esm",
   jsx: "automatic",
+  loader: {
+    ".wasm": "file",
+  },
   outfile: distShellEntry,
   platform: "browser",
   sourcemap: false,

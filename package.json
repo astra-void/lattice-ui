@@ -100,8 +100,8 @@
       "lodash": "4.17.23"
     },
     "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
+      "@swc/core",
+      "esbuild"
     ]
   },
   "packageManager": "pnpm@10.30.3"

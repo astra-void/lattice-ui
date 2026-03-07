@@ -1,4 +1,5 @@
-import initLayoutEngine, { compute_layout } from "layout-engine";
+import initLayoutEngine, { compute_layout } from "@lattice-ui/layout-engine";
+import layoutEngineWasmUrl from "@lattice-ui/layout-engine/layout_engine_bg.wasm?url";
 import React from "react";
 
 type UDim = {
@@ -32,6 +33,9 @@ type ComputedRect = {
   height: number;
 };
 
+const VIEWPORT_WIDTH = 1920;
+const VIEWPORT_HEIGHT = 1080;
+
 function createMockTree(): RobloxNode {
   return {
     id: "Root",
@@ -47,11 +51,11 @@ function createMockTree(): RobloxNode {
     anchor_point: { x: 0, y: 0 },
     children: [
       {
-        id: "CenterButton",
-        node_type: "TextButton",
+        id: "CenterBox",
+        node_type: "Frame",
         size: {
-          x: { scale: 0, offset: 200 },
-          y: { scale: 0, offset: 50 },
+          x: { scale: 0, offset: 300 },
+          y: { scale: 0, offset: 100 },
         },
         position: {
           x: { scale: 0.5, offset: 0 },
@@ -72,100 +76,182 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
+function isValidWasmMagic(bytes: Uint8Array): boolean {
+  return bytes.length >= 4 && bytes[0] === 0x00 && bytes[1] === 0x61 && bytes[2] === 0x73 && bytes[3] === 0x6d;
+}
+
+function formatHeader(bytes: Uint8Array): string {
+  return Array.from(bytes.slice(0, 4))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join(" ");
+}
+
+function isComputedRect(value: unknown): value is ComputedRect {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.x === "number" &&
+    typeof record.y === "number" &&
+    typeof record.width === "number" &&
+    typeof record.height === "number"
+  );
+}
+
+function normalizeLayoutResult(raw: unknown): Record<string, ComputedRect> {
+  let entries: Array<[string, unknown]> = [];
+
+  if (raw instanceof Map) {
+    entries = Array.from(raw.entries()) as Array<[string, unknown]>;
+  } else if (typeof raw === "object" && raw !== null) {
+    entries = Object.entries(raw as Record<string, unknown>);
+  } else {
+    throw new Error(`Unexpected layout result type: ${typeof raw}`);
+  }
+
+  const normalized: Record<string, ComputedRect> = {};
+  for (const [key, value] of entries) {
+    if (!isComputedRect(value)) {
+      continue;
+    }
+
+    normalized[key] = value;
+  }
+
+  return normalized;
+}
+
 export function WasmTestApp() {
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [layout, setLayout] = React.useState<Record<string, ComputedRect>>({});
+  const [isLoaded, setIsLoaded] = React.useState(false);
+  const [layoutResult, setLayoutResult] = React.useState<Record<string, ComputedRect>>({});
+  const [error, setError] = React.useState("");
 
   React.useEffect(() => {
     let cancelled = false;
-    let detachResize: (() => void) | undefined;
 
-    const boot = async () => {
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      event.preventDefault();
+      setError(`Unhandled rejection: ${toErrorMessage(event.reason)}`);
+      setIsLoaded(false);
+    };
+
+    const initialize = async () => {
       try {
-        await initLayoutEngine();
+        const response = await fetch(layoutEngineWasmUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch Wasm binary (${response.status}) from ${layoutEngineWasmUrl}`);
+        }
+
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        if (!isValidWasmMagic(bytes)) {
+          throw new Error(
+            `Invalid Wasm binary header from ${layoutEngineWasmUrl}. Expected 00 61 73 6d, received ${formatHeader(bytes)}`,
+          );
+        }
+
+        await initLayoutEngine(bytes);
 
         if (cancelled) {
           return;
         }
 
-        const recalculate = () => {
-          const computed = compute_layout(createMockTree(), window.innerWidth, window.innerHeight) as Record<
-            string,
-            ComputedRect
-          >;
-          setLayout(computed);
-        };
+        const rawComputed = compute_layout(createMockTree(), VIEWPORT_WIDTH, VIEWPORT_HEIGHT) as unknown;
+        const computed = normalizeLayoutResult(rawComputed);
 
-        recalculate();
-        window.addEventListener("resize", recalculate);
-        detachResize = () => window.removeEventListener("resize", recalculate);
-        setLoading(false);
+        if (!computed.CenterBox) {
+          throw new Error("Layout result does not include `CenterBox`. Check serialization shape from Wasm bridge.");
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setLayoutResult(computed);
+        setError("");
+        setIsLoaded(true);
       } catch (nextError) {
         if (!cancelled) {
-          setError(toErrorMessage(nextError));
-          setLoading(false);
+          setError(`Wasm engine failed: ${toErrorMessage(nextError)}`);
+          setIsLoaded(false);
         }
       }
     };
 
-    void boot();
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    void initialize();
 
     return () => {
       cancelled = true;
-      detachResize?.();
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
     };
   }, []);
 
-  if (loading) {
+  if (!isLoaded && !error) {
     return (
       <div style={{ display: "grid", height: "100vh", placeItems: "center" }}>
-        <h2>Loading Engine...</h2>
+        <h2>Loading Wasm Engine...</h2>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ display: "grid", gap: 8, height: "100vh", placeContent: "center", textAlign: "center" }}>
-        <h2>Engine Load Failed</h2>
-        <p>{error}</p>
+      <div
+        style={{
+          alignItems: "center",
+          background: "#ffebee",
+          color: "#b71c1c",
+          display: "grid",
+          gap: 12,
+          height: "100vh",
+          justifyItems: "center",
+          padding: 24,
+          textAlign: "center",
+        }}
+      >
+        <h2>Wasm Initialization Error</h2>
+        <pre style={{ margin: 0, maxWidth: 900, whiteSpace: "pre-wrap" }}>{error}</pre>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        background: "linear-gradient(180deg, #eef2f9 0%, #dce4f5 100%)",
-        height: "100vh",
-        overflow: "hidden",
-        position: "relative",
-        width: "100vw",
-      }}
-    >
-      {Object.entries(layout).map(([id, rect]) => (
-        <div
-          key={id}
-          style={{
-            background: id === "CenterButton" ? "rgba(31, 103, 214, 0.2)" : "rgba(255, 255, 255, 0.25)",
-            border: id === "CenterButton" ? "2px solid #1f67d6" : "1px dashed #4a5a78",
-            color: "#1b2538",
-            fontSize: 14,
-            fontWeight: 700,
-            height: `${rect.height}px`,
-            left: `${rect.x}px`,
-            position: "absolute",
-            top: `${rect.y}px`,
-            width: `${rect.width}px`,
-            zIndex: id === "CenterButton" ? 2 : 1,
-          }}
-        >
-          <div style={{ padding: 8 }}>
-            {id} ({Math.round(rect.x)}, {Math.round(rect.y)})
-          </div>
-        </div>
-      ))}
+    <div style={{ alignItems: "center", display: "grid", height: "100vh", justifyItems: "center" }}>
+      <div
+        style={{
+          background: "#bdbdbd",
+          border: "1px solid #888",
+          height: VIEWPORT_HEIGHT,
+          overflow: "hidden",
+          position: "relative",
+          width: VIEWPORT_WIDTH,
+        }}
+      >
+        {Object.entries(layoutResult)
+          .filter(([id]) => id !== "Root")
+          .map(([id, rect]) => (
+            <div
+              key={id}
+              style={{
+                background: "#1976d2",
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 700,
+                height: `${rect.height}px`,
+                left: `${rect.x}px`,
+                lineHeight: `${rect.height}px`,
+                position: "absolute",
+                textAlign: "center",
+                top: `${rect.y}px`,
+                width: `${rect.width}px`,
+              }}
+            >
+              {id} ({Math.round(rect.x)}, {Math.round(rect.y)})
+            </div>
+          ))}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import topLevelAwait from "vite-plugin-top-level-await";
+import wasm from "vite-plugin-wasm";
 import { createPreviewVitePlugin } from "../../packages/preview/src/source/plugin";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,10 +38,12 @@ export default defineConfig({
       targets: [...previewTargets],
     }),
     react(),
+    wasm(),
+    topLevelAwait(),
   ],
   assetsInclude: ["**/*.wasm"],
   optimizeDeps: {
-    exclude: ["layout-engine"],
+    exclude: ["@lattice-ui/layout-engine", "layout-engine"],
   },
   server: {
     fs: {
