@@ -174,7 +174,9 @@ describe("preview shell", () => {
   });
 
   it("shows an empty-project state when there are no eligible preview entries", () => {
-    render(<PreviewApp entries={[]} loadModule={() => Promise.reject(new Error("should not load"))} projectName="Empty" />);
+    render(
+      <PreviewApp entries={[]} loadModule={() => Promise.reject(new Error("should not load"))} projectName="Empty" />,
+    );
 
     expect(screen.getByText("No previewable source files were found.")).toBeTruthy();
   });

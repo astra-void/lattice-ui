@@ -5,6 +5,7 @@
 "@lattice-ui/select": minor
 "@lattice-ui/slider": minor
 "@lattice-ui/layer": minor
+"@lattice-ui/layout-engine": minor
 "@lattice-ui/menu": minor
 "@lattice-ui/tabs": minor
 "@lattice-ui/cli": minor
@@ -12,6 +13,7 @@
 "@lattice-ui/avatar": minor
 "@lattice-ui/checkbox": minor
 "@lattice-ui/core": minor
+"@lattice-ui/compiler": minor
 "@lattice-ui/focus": minor
 "@lattice-ui/popover": minor
 "@lattice-ui/popper": minor

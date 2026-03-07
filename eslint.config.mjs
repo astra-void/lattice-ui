@@ -139,10 +139,7 @@ export default defineConfig([
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: [
-          "./packages/preview/tsconfig.json",
-          "./apps/preview-harness/tsconfig.json",
-        ],
+        project: ["./packages/preview/tsconfig.json", "./apps/preview-harness/tsconfig.json"],
         tsconfigRootDir: __dirname,
       },
     },

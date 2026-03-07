@@ -3,7 +3,16 @@ import path from "node:path";
 import ts from "typescript";
 import type { TransformPreviewSourceOptions, TransformPreviewSourceResult, UnsupportedPatternError } from "./types";
 
-const runtimeHelperNames = ["Color3", "UDim2", "UDim", "Vector2", "typeIs", "pairs", "error", "isPreviewElement"] as const;
+const runtimeHelperNames = [
+  "Color3",
+  "UDim2",
+  "UDim",
+  "Vector2",
+  "typeIs",
+  "pairs",
+  "error",
+  "isPreviewElement",
+] as const;
 const runtimeHostNames = [
   "Frame",
   "TextButton",

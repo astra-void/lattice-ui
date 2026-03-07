@@ -37,6 +37,10 @@ export default defineConfig({
     }),
     react(),
   ],
+  assetsInclude: ["**/*.wasm"],
+  optimizeDeps: {
+    exclude: ["layout-engine"],
+  },
   server: {
     fs: {
       allow: [workspaceRoot, ...previewTargets.flatMap((target) => [target.packageRoot, target.sourceRoot])],

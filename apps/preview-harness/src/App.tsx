@@ -1,5 +1,5 @@
-import { PreviewWorkspaceApp } from "../../../packages/preview/src/shell/PreviewWorkspaceApp";
+import { WasmTestApp } from "../../../packages/preview/src/shell/WasmTestApp";
 
 export function App() {
-  return <PreviewWorkspaceApp />;
+  return <WasmTestApp />;
 }

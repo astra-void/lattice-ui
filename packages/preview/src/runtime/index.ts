@@ -18,9 +18,9 @@ import {
 import { FocusScope } from "./focusScope";
 import { Color3, error, isPreviewElement, pairs, typeIs, UDim, UDim2, Vector2 } from "./helpers";
 import { Portal, PortalProvider, usePortalContext } from "./portal";
-import { Box, Text } from "./stylePrimitives";
 import { Presence } from "./presence";
 import { Slot } from "./slot";
+import { Box, Text } from "./stylePrimitives";
 import { useControllableState } from "./useControllableState";
 
 export { React };

@@ -1,9 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  discoverPreviewProject,
-  discoverPreviewWorkspace,
-} from "../../../packages/preview/src/source/discover";
+import { discoverPreviewProject, discoverPreviewWorkspace } from "../../../packages/preview/src/source/discover";
 
 const fixtureRoot = path.resolve(__dirname, "fixtures/source-preview");
 const fixtureSourceRoot = path.join(fixtureRoot, "src");
