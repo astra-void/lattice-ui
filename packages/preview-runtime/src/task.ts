@@ -33,8 +33,8 @@ export function delay<TArgs extends readonly unknown[]>(
   callback: TaskCallback<TArgs>,
   ...args: TArgs
 ) {
-  return wait(seconds).then((elapsed) => {
-    spawn(callback, ...args);
+  return task.wait(seconds).then((elapsed) => {
+    task.spawn(callback, ...args);
     return elapsed;
   });
 }

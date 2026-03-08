@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
-import { transformPreviewSource } from "../compiler/transformSource";
+import { transformPreviewSource } from "@lattice-ui/compiler";
 import type {
   PreviewProject,
   PreviewRegistryDiagnostic,

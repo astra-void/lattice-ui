@@ -1,4 +1,4 @@
-import type { UnsupportedPatternError } from "../compiler/types";
+import type { UnsupportedPatternError } from "@lattice-ui/compiler";
 
 export type PreviewDefinition<Props = Record<string, unknown>> = {
   title?: string;
@@ -59,3 +59,4 @@ export type PreviewWorkspace = {
   entries: PreviewRegistryItem[];
   targets: PreviewSourceTarget[];
 };
+

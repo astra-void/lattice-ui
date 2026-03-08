@@ -13,8 +13,8 @@ export type FrameSubscriber = (frameState: FrameState) => void;
 class FrameScheduler {
   private readonly subscribers = new Set<FrameSubscriber>();
   private elapsedTime = 0;
-  private frameHandle: number | null = null;
-  private lastFrameTime: number | null = null;
+  private frameHandle: number | undefined = undefined;
+  private lastFrameTime: number | undefined = undefined;
 
   subscribe(subscriber: FrameSubscriber) {
     this.subscribers.add(subscriber);
@@ -25,14 +25,14 @@ class FrameScheduler {
         return;
       }
 
-      if (this.subscribers.size === 0) {
+      if (this.subscribers.size() === 0) {
         this.stop();
       }
     };
   }
 
   private ensureScheduled() {
-    if (this.frameHandle !== null) {
+    if (this.frameHandle !== undefined) {
       return;
     }
 
@@ -50,17 +50,17 @@ class FrameScheduler {
   }
 
   private stop() {
-    if (this.frameHandle !== null && typeof globalThis.cancelAnimationFrame === "function") {
+    if (this.frameHandle !== undefined && typeof globalThis.cancelAnimationFrame === "function") {
       globalThis.cancelAnimationFrame(this.frameHandle);
     }
 
-    this.frameHandle = null;
-    this.lastFrameTime = null;
+    this.frameHandle = undefined;
+    this.lastFrameTime = undefined;
     this.elapsedTime = 0;
   }
 
   private readonly step = (now: number) => {
-    this.frameHandle = null;
+    this.frameHandle = undefined;
 
     const previousFrameTime = this.lastFrameTime ?? now;
     const deltaTime = Math.max(0, (now - previousFrameTime) / 1000);
@@ -80,7 +80,7 @@ class FrameScheduler {
       }
     }
 
-    if (this.subscribers.size === 0) {
+    if (this.subscribers.size() === 0) {
       this.stop();
       return;
     }

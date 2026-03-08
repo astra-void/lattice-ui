@@ -1,3 +1,5 @@
+mod preview_transform;
+
 use napi_derive::napi;
 use swc_core::{
     common::{sync::Lrc, FileName, SourceMap, DUMMY_SP},
@@ -253,6 +255,7 @@ pub fn compile_tsx(code: String) -> napi::Result<String> {
             .map_err(|err| napi::Error::from_reason(format!("Failed to emit JS/TSX: {err:?}")))?;
     }
 
-    String::from_utf8(out)
-        .map_err(|err| napi::Error::from_reason(format!("Generated output was not valid UTF-8: {err}")))
+    String::from_utf8(out).map_err(|err| {
+        napi::Error::from_reason(format!("Generated output was not valid UTF-8: {err}"))
+    })
 }

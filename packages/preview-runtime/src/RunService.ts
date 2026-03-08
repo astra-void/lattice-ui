@@ -61,8 +61,8 @@ class Signal<TArgs extends readonly unknown[]> implements RBXScriptSignal<TArgs>
     }
   }
 
-  public get size() {
-    return this.connections.size;
+  public getsize() {
+    return this.connections.size();
   }
 
   public disconnect(connection: SignalConnection<TArgs>) {
@@ -83,7 +83,7 @@ export interface PreviewRunService {
 }
 
 class PreviewRunServiceImpl implements PreviewRunService {
-  private frameUnsubscribe: (() => void) | null = null;
+  private frameUnsubscribe: (() => void) | undefined = undefined;
 
   private readonly syncFrameLoop = () => {
     const hasListeners =
@@ -92,7 +92,7 @@ class PreviewRunServiceImpl implements PreviewRunService {
     if (!hasListeners) {
       if (this.frameUnsubscribe) {
         this.frameUnsubscribe();
-        this.frameUnsubscribe = null;
+        this.frameUnsubscribe = undefined;
       }
 
       return;

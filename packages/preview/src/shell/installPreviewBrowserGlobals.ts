@@ -148,5 +148,3 @@ export function installPreviewBrowserGlobals() {
     (window as PreviewWindow).Enum = globalRecord.Enum;
   }
 }
-
-

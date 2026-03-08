@@ -1,8 +1,7 @@
 ﻿import fs from "node:fs";
 import path from "node:path";
-import { compile_tsx } from "@lattice-ui/compiler";
+import { compile_tsx, transformPreviewSource } from "@lattice-ui/compiler";
 import ts from "typescript";
-import { transformPreviewSource } from "../compiler/transformSource";
 import {
   createUnresolvedPackageMockResolvePlugin,
   createUnresolvedPackageMockTransformPlugin,

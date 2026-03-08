@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { buildPreviewModules } from "../../../packages/preview/src/compiler/buildPreviewTargets";
+import { buildPreviewModules } from "../../../packages/preview/src/build";
 
 let generationPromise: Promise<string> | undefined;
 

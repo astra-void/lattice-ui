@@ -9,7 +9,9 @@ const DEFAULT_MOCK_IMPORT_BASENAME = "__latticeUnresolvedEnvMock";
 const MODULE_MOCK_IMPORT_BASENAME = "__latticeUnresolvedModuleMock";
 const UNSUPPORTED_RESOLVED_EXTENSIONS = new Set([".lua", ".luau"]);
 function normalizeResolvedId(id: string) {
-  return stripQuery(id).split("#", 1)[0]!.replace(/^\/\@id\/__x00__/, "\0");
+  return stripQuery(id)
+    .split("#", 1)[0]!
+    .replace(/^\/\@id\/__x00__/, "\0");
 }
 
 function isMockResolvedId(id: string) {
