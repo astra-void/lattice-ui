@@ -1,7 +1,7 @@
 ﻿// @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Enum, RunService, installPreviewRuntimeGlobals, task } from "@lattice-ui/preview-runtime";
+import { Enum, RunService, setupRobloxEnvironment, task } from "@lattice-ui/preview-runtime";
 
 class RafController {
   private readonly callbacks = new Map<number, FrameRequestCallback>();
@@ -163,13 +163,13 @@ describe.sequential("@lattice-ui/preview-runtime", () => {
     expect(errorSpy).toHaveBeenCalledOnce();
   });
 
-  it("installs globals without overwriting an existing target", () => {
+  it("setupRobloxEnvironment installs globals without overwriting an existing target", () => {
     const existingTask = {} as typeof task;
     const target = {
       task: existingTask,
     };
 
-    installPreviewRuntimeGlobals(target);
+    setupRobloxEnvironment(target);
 
     expect(target.Enum).toBe(Enum);
     expect(target.RunService).toBe(RunService);

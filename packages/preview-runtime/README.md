@@ -7,15 +7,16 @@ High-precision browser polyfills for the Roblox runtime APIs that Lattice UI pre
 - `task`
 - `RunService`
 - `Enum`
+- `setupRobloxEnvironment`
 
 `TweenService` is intentionally out of scope for this package.
 
 ## Usage
 
 ```ts
-import { installPreviewRuntimeGlobals } from "@lattice-ui/preview-runtime";
+import { setupRobloxEnvironment } from "@lattice-ui/preview-runtime";
 
-installPreviewRuntimeGlobals();
+setupRobloxEnvironment();
 ```
 
 You can also import the pieces directly:
@@ -57,4 +58,4 @@ export const Flamework = {};
 export const Modding = {};
 ```
 
-If your previewed code uses Roblox globals directly, call `installPreviewRuntimeGlobals()` once in the preview app entrypoint before rendering.
+If your previewed code uses Roblox globals directly, call `setupRobloxEnvironment()` once in the preview app entrypoint before rendering.
