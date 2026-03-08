@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { Color3Value, UDim2Value, Vector2 } from "./helpers";
 import { toCssColor } from "./helpers";
-import { LayoutNodeParentProvider, type ComputedRect, useRobloxLayout } from "./LayoutProvider";
+import { LayoutNodeParentProvider, type ComputedRect, useLayoutDebugState, useRobloxLayout } from "./LayoutProvider";
 
 export type PreviewEventTable = {
   Activated?: (event: Event) => void;
@@ -49,7 +49,15 @@ type HostName =
   | "uipadding"
   | "uilistlayout"
   | "uigridlayout"
-  | "uistroke";
+  | "uistroke"
+  | "uiscale"
+  | "uigradient"
+  | "uipagelayout"
+  | "uitablelayout"
+  | "uisizeconstraint"
+  | "uitextsizeconstraint"
+  | "uiaspectratioconstraint"
+  | "uiflexitem";
 
 type LayoutHostName = "frame" | "textbutton" | "screengui" | "textlabel" | "textbox" | "imagelabel" | "scrollingframe";
 
@@ -357,6 +365,40 @@ function resolveNodeId(_host: HostName, generatedId: string, layoutInput: Layout
   return normalizePreviewNodeId(layoutInput.id) ?? generatedId;
 }
 
+type LayoutDebugState = ReturnType<typeof useLayoutDebugState>;
+
+function toDebugAttributeValue(
+  value: React.CSSProperties[keyof React.CSSProperties] | number | string | undefined | null,
+) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  return String(value);
+}
+
+function withLayoutDiagnostics(
+  domProps: React.HTMLAttributes<HTMLElement>,
+  computed: ComputedRect | null,
+  diagnostics: LayoutDebugState,
+) {
+  const style = domProps.style as React.CSSProperties | undefined;
+
+  return {
+    ...domProps,
+    "data-layout-computed-height": computed?.height ?? undefined,
+    "data-layout-computed-width": computed?.width ?? undefined,
+    "data-layout-context": diagnostics.hasContext ? "true" : "false",
+    "data-layout-parent-height": diagnostics.inheritedParentRect?.height ?? undefined,
+    "data-layout-parent-width": diagnostics.inheritedParentRect?.width ?? undefined,
+    "data-layout-style-height": toDebugAttributeValue(style?.height),
+    "data-layout-style-width": toDebugAttributeValue(style?.width),
+    "data-layout-viewport-height": diagnostics.viewport?.height ?? undefined,
+    "data-layout-viewport-ready": diagnostics.viewportReady ? "true" : "false",
+    "data-layout-viewport-width": diagnostics.viewport?.width ?? undefined,
+  };
+}
+
 function useHostLayout(host: LayoutHostName, props: PreviewDomProps) {
   const generatedId = useGeneratedPreviewNodeId();
   const layoutInput = React.useMemo(() => getLayoutInput(host, props), [host, props]);
@@ -380,9 +422,11 @@ function useHostLayout(host: LayoutHostName, props: PreviewDomProps) {
   );
 
   const computed = useRobloxLayout(nodeData);
+  const diagnostics = useLayoutDebugState();
 
   return {
     computed,
+    diagnostics,
     nodeId,
   };
 }
@@ -597,7 +641,7 @@ function createDecoratorHost(displayName: string, host: HostName) {
 }
 
 export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, nodeId } = useHostLayout("frame", props);
+  const { computed, diagnostics, nodeId } = useHostLayout("frame", props);
   const resolved = resolvePreviewDomProps(props, {
     computed,
     host: "frame",
@@ -605,7 +649,10 @@ export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forw
   });
 
   return (
-    <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
+    <div
+      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      ref={forwardedRef as React.Ref<HTMLDivElement>}
+    >
       {resolved.text ? <span className="preview-host-text">{resolved.text}</span> : undefined}
       {withNodeParent(nodeId, computed, resolved.children)}
     </div>
@@ -614,7 +661,7 @@ export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forw
 Frame.displayName = "PreviewFrame";
 
 export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, nodeId } = useHostLayout("textbutton", props);
+  const { computed, diagnostics, nodeId } = useHostLayout("textbutton", props);
   const resolved = resolvePreviewDomProps(props, {
     computed,
     host: "textbutton",
@@ -623,7 +670,7 @@ export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props,
 
   return (
     <button
-      {...resolved.domProps}
+      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
       disabled={resolved.disabled}
       ref={forwardedRef as React.Ref<HTMLButtonElement>}
       type="button"
@@ -636,7 +683,7 @@ export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props,
 TextButton.displayName = "PreviewTextButton";
 
 export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, nodeId } = useHostLayout("screengui", props);
+  const { computed, diagnostics, nodeId } = useHostLayout("screengui", props);
   const resolved = resolvePreviewDomProps(props, {
     computed,
     host: "screengui",
@@ -644,7 +691,10 @@ export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
   });
 
   return (
-    <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
+    <div
+      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      ref={forwardedRef as React.Ref<HTMLDivElement>}
+    >
       {withNodeParent(nodeId, computed, resolved.children)}
     </div>
   );
@@ -652,7 +702,7 @@ export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
 ScreenGui.displayName = "PreviewScreenGui";
 
 export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, nodeId } = useHostLayout("textlabel", props);
+  const { computed, diagnostics, nodeId } = useHostLayout("textlabel", props);
   const resolved = resolvePreviewDomProps(props, {
     computed,
     host: "textlabel",
@@ -660,7 +710,10 @@ export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
   });
 
   return (
-    <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
+    <div
+      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      ref={forwardedRef as React.Ref<HTMLDivElement>}
+    >
       {resolved.text}
       {withNodeParent(nodeId, computed, resolved.children)}
     </div>
@@ -669,7 +722,7 @@ export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
 TextLabel.displayName = "PreviewTextLabel";
 
 export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, nodeId } = useHostLayout("textbox", props);
+  const { computed, diagnostics, nodeId } = useHostLayout("textbox", props);
   const resolved = resolvePreviewDomProps(props, {
     computed,
     host: "textbox",
@@ -678,7 +731,7 @@ export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, fo
 
   return (
     <input
-      {...resolved.domProps}
+      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
       defaultValue={resolved.text}
       disabled={resolved.disabled}
       ref={forwardedRef as React.Ref<HTMLInputElement>}
@@ -689,7 +742,7 @@ export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, fo
 TextBox.displayName = "PreviewTextBox";
 
 export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, nodeId } = useHostLayout("imagelabel", props);
+  const { computed, diagnostics, nodeId } = useHostLayout("imagelabel", props);
   const resolved = resolvePreviewDomProps(props, {
     computed,
     host: "imagelabel",
@@ -698,7 +751,7 @@ export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props,
 
   return (
     <img
-      {...resolved.domProps}
+      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
       alt=""
       ref={forwardedRef as React.Ref<HTMLImageElement>}
       src={typeof resolved.image === "string" ? resolved.image : undefined}
@@ -708,7 +761,7 @@ export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props,
 ImageLabel.displayName = "PreviewImageLabel";
 
 export const ScrollingFrame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, nodeId } = useHostLayout("scrollingframe", props);
+  const { computed, diagnostics, nodeId } = useHostLayout("scrollingframe", props);
   const resolved = resolvePreviewDomProps(props, {
     computed,
     host: "scrollingframe",
@@ -716,7 +769,10 @@ export const ScrollingFrame = React.forwardRef<HTMLElement, PreviewDomProps>((pr
   });
 
   return (
-    <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
+    <div
+      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      ref={forwardedRef as React.Ref<HTMLDivElement>}
+    >
       {withNodeParent(nodeId, computed, resolved.children)}
     </div>
   );
@@ -728,3 +784,11 @@ export const UIPadding = createDecoratorHost("PreviewUIPadding", "uipadding");
 export const UIListLayout = createDecoratorHost("PreviewUIListLayout", "uilistlayout");
 export const UIGridLayout = createDecoratorHost("PreviewUIGridLayout", "uigridlayout");
 export const UIStroke = createDecoratorHost("PreviewUIStroke", "uistroke");
+export const UIScale = createDecoratorHost("PreviewUIScale", "uiscale");
+export const UIGradient = createDecoratorHost("PreviewUIGradient", "uigradient");
+export const UIPageLayout = createDecoratorHost("PreviewUIPageLayout", "uipagelayout");
+export const UITableLayout = createDecoratorHost("PreviewUITableLayout", "uitablelayout");
+export const UISizeConstraint = createDecoratorHost("PreviewUISizeConstraint", "uisizeconstraint");
+export const UITextSizeConstraint = createDecoratorHost("PreviewUITextSizeConstraint", "uitextsizeconstraint");
+export const UIAspectRatioConstraint = createDecoratorHost("PreviewUIAspectRatioConstraint", "uiaspectratioconstraint");
+export const UIFlexItem = createDecoratorHost("PreviewUIFlexItem", "uiflexitem");

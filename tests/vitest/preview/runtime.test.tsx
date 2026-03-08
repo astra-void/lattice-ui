@@ -9,6 +9,7 @@ import {
   UDim2,
   UIListLayout,
   UIPadding,
+  UIScale,
 } from "@lattice-ui/preview/runtime";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -128,13 +129,16 @@ describe("preview runtime host mapping", () => {
       <Frame>
         <UIListLayout FillDirection="vertical" SortOrder="layout-order" />
         <UIPadding PaddingLeft="10px" />
+        <UIScale Scale={1.25} />
         <TextLabel Text="Hello preview" TextXAlignment="left" />
       </Frame>,
     );
 
     expect(screen.getByText("Hello preview")).toBeTruthy();
     expect(document.querySelector('[data-preview-host="uilistlayout"]')).toBeTruthy();
+    expect(document.querySelector('[data-preview-host="uiscale"]')).toBeTruthy();
     expect(document.querySelector("[filldirection]")).toBeNull();
+    expect(document.querySelector("[scale]")).toBeNull();
   });
 
   it("renders a viewport-filling layout provider container", () => {

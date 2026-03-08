@@ -3,7 +3,9 @@ import path from "node:path";
 import ts from "typescript";
 import type { TransformPreviewSourceOptions, TransformPreviewSourceResult, UnsupportedPatternError } from "./types";
 
+const previewGlobalHelperName = "__previewGlobal";
 const runtimeHelperNames = [
+  previewGlobalHelperName,
   "Color3",
   "UDim2",
   "UDim",
@@ -26,6 +28,14 @@ const runtimeHostNames = [
   "UIListLayout",
   "UIGridLayout",
   "UIStroke",
+  "UIScale",
+  "UIGradient",
+  "UIPageLayout",
+  "UITableLayout",
+  "UISizeConstraint",
+  "UITextSizeConstraint",
+  "UIAspectRatioConstraint",
+  "UIFlexItem",
 ] as const;
 const supportedHostMap = {
   frame: "Frame",
@@ -40,6 +50,14 @@ const supportedHostMap = {
   uilistlayout: "UIListLayout",
   uigridlayout: "UIGridLayout",
   uistroke: "UIStroke",
+  uiscale: "UIScale",
+  uigradient: "UIGradient",
+  uipagelayout: "UIPageLayout",
+  uitablelayout: "UITableLayout",
+  uisizeconstraint: "UISizeConstraint",
+  uitextsizeconstraint: "UITextSizeConstraint",
+  uiaspectratioconstraint: "UIAspectRatioConstraint",
+  uiflexitem: "UIFlexItem",
 } as const;
 const supportedTypeNames = new Set([
   "GuiObject",
@@ -63,6 +81,9 @@ const supportedIsATypeNames = new Set([
   "ImageLabel",
   "ScrollingFrame",
 ]);
+const runtimeBindingNames = new Set<string>([previewGlobalHelperName, ...runtimeHelperNames, ...runtimeHostNames]);
+const neverRewriteIdentifierNames = new Set([previewGlobalHelperName, "arguments", "require"]);
+
 const supportedEnumValues = new Map<string, string>([
   ["Enum.TextXAlignment.Left", "left"],
   ["Enum.TextXAlignment.Center", "center"],
@@ -274,6 +295,366 @@ function resolveRelativeModuleSpecifier(filePath: string, moduleSpecifier: strin
   return relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
 }
 
+function createPreviewGlobalAccessExpression(name: string) {
+  return ts.factory.createCallExpression(ts.factory.createIdentifier(previewGlobalHelperName), undefined, [
+    ts.factory.createStringLiteral(name),
+  ]);
+}
+
+function addBindingNames(bindings: Set<string>, name: ts.BindingName) {
+  if (ts.isIdentifier(name)) {
+    bindings.add(name.text);
+    return;
+  }
+
+  for (const element of name.elements) {
+    if (ts.isOmittedExpression(element)) {
+      continue;
+    }
+
+    addBindingNames(bindings, element.name);
+  }
+}
+
+function addImportBindings(bindings: Set<string>, importClause: ts.ImportClause) {
+  if (importClause.name) {
+    bindings.add(importClause.name.text);
+  }
+
+  const namedBindings = importClause.namedBindings;
+  if (!namedBindings) {
+    return;
+  }
+
+  if (ts.isNamespaceImport(namedBindings)) {
+    bindings.add(namedBindings.name.text);
+    return;
+  }
+
+  for (const element of namedBindings.elements) {
+    bindings.add(element.name.text);
+  }
+}
+
+function addStatementBindings(bindings: Set<string>, statement: ts.Statement) {
+  if (ts.isVariableStatement(statement)) {
+    for (const declaration of statement.declarationList.declarations) {
+      addBindingNames(bindings, declaration.name);
+    }
+    return;
+  }
+
+  if (ts.isFunctionDeclaration(statement) && statement.name) {
+    bindings.add(statement.name.text);
+    return;
+  }
+
+  if (ts.isClassDeclaration(statement) && statement.name) {
+    bindings.add(statement.name.text);
+    return;
+  }
+
+  if (ts.isEnumDeclaration(statement)) {
+    bindings.add(statement.name.text);
+    return;
+  }
+
+  if (ts.isImportDeclaration(statement) && statement.importClause) {
+    addImportBindings(bindings, statement.importClause);
+    return;
+  }
+
+  if (ts.isImportEqualsDeclaration(statement)) {
+    bindings.add(statement.name.text);
+    return;
+  }
+
+  if (ts.isForStatement(statement) && statement.initializer && ts.isVariableDeclarationList(statement.initializer)) {
+    for (const declaration of statement.initializer.declarations) {
+      addBindingNames(bindings, declaration.name);
+    }
+    return;
+  }
+
+  if (ts.isForInStatement(statement) && ts.isVariableDeclarationList(statement.initializer)) {
+    for (const declaration of statement.initializer.declarations) {
+      addBindingNames(bindings, declaration.name);
+    }
+    return;
+  }
+
+  if (ts.isForOfStatement(statement) && ts.isVariableDeclarationList(statement.initializer)) {
+    for (const declaration of statement.initializer.declarations) {
+      addBindingNames(bindings, declaration.name);
+    }
+  }
+}
+
+function createsLexicalScope(node: ts.Node) {
+  return (
+    ts.isSourceFile(node) ||
+    ts.isBlock(node) ||
+    ts.isModuleBlock(node) ||
+    ts.isCaseClause(node) ||
+    ts.isDefaultClause(node) ||
+    ts.isCatchClause(node) ||
+    ts.isForStatement(node) ||
+    ts.isForInStatement(node) ||
+    ts.isForOfStatement(node) ||
+    ts.isFunctionLike(node)
+  );
+}
+
+function collectScopeBindings(node: ts.Node) {
+  const bindings = new Set<string>();
+
+  if (ts.isSourceFile(node) || ts.isBlock(node) || ts.isModuleBlock(node)) {
+    for (const statement of node.statements) {
+      addStatementBindings(bindings, statement);
+    }
+    return bindings;
+  }
+
+  if (ts.isCaseClause(node) || ts.isDefaultClause(node)) {
+    for (const statement of node.statements) {
+      addStatementBindings(bindings, statement);
+    }
+    return bindings;
+  }
+
+  if (ts.isCatchClause(node)) {
+    if (node.variableDeclaration) {
+      addBindingNames(bindings, node.variableDeclaration.name);
+    }
+    return bindings;
+  }
+
+  if (ts.isForStatement(node) && node.initializer && ts.isVariableDeclarationList(node.initializer)) {
+    for (const declaration of node.initializer.declarations) {
+      addBindingNames(bindings, declaration.name);
+    }
+    return bindings;
+  }
+
+  if (ts.isForInStatement(node) && ts.isVariableDeclarationList(node.initializer)) {
+    for (const declaration of node.initializer.declarations) {
+      addBindingNames(bindings, declaration.name);
+    }
+    return bindings;
+  }
+
+  if (ts.isForOfStatement(node) && ts.isVariableDeclarationList(node.initializer)) {
+    for (const declaration of node.initializer.declarations) {
+      addBindingNames(bindings, declaration.name);
+    }
+    return bindings;
+  }
+
+  if (ts.isFunctionLike(node)) {
+    if ((ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) && node.name) {
+      bindings.add(node.name.text);
+    }
+
+    for (const parameter of node.parameters) {
+      addBindingNames(bindings, parameter.name);
+    }
+  }
+
+  return bindings;
+}
+
+function hasBinding(scopeStack: ReadonlyArray<ReadonlySet<string>>, name: string) {
+  for (let index = scopeStack.length - 1; index >= 0; index -= 1) {
+    if (scopeStack[index]?.has(name)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isIdentifierWriteTarget(node: ts.Identifier) {
+  const parent = node.parent;
+  if (!parent) {
+    return false;
+  }
+
+  if (
+    ts.isBinaryExpression(parent) &&
+    parent.left === node &&
+    parent.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+    parent.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+  ) {
+    return true;
+  }
+
+  if (
+    (ts.isPrefixUnaryExpression(parent) || ts.isPostfixUnaryExpression(parent)) &&
+    parent.operand === node &&
+    (parent.operator === ts.SyntaxKind.PlusPlusToken || parent.operator === ts.SyntaxKind.MinusMinusToken)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function isTypeOnlyIdentifier(node: ts.Identifier) {
+  const parent = node.parent;
+  if (!parent) {
+    return false;
+  }
+
+  if (ts.isTypeNode(parent) && !ts.isExpressionWithTypeArguments(parent)) {
+    return true;
+  }
+
+  if (ts.isQualifiedName(parent) || ts.isImportTypeNode(parent) || ts.isTypeQueryNode(parent)) {
+    return true;
+  }
+
+  if (
+    ts.isExpressionWithTypeArguments(parent) &&
+    ts.isHeritageClause(parent.parent) &&
+    parent.parent.token === ts.SyntaxKind.ImplementsKeyword
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function shouldRewriteIdentifier(node: ts.Identifier, scopeStack: ReadonlyArray<ReadonlySet<string>>) {
+  if (neverRewriteIdentifierNames.has(node.text) || hasBinding(scopeStack, node.text)) {
+    return false;
+  }
+
+  if (isTypeOnlyIdentifier(node) || isIdentifierWriteTarget(node)) {
+    return false;
+  }
+
+  const parent = node.parent;
+  if (!parent) {
+    return false;
+  }
+
+  if (ts.isPropertyAccessExpression(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isPropertyAssignment(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isShorthandPropertyAssignment(parent)) {
+    return false;
+  }
+
+  if (ts.isImportClause(parent) || ts.isImportSpecifier(parent) || ts.isNamespaceImport(parent)) {
+    return false;
+  }
+
+  if (ts.isNamespaceExport(parent) || ts.isImportEqualsDeclaration(parent) || ts.isExportSpecifier(parent)) {
+    return false;
+  }
+
+  if (ts.isVariableDeclaration(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isParameter(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isBindingElement(parent) && (parent.name === node || parent.propertyName === node)) {
+    return false;
+  }
+
+  if (
+    (ts.isFunctionDeclaration(parent) ||
+      ts.isFunctionExpression(parent) ||
+      ts.isClassDeclaration(parent) ||
+      ts.isClassExpression(parent)) &&
+    parent.name === node
+  ) {
+    return false;
+  }
+
+  if ((ts.isInterfaceDeclaration(parent) || ts.isTypeAliasDeclaration(parent) || ts.isEnumDeclaration(parent)) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isEnumMember(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isModuleDeclaration(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isTypeParameterDeclaration(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isLabeledStatement(parent) && parent.label === node) {
+    return false;
+  }
+
+  if (ts.isBreakStatement(parent) && parent.label === node) {
+    return false;
+  }
+
+  if (ts.isContinueStatement(parent) && parent.label === node) {
+    return false;
+  }
+
+  if (ts.isPropertyDeclaration(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isPropertySignature(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isMethodDeclaration(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isMethodSignature(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isGetAccessorDeclaration(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isSetAccessorDeclaration(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isJsxOpeningElement(parent) && parent.tagName === node) {
+    return false;
+  }
+
+  if (ts.isJsxClosingElement(parent) && parent.tagName === node) {
+    return false;
+  }
+
+  if (ts.isJsxSelfClosingElement(parent) && parent.tagName === node) {
+    return false;
+  }
+
+  if (ts.isJsxAttribute(parent) && parent.name === node) {
+    return false;
+  }
+
+  if (ts.isMetaProperty(parent)) {
+    return false;
+  }
+
+  return true;
+}
+
 export function transformPreviewSource(
   sourceText: string,
   options: TransformPreviewSourceOptions,
@@ -283,23 +664,15 @@ export function transformPreviewSource(
   const errors: UnsupportedPatternError[] = [];
 
   const transformer: ts.TransformerFactory<ts.SourceFile> = (context) => {
-    const visit: ts.Visitor = (node) => {
-      if (ts.isIdentifier(node) && node.text === "game") {
-        const parent = node.parent;
-        const isPropertyName = ts.isPropertyAccessExpression(parent) && parent.name === node;
-        const isImport = ts.isImportSpecifier(parent) || ts.isImportClause(parent);
-        if (!isPropertyName && !isImport) {
-          errors.push(
-            createUnsupportedError(
-              sourceFile,
-              options,
-              node,
-              "UNSUPPORTED_GLOBAL",
-              "The Roblox `game` global is not supported by preview generation.",
-              "game",
-            ),
-          );
-        }
+    const visitNode = (node: ts.Node, scopeStack: ReadonlyArray<ReadonlySet<string>>): ts.Node => {
+      const nextScopeStack = createsLexicalScope(node) ? [...scopeStack, collectScopeBindings(node)] : scopeStack;
+      const visitChild: ts.Visitor = (child) => visitNode(child, nextScopeStack);
+
+      if (ts.isShorthandPropertyAssignment(node) && shouldRewriteIdentifier(node.name, nextScopeStack)) {
+        return ts.factory.createPropertyAssignment(
+          ts.factory.createIdentifier(node.name.text),
+          createPreviewGlobalAccessExpression(node.name.text),
+        );
       }
 
       if (ts.isPropertyAccessExpression(node) && node.getText(sourceFile).startsWith("Enum.")) {
@@ -308,24 +681,7 @@ export function transformPreviewSource(
           return resolvedEnum;
         }
 
-        const isNestedEnum =
-          ts.isPropertyAccessExpression(node.parent) &&
-          node.parent.expression === node &&
-          node.parent.getText(sourceFile).startsWith("Enum.");
-        if (isNestedEnum) {
-          return ts.visitEachChild(node, visit, context);
-        }
-
-        errors.push(
-          createUnsupportedError(
-            sourceFile,
-            options,
-            node,
-            "UNSUPPORTED_ENUM",
-            "Roblox `Enum` access is not supported by preview generation.",
-            node.getText(sourceFile),
-          ),
-        );
+        return ts.visitEachChild(node, visitChild, context);
       }
 
       if (
@@ -336,7 +692,7 @@ export function transformPreviewSource(
         const [argument] = node.arguments;
         if (argument && ts.isStringLiteral(argument) && supportedIsATypeNames.has(argument.text)) {
           return ts.factory.createCallExpression(ts.factory.createIdentifier("isPreviewElement"), undefined, [
-            ts.visitNode(node.expression.expression, visit) as ts.Expression,
+            ts.visitNode(node.expression.expression, visitChild) as ts.Expression,
             ts.factory.createStringLiteral(argument.text),
           ]);
         }
@@ -364,7 +720,7 @@ export function transformPreviewSource(
           node,
           node.expression,
           ts.factory.createNodeArray(
-            node.typeArguments.map((typeArgument) => ts.visitNode(typeArgument, visit) as ts.TypeNode),
+            node.typeArguments.map((typeArgument) => ts.visitNode(typeArgument, visitChild) as ts.TypeNode),
           ),
           [ts.factory.createNull()],
         );
@@ -423,7 +779,7 @@ export function transformPreviewSource(
       }
 
       if (ts.isTypeReferenceNode(node)) {
-        return rewriteTypeReference(node, visit);
+        return rewriteTypeReference(node, visitChild);
       }
 
       if (ts.isJsxSelfClosingElement(node)) {
@@ -437,7 +793,7 @@ export function transformPreviewSource(
                 options,
                 node.tagName,
                 "UNSUPPORTED_HOST_ELEMENT",
-                `Host element \`${hostName}\` is not supported by preview generation.`,
+                `Host element ${hostName} is not supported by preview generation.`,
                 hostName,
               ),
             );
@@ -446,7 +802,7 @@ export function transformPreviewSource(
               node,
               ts.factory.createIdentifier(mapped),
               node.typeArguments,
-              ts.visitNode(node.attributes, visit) as ts.JsxAttributes,
+              ts.visitNode(node.attributes, visitChild) as ts.JsxAttributes,
             );
           }
         }
@@ -463,7 +819,7 @@ export function transformPreviewSource(
                 options,
                 node.tagName,
                 "UNSUPPORTED_HOST_ELEMENT",
-                `Host element \`${hostName}\` is not supported by preview generation.`,
+                `Host element ${hostName} is not supported by preview generation.`,
                 hostName,
               ),
             );
@@ -472,7 +828,7 @@ export function transformPreviewSource(
               node,
               ts.factory.createIdentifier(mapped),
               node.typeArguments,
-              ts.visitNode(node.attributes, visit) as ts.JsxAttributes,
+              ts.visitNode(node.attributes, visitChild) as ts.JsxAttributes,
             );
           }
         }
@@ -481,7 +837,7 @@ export function transformPreviewSource(
       if (ts.isJsxClosingElement(node)) {
         const hostName = getLowerCaseJsxText(node.tagName);
         if (!hostName) {
-          return ts.visitEachChild(node, visit, context);
+          return ts.visitEachChild(node, visitChild, context);
         }
 
         const mapped = supportedHostMap[hostName as keyof typeof supportedHostMap];
@@ -492,7 +848,7 @@ export function transformPreviewSource(
               options,
               node.tagName,
               "UNSUPPORTED_HOST_ELEMENT",
-              `Host element \`${hostName}\` is not supported by preview generation.`,
+              `Host element ${hostName} is not supported by preview generation.`,
               hostName,
             ),
           );
@@ -501,10 +857,14 @@ export function transformPreviewSource(
         }
       }
 
-      return ts.visitEachChild(node, visit, context);
+      if (ts.isIdentifier(node) && shouldRewriteIdentifier(node, nextScopeStack)) {
+        return createPreviewGlobalAccessExpression(node.text);
+      }
+
+      return ts.visitEachChild(node, visitChild, context);
     };
 
-    return (node) => ts.visitNode(node, visit) as ts.SourceFile;
+    return (node) => visitNode(node, [runtimeBindingNames]) as ts.SourceFile;
   };
 
   const transformed = ts.transform(sourceFile, [transformer]).transformed[0];
@@ -521,3 +881,5 @@ export function transformPreviewSource(
     errors,
   };
 }
+
+

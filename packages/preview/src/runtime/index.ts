@@ -9,14 +9,22 @@ import {
   TextBox,
   TextButton,
   TextLabel,
+  UIAspectRatioConstraint,
   UICorner,
+  UIFlexItem,
+  UIGradient,
   UIGridLayout,
   UIListLayout,
   UIPadding,
+  UIPageLayout,
+  UIScale,
+  UISizeConstraint,
   UIStroke,
+  UITableLayout,
+  UITextSizeConstraint,
 } from "./domHost";
 import { FocusScope } from "./focusScope";
-import { Color3, error, isPreviewElement, pairs, typeIs, UDim, UDim2, Vector2 } from "./helpers";
+import { __previewGlobal, Color3, error, isPreviewElement, pairs, typeIs, UDim, UDim2, Vector2 } from "./helpers";
 import { LayoutProvider, useLayoutEngineStatus, useRobloxLayout } from "./LayoutProvider";
 import { Portal, PortalProvider, usePortalContext } from "./portal";
 import { Presence } from "./presence";
@@ -41,8 +49,16 @@ export {
   UIListLayout,
   UIGridLayout,
   UIStroke,
+  UIScale,
+  UIGradient,
+  UIPageLayout,
+  UITableLayout,
+  UISizeConstraint,
+  UITextSizeConstraint,
+  UIAspectRatioConstraint,
+  UIFlexItem,
 };
-export { Color3, UDim, UDim2, Vector2, typeIs, pairs, error, isPreviewElement };
+export { __previewGlobal, Color3, UDim, UDim2, Vector2, typeIs, pairs, error, isPreviewElement };
 export { __rbxStyle } from "./style";
 export { Box, Text };
 export type { LayerInteractEvent };
@@ -61,8 +77,17 @@ export type PreviewRuntime = {
     UIListLayout: typeof UIListLayout;
     UIGridLayout: typeof UIGridLayout;
     UIStroke: typeof UIStroke;
+    UIScale: typeof UIScale;
+    UIGradient: typeof UIGradient;
+    UIPageLayout: typeof UIPageLayout;
+    UITableLayout: typeof UITableLayout;
+    UISizeConstraint: typeof UISizeConstraint;
+    UITextSizeConstraint: typeof UITextSizeConstraint;
+    UIAspectRatioConstraint: typeof UIAspectRatioConstraint;
+    UIFlexItem: typeof UIFlexItem;
   };
   helpers: {
+    __previewGlobal: typeof __previewGlobal;
     Color3: typeof Color3;
     UDim: typeof UDim;
     UDim2: typeof UDim2;
@@ -101,8 +126,17 @@ export const previewRuntime: PreviewRuntime = {
     UIListLayout,
     UIGridLayout,
     UIStroke,
+    UIScale,
+    UIGradient,
+    UIPageLayout,
+    UITableLayout,
+    UISizeConstraint,
+    UITextSizeConstraint,
+    UIAspectRatioConstraint,
+    UIFlexItem,
   },
   helpers: {
+    __previewGlobal,
     Color3,
     UDim,
     UDim2,

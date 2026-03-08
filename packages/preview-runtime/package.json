@@ -1,0 +1,35 @@
+﻿{
+  "name": "@lattice-ui/preview-runtime",
+  "version": "0.3.2",
+  "private": false,
+  "description": "Browser polyfills for Roblox runtime APIs used by Lattice UI previews.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "watch": "tsc -p tsconfig.json -w"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./Enum": {
+      "types": "./dist/Enum.d.ts",
+      "default": "./dist/Enum.js"
+    },
+    "./RunService": {
+      "types": "./dist/RunService.d.ts",
+      "default": "./dist/RunService.js"
+    },
+    "./task": {
+      "types": "./dist/task.d.ts",
+      "default": "./dist/task.js"
+    }
+  }
+}

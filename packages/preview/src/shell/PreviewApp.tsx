@@ -1,7 +1,8 @@
 import React from "react";
-import { LayoutProvider } from "../runtime/LayoutProvider";
+import { LayoutProvider } from "../runtime";
 import {
   areViewportsEqual,
+  createViewportSize,
   createWindowViewport,
   isViewportLargeEnough,
   measureElementViewport,
@@ -180,8 +181,8 @@ function usePreviewViewport() {
       return;
     }
 
-    const update = () => {
-      const measuredViewport = measureElementViewport(element);
+    const update = (nextMeasuredViewport?: ViewportSize | null) => {
+      const measuredViewport = nextMeasuredViewport ?? measureElementViewport(element);
       const nextViewport = pickViewport([measuredViewport, lastStableViewportRef.current], createWindowViewport());
 
       if (isViewportLargeEnough(nextViewport)) {
@@ -194,8 +195,9 @@ function usePreviewViewport() {
     update();
 
     if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver(() => {
-        update();
+      const observer = new ResizeObserver((entries) => {
+        const entry = entries.find((candidate) => candidate.target === element) ?? entries[0];
+        update(createViewportSize(entry?.contentRect.width, entry?.contentRect.height));
       });
       observer.observe(element);
       return () => {
@@ -257,6 +259,8 @@ function PreviewCanvas(props: PreviewCanvasProps) {
         <div
           className="preview-stage-viewport"
           data-debug-mode={props.isDebugMode ? "true" : undefined}
+          data-preview-stage-height={viewport.height}
+          data-preview-stage-width={viewport.width}
           ref={viewportRef}
         >
           <LayoutProvider viewportHeight={viewport.height} viewportWidth={viewport.width}>

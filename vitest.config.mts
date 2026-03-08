@@ -1,4 +1,4 @@
-import path from "node:path";
+﻿import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
@@ -9,6 +9,10 @@ const workspaceRoot = __dirname;
 export default defineConfig({
   resolve: {
     alias: [
+      {
+        find: "@lattice-ui/preview-runtime",
+        replacement: path.resolve(workspaceRoot, "packages/preview-runtime/src/index.ts"),
+      },
       {
         find: "@lattice-ui/preview/runtime",
         replacement: path.resolve(workspaceRoot, "packages/preview/src/runtime/index.ts"),

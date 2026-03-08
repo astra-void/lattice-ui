@@ -1,10 +1,15 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import path from "node:path";
 import { compile_tsx } from "@lattice-ui/compiler";
+import ts from "typescript";
 import { transformPreviewSource } from "../compiler/transformSource";
+import {
+  createUnresolvedPackageMockResolvePlugin,
+  createUnresolvedPackageMockTransformPlugin,
+} from "./robloxPackageMockPlugin";
 import { discoverPreviewWorkspace } from "./discover";
 import type { PreviewSourceTarget } from "./types";
-import type { PreviewDevServer, PreviewPlugin } from "./viteTypes";
+import type { PreviewDevServer, PreviewPlugin, PreviewPluginOption } from "./viteTypes";
 
 const REGISTRY_MODULE_ID = "virtual:lattice-preview-registry";
 const RESOLVED_REGISTRY_MODULE_ID = `\0${REGISTRY_MODULE_ID}`;
@@ -36,7 +41,21 @@ function resolveRuntimeEntryPath() {
     throw new Error("Unable to resolve @lattice-ui/preview runtime entry.");
   }
 
-  return candidate;
+  return candidate.split(path.sep).join("/");
+}
+
+function resolveMockEntryPath() {
+  const candidates = [
+    path.resolve(__dirname, "./robloxEnv.ts"),
+    path.resolve(__dirname, "../../src/source/robloxEnv.ts"),
+    path.resolve(__dirname, "./robloxEnv.js"),
+  ];
+  const candidate = candidates.find((filePath) => fs.existsSync(filePath));
+  if (!candidate) {
+    throw new Error("Unable to resolve preview mock entry.");
+  }
+
+  return candidate.split(path.sep).join("/");
 }
 
 function stripQuery(id: string) {
@@ -44,6 +63,17 @@ function stripQuery(id: string) {
   return filePath;
 }
 
+function stripTypeSyntax(code: string, filePath: string) {
+  return ts.transpileModule(code, {
+    compilerOptions: {
+      jsx: ts.JsxEmit.Preserve,
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ESNext,
+      verbatimModuleSyntax: true,
+    },
+    fileName: filePath,
+  }).outputText;
+}
 function findTargetForFilePath(filePath: string, targets: PreviewSourceTarget[]) {
   const extension = path.extname(filePath);
   if (extension !== ".ts" && extension !== ".tsx") {
@@ -75,7 +105,9 @@ ${importers}
   };
 }
 
-export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions): PreviewPlugin {
+export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions): PreviewPluginOption {
+  const runtimeEntryPath = resolveRuntimeEntryPath();
+  const mockEntryPath = resolveMockEntryPath();
   let registry = renderRegistryModule(options);
   let server: PreviewDevServer | undefined;
 
@@ -96,7 +128,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     }
   };
 
-  return {
+  const previewPlugin: PreviewPlugin = {
     name: "lattice-preview-source-first",
     enforce: "pre",
     configureServer(configuredServer: PreviewDevServer) {
@@ -154,11 +186,12 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
 
       const transformed = transformPreviewSource(code, {
         filePath,
-        runtimeModule: RUNTIME_MODULE_ID,
+        runtimeModule: runtimeEntryPath,
         target: target.name,
       });
 
       let transformedCode = compile_tsx(transformed.code);
+      transformedCode = stripTypeSyntax(transformedCode, filePath);
 
       if (transformedCode.includes(RBX_STYLE_HELPER_NAME) && !transformedCode.includes(RBX_STYLE_IMPORT.trim())) {
         transformedCode = `${RBX_STYLE_IMPORT}${transformedCode}`;
@@ -170,4 +203,10 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
       };
     },
   };
+
+  return [
+    createUnresolvedPackageMockResolvePlugin(mockEntryPath),
+    previewPlugin,
+    createUnresolvedPackageMockTransformPlugin(),
+  ];
 }

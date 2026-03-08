@@ -5,12 +5,10 @@ import type { UDim2Value, Vector2 } from "./helpers";
 import {
   areViewportsEqual,
   createViewportSize,
-  createWindowViewport,
   DEFAULT_VIEWPORT_HEIGHT,
   DEFAULT_VIEWPORT_WIDTH,
-  isViewportLargeEnough,
+  hasPositiveViewport,
   measureElementViewport,
-  pickViewport,
   type ViewportSize,
 } from "./viewport";
 
@@ -88,15 +86,44 @@ type LayoutContextValue = {
   registerNode: (node: RegisteredNode) => void;
   unregisterNode: (nodeId: string) => void;
   viewport: ViewportSize;
+  viewportReady: boolean;
 };
 
 const SYNTHETIC_ROOT_ID = "__lattice_preview_root__";
 const DEFAULT_DEBOUNCE_MS = 12;
 const DEBUG_FALLBACK_SIZE = 24;
+const ZERO_VIEWPORT: ViewportSize = {
+  height: 0,
+  width: 0,
+};
+const LAYOUT_CONTEXTS_GLOBAL_KEY = "__lattice_preview_layout_contexts__";
 
-const LayoutContext = React.createContext<LayoutContextValue | null>(null);
-const ParentNodeContext = React.createContext<string | undefined>(undefined);
-const ParentRectContext = React.createContext<ComputedRect | null>(null);
+type LayoutContexts = {
+  layout: React.Context<LayoutContextValue | null>;
+  parentNode: React.Context<string | undefined>;
+  parentRect: React.Context<ComputedRect | null>;
+};
+
+function getSharedLayoutContexts(): LayoutContexts {
+  const globalRecord = globalThis as typeof globalThis & {
+    [LAYOUT_CONTEXTS_GLOBAL_KEY]?: LayoutContexts;
+  };
+
+  if (!globalRecord[LAYOUT_CONTEXTS_GLOBAL_KEY]) {
+    globalRecord[LAYOUT_CONTEXTS_GLOBAL_KEY] = {
+      layout: React.createContext<LayoutContextValue | null>(null),
+      parentNode: React.createContext<string | undefined>(undefined),
+      parentRect: React.createContext<ComputedRect | null>(null),
+    };
+  }
+
+  return globalRecord[LAYOUT_CONTEXTS_GLOBAL_KEY];
+}
+
+const sharedLayoutContexts = getSharedLayoutContexts();
+const LayoutContext = sharedLayoutContexts.layout;
+const ParentNodeContext = sharedLayoutContexts.parentNode;
+const ParentRectContext = sharedLayoutContexts.parentRect;
 const PREVIEW_NODE_ID_PATTERN = /(?:^|:)(preview-node-\d+)$/;
 
 function scheduleMicrotask(callback: () => void) {
@@ -376,51 +403,29 @@ function buildSemanticTree(nodes: Map<string, RegisteredNode>): SolverNode {
   };
 }
 
-function useWindowViewport() {
-  const [viewport, setViewport] = React.useState<ViewportSize>(() => createWindowViewport());
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const update = () => {
-      const nextViewport = createWindowViewport();
-      setViewport((previous) => (areViewportsEqual(previous, nextViewport) ? previous : nextViewport));
-    };
-
-    update();
-    window.addEventListener("resize", update);
-
-    return () => {
-      window.removeEventListener("resize", update);
-    };
-  }, []);
-
-  return viewport;
-}
-
 function useMeasuredViewport(containerRef: React.RefObject<HTMLDivElement | null>) {
   const [viewport, setViewport] = React.useState<ViewportSize | null>(null);
 
   React.useLayoutEffect(() => {
     const element = containerRef.current;
-    if (!element) {
+    const measurementElement = element?.parentElement ?? element;
+    if (!measurementElement) {
       return;
     }
 
-    const update = () => {
-      const nextViewport = measureElementViewport(element);
-      setViewport((previous) => (areViewportsEqual(previous, nextViewport) ? previous : nextViewport));
+    const update = (nextViewport?: ViewportSize | null) => {
+      const next = nextViewport ?? measureElementViewport(measurementElement);
+      setViewport((previous) => (areViewportsEqual(previous, next) ? previous : next));
     };
 
     update();
 
     if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver(() => {
-        update();
+      const observer = new ResizeObserver((entries) => {
+        const entry = entries.find((candidate) => candidate.target === measurementElement) ?? entries[0];
+        update(createViewportSize(entry?.contentRect.width, entry?.contentRect.height));
       });
-      observer.observe(element);
+      observer.observe(measurementElement);
 
       return () => {
         observer.disconnect();
@@ -431,9 +436,13 @@ function useMeasuredViewport(containerRef: React.RefObject<HTMLDivElement | null
       return;
     }
 
-    window.addEventListener("resize", update);
+    const handleWindowResize = () => {
+      update();
+    };
+
+    window.addEventListener("resize", handleWindowResize);
     return () => {
-      window.removeEventListener("resize", update);
+      window.removeEventListener("resize", handleWindowResize);
     };
   }, [containerRef]);
 
@@ -442,23 +451,44 @@ function useMeasuredViewport(containerRef: React.RefObject<HTMLDivElement | null
 
 export function LayoutProvider(props: LayoutProviderProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const fallbackViewport = useWindowViewport();
   const measuredViewport = useMeasuredViewport(containerRef);
   const explicitViewport = React.useMemo(
     () => createViewportSize(props.viewportWidth, props.viewportHeight),
     [props.viewportHeight, props.viewportWidth],
   );
-  const [lastStableViewport, setLastStableViewport] = React.useState<ViewportSize>(() => fallbackViewport);
-  const resolvedViewport = React.useMemo(
-    () => pickViewport([explicitViewport, measuredViewport, lastStableViewport], fallbackViewport),
-    [explicitViewport, fallbackViewport, lastStableViewport, measuredViewport],
-  );
-  const viewportWidth = resolvedViewport.width;
-  const viewportHeight = resolvedViewport.height;
+  const resolvedViewport = React.useMemo(() => {
+    if (hasPositiveViewport(measuredViewport)) {
+      return measuredViewport;
+    }
+
+    if (measuredViewport !== null) {
+      return null;
+    }
+
+    return explicitViewport;
+  }, [explicitViewport, measuredViewport]);
+  const viewportSource = React.useMemo(() => {
+    if (hasPositiveViewport(measuredViewport)) {
+      return "measured-parent";
+    }
+
+    if (measuredViewport !== null) {
+      return "unresolved";
+    }
+
+    if (hasPositiveViewport(explicitViewport)) {
+      return "explicit";
+    }
+
+    return "none";
+  }, [explicitViewport, measuredViewport]);
+  const viewportReady = hasPositiveViewport(resolvedViewport);
+  const viewportWidth = resolvedViewport?.width ?? 0;
+  const viewportHeight = resolvedViewport?.height ?? 0;
   const debounceMs = props.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   const viewportRect = React.useMemo(
-    () => createViewportRect(viewportWidth, viewportHeight),
-    [viewportHeight, viewportWidth],
+    () => (viewportReady ? createViewportRect(viewportWidth, viewportHeight) : null),
+    [viewportHeight, viewportReady, viewportWidth],
   );
 
   const [isReady, setIsReady] = React.useState(false);
@@ -473,18 +503,11 @@ export function LayoutProvider(props: LayoutProviderProps) {
       height: "100%",
       minHeight: "500px",
       position: "relative",
+      visibility: viewportReady ? "visible" : "hidden",
       width: "100%",
     }),
-    [],
+    [viewportReady],
   );
-
-  React.useEffect(() => {
-    if (!isViewportLargeEnough(resolvedViewport) || areViewportsEqual(lastStableViewport, resolvedViewport)) {
-      return;
-    }
-
-    setLastStableViewport(resolvedViewport);
-  }, [lastStableViewport, resolvedViewport]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -568,7 +591,7 @@ export function LayoutProvider(props: LayoutProviderProps) {
       return;
     }
 
-    if (!isViewportLargeEnough(resolvedViewport)) {
+    if (!viewportReady) {
       setComputedRects({});
       return;
     }
@@ -583,7 +606,6 @@ export function LayoutProvider(props: LayoutProviderProps) {
       () => {
         try {
           const tree = buildSemanticTree(registryRef.current);
-          console.log("Tree to Wasm:", JSON.stringify(tree, null, 2));
           const rawResult = compute_layout(tree, viewportWidth, viewportHeight) as unknown;
           const computedLayouts = normalizeLayoutMap(rawResult);
           delete computedLayouts[SYNTHETIC_ROOT_ID];
@@ -600,7 +622,7 @@ export function LayoutProvider(props: LayoutProviderProps) {
     return () => {
       globalThis.clearTimeout(timeoutId);
     };
-  }, [debounceMs, isReady, resolvedViewport, settledRegistryVersion, viewportHeight, viewportWidth]);
+  }, [debounceMs, isReady, settledRegistryVersion, viewportHeight, viewportReady, viewportWidth]);
 
   const getRect = React.useCallback(
     (nodeId: string) => {
@@ -617,14 +639,23 @@ export function LayoutProvider(props: LayoutProviderProps) {
       isReady,
       registerNode,
       unregisterNode,
-      viewport: resolvedViewport,
+      viewport: resolvedViewport ?? ZERO_VIEWPORT,
+      viewportReady,
     }),
-    [error, getRect, isReady, registerNode, resolvedViewport, unregisterNode],
+    [error, getRect, isReady, registerNode, resolvedViewport, unregisterNode, viewportReady],
   );
 
   return (
     <LayoutContext.Provider value={contextValue}>
-      <div data-preview-layout-provider="" ref={containerRef} style={containerStyle}>
+      <div
+        data-preview-layout-provider=""
+        data-preview-viewport-height={viewportHeight || undefined}
+        data-preview-viewport-ready={viewportReady ? "true" : "false"}
+        data-preview-viewport-source={viewportSource}
+        data-preview-viewport-width={viewportWidth || undefined}
+        ref={containerRef}
+        style={containerStyle}
+      >
         <ParentRectContext.Provider value={viewportRect}>
           <ParentNodeContext.Provider value={undefined}>{props.children}</ParentNodeContext.Provider>
         </ParentRectContext.Provider>
@@ -651,6 +682,21 @@ export function useLayoutEngineStatus() {
     error: context?.error ?? null,
     isReady: context?.isReady ?? false,
   };
+}
+
+export function useLayoutDebugState() {
+  const context = React.useContext(LayoutContext);
+  const inheritedParentRect = React.useContext(ParentRectContext);
+
+  return React.useMemo(
+    () => ({
+      hasContext: context !== null,
+      inheritedParentRect,
+      viewport: context?.viewport ?? null,
+      viewportReady: context?.viewportReady ?? false,
+    }),
+    [context, inheritedParentRect],
+  );
 }
 
 export function useRobloxLayout(input: RobloxLayoutNodeInput): ComputedRect | null {
@@ -690,6 +736,10 @@ export function useRobloxLayout(input: RobloxLayoutNodeInput): ComputedRect | nu
       unregisterNode(normalizedNode.id);
     };
   }, [normalizedNode, registerNode, unregisterNode]);
+
+  if (context && !context.viewportReady) {
+    return null;
+  }
 
   return computed ?? fallbackRect;
 }

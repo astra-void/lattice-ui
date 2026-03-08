@@ -1,3 +1,7 @@
+import robloxMock from "../source/robloxEnv";
+
+const robloxMockRecord = robloxMock as unknown as Record<PropertyKey, unknown>;
+
 export type Color3Value = {
   r: number;
   g: number;
@@ -105,6 +109,15 @@ export function isPreviewElement(value: unknown, typeName: string): value is HTM
     default:
       return true;
   }
+}
+
+export function __previewGlobal(name: string) {
+  const globalRecord = globalThis as Record<PropertyKey, unknown>;
+  if (name in globalRecord) {
+    return globalRecord[name];
+  }
+
+  return robloxMockRecord[name];
 }
 
 function toChannel(channel: number) {
