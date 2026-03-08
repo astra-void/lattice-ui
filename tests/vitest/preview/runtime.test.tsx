@@ -166,6 +166,37 @@ describe("preview runtime host mapping", () => {
     expect(screenGui.style.height).toBe("480px");
     expect(screenGui.style.outline).toContain("red");
   });
+
+  it("derives nested scale fallback rects from parent rects when Wasm is unavailable", async () => {
+    layoutEngineMocks.init.mockRejectedValueOnce(new Error("init failed"));
+
+    render(
+      <LayoutProvider viewportHeight={600} viewportWidth={800}>
+        <ScreenGui>
+          <Frame Size={UDim2.fromScale(1, 1)}>
+            <TextLabel AnchorPoint={[0.5, 0.5]} Position={[0.5, 0, 0.5, 0]} Size={[0, 420, 0, 40]} Text="Centered" />
+          </Frame>
+        </ScreenGui>
+      </LayoutProvider>,
+    );
+
+    const frame = document.querySelector('[data-preview-host="frame"]') as HTMLElement;
+    const label = document.querySelector('[data-preview-host="textlabel"]') as HTMLElement;
+
+    await waitFor(() => {
+      expect(frame.style.left).toBe("0px");
+      expect(frame.style.top).toBe("0px");
+      expect(frame.style.width).toBe("800px");
+      expect(frame.style.height).toBe("600px");
+      expect(label.style.left).toBe("190px");
+      expect(label.style.top).toBe("280px");
+      expect(label.style.width).toBe("420px");
+      expect(label.style.height).toBe("40px");
+    });
+
+    expect(frame.style.outline).toContain("red");
+    expect(label.style.outline).toContain("red");
+  });
   it("serializes frame defaults and textlabel layout props before calling Wasm", async () => {
     layoutEngineMocks.computeLayout.mockImplementation((tree, viewportWidth, viewportHeight) => {
       expect(viewportWidth).toBe(800);

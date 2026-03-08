@@ -24,6 +24,7 @@ type PreviewAppProps = {
 
 type PreviewCanvasProps = {
   entry: PreviewRegistryItem;
+  isDebugMode: boolean;
   module: PreviewModule;
   onRenderError: (message: string | null) => void;
 };
@@ -253,7 +254,11 @@ function PreviewCanvas(props: PreviewCanvasProps) {
         </div>
       </div>
       <div className="preview-stage">
-        <div className="preview-stage-viewport" ref={viewportRef}>
+        <div
+          className="preview-stage-viewport"
+          data-debug-mode={props.isDebugMode ? "true" : undefined}
+          ref={viewportRef}
+        >
           <LayoutProvider viewportHeight={viewport.height} viewportWidth={viewport.width}>
             <PreviewErrorBoundary onError={props.onRenderError}>
               {createPreviewNode(props.entry, props.module)}
@@ -269,6 +274,7 @@ export function PreviewApp(props: PreviewAppProps) {
   const [selectedId, setSelectedId] = React.useState(() =>
     getInitialSelectedId(props.entries, props.initialSelectedId),
   );
+  const [isDebugMode, setIsDebugMode] = React.useState(false);
   const [loadedModule, setLoadedModule] = React.useState<PreviewModule | undefined>();
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [renderError, setRenderError] = React.useState<string | null>(null);
@@ -350,17 +356,32 @@ export function PreviewApp(props: PreviewAppProps) {
                 <p className="section-eyebrow">Selected file</p>
                 <h2>{selectedEntry.title}</h2>
               </div>
-              <div className="header-meta">
-                <span>{selectedEntry.targetName}</span>
-                <span>{selectedEntry.relativePath}</span>
-                <span>{selectedEntry.hasPreviewExport ? "Has preview export" : "Direct export render"}</span>
+              <div className="header-controls">
+                <div className="header-meta">
+                  <span>{selectedEntry.targetName}</span>
+                  <span>{selectedEntry.relativePath}</span>
+                  <span>{selectedEntry.hasPreviewExport ? "Has preview export" : "Direct export render"}</span>
+                </div>
+                <label className="debug-toggle">
+                  <input
+                    checked={isDebugMode}
+                    onChange={(event) => setIsDebugMode(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>Debug mode</span>
+                </label>
               </div>
             </header>
 
             <section className="preview-card">
               {selectedEntry.status === "ready" ? (
                 loadedModule ? (
-                  <PreviewCanvas entry={selectedEntry} module={loadedModule} onRenderError={setRenderError} />
+                  <PreviewCanvas
+                    entry={selectedEntry}
+                    isDebugMode={isDebugMode}
+                    module={loadedModule}
+                    onRenderError={setRenderError}
+                  />
                 ) : loadError ? (
                   <div className="preview-empty">
                     <p className="preview-empty-eyebrow">Load error</p>

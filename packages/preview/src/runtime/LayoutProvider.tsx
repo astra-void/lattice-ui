@@ -19,7 +19,6 @@ export type ComputedRect = {
   y: number;
   width: number;
   height: number;
-  debugFallback?: boolean;
 };
 
 type UDimLike = { Scale?: number; Offset?: number; scale?: number; offset?: number } | readonly [number, number];
@@ -97,6 +96,7 @@ const DEBUG_FALLBACK_SIZE = 24;
 
 const LayoutContext = React.createContext<LayoutContextValue | null>(null);
 const ParentNodeContext = React.createContext<string | undefined>(undefined);
+const ParentRectContext = React.createContext<ComputedRect | null>(null);
 const PREVIEW_NODE_ID_PATTERN = /(?:^|:)(preview-node-\d+)$/;
 
 function scheduleMicrotask(callback: () => void) {
@@ -287,6 +287,35 @@ function normalizeRootScreenGuiNode(node: RegisteredNode): RegisteredNode {
   };
 }
 
+function createViewportRect(width: number, height: number): ComputedRect {
+  return {
+    height,
+    width,
+    x: 0,
+    y: 0,
+  };
+}
+
+function resolveAxis(udim: SolverUDim, parentAxisSize: number) {
+  return parentAxisSize * udim.scale + udim.offset;
+}
+
+function computeRectFromParentRect(
+  node: Pick<RegisteredNode, "anchorPoint" | "position" | "size">,
+  parentRect: ComputedRect,
+  minimumSize = 0,
+): ComputedRect {
+  const width = Math.max(resolveAxis(node.size.x, parentRect.width), minimumSize);
+  const height = Math.max(resolveAxis(node.size.y, parentRect.height), minimumSize);
+
+  return {
+    height,
+    width,
+    x: parentRect.x + resolveAxis(node.position.x, parentRect.width) - node.anchorPoint.x * width,
+    y: parentRect.y + resolveAxis(node.position.y, parentRect.height) - node.anchorPoint.y * height,
+  };
+}
+
 function buildSemanticTree(nodes: Map<string, RegisteredNode>): SolverNode {
   const byParentId = new Map<string, RegisteredNode[]>();
   const roots: RegisteredNode[] = [];
@@ -427,6 +456,10 @@ export function LayoutProvider(props: LayoutProviderProps) {
   const viewportWidth = resolvedViewport.width;
   const viewportHeight = resolvedViewport.height;
   const debounceMs = props.debounceMs ?? DEFAULT_DEBOUNCE_MS;
+  const viewportRect = React.useMemo(
+    () => createViewportRect(viewportWidth, viewportHeight),
+    [viewportHeight, viewportWidth],
+  );
 
   const [isReady, setIsReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -592,14 +625,24 @@ export function LayoutProvider(props: LayoutProviderProps) {
   return (
     <LayoutContext.Provider value={contextValue}>
       <div data-preview-layout-provider="" ref={containerRef} style={containerStyle}>
-        <ParentNodeContext.Provider value={undefined}>{props.children}</ParentNodeContext.Provider>
+        <ParentRectContext.Provider value={viewportRect}>
+          <ParentNodeContext.Provider value={undefined}>{props.children}</ParentNodeContext.Provider>
+        </ParentRectContext.Provider>
       </div>
     </LayoutContext.Provider>
   );
 }
 
-export function LayoutNodeParentProvider(props: { children: React.ReactNode; nodeId: string }) {
-  return <ParentNodeContext.Provider value={props.nodeId}>{props.children}</ParentNodeContext.Provider>;
+export function LayoutNodeParentProvider(props: {
+  children: React.ReactNode;
+  nodeId: string;
+  rect: ComputedRect | null;
+}) {
+  return (
+    <ParentRectContext.Provider value={props.rect}>
+      <ParentNodeContext.Provider value={props.nodeId}>{props.children}</ParentNodeContext.Provider>
+    </ParentRectContext.Provider>
+  );
 }
 
 export function useLayoutEngineStatus() {
@@ -613,38 +656,25 @@ export function useLayoutEngineStatus() {
 export function useRobloxLayout(input: RobloxLayoutNodeInput): ComputedRect | null {
   const context = React.useContext(LayoutContext);
   const inheritedParentId = React.useContext(ParentNodeContext);
+  const inheritedParentRect = React.useContext(ParentRectContext);
   const parentId = input.parentId ?? inheritedParentId;
   const normalizedNode = React.useMemo(() => adaptRobloxNodeInput(input, parentId), [input, parentId]);
   const fallbackViewportWidth = context?.viewport.width ?? DEFAULT_VIEWPORT_WIDTH;
   const fallbackViewportHeight = context?.viewport.height ?? DEFAULT_VIEWPORT_HEIGHT;
+  const fallbackViewportRect = React.useMemo(
+    () => createViewportRect(fallbackViewportWidth, fallbackViewportHeight),
+    [fallbackViewportHeight, fallbackViewportWidth],
+  );
+  const fallbackParentRect = inheritedParentRect ?? fallbackViewportRect;
+  const fallbackLayoutNode = React.useMemo(
+    () => (parentId === undefined ? normalizeRootScreenGuiNode(normalizedNode) : normalizedNode),
+    [normalizedNode, parentId],
+  );
 
-  const fallbackRect = React.useMemo<ComputedRect>(() => {
-    if (input.nodeType === "ScreenGui") {
-      return {
-        debugFallback: true,
-        height: fallbackViewportHeight,
-        width: fallbackViewportWidth,
-        x: 0,
-        y: 0,
-      };
-    }
-
-    return {
-      debugFallback: true,
-      height: Math.max(normalizedNode.size.y.offset, DEBUG_FALLBACK_SIZE),
-      width: Math.max(normalizedNode.size.x.offset, DEBUG_FALLBACK_SIZE),
-      x: normalizedNode.position.x.offset,
-      y: normalizedNode.position.y.offset,
-    };
-  }, [
-    fallbackViewportHeight,
-    fallbackViewportWidth,
-    input.nodeType,
-    normalizedNode.position.x.offset,
-    normalizedNode.position.y.offset,
-    normalizedNode.size.x.offset,
-    normalizedNode.size.y.offset,
-  ]);
+  const fallbackRect = React.useMemo<ComputedRect>(
+    () => computeRectFromParentRect(fallbackLayoutNode, fallbackParentRect, DEBUG_FALLBACK_SIZE),
+    [fallbackLayoutNode, fallbackParentRect],
+  );
 
   const registerNode = context?.registerNode;
   const unregisterNode = context?.unregisterNode;

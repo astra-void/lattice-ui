@@ -198,12 +198,43 @@ code,
   line-height: 0.92;
 }
 
+.header-controls {
+  align-items: end;
+  display: flex;
+  gap: 16px;
+}
+
 .header-meta,
 .diagnostics-summary {
   color: var(--muted);
   display: grid;
   gap: 4px;
   text-align: right;
+}
+
+.debug-toggle {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.54);
+  border: 1px solid rgba(24, 23, 23, 0.08);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  gap: 10px;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.debug-toggle input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+.debug-toggle span {
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .preview-card,
@@ -315,6 +346,16 @@ code,
   font: inherit;
 }
 
+[data-debug-mode="true"] .preview-host {
+  background-color: rgba(255, 0, 0, 0.1);
+  outline: 1px solid red;
+}
+
+[data-debug-mode="true"] .preview-textlabel {
+  background-color: rgba(0, 0, 255, 0.1);
+  outline: 1px solid blue;
+}
+
 @media (max-width: 980px) {
   .preview-shell {
     grid-template-columns: 1fr;
@@ -329,6 +370,7 @@ code,
     text-align: left;
   }
 
+  .header-controls,
   .preview-header,
   .diagnostics-header {
     align-items: start;

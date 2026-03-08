@@ -387,8 +387,12 @@ function useHostLayout(host: LayoutHostName, props: PreviewDomProps) {
   };
 }
 
-function withNodeParent(nodeId: string, children: React.ReactNode) {
-  return <LayoutNodeParentProvider nodeId={nodeId}>{children}</LayoutNodeParentProvider>;
+function withNodeParent(nodeId: string, rect: ComputedRect | null, children: React.ReactNode) {
+  return (
+    <LayoutNodeParentProvider nodeId={nodeId} rect={rect}>
+      {children}
+    </LayoutNodeParentProvider>
+  );
 }
 
 function applyComputedLayout(style: React.CSSProperties, computed: ComputedRect | null) {
@@ -411,12 +415,6 @@ function applyComputedLayout(style: React.CSSProperties, computed: ComputedRect 
   style.top = `${computed.y}px`;
   style.width = `${computed.width}px`;
   style.height = `${computed.height}px`;
-
-  if (computed.debugFallback) {
-    style.backgroundColor = style.backgroundColor ?? "rgba(255, 0, 0, 0.28)";
-    style.outline = "2px solid red";
-    style.outlineOffset = "-1px";
-  }
 }
 
 export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveOptions) {
@@ -609,7 +607,7 @@ export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forw
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
       {resolved.text ? <span className="preview-host-text">{resolved.text}</span> : undefined}
-      {withNodeParent(nodeId, resolved.children)}
+      {withNodeParent(nodeId, computed, resolved.children)}
     </div>
   );
 });
@@ -631,7 +629,7 @@ export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props,
       type="button"
     >
       {resolved.text ? <span className="preview-host-text">{resolved.text}</span> : undefined}
-      {withNodeParent(nodeId, resolved.children)}
+      {withNodeParent(nodeId, computed, resolved.children)}
     </button>
   );
 });
@@ -647,7 +645,7 @@ export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
 
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
-      {withNodeParent(nodeId, resolved.children)}
+      {withNodeParent(nodeId, computed, resolved.children)}
     </div>
   );
 });
@@ -664,7 +662,7 @@ export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
       {resolved.text}
-      {withNodeParent(nodeId, resolved.children)}
+      {withNodeParent(nodeId, computed, resolved.children)}
     </div>
   );
 });
@@ -719,7 +717,7 @@ export const ScrollingFrame = React.forwardRef<HTMLElement, PreviewDomProps>((pr
 
   return (
     <div {...resolved.domProps} ref={forwardedRef as React.Ref<HTMLDivElement>}>
-      {withNodeParent(nodeId, resolved.children)}
+      {withNodeParent(nodeId, computed, resolved.children)}
     </div>
   );
 });
