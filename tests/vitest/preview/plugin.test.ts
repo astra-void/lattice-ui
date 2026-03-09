@@ -69,7 +69,7 @@ function createMockServer() {
       }
     },
     moduleGraph: {
-      getModuleById: vi.fn(() => registryModule),
+      getModuleById: vi.fn((id: string) => (id === registryModule.id ? registryModule : undefined)),
       invalidateModule: vi.fn(),
     },
     watcher: {
@@ -111,8 +111,31 @@ function readRegistryEntries(previewPlugin: PreviewPlugin) {
   }>;
 }
 
+function readEntryMeta(previewPlugin: PreviewPlugin, entryId: string) {
+  const resolveId = getHookHandler<TestResolveIdHook>(previewPlugin.resolveId as TestResolveIdHook | undefined);
+  const load = getHookHandler<TestLoadHook>(previewPlugin.load as TestLoadHook | undefined);
+
+  const resolvedEntryId = resolveId?.(`virtual:lattice-preview-entry:${encodeURIComponent(entryId)}`);
+  const entryModuleCode = load?.(resolvedEntryId ?? entryId);
+  if (typeof entryModuleCode !== "string") {
+    throw new Error("Expected the preview entry module to load as a string.");
+  }
+
+  const metaMatch = entryModuleCode.match(/export const __previewEntryMeta = (\{[\s\S]*\});\n$/);
+  if (!metaMatch) {
+    throw new Error(`Unable to parse preview entry module:\n${entryModuleCode}`);
+  }
+
+  return JSON.parse(metaMatch[1] ?? "{}") as {
+    diagnostics: Array<{
+      code: string;
+      relativeFile: string;
+    }>;
+  };
+}
+
 describe("createPreviewVitePlugin", () => {
-  it("suppresses partial hot updates for preview source files", async () => {
+  it("allows normal hot updates when the registry shape is unchanged", async () => {
     const { fixtureRoot, sourceRoot } = createFixtureRoot();
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
     fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
@@ -123,7 +146,7 @@ describe("createPreviewVitePlugin", () => {
     );
 
     expect(handleHotUpdate).toBeTypeOf("function");
-    expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
+    expect(handleHotUpdate?.({ file: sourceFile })).toBe(undefined);
     expect(handleHotUpdate?.({ file: path.join(fixtureRoot, "README.md") })).toBe(undefined);
   });
 
@@ -170,7 +193,7 @@ describe("createPreviewVitePlugin", () => {
     expect(readRegistryEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual(["AnimatedSlot.tsx"]);
 
     expect(mockServer.moduleGraph.invalidateModule).toHaveBeenCalledTimes(4);
-    expect(mockServer.ws.send).toHaveBeenCalledTimes(4);
+    expect(mockServer.ws.send).toHaveBeenCalledTimes(3);
     expect(mockServer.ws.send).toHaveBeenCalledWith({ type: "full-reload" });
   });
 
@@ -245,5 +268,31 @@ describe("createPreviewVitePlugin", () => {
 
     expect(mockServer.moduleGraph.invalidateModule).toHaveBeenCalledTimes(3);
     expect(mockServer.ws.send).toHaveBeenCalledTimes(3);
+  });
+
+  it("loads lazy entry metadata with transform diagnostics on demand", () => {
+    const { fixtureRoot, sourceRoot } = createFixtureRoot();
+    const sourceFile = path.join(sourceRoot, "Broken.tsx");
+    fs.writeFileSync(
+      sourceFile,
+      `
+        export function Broken() {
+          return <viewportframe />;
+        }
+      `,
+      "utf8",
+    );
+
+    const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
+    const entryMeta = readEntryMeta(previewPlugin, "fixture:Broken.tsx");
+
+    expect(entryMeta.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "UNSUPPORTED_HOST_ELEMENT",
+          relativeFile: "src/Broken.tsx",
+        }),
+      ]),
+    );
   });
 });

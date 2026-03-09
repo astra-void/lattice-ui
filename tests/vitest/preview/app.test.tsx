@@ -26,12 +26,20 @@ const dialogEntry = discoverPreviewProject({
   sourceRoot: path.join(fixtureRoot, "src"),
 }).entries.find((entry) => entry.relativePath === "DialogRoot.tsx");
 
+function createLoadedEntry(module: Record<string, unknown>, diagnostics: Array<Record<string, unknown>> = []) {
+  return Promise.resolve({
+    meta: {
+      diagnostics,
+    },
+    module,
+  });
+}
+
 function createReadyEntry(id: string, title: string) {
   return {
     autoRenderCandidate: "default" as const,
     autoRenderReason: "default" as const,
     candidateExportNames: [],
-    diagnostics: [],
     discoveryDiagnostics: [],
     exportNames: ["default"],
     hasDefaultExport: true,
@@ -66,8 +74,8 @@ describe("preview shell", () => {
       <PreviewApp
         entries={[checkboxEntry]}
         initialSelectedId={checkboxEntry.id}
-        loadModule={() =>
-          Promise.resolve({
+        loadEntry={() =>
+          createLoadedEntry({
             CheckboxRoot: () => <button type="button">Unchecked</button>,
           })
         }
@@ -87,8 +95,8 @@ describe("preview shell", () => {
       <PreviewApp
         entries={[dialogEntry]}
         initialSelectedId={dialogEntry.id}
-        loadModule={() =>
-          Promise.resolve({
+        loadEntry={() =>
+          createLoadedEntry({
             preview: {
               render: () => (
                 <div>
@@ -107,7 +115,7 @@ describe("preview shell", () => {
     expect(screen.getByRole("button", { name: /close/i })).toBeTruthy();
   });
 
-  it("shows diagnostics states without crashing the shell", async () => {
+  it("shows lazy transform diagnostics without crashing the shell", async () => {
     renderPreviewApp(
       <PreviewApp
         entries={[
@@ -115,17 +123,6 @@ describe("preview shell", () => {
             autoRenderCandidate: "Broken",
             autoRenderReason: "sole-export",
             candidateExportNames: ["Broken"],
-            diagnostics: [
-              {
-                code: "UNSUPPORTED_GLOBAL",
-                column: 3,
-                file: "/virtual/Broken.tsx",
-                line: 2,
-                message: "The Roblox `game` global is not supported by preview generation.",
-                relativeFile: "src/Broken.tsx",
-                target: "roblox",
-              },
-            ],
             discoveryDiagnostics: [],
             exportNames: ["Broken"],
             hasDefaultExport: false,
@@ -140,35 +137,51 @@ describe("preview shell", () => {
               usesPreviewProps: false,
             },
             sourceFilePath: "/virtual/Broken.tsx",
-            status: "error",
+            status: "ready",
             targetName: "broken",
             title: "Broken",
           },
         ]}
         initialSelectedId="Broken.tsx"
-        loadModule={() => Promise.reject(new Error("should not load"))}
+        loadEntry={() =>
+          createLoadedEntry(
+            {
+              Broken: () => <button type="button">Broken preview</button>,
+            },
+            [
+              {
+                code: "UNSUPPORTED_GLOBAL",
+                column: 3,
+                file: "/virtual/Broken.tsx",
+                line: 2,
+                message: "The Roblox `game` global is not supported by preview generation.",
+                relativeFile: "src/Broken.tsx",
+                target: "roblox",
+              },
+            ],
+          )
+        }
         projectName="@lattice-ui/preview-smoke"
       />,
     );
 
-    expect(screen.getByText("Transform diagnostics are blocking this preview.")).toBeTruthy();
+    expect(await screen.findByText("Transform diagnostics are blocking this preview.")).toBeTruthy();
     expect(screen.getByText("UNSUPPORTED_GLOBAL")).toBeTruthy();
   });
 
   it("shows harness guidance without loading modules for non-previewable entries", () => {
-    const loadModule = vi.fn(() => Promise.reject(new Error("should not load")));
+    const loadEntry = vi.fn(() => Promise.reject(new Error("should not load")));
 
     renderPreviewApp(
       <PreviewApp
         entries={[
           {
             candidateExportNames: [],
-            diagnostics: [],
             discoveryDiagnostics: [
               {
                 code: "PREVIEW_RENDER_MISSING",
                 file: "/virtual/CheckboxIndicator.tsx",
-                message: "The file exports `preview`, but it does not define a callable `preview.render`.",
+                message: "The file exports `preview`, but it does not define a usable `preview.entry` or callable `preview.render`.",
                 relativeFile: "src/Checkbox/CheckboxIndicator.tsx",
               },
             ],
@@ -189,25 +202,24 @@ describe("preview shell", () => {
           },
         ]}
         initialSelectedId="Checkbox/CheckboxIndicator.tsx"
-        loadModule={loadModule}
+        loadEntry={loadEntry}
         projectName="@lattice-ui/preview-smoke"
       />,
     );
 
     expect(screen.getByText("The preview export is incomplete.")).toBeTruthy();
     expect(screen.getByText("PREVIEW_RENDER_MISSING")).toBeTruthy();
-    expect(loadModule).not.toHaveBeenCalled();
+    expect(loadEntry).not.toHaveBeenCalled();
   });
 
   it("shows ambiguous guidance with concrete candidates", () => {
-    const loadModule = vi.fn(() => Promise.reject(new Error("should not load")));
+    const loadEntry = vi.fn(() => Promise.reject(new Error("should not load")));
 
     renderPreviewApp(
       <PreviewApp
         entries={[
           {
             candidateExportNames: ["Alpha", "Beta"],
-            diagnostics: [],
             discoveryDiagnostics: [
               {
                 code: "AMBIGUOUS_COMPONENT_EXPORTS",
@@ -234,7 +246,7 @@ describe("preview shell", () => {
           },
         ]}
         initialSelectedId="Ambiguous.tsx"
-        loadModule={loadModule}
+        loadEntry={loadEntry}
         projectName="@lattice-ui/preview-smoke"
       />,
     );
@@ -242,18 +254,17 @@ describe("preview shell", () => {
     expect(screen.getByText("Multiple exported components match this file.")).toBeTruthy();
     expect(screen.getByText(/Automatic selection found multiple component exports: Alpha, Beta\./)).toBeTruthy();
     expect(screen.getByText("AMBIGUOUS_COMPONENT_EXPORTS")).toBeTruthy();
-    expect(loadModule).not.toHaveBeenCalled();
+    expect(loadEntry).not.toHaveBeenCalled();
   });
 
   it("shows no-component guidance without falling back to ambiguous messaging", () => {
-    const loadModule = vi.fn(() => Promise.reject(new Error("should not load")));
+    const loadEntry = vi.fn(() => Promise.reject(new Error("should not load")));
 
     renderPreviewApp(
       <PreviewApp
         entries={[
           {
             candidateExportNames: [],
-            diagnostics: [],
             discoveryDiagnostics: [
               {
                 code: "NO_COMPONENT_EXPORTS",
@@ -279,19 +290,19 @@ describe("preview shell", () => {
           },
         ]}
         initialSelectedId="HarnessOnly.tsx"
-        loadModule={loadModule}
+        loadEntry={loadEntry}
         projectName="@lattice-ui/preview-smoke"
       />,
     );
 
     expect(screen.getByText("This file is not directly previewable yet.")).toBeTruthy();
-    expect(screen.getByText("No renderable exported component was found. Add a default export or `preview.render` for composed demos.")).toBeTruthy();
-    expect(loadModule).not.toHaveBeenCalled();
+    expect(screen.getByText("No renderable exported component was found. Add `preview.entry` or `preview.render` for composed demos.")).toBeTruthy();
+    expect(loadEntry).not.toHaveBeenCalled();
   });
 
   it("shows an empty-project state when there are no eligible preview entries", () => {
     renderPreviewApp(
-      <PreviewApp entries={[]} loadModule={() => Promise.reject(new Error("should not load"))} projectName="Empty" />,
+      <PreviewApp entries={[]} loadEntry={() => Promise.reject(new Error("should not load"))} projectName="Empty" />,
     );
 
     expect(screen.getByText("No previewable source files were found.")).toBeTruthy();
@@ -306,10 +317,10 @@ describe("preview shell", () => {
       <PreviewApp
         entries={[brokenEntry, workingEntry]}
         initialSelectedId={brokenEntry.id}
-        loadModule={(id) =>
+        loadEntry={(id) =>
           id === brokenEntry.id
             ? Promise.reject(new Error("Intentional load failure."))
-            : Promise.resolve({
+            : createLoadedEntry({
                 default: () => <button type="button">Healthy preview</button>,
               })
         }
@@ -331,8 +342,8 @@ describe("preview shell", () => {
       <PreviewApp
         entries={[crashingEntry, workingEntry]}
         initialSelectedId={crashingEntry.id}
-        loadModule={(id) =>
-          Promise.resolve({
+        loadEntry={(id) =>
+          createLoadedEntry({
             default:
               id === crashingEntry.id
                 ? () => {
@@ -358,7 +369,6 @@ describe("preview shell", () => {
             autoRenderCandidate: "LoadoutEditor",
             autoRenderReason: "sole-export",
             candidateExportNames: ["LoadoutEditor"],
-            diagnostics: [],
             discoveryDiagnostics: [],
             exportNames: ["LoadoutEditor"],
             hasDefaultExport: false,
@@ -379,8 +389,8 @@ describe("preview shell", () => {
           },
         ]}
         initialSelectedId="LoadoutEditor.tsx"
-        loadModule={() =>
-          Promise.resolve({
+        loadEntry={() =>
+          createLoadedEntry({
             AnimatedSlot: () => <button type="button">Recovered stale export</button>,
           })
         }

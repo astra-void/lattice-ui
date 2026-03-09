@@ -1,14 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { transformPreviewSource } from "@lattice-ui/compiler";
 import ts from "typescript";
-import { createErrorWithCause } from "../errorWithCause";
 import { isFilePathUnderRoot, resolveRealFilePath } from "./pathUtils";
 import type {
   PreviewAutoRenderSelectionReason,
   PreviewDiscoveryDiagnostic,
   PreviewProject,
-  PreviewRegistryDiagnostic,
   PreviewRegistryItem,
   PreviewRenderTarget,
   PreviewSourceTarget,
@@ -26,8 +23,11 @@ const DEFAULT_COMPILER_OPTIONS: ts.CompilerOptions = {
 type PreviewExportInfo = {
   title?: string;
   hasExport: boolean;
+  hasEntry: boolean;
   hasProps: boolean;
   hasRender: boolean;
+  entryLocalName?: string;
+  entryExportName?: string;
 };
 
 type LocalRenderableDeclarationKind =
@@ -56,12 +56,11 @@ type SelectRenderTargetResult = {
   autoRenderReason?: PreviewAutoRenderSelectionReason;
 };
 
-type SourceModuleRecord = {
+export type SourceModuleRecord = {
   filePath: string;
   relativePath: string;
   isTsx: boolean;
   imports: string[];
-  diagnostics: PreviewRegistryDiagnostic[];
   discoveryDiagnostics: PreviewDiscoveryDiagnostic[];
   candidateExportNames: string[];
   hasDefaultComponent: boolean;
@@ -82,7 +81,7 @@ type DiscoverPreviewWorkspaceOptions = {
   targets: PreviewSourceTarget[];
 };
 
-type ParsedConfigCache = Map<string, ts.ParsedCommandLine>;
+export type ParsedConfigCache = Map<string, ts.ParsedCommandLine>;
 
 type ResolveModuleImportOptions = {
   importerFilePath: string;
@@ -98,7 +97,7 @@ function isTransformableSourceFile(fileName: string) {
   return SOURCE_EXTENSIONS.has(path.extname(fileName)) && !fileName.endsWith(".d.ts") && !fileName.endsWith(".d.tsx");
 }
 
-function listSourceFiles(dirPath: string): string[] {
+export function listSourceFiles(dirPath: string): string[] {
   if (!fs.existsSync(dirPath)) {
     return [];
   }
@@ -121,16 +120,7 @@ function listSourceFiles(dirPath: string): string[] {
   return files.sort((left, right) => left.localeCompare(right));
 }
 
-function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<typeof transformPreviewSource>[1]) {
-  try {
-    return transformPreviewSource(sourceText, options);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw createErrorWithCause(`Failed to parse preview source ${options.filePath}: ${detail}`, error);
-  }
-}
-
-function toRelativeSourcePath(packageRoot: string, filePath: string) {
+export function toRelativeSourcePath(packageRoot: string, filePath: string) {
   const relativePath = path.relative(resolveRealFilePath(packageRoot), resolveRealFilePath(filePath));
   return relativePath.split(path.sep).join("/");
 }
@@ -186,6 +176,7 @@ function parsePreviewObject(node: ts.Expression | undefined): PreviewExportInfo 
     return undefined;
   }
 
+  let entryLocalName: string | undefined;
   let title: string | undefined;
   let hasProps = false;
   let hasRender = false;
@@ -213,14 +204,21 @@ function parsePreviewObject(node: ts.Expression | undefined): PreviewExportInfo 
       continue;
     }
 
+    if (propertyName === "entry" && ts.isPropertyAssignment(property) && ts.isIdentifier(property.initializer)) {
+      entryLocalName = property.initializer.text;
+      continue;
+    }
+
     if (propertyName === "render") {
       hasRender = true;
     }
   }
 
   return {
+    entryLocalName,
     title,
     hasExport: true,
+    hasEntry: entryLocalName !== undefined,
     hasProps,
     hasRender,
   };
@@ -276,7 +274,7 @@ function getParsedTsconfig(filePath: string, cache: ParsedConfigCache) {
   return parsed;
 }
 
-function createDiscoveryDiagnostic(
+export function createDiscoveryDiagnostic(
   packageRoot: string,
   filePath: string,
   code: PreviewDiscoveryDiagnostic["code"],
@@ -449,6 +447,16 @@ function selectRenderTarget(options: {
     };
   }
 
+  if (options.preview.entryExportName) {
+    return {
+      render: {
+        mode: "preview-entry",
+        exportName: options.preview.entryExportName,
+        usesPreviewProps: options.preview.hasProps,
+      },
+    };
+  }
+
   if (options.hasDefaultComponent) {
     return {
       autoRenderCandidate: "default",
@@ -504,7 +512,7 @@ function selectRenderTarget(options: {
   };
 }
 
-function analyzeSourceModule(options: {
+export function analyzeSourceModule(options: {
   filePath: string;
   packageName: string;
   packageRoot: string;
@@ -517,6 +525,7 @@ function analyzeSourceModule(options: {
   const fileBasename = path.basename(options.filePath, path.extname(options.filePath));
   const { localRenderableMetadata, localPreviewInfo } = collectLocalRenderableNames(sourceFile);
   const namedExportCandidates = new Map<string, ExportedRenderableCandidate>();
+  const exportedNamesByLocal = new Map<string, Set<string>>();
   const imports = new Set<string>();
   const discoveryDiagnostics = new Map<string, PreviewDiscoveryDiagnostic>();
   let hasDefaultComponent = false;
@@ -535,6 +544,15 @@ function analyzeSourceModule(options: {
       matchesFileBasename: exportName === fileBasename,
       declarationKind: localMetadata.declarationKind,
     });
+  };
+  const addExportBinding = (localName: string, exportName: string) => {
+    const bindings = exportedNamesByLocal.get(localName);
+    if (bindings) {
+      bindings.add(exportName);
+      return;
+    }
+
+    exportedNamesByLocal.set(localName, new Set([exportName]));
   };
 
   for (const statement of sourceFile.statements) {
@@ -570,8 +588,10 @@ function analyzeSourceModule(options: {
       } else if (statement.name) {
         if (isDefaultExport(statement)) {
           hasDefaultComponent = Boolean(localRenderableMetadata.get(statement.name.text)?.isRenderable);
+          addExportBinding(statement.name.text, "default");
         } else {
           addNamedExportCandidate(statement.name.text, statement.name.text);
+          addExportBinding(statement.name.text, statement.name.text);
         }
       } else if (isDefaultExport(statement)) {
         hasDefaultComponent = true;
@@ -590,6 +610,7 @@ function analyzeSourceModule(options: {
           preview = parsePreviewObject(declaration.initializer) ??
             preview ?? {
               hasExport: true,
+              hasEntry: false,
               hasProps: false,
               hasRender: false,
             };
@@ -601,6 +622,7 @@ function analyzeSourceModule(options: {
         }
 
         addNamedExportCandidate(declaration.name.text, declaration.name.text);
+        addExportBinding(declaration.name.text, declaration.name.text);
       }
       continue;
     }
@@ -608,6 +630,7 @@ function analyzeSourceModule(options: {
     if (ts.isExportAssignment(statement)) {
       if (ts.isIdentifier(statement.expression) && localRenderableMetadata.get(statement.expression.text)?.isRenderable) {
         hasDefaultComponent = true;
+        addExportBinding(statement.expression.text, "default");
       } else if (ts.isArrowFunction(statement.expression) || ts.isFunctionExpression(statement.expression)) {
         hasDefaultComponent = true;
       }
@@ -634,34 +657,55 @@ function analyzeSourceModule(options: {
 
         if (exportName === "default") {
           hasDefaultComponent = true;
+          addExportBinding(localName, "default");
         } else {
           addNamedExportCandidate(localName, exportName);
+          addExportBinding(localName, exportName);
         }
       }
     }
   }
-
-  const transformResult = transformPreviewSourceOrThrow(sourceText, {
-    filePath: options.filePath,
-    runtimeModule: "virtual:lattice-preview-runtime",
-    target: options.packageName,
-  });
-  const diagnostics = transformResult.errors.map((error) => ({
-    ...error,
-    relativeFile: toRelativeSourcePath(options.packageRoot, error.file),
-  }));
   const exportedRenderableCandidates = [...namedExportCandidates.values()].sort((left, right) =>
     left.exportName.localeCompare(right.exportName),
   );
   const candidateExportNames = exportedRenderableCandidates.map((candidate) => candidate.exportName);
   const resolvedPreview = previewExported
-    ? (preview ?? { hasExport: true, hasProps: false, hasRender: false })
-    : { hasExport: false, hasProps: false, hasRender: false };
+    ? (preview ?? { hasExport: true, hasEntry: false, hasProps: false, hasRender: false })
+    : { hasExport: false, hasEntry: false, hasProps: false, hasRender: false };
+
+  const resolvePreviewEntryExportName = () => {
+    const entryLocalName = resolvedPreview.entryLocalName;
+    if (!entryLocalName || !localRenderableMetadata.get(entryLocalName)?.isRenderable) {
+      return undefined;
+    }
+
+    const exportNames = [...(exportedNamesByLocal.get(entryLocalName) ?? [])].sort((left, right) =>
+      left.localeCompare(right),
+    );
+    if (exportNames.length === 0) {
+      return undefined;
+    }
+
+    if (exportNames.includes(entryLocalName)) {
+      return entryLocalName;
+    }
+
+    if (exportNames.length === 1) {
+      return exportNames[0];
+    }
+
+    return exportNames.includes("default") ? "default" : exportNames[0];
+  };
+
+  const previewWithResolvedEntry = {
+    ...resolvedPreview,
+    entryExportName: resolvePreviewEntryExportName(),
+  };
   const renderSelection = selectRenderTarget({
     candidateExportNames,
     exportedRenderableCandidates,
     hasDefaultComponent,
-    preview: resolvedPreview,
+    preview: previewWithResolvedEntry,
   });
 
   return {
@@ -669,7 +713,6 @@ function analyzeSourceModule(options: {
     relativePath: path.relative(resolveRealFilePath(options.sourceRoot), options.filePath).split(path.sep).join("/"),
     isTsx: options.filePath.endsWith(".tsx"),
     imports: [...imports].sort((left, right) => left.localeCompare(right)),
-    diagnostics,
     discoveryDiagnostics: [...discoveryDiagnostics.values()].sort((left, right) => {
       if (left.relativeFile !== right.relativeFile) {
         return left.relativeFile.localeCompare(right.relativeFile);
@@ -682,41 +725,11 @@ function analyzeSourceModule(options: {
     autoRenderCandidate: renderSelection.autoRenderCandidate,
     autoRenderReason: renderSelection.autoRenderReason,
     render: renderSelection.render,
-    preview: resolvedPreview,
+    preview: previewWithResolvedEntry,
   };
 }
 
-function collectTransitiveDiagnostics(
-  entryFilePath: string,
-  recordsByPath: Map<string, SourceModuleRecord>,
-  visited = new Set<string>(),
-  collected = new Map<string, PreviewRegistryDiagnostic>(),
-) {
-  if (visited.has(entryFilePath)) {
-    return collected;
-  }
-
-  visited.add(entryFilePath);
-  const record = recordsByPath.get(entryFilePath);
-  if (!record) {
-    return collected;
-  }
-
-  for (const diagnostic of record.diagnostics) {
-    const key = `${diagnostic.file}:${diagnostic.line}:${diagnostic.column}:${diagnostic.code}`;
-    if (!collected.has(key)) {
-      collected.set(key, diagnostic);
-    }
-  }
-
-  for (const importPath of record.imports) {
-    collectTransitiveDiagnostics(importPath, recordsByPath, visited, collected);
-  }
-
-  return collected;
-}
-
-function collectTransitiveDiscoveryDiagnostics(
+export function collectTransitiveDiscoveryDiagnostics(
   entryFilePath: string,
   recordsByPath: Map<string, SourceModuleRecord>,
   visited = new Set<string>(),
@@ -746,20 +759,35 @@ function collectTransitiveDiscoveryDiagnostics(
   return collected;
 }
 
-function createEntryDiscoveryDiagnostics(record: SourceModuleRecord, packageRoot: string, render: PreviewRenderTarget) {
+export function createEntryDiscoveryDiagnostics(
+  record: SourceModuleRecord,
+  packageRoot: string,
+  render: PreviewRenderTarget,
+) {
   const diagnostics: PreviewDiscoveryDiagnostic[] = [];
+
+  if (render.mode === "auto") {
+    diagnostics.push(
+      createDiscoveryDiagnostic(
+        packageRoot,
+        record.filePath,
+        "LEGACY_AUTO_RENDER_FALLBACK",
+        `This entry still relies on legacy export inference (${render.selectedBy}). Add \`preview.entry\` or \`preview.render\` to make preview selection explicit.`,
+      ),
+    );
+  }
 
   if (render.mode !== "none") {
     return diagnostics;
   }
 
-  if (record.preview.hasExport && !record.preview.hasRender) {
+  if (record.preview.hasExport && !record.preview.hasRender && !record.preview.entryExportName) {
     diagnostics.push(
       createDiscoveryDiagnostic(
         packageRoot,
         record.filePath,
         "PREVIEW_RENDER_MISSING",
-        "The file exports `preview`, but it does not define a callable `preview.render`.",
+        "The file exports `preview`, but it does not define a usable `preview.entry` or callable `preview.render`.",
       ),
     );
   }
@@ -789,14 +817,7 @@ function createEntryDiscoveryDiagnostics(record: SourceModuleRecord, packageRoot
   return diagnostics;
 }
 
-function getEntryStatus(
-  diagnostics: PreviewRegistryDiagnostic[],
-  render: PreviewRenderTarget,
-) {
-  if (diagnostics.length > 0) {
-    return "error" as const;
-  }
-
+function getEntryStatus(render: PreviewRenderTarget) {
   if (render.mode !== "none") {
     return "ready" as const;
   }
@@ -804,7 +825,7 @@ function getEntryStatus(
   return "needs-harness" as const;
 }
 
-function isPreviewPackageInternalEntry(packageRoot: string, relativePath: string) {
+export function isPreviewPackageInternalEntry(packageRoot: string, relativePath: string) {
   const previewPackageRoot = resolveRealFilePath(path.resolve(__dirname, "../.."));
   if (resolveRealFilePath(packageRoot) !== previewPackageRoot) {
     return false;
@@ -813,24 +834,13 @@ function isPreviewPackageInternalEntry(packageRoot: string, relativePath: string
   return PREVIEW_PACKAGE_ENTRY_EXCLUDES.some((prefix) => relativePath.startsWith(prefix));
 }
 
-function createRegistryItem(
+export function createRegistryItem(
   record: SourceModuleRecord,
   recordsByPath: Map<string, SourceModuleRecord>,
   packageRoot: string,
   targetName: string,
   packageName: string,
 ): PreviewRegistryItem {
-  const diagnostics = [...collectTransitiveDiagnostics(record.filePath, recordsByPath).values()].sort((left, right) => {
-    if (left.relativeFile !== right.relativeFile) {
-      return left.relativeFile.localeCompare(right.relativeFile);
-    }
-
-    if (left.line !== right.line) {
-      return left.line - right.line;
-    }
-
-    return left.column - right.column;
-  });
   const render = record.render;
   const discoveryDiagnostics = [
     ...collectTransitiveDiscoveryDiagnostics(record.filePath, recordsByPath).values(),
@@ -846,7 +856,7 @@ function createRegistryItem(
 
     return left.message.localeCompare(right.message);
   });
-  const status = getEntryStatus(diagnostics, render);
+  const status = getEntryStatus(render);
   const title = record.preview.title?.trim() ? record.preview.title.trim() : humanizeTitle(record.relativePath);
 
   return {
@@ -864,7 +874,6 @@ function createRegistryItem(
     exportNames: record.hasDefaultComponent ? ["default", ...record.candidateExportNames] : [...record.candidateExportNames],
     hasDefaultExport: record.hasDefaultComponent,
     hasPreviewExport: record.preview.hasExport,
-    diagnostics,
     discoveryDiagnostics,
   };
 }

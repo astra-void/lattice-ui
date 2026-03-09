@@ -18,9 +18,9 @@ npx lattice preview
 
 1. Run `lattice preview` from a package root.
 2. The preview shell discovers real `src/**/*.tsx` files and renders them directly in the browser.
-3. Auto-render target selection prefers `preview.render`, then the default export, then a named export that matches the file basename, then a sole named component export.
-4. Files that still cannot be resolved to one render target stay in `needs harness`, and the shell reports whether the file has ambiguous exports or no renderable export at all.
-5. Files that need composition can opt in with `export const preview = { title?, props?, render? }`, and the shell reports why a file still needs a harness or where transitive analysis stopped.
+3. Explicit preview selection prefers `preview.render`, then `preview.entry`.
+4. Default export / basename / sole-export inference still exists as a deprecated fallback, and the shell reports a `LEGACY_AUTO_RENDER_FALLBACK` note until the file is migrated.
+5. Files that still cannot be resolved to one render target stay in `needs harness`, and the shell reports whether the file has ambiguous exports or no renderable export at all.
 6. This package only exposes the source-first preview server and the preview runtime. The browser shell itself is internal.
 
 ## Preview Contract
@@ -28,6 +28,7 @@ npx lattice preview
 ```ts
 export const preview = {
   title: "Dialog Root",
+  entry: DialogRoot,
   props: {
     defaultChecked: true,
   },
@@ -36,8 +37,15 @@ export const preview = {
 ```
 
 - `title` overrides the sidebar/display title.
-- `props` feeds the auto-render path when discovery can resolve one preview target without a custom harness.
+- `entry` makes the preview target explicit for direct component renders.
+- `props` feeds the `preview.entry` path when discovery can resolve one preview target without a custom harness.
 - `render` is the escape hatch for custom harnesses and composed demos.
+- `render` wins over `entry` when both are present.
+
+Legacy fallback note:
+
+- Files without `preview.entry` or `preview.render` can still render via default export / basename / sole-export inference for now.
+- That inference is deprecated and intentionally surfaced in diagnostics so packages can migrate incrementally.
 
 When discovery cannot follow an import chain past the current `sourceRoot`, the shell keeps the entry previewable when possible and shows a `TRANSITIVE_ANALYSIS_LIMITED` note instead of silently skipping that branch.
 

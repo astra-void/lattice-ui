@@ -1,8 +1,10 @@
+import type { ComponentType } from "react";
 import type { UnsupportedPatternError } from "@lattice-ui/compiler";
 
 export type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "@lattice-ui/preview-runtime";
 
 export type PreviewDefinition<Props = Record<string, unknown>> = {
+  entry?: ComponentType<Props>;
   title?: string;
   props?: Props;
   render?: () => unknown;
@@ -30,12 +32,23 @@ export type PreviewRenderTarget =
       mode: "preview-render";
     }
   | {
+      mode: "preview-entry";
+      exportName: string;
+      usesPreviewProps: boolean;
+    }
+  | {
+      mode: "auto";
+      exportName: "default" | string;
+      usesPreviewProps: boolean;
+      selectedBy: PreviewAutoRenderSelectionReason;
+    }
+  | {
       mode: "none";
       reason: PreviewRenderFailureReason;
       candidates?: string[];
     };
 
-export type PreviewEntryStatus = "ready" | "needs-harness" | "error";
+export type PreviewEntryStatus = "ready" | "needs-harness";
 
 export type PreviewRegistryDiagnostic = UnsupportedPatternError & {
   relativeFile: string;
@@ -43,6 +56,7 @@ export type PreviewRegistryDiagnostic = UnsupportedPatternError & {
 
 export type PreviewDiscoveryDiagnosticCode =
   | "AMBIGUOUS_COMPONENT_EXPORTS"
+  | "LEGACY_AUTO_RENDER_FALLBACK"
   | "NO_COMPONENT_EXPORTS"
   | "PREVIEW_RENDER_MISSING"
   | "TRANSITIVE_ANALYSIS_LIMITED";
@@ -69,8 +83,11 @@ export type PreviewRegistryItem = {
   exportNames: string[];
   hasDefaultExport: boolean;
   hasPreviewExport: boolean;
-  diagnostics: PreviewRegistryDiagnostic[];
   discoveryDiagnostics: PreviewDiscoveryDiagnostic[];
+};
+
+export type PreviewEntryMeta = {
+  diagnostics: PreviewRegistryDiagnostic[];
 };
 
 export type PreviewProject = {

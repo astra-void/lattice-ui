@@ -15,6 +15,7 @@ const distShellIndexHtml = path.join(distShellRoot, "index.html");
 const distShellStyles = path.join(distShellRoot, "styles.css");
 const distShellEntry = path.join(distShellRoot, "main.js");
 const distPreviewEntry = path.join(packageRoot, "dist/index.mjs");
+const previewRuntimeSourceEntry = path.resolve(packageRoot, "../preview-runtime/src/index.ts");
 
 if (!fs.existsSync(sourceShellIndexHtml)) {
   throw new Error(`Missing preview shell index: ${sourceShellIndexHtml}`);
@@ -27,6 +28,9 @@ if (!fs.existsSync(sourceShellStyles)) {
 fs.mkdirSync(distShellRoot, { recursive: true });
 
 await build({
+  alias: {
+    "@lattice-ui/preview-runtime": previewRuntimeSourceEntry,
+  },
   assetNames: "assets/[name]-[hash]",
   bundle: true,
   entryPoints: [path.join(sourceShellRoot, "main.tsx")],

@@ -13,6 +13,7 @@ import React from "react";
 import type {
   PreviewDefinition,
   PreviewDiscoveryDiagnostic,
+  PreviewEntryMeta,
   PreviewEntryStatus,
   PreviewRegistryItem,
 } from "../source/types";
@@ -26,7 +27,7 @@ type PreviewModule = Record<string, unknown> & {
 type PreviewAppProps = {
   entries: PreviewRegistryItem[];
   initialSelectedId?: string;
-  loadModule: (id: string) => Promise<PreviewModule>;
+  loadEntry: (id: string) => Promise<LoadedPreviewEntry>;
   projectName: string;
 };
 
@@ -44,6 +45,11 @@ type PreviewErrorBoundaryProps = {
 
 type PreviewErrorBoundaryState = {
   errorMessage: string | null;
+};
+
+type LoadedPreviewEntry = {
+  meta: PreviewEntryMeta;
+  module: PreviewModule;
 };
 
 class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, PreviewErrorBoundaryState> {
@@ -169,7 +175,7 @@ function collectRenderableModuleExports(
   const renderableExports: Array<{ exportName: string; value: unknown }> = [];
 
   for (const [name, value] of Object.entries(container)) {
-    if (name === "__esModule" || name === "preview") {
+    if (name === "__esModule" || name === "__previewEntryMeta" || name === "preview") {
       continue;
     }
 
@@ -257,6 +263,10 @@ function getRenderModeLabel(entry: PreviewRegistryItem) {
     return "preview.render";
   }
 
+  if (entry.render.mode === "preview-entry") {
+    return "preview.entry";
+  }
+
   if (entry.render.mode === "auto" && entry.render.exportName === "default") {
     return "default export";
   }
@@ -274,8 +284,6 @@ function getStatusLabel(status: PreviewEntryStatus) {
       return "ready";
     case "needs-harness":
       return "needs harness";
-    case "error":
-      return "error";
   }
 }
 
@@ -289,6 +297,7 @@ function getPrimaryDiscoveryDiagnostic(entry: PreviewRegistryItem) {
     PREVIEW_RENDER_MISSING: 1,
     NO_COMPONENT_EXPORTS: 2,
     TRANSITIVE_ANALYSIS_LIMITED: 3,
+    LEGACY_AUTO_RENDER_FALLBACK: 4,
   };
   const discoveryDiagnostics = entry.discoveryDiagnostics ?? [];
 
@@ -314,10 +323,10 @@ function getNeedsHarnessReasonBody(entry: PreviewRegistryItem) {
   if (entry.render.reason === "ambiguous-exports") {
     return `Automatic selection found multiple component exports: ${formatCandidateExports(
       entry.render.candidates ?? entry.candidateExportNames,
-    )}. Add a default export or \`preview.render\` to pick the intended preview target.`;
+    )}. Add \`preview.entry\` or \`preview.render\` to pick the intended preview target.`;
   }
 
-  return "No renderable exported component was found. Add a default export or `preview.render` for composed demos.";
+  return "No renderable exported component was found. Add `preview.entry` or `preview.render` for composed demos.";
 }
 
 function getEntryEmptyState(entry: PreviewRegistryItem) {
@@ -329,7 +338,7 @@ function getEntryEmptyState(entry: PreviewRegistryItem) {
       return {
         body:
           `${previewRenderMissingDiagnostic.message} ` +
-          (getNeedsHarnessReasonBody(entry) ?? "Add `preview.render` or expose one renderable component export."),
+          (getNeedsHarnessReasonBody(entry) ?? "Add `preview.entry` or `preview.render` to make the preview target explicit."),
         eyebrow: "Needs harness",
         title: "The preview export is incomplete.",
       };
@@ -354,17 +363,11 @@ function getEntryEmptyState(entry: PreviewRegistryItem) {
     return {
       body:
         primaryDiscoveryDiagnostic?.message ??
-        "Add a default export or `export const preview = { render: ... }` when the file needs explicit harnessing.",
+        "Add `export const preview = { entry: Component }` or `render: () => ...` when the file needs explicit harnessing.",
       eyebrow: "Needs harness",
       title: "This file is not directly previewable yet.",
     };
   }
-
-  return {
-    body: "Fix the unsupported patterns below, then save again.",
-    eyebrow: "Diagnostics",
-    title: "Transform diagnostics are blocking this preview.",
-  };
 }
 
 function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
@@ -381,7 +384,7 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
     return <Harness />;
   }
 
-  if (entry.render.mode === "auto") {
+  if (entry.render.mode === "preview-entry" || entry.render.mode === "auto") {
     const exportValue = readModuleExport(module, entry.render.exportName);
     // Preview source edits can briefly update the module before the registry full-reload lands.
     const fallbackExport = exportValue === undefined ? readSingleRenderableModuleExport(module) : undefined;
@@ -514,11 +517,12 @@ export function PreviewApp(props: PreviewAppProps) {
     getInitialSelectedId(props.entries, props.initialSelectedId),
   );
   const [isDebugMode, setIsDebugMode] = React.useState(false);
-  const [loadedModule, setLoadedModule] = React.useState<PreviewModule | undefined>();
+  const [loadedEntry, setLoadedEntry] = React.useState<LoadedPreviewEntry | undefined>();
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [renderError, setRenderError] = React.useState<string | null>(null);
   const selectedEntry = props.entries.find((entry) => entry.id === selectedId) ?? props.entries[0];
   const selectedEntryDiscoveryDiagnostics = selectedEntry?.discoveryDiagnostics ?? [];
+  const selectedEntryDiagnostics = loadedEntry?.meta.diagnostics ?? [];
   const emptyState = selectedEntry ? getEntryEmptyState(selectedEntry) : undefined;
 
   React.useEffect(() => {
@@ -533,22 +537,22 @@ export function PreviewApp(props: PreviewAppProps) {
 
   React.useEffect(() => {
     if (!selectedEntry || selectedEntry.status !== "ready") {
-      setLoadedModule(undefined);
+      setLoadedEntry(undefined);
       setLoadError(null);
       setRenderError(null);
       return;
     }
 
     let cancelled = false;
-    setLoadedModule(undefined);
+    setLoadedEntry(undefined);
     setLoadError(null);
     setRenderError(null);
 
     props
-      .loadModule(selectedEntry.id)
-      .then((module) => {
+      .loadEntry(selectedEntry.id)
+      .then((entryResult) => {
         if (!cancelled) {
-          setLoadedModule(module);
+          setLoadedEntry(entryResult);
         }
       })
       .catch((error: unknown) => {
@@ -610,20 +614,32 @@ export function PreviewApp(props: PreviewAppProps) {
                 <div className="header-meta">
                   <span>{selectedEntry.targetName}</span>
                   <span>{selectedEntry.relativePath}</span>
-                  <span>{selectedEntry.hasPreviewExport ? "Has preview export" : "Direct export render"}</span>
+                  <span>
+                    {selectedEntry.render.mode === "preview-render" || selectedEntry.render.mode === "preview-entry"
+                      ? "Explicit preview contract"
+                      : "Legacy export inference"}
+                  </span>
                 </div>
               </div>
             </header>
 
             <section className="preview-card">
               {selectedEntry.status === "ready" ? (
-                loadedModule ? (
-                  <PreviewCanvas
-                    entry={selectedEntry}
-                    isDebugMode={isDebugMode}
-                    module={loadedModule}
-                    onRenderError={setRenderError}
-                  />
+                loadedEntry ? (
+                  selectedEntryDiagnostics.length > 0 ? (
+                    <div className="preview-empty">
+                      <p className="preview-empty-eyebrow">Diagnostics</p>
+                      <h2>Transform diagnostics are blocking this preview.</h2>
+                      <p>Fix the unsupported patterns below, then save again.</p>
+                    </div>
+                  ) : (
+                    <PreviewCanvas
+                      entry={selectedEntry}
+                      isDebugMode={isDebugMode}
+                      module={loadedEntry.module}
+                      onRenderError={setRenderError}
+                    />
+                  )
                 ) : loadError ? (
                   <div className="preview-empty">
                     <p className="preview-empty-eyebrow">Load error</p>
@@ -643,13 +659,7 @@ export function PreviewApp(props: PreviewAppProps) {
                   <h2>{emptyState?.title}</h2>
                   <p>{emptyState?.body}</p>
                 </div>
-              ) : (
-                <div className="preview-empty">
-                  <p className="preview-empty-eyebrow">{emptyState?.eyebrow}</p>
-                  <h2>{emptyState?.title}</h2>
-                  <p>{emptyState?.body}</p>
-                </div>
-              )}
+              ) : null}
             </section>
 
             <section className="diagnostics-card">
@@ -659,20 +669,20 @@ export function PreviewApp(props: PreviewAppProps) {
                   <h3>Source analysis</h3>
                 </div>
                 <div className="diagnostics-summary">
-                  <span>{selectedEntry.diagnostics.length} blocking issue(s)</span>
+                  <span>{selectedEntryDiagnostics.length} blocking issue(s)</span>
                   <span>{selectedEntryDiscoveryDiagnostics.length} discover note(s)</span>
                   {renderError ? <span>render error</span> : undefined}
                   {loadError ? <span>load error</span> : undefined}
                 </div>
               </div>
-              {selectedEntry.diagnostics.length === 0 &&
+              {selectedEntryDiagnostics.length === 0 &&
               selectedEntryDiscoveryDiagnostics.length === 0 &&
               !renderError &&
               !loadError ? (
                 <p className="diagnostics-empty">No diagnostics for this entry.</p>
               ) : (
                 <div className="diagnostics-list">
-                  {selectedEntry.diagnostics.map((diagnostic) => (
+                  {selectedEntryDiagnostics.map((diagnostic) => (
                     <article
                       className="diagnostic-item"
                       key={`${diagnostic.relativeFile}:${diagnostic.line}:${diagnostic.column}:${diagnostic.code}`}

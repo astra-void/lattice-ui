@@ -67,7 +67,8 @@ function renderHostText(text: string | undefined) {
 }
 
 export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, diagnostics, nodeId } = useHostLayout("frame", props);
+  const { computed, diagnostics, elementRef, nodeId } = useHostLayout("frame", props);
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLDivElement>, elementRef as React.Ref<HTMLDivElement>);
   const prepared = prepareResolvedHost(
     props,
     resolvePreviewDomProps(props, {
@@ -81,7 +82,7 @@ export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forw
   return (
     <div
       {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
-      ref={forwardedRef as React.Ref<HTMLDivElement>}
+      ref={mergedRef}
     >
       {renderHostText(prepared.text)}
       {withNodeParent(nodeId, computed, prepared.children)}
@@ -91,9 +92,9 @@ export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forw
 Frame.displayName = "PreviewFrame";
 
 export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, diagnostics, nodeId } = useHostLayout("textbutton", props);
-  const innerRef = React.useRef<HTMLButtonElement | null>(null);
-  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLButtonElement>, innerRef);
+  const { computed, diagnostics, elementRef, nodeId } = useHostLayout("textbutton", props);
+  const innerRef = elementRef as React.RefObject<HTMLButtonElement | null>;
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLButtonElement>, innerRef as React.Ref<HTMLButtonElement>);
   const prepared = prepareResolvedHost(
     props,
     resolvePreviewDomProps(props, {
@@ -139,7 +140,8 @@ export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props,
 TextButton.displayName = "PreviewTextButton";
 
 export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, diagnostics, nodeId } = useHostLayout("screengui", props);
+  const { computed, diagnostics, elementRef, nodeId } = useHostLayout("screengui", props);
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLDivElement>, elementRef as React.Ref<HTMLDivElement>);
   const prepared = prepareResolvedHost(
     props,
     resolvePreviewDomProps(props, {
@@ -153,7 +155,7 @@ export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
   return (
     <div
       {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
-      ref={forwardedRef as React.Ref<HTMLDivElement>}
+      ref={mergedRef}
     >
       {withNodeParent(nodeId, computed, prepared.children)}
     </div>
@@ -162,9 +164,9 @@ export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
 ScreenGui.displayName = "PreviewScreenGui";
 
 export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, diagnostics, nodeId } = useHostLayout("textlabel", props);
-  const innerRef = React.useRef<HTMLDivElement | null>(null);
-  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLDivElement>, innerRef);
+  const { computed, diagnostics, elementRef, nodeId } = useHostLayout("textlabel", props);
+  const innerRef = elementRef as React.RefObject<HTMLDivElement | null>;
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLDivElement>, innerRef as React.Ref<HTMLDivElement>);
   const prepared = prepareResolvedHost(
     props,
     resolvePreviewDomProps(props, {
@@ -205,9 +207,9 @@ export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, 
 TextLabel.displayName = "PreviewTextLabel";
 
 export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, diagnostics, nodeId } = useHostLayout("textbox", props);
-  const innerRef = React.useRef<HTMLInputElement | null>(null);
-  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLInputElement>, innerRef);
+  const { computed, diagnostics, elementRef, nodeId } = useHostLayout("textbox", props);
+  const innerRef = elementRef as React.RefObject<HTMLInputElement | null>;
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLInputElement>, innerRef as React.Ref<HTMLInputElement>);
   const prepared = prepareResolvedHost(
     props,
     resolvePreviewDomProps(props, {
@@ -251,7 +253,8 @@ export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, fo
 TextBox.displayName = "PreviewTextBox";
 
 export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, diagnostics, nodeId } = useHostLayout("imagelabel", props);
+  const { computed, diagnostics, elementRef, nodeId } = useHostLayout("imagelabel", props);
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLImageElement>, elementRef as React.Ref<HTMLImageElement>);
   const prepared = prepareResolvedHost(
     props,
     resolvePreviewDomProps(props, {
@@ -266,7 +269,7 @@ export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props,
     <img
       {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
       alt=""
-      ref={forwardedRef as React.Ref<HTMLImageElement>}
+      ref={mergedRef}
       src={typeof prepared.image === "string" ? prepared.image : undefined}
     />
   );
@@ -274,7 +277,8 @@ export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props,
 ImageLabel.displayName = "PreviewImageLabel";
 
 export const ScrollingFrame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-  const { computed, diagnostics, nodeId } = useHostLayout("scrollingframe", props);
+  const { computed, diagnostics, elementRef, nodeId } = useHostLayout("scrollingframe", props);
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLDivElement>, elementRef as React.Ref<HTMLDivElement>);
   const prepared = prepareResolvedHost(
     props,
     resolvePreviewDomProps(props, {
@@ -288,7 +292,7 @@ export const ScrollingFrame = React.forwardRef<HTMLElement, PreviewDomProps>((pr
   return (
     <div
       {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
-      ref={forwardedRef as React.Ref<HTMLDivElement>}
+      ref={mergedRef}
     >
       {withNodeParent(nodeId, computed, prepared.children)}
     </div>

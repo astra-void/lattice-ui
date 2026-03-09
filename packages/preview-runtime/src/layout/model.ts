@@ -20,6 +20,11 @@ export type ComputedRect = {
   height: number;
 };
 
+export type MeasuredNodeSize = {
+  height: number;
+  width: number;
+};
+
 type SolverUDim = {
   scale: number;
   offset: number;
@@ -46,10 +51,13 @@ export type SolverNode = {
 };
 
 export type RegisteredNode = {
+  canMeasure?: boolean;
   id: string;
+  measure?: () => MeasuredNodeSize | null;
+  measurementVersion?: number;
   parentId?: string;
   nodeType: string;
-  size: SolverUDim2;
+  size?: SolverUDim2;
   position: SolverUDim2;
   anchorPoint: SolverVector2;
 };
@@ -61,6 +69,12 @@ export type RobloxLayoutNodeInput = {
   size?: UDim2Like;
   position?: UDim2Like;
   anchorPoint?: Vector2Like;
+};
+
+export type RobloxLayoutRegistrationInput = RobloxLayoutNodeInput & {
+  canMeasure?: boolean;
+  measure?: () => MeasuredNodeSize | null;
+  measurementVersion?: number;
 };
 
 export const SYNTHETIC_ROOT_ID = "__lattice_preview_root__";
@@ -86,24 +100,17 @@ function toSolverVector2(value: SerializedVector2): SolverVector2 {
   };
 }
 
-function createDefaultNodeSize(nodeType: string): SerializedUDim2 {
-  if (nodeType === "ScreenGui") {
-    return FULL_SIZE_UDIM2;
-  }
-
-  return ZERO_UDIM2;
-}
-
-export function adaptRobloxNodeInput(input: RobloxLayoutNodeInput, parentId: string | undefined): RegisteredNode {
+export function adaptRobloxNodeInput(input: RobloxLayoutRegistrationInput, parentId: string | undefined): RegisteredNode {
   return {
     anchorPoint: toSolverVector2(serializeVector2(input.anchorPoint, ZERO_VECTOR2)),
+    canMeasure: input.canMeasure,
     id: normalizePreviewNodeId(input.id) ?? input.id,
+    measure: input.measure,
+    measurementVersion: input.measurementVersion,
     nodeType: input.nodeType,
     parentId: normalizePreviewNodeId(parentId),
     position: toSolverUDim2(serializeUDim2(input.position, ZERO_UDIM2) ?? ZERO_UDIM2),
-    size: toSolverUDim2(
-      serializeUDim2(input.size, createDefaultNodeSize(input.nodeType)) ?? createDefaultNodeSize(input.nodeType),
-    ),
+    size: input.size ? toSolverUDim2(serializeUDim2(input.size, ZERO_UDIM2) ?? ZERO_UDIM2) : undefined,
   };
 }
 
@@ -140,13 +147,15 @@ export function normalizeLayoutMap(raw: unknown): Record<string, ComputedRect> {
 
 export function areNodesEqual(a: RegisteredNode, b: RegisteredNode): boolean {
   return (
+    a.canMeasure === b.canMeasure &&
     a.id === b.id &&
     a.parentId === b.parentId &&
     a.nodeType === b.nodeType &&
-    a.size.x.scale === b.size.x.scale &&
-    a.size.x.offset === b.size.x.offset &&
-    a.size.y.scale === b.size.y.scale &&
-    a.size.y.offset === b.size.y.offset &&
+    (a.measurementVersion ?? 0) === (b.measurementVersion ?? 0) &&
+    (a.size?.x.scale ?? 0) === (b.size?.x.scale ?? 0) &&
+    (a.size?.x.offset ?? 0) === (b.size?.x.offset ?? 0) &&
+    (a.size?.y.scale ?? 0) === (b.size?.y.scale ?? 0) &&
+    (a.size?.y.offset ?? 0) === (b.size?.y.offset ?? 0) &&
     a.position.x.scale === b.position.x.scale &&
     a.position.x.offset === b.position.x.offset &&
     a.position.y.scale === b.position.y.scale &&
@@ -186,73 +195,14 @@ export function computeRectFromParentRect(
   node: Pick<RegisteredNode, "anchorPoint" | "position" | "size">,
   parentRect: ComputedRect,
 ): ComputedRect {
-  const width = resolveAxis(node.size.x, parentRect.width);
-  const height = resolveAxis(node.size.y, parentRect.height);
+  const nodeSize = node.size ?? toSolverUDim2(ZERO_UDIM2);
+  const width = resolveAxis(nodeSize.x, parentRect.width);
+  const height = resolveAxis(nodeSize.y, parentRect.height);
 
   return {
     height,
     width,
     x: parentRect.x + resolveAxis(node.position.x, parentRect.width) - node.anchorPoint.x * width,
     y: parentRect.y + resolveAxis(node.position.y, parentRect.height) - node.anchorPoint.y * height,
-  };
-}
-
-export function buildSemanticTree(nodes: Map<string, RegisteredNode>): SolverNode {
-  const byParentId = new Map<string, RegisteredNode[]>();
-  const roots: RegisteredNode[] = [];
-
-  for (const node of nodes.values()) {
-    if (node.parentId && nodes.has(node.parentId)) {
-      const children = byParentId.get(node.parentId);
-      if (children) {
-        children.push(node);
-      } else {
-        byParentId.set(node.parentId, [node]);
-      }
-      continue;
-    }
-
-    roots.push(node);
-  }
-
-  const stack = new Set<string>();
-  const buildNode = (node: RegisteredNode, isRoot = false): SolverNode => {
-    const normalizedNode = isRoot ? normalizeRootScreenGuiNode(node) : node;
-
-    if (stack.has(normalizedNode.id)) {
-      return {
-        Id: normalizedNode.id,
-        anchor_point: normalizedNode.anchorPoint,
-        children: [],
-        id: normalizedNode.id,
-        node_type: normalizedNode.nodeType,
-        position: normalizedNode.position,
-        size: normalizedNode.size,
-      };
-    }
-
-    stack.add(normalizedNode.id);
-    const children = (byParentId.get(normalizedNode.id) ?? []).map((child) => buildNode(child));
-    stack.delete(normalizedNode.id);
-
-    return {
-      Id: normalizedNode.id,
-      anchor_point: normalizedNode.anchorPoint,
-      children,
-      id: normalizedNode.id,
-      node_type: normalizedNode.nodeType,
-      position: normalizedNode.position,
-      size: normalizedNode.size,
-    };
-  };
-
-  return {
-    Id: SYNTHETIC_ROOT_ID,
-    anchor_point: toSolverVector2(ZERO_VECTOR2),
-    children: roots.map((root) => buildNode(root, true)),
-    id: SYNTHETIC_ROOT_ID,
-    node_type: "Frame",
-    position: toSolverUDim2(ZERO_UDIM2),
-    size: toSolverUDim2(FULL_SIZE_UDIM2),
   };
 }

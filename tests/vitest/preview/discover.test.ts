@@ -62,7 +62,6 @@ describe("discoverPreviewProject", () => {
       autoRenderCandidate: "CheckboxRoot",
       autoRenderReason: "basename-match",
       candidateExportNames: ["CheckboxRoot"],
-      discoveryDiagnostics: [],
       status: "ready",
       render: {
         exportName: "CheckboxRoot",
@@ -95,11 +94,16 @@ describe("discoverPreviewProject", () => {
       "AMBIGUOUS_COMPONENT_EXPORTS",
     );
 
-    expect(brokenEntry?.status).toBe("error");
-    expect(brokenEntry?.diagnostics.map((diagnostic) => diagnostic.code)).toContain("UNSUPPORTED_HOST_ELEMENT");
-    expect(nestedEntry?.status).toBe("error");
-    expect(nestedEntry?.diagnostics.map((diagnostic) => diagnostic.relativeFile)).toContain(
-      "src/support/nestedLabel.ts",
+    expect(checkboxEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "LEGACY_AUTO_RENDER_FALLBACK",
+    );
+    expect(brokenEntry?.status).toBe("ready");
+    expect(brokenEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "LEGACY_AUTO_RENDER_FALLBACK",
+    );
+    expect(nestedEntry?.status).toBe("ready");
+    expect(nestedEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "LEGACY_AUTO_RENDER_FALLBACK",
     );
   });
 
@@ -196,6 +200,44 @@ describe("discoverPreviewProject", () => {
         mode: "auto",
         exportName: "SoleFixture",
         selectedBy: "sole-export",
+      },
+    });
+  });
+
+  it("resolves preview.entry against exported local symbols, including aliased exports", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "src/ExplicitEntry.tsx": `
+        function Showcase() {
+          return <frame />;
+        }
+
+        export { Showcase as ExplicitCard };
+
+        export const preview = {
+          entry: Showcase,
+          props: {
+            checked: true,
+          },
+          title: "Explicit Card",
+        };
+      `,
+    });
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/explicit-entry",
+      packageRoot,
+      sourceRoot,
+    });
+
+    expect(project.entries.find((entry) => entry.relativePath === "ExplicitEntry.tsx")).toMatchObject({
+      discoveryDiagnostics: [],
+      hasPreviewExport: true,
+      status: "ready",
+      title: "Explicit Card",
+      render: {
+        mode: "preview-entry",
+        exportName: "ExplicitCard",
+        usesPreviewProps: true,
       },
     });
   });
@@ -298,9 +340,10 @@ describe("discoverPreviewProject", () => {
 
     const aliasEntry = project.entries.find((entry) => entry.relativePath === "AliasNested.tsx");
 
-    expect(aliasEntry?.status).toBe("error");
-    expect(aliasEntry?.diagnostics.map((diagnostic) => diagnostic.code)).toContain("UNSUPPORTED_HOST_ELEMENT");
-    expect(aliasEntry?.diagnostics.map((diagnostic) => diagnostic.relativeFile)).toContain("src/support/unsupported.tsx");
+    expect(aliasEntry?.status).toBe("ready");
+    expect(aliasEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "LEGACY_AUTO_RENDER_FALLBACK",
+    ]);
   });
 
   it("reports a limitation when aliased imports resolve outside the source root", () => {
@@ -336,11 +379,13 @@ describe("discoverPreviewProject", () => {
     const aliasOutsideEntry = project.entries.find((entry) => entry.relativePath === "AliasOutside.tsx");
 
     expect(aliasOutsideEntry?.status).toBe("ready");
-    expect(aliasOutsideEntry?.diagnostics).toEqual([]);
     expect(aliasOutsideEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toContain(
       "TRANSITIVE_ANALYSIS_LIMITED",
     );
-    expect(aliasOutsideEntry?.discoveryDiagnostics[0]?.message).toContain("@shared/label");
+    expect(
+      aliasOutsideEntry?.discoveryDiagnostics.find((diagnostic) => diagnostic.code === "TRANSITIVE_ANALYSIS_LIMITED")
+        ?.message,
+    ).toContain("@shared/label");
   });
 
   it("allows context-dependent subcomponents to auto-render without a preview export", () => {

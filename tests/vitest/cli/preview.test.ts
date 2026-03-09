@@ -22,10 +22,24 @@ function buildCliPackage() {
   });
 }
 
+function readJsonFile<T>(filePath: string) {
+  return JSON.parse(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, "")) as T;
+}
+
 function readPreviewPackageJson() {
-  return JSON.parse(fs.readFileSync(path.join(workspaceRoot, "packages/preview/package.json"), "utf8")) as {
+  return readJsonFile<{
     exports?: Record<string, unknown>;
-  };
+  }>(path.join(workspaceRoot, "packages/preview/package.json"));
+}
+
+function readPreviewRuntimePackageJson() {
+  return readJsonFile<{
+    files?: string[];
+  }>(path.join(workspaceRoot, "packages/preview-runtime/package.json"));
+}
+
+function readBuiltPreviewShellBundle() {
+  return fs.readFileSync(path.join(workspaceRoot, "packages/preview/dist/shell/main.js"), "utf8");
 }
 
 function readCommandFailure(command: string[], cwd: string) {
@@ -153,12 +167,27 @@ describe("preview command", () => {
     });
   });
 
+  it("builds the preview shell without bundling the preview-runtime CommonJS dist", () => {
+    buildPreviewPackage();
+
+    const bundle = readBuiltPreviewShellBundle();
+
+    expect(bundle).not.toContain("../preview-runtime/dist/index.js");
+    expect(bundle).not.toContain('Dynamic require of "react" is not supported');
+  });
+
   it("drops public ui and build subpath exports from the preview package", () => {
     const packageJson = readPreviewPackageJson();
 
     expect(packageJson.exports).not.toHaveProperty("./ui");
     expect(packageJson.exports).not.toHaveProperty("./ui/styles.css");
     expect(packageJson.exports).not.toHaveProperty("./build");
+  });
+
+  it("publishes preview-runtime source files for browser-safe preview aliasing", () => {
+    const packageJson = readPreviewRuntimePackageJson();
+
+    expect(packageJson.files).toContain("src");
   });
 
   it("keeps the built cli dist on the removed-subcommand migration path", () => {

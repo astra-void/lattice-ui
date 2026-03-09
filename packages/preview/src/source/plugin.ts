@@ -1,14 +1,11 @@
 ﻿import fs from "node:fs";
 import path from "node:path";
-import { compile_tsx, transformPreviewSource } from "@lattice-ui/compiler";
-import ts from "typescript";
-import { createErrorWithCause } from "../errorWithCause";
-import { discoverPreviewWorkspace } from "./discover";
-import { isFilePathUnderRoot, stripFileIdDecorations } from "./pathUtils";
+import { stripFileIdDecorations } from "./pathUtils";
 import {
   createUnresolvedPackageMockResolvePlugin,
   createUnresolvedPackageMockTransformPlugin,
 } from "./robloxPackageMockPlugin";
+import { PreviewSourceIndex } from "./sourceIndex";
 import type { PreviewSourceTarget } from "./types";
 import type { PreviewDevServer, PreviewPlugin, PreviewPluginOption } from "./viteTypes";
 
@@ -17,8 +14,7 @@ const RESOLVED_REGISTRY_MODULE_ID = `\0${REGISTRY_MODULE_ID}`;
 const RUNTIME_MODULE_ID = "virtual:lattice-preview-runtime";
 const RESOLVED_RUNTIME_MODULE_ID = `\0${RUNTIME_MODULE_ID}`;
 const ENTRY_MODULE_ID_PREFIX = "virtual:lattice-preview-entry:";
-const RBX_STYLE_HELPER_NAME = "__rbxStyle";
-const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/preview-runtime";\n`;
+const RESOLVED_ENTRY_MODULE_ID_PREFIX = `\0${ENTRY_MODULE_ID_PREFIX}`;
 
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
@@ -52,38 +48,8 @@ function resolveMockEntryPath() {
   return candidate.split(path.sep).join("/");
 }
 
-function stripTypeSyntax(code: string, filePath: string) {
-  return ts.transpileModule(code, {
-    compilerOptions: {
-      jsx: ts.JsxEmit.Preserve,
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ESNext,
-      verbatimModuleSyntax: true,
-    },
-    fileName: filePath,
-  }).outputText;
-}
-
-function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<typeof transformPreviewSource>[1]) {
-  try {
-    return transformPreviewSource(sourceText, options);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw createErrorWithCause(`Failed to parse preview source ${options.filePath}: ${detail}`, error);
-  }
-}
-
-function findTargetForFilePath(filePath: string, targets: PreviewSourceTarget[]) {
-  const extension = path.extname(stripFileIdDecorations(filePath)).toLowerCase();
-  if (extension !== ".ts" && extension !== ".tsx") {
-    return undefined;
-  }
-
-  return targets.find((target) => isFilePathUnderRoot(target.sourceRoot, filePath));
-}
-
-function renderRegistryModule(options: CreatePreviewVitePluginOptions) {
-  const workspace = discoverPreviewWorkspace(options);
+function renderRegistryModule(sourceIndex: PreviewSourceIndex) {
+  const workspace = sourceIndex.getWorkspace();
   const importers = workspace.entries
     .map(
       (entry) =>
@@ -104,15 +70,30 @@ ${importers}
   };
 }
 
+function renderEntryModule(sourceIndex: PreviewSourceIndex, entryId: string) {
+  const entry = sourceIndex.getWorkspace().entries.find((candidate) => candidate.id === entryId);
+  if (!entry) {
+    throw new Error(`No preview entry registered for \`${entryId}\`.`);
+  }
+
+  const meta = sourceIndex.getEntryMeta(entryId);
+  const sourceFilePath = entry.sourceFilePath.split(path.sep).join("/");
+
+  return `import * as __previewModule from ${JSON.stringify(sourceFilePath)};
+export * from ${JSON.stringify(sourceFilePath)};
+const __previewDefault = __previewModule.default;
+export default __previewDefault;
+export const __previewEntryMeta = ${JSON.stringify(meta, null, 2)};
+`;
+}
+
 export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions): PreviewPluginOption {
   const runtimeEntryPath = resolveRuntimeEntryPath();
   const mockEntryPath = resolveMockEntryPath();
-  let registry = renderRegistryModule(options);
+  const sourceIndex = new PreviewSourceIndex(options);
   let server: PreviewDevServer | undefined;
 
-  const refreshRegistry = (triggerReload: boolean) => {
-    registry = renderRegistryModule(options);
-
+  const invalidateVirtualModules = (filePath: string) => {
     if (!server) {
       return;
     }
@@ -122,9 +103,27 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
       server.moduleGraph.invalidateModule(registryModule);
     }
 
-    if (triggerReload) {
+    for (const entryId of sourceIndex.getImpactedEntryIds(filePath)) {
+      const entryModule = server.moduleGraph.getModuleById(
+        `${RESOLVED_ENTRY_MODULE_ID_PREFIX}${encodeURIComponent(entryId)}`,
+      );
+      if (entryModule) {
+        server.moduleGraph.invalidateModule(entryModule);
+      }
+    }
+  };
+
+  const refreshSourceIndex = (filePath: string) => {
+    const previousHash = sourceIndex.getWorkspaceHash();
+    invalidateVirtualModules(filePath);
+    sourceIndex.invalidateFile(filePath);
+    const nextHash = sourceIndex.getWorkspaceHash();
+
+    if (server && previousHash !== nextHash) {
       server.ws.send({ type: "full-reload" });
     }
+
+    return previousHash !== nextHash;
   };
 
   const previewPlugin: PreviewPlugin = {
@@ -133,32 +132,38 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     configureServer(configuredServer: PreviewDevServer) {
       server = configuredServer;
       configuredServer.watcher.on("add", (filePath: string) => {
-        if (findTargetForFilePath(filePath, options.targets)) {
-          refreshRegistry(true);
+        if (sourceIndex.findTargetForFilePath(filePath)) {
+          refreshSourceIndex(filePath);
         }
       });
       configuredServer.watcher.on("unlink", (filePath: string) => {
-        if (findTargetForFilePath(filePath, options.targets)) {
-          refreshRegistry(true);
+        if (sourceIndex.findTargetForFilePath(filePath)) {
+          refreshSourceIndex(filePath);
         }
       });
     },
     handleHotUpdate(context: { file: string }) {
-      if (findTargetForFilePath(context.file, options.targets)) {
-        refreshRegistry(true);
-        // Avoid rendering a mixed old-registry/new-module state before the forced reload completes.
-        return [];
+      if (sourceIndex.findTargetForFilePath(context.file)) {
+        if (refreshSourceIndex(context.file)) {
+          // Avoid rendering a mixed old-registry/new-module state before the forced reload completes.
+          return [];
+        }
       }
 
       return undefined;
     },
     load(id: string) {
       if (id === RESOLVED_REGISTRY_MODULE_ID) {
-        return registry.code;
+        return renderRegistryModule(sourceIndex).code;
       }
 
       if (id === RESOLVED_RUNTIME_MODULE_ID) {
         return `export * from ${JSON.stringify(resolveRuntimeEntryPath())};\n`;
+      }
+
+      if (id.startsWith(RESOLVED_ENTRY_MODULE_ID_PREFIX)) {
+        const entryId = decodeURIComponent(id.slice(RESOLVED_ENTRY_MODULE_ID_PREFIX.length));
+        return renderEntryModule(sourceIndex, entryId);
       }
 
       return undefined;
@@ -173,35 +178,27 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
       }
 
       if (id.startsWith(ENTRY_MODULE_ID_PREFIX)) {
-        const entryId = decodeURIComponent(id.slice(ENTRY_MODULE_ID_PREFIX.length));
-        const matchedEntry = registry.workspace.entries.find((entry) => entry.id === entryId);
-        return matchedEntry?.sourceFilePath;
+        return `${RESOLVED_ENTRY_MODULE_ID_PREFIX}${id.slice(ENTRY_MODULE_ID_PREFIX.length)}`;
       }
 
       return undefined;
     },
     transform(code: string, id: string) {
       const filePath = stripFileIdDecorations(id);
-      const target = findTargetForFilePath(filePath, options.targets);
+      const target = sourceIndex.findTargetForFilePath(filePath);
       if (!target) {
         return undefined;
       }
 
-      const transformed = transformPreviewSourceOrThrow(code, {
+      const transformed = sourceIndex.getTransformedModule({
+        code,
         filePath,
         runtimeModule: runtimeEntryPath,
-        target: target.name,
+        target,
       });
 
-      let transformedCode = compile_tsx(transformed.code);
-      transformedCode = stripTypeSyntax(transformedCode, filePath);
-
-      if (transformedCode.includes(RBX_STYLE_HELPER_NAME) && !transformedCode.includes(RBX_STYLE_IMPORT.trim())) {
-        transformedCode = `${RBX_STYLE_IMPORT}${transformedCode}`;
-      }
-
       return {
-        code: transformedCode,
+        code: transformed.code,
         map: null,
       };
     },

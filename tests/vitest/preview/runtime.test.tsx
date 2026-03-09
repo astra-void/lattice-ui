@@ -336,6 +336,59 @@ describe("preview runtime host mapping", () => {
       expect(label.style.height).toBe("40px");
     });
   });
+
+  it("uses measurable host bounds in provider fallback layout when size is omitted", async () => {
+    layoutEngineMocks.init.mockRejectedValueOnce(new Error("init failed"));
+
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        if (this.dataset.previewHost === "textlabel") {
+          return {
+            bottom: 24,
+            height: 24,
+            left: 0,
+            right: 88,
+            toJSON: () => ({}),
+            top: 0,
+            width: 88,
+            x: 0,
+            y: 0,
+          } as DOMRect;
+        }
+
+        return {
+          bottom: 0,
+          height: 0,
+          left: 0,
+          right: 0,
+          toJSON: () => ({}),
+          top: 0,
+          width: 0,
+          x: 0,
+          y: 0,
+        } as DOMRect;
+      },
+    );
+
+    try {
+      render(
+        <LayoutProvider viewportHeight={480} viewportWidth={640}>
+          <ScreenGui>
+            <TextLabel Text="Measured fallback" />
+          </ScreenGui>
+        </LayoutProvider>,
+      );
+
+      const label = document.querySelector('[data-preview-host="textlabel"]') as HTMLElement;
+
+      await waitFor(() => {
+        expect(label.style.width).toBe("88px");
+        expect(label.style.height).toBe("24px");
+      });
+    } finally {
+      getBoundingClientRectSpy.mockRestore();
+    }
+  });
   it("serializes frame defaults and textlabel layout props before calling Wasm", async () => {
     layoutEngineMocks.computeLayout.mockImplementation((tree, viewportWidth, viewportHeight) => {
       expect(viewportWidth).toBe(800);

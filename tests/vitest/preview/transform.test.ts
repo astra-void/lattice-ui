@@ -190,4 +190,98 @@ describe("buildPreviewModules", () => {
     );
     expect(result.writtenFiles.some((filePath) => filePath.endsWith(".d.ts"))).toBe(false);
   });
+
+  it("rejects unsafe target names and overlapping output directories", async () => {
+    const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-unsafe-"));
+    const sourceRoot = path.join(fixtureRoot, "src");
+
+    fs.mkdirSync(sourceRoot, { recursive: true });
+    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function UnsafeFixture() { return <frame />; }\n", "utf8");
+
+    await expect(
+      buildPreviewModules({
+        targets: [
+          {
+            name: "../escape",
+            sourceRoot,
+          },
+        ],
+        outDir: path.join(fixtureRoot, "generated"),
+      }),
+    ).rejects.toThrow(/safe path segment/i);
+
+    await expect(
+      buildPreviewModules({
+        targets: [
+          {
+            name: "unsafe",
+            sourceRoot,
+          },
+        ],
+        outDir: sourceRoot,
+      }),
+    ).rejects.toThrow(/overlaps the source tree/i);
+  });
+
+  it("skips unchanged files and removes stale manifest-owned outputs incrementally", async () => {
+    const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-incremental-"));
+    const sourceRoot = path.join(fixtureRoot, "src");
+    const outDir = path.join(fixtureRoot, "generated");
+
+    fs.mkdirSync(sourceRoot, { recursive: true });
+    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function RootFixture() { return <frame />; }\n", "utf8");
+    fs.writeFileSync(path.join(sourceRoot, "Extra.tsx"), "export function ExtraFixture() { return <frame />; }\n", "utf8");
+
+    const initialResult = await buildPreviewModules({
+      targets: [
+        {
+          name: "incremental",
+          sourceRoot,
+        },
+      ],
+      outDir,
+    });
+
+    const generatedExtra = path.join(outDir, "incremental/Extra.tsx");
+    const generatedIndex = path.join(outDir, "incremental/index.tsx");
+    expect(initialResult.writtenFiles).toEqual(
+      expect.arrayContaining([generatedExtra, generatedIndex]),
+    );
+    expect(fs.existsSync(path.join(outDir, ".lattice-preview-manifest.json"))).toBe(true);
+
+    const secondResult = await buildPreviewModules({
+      targets: [
+        {
+          name: "incremental",
+          sourceRoot,
+        },
+      ],
+      outDir,
+    });
+    expect(secondResult.writtenFiles).toEqual([]);
+
+    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function RootFixture() { return <textlabel Text=\"updated\" />; }\n", "utf8");
+    const thirdResult = await buildPreviewModules({
+      targets: [
+        {
+          name: "incremental",
+          sourceRoot,
+        },
+      ],
+      outDir,
+    });
+    expect(thirdResult.writtenFiles).toEqual([generatedIndex]);
+
+    fs.rmSync(path.join(sourceRoot, "Extra.tsx"));
+    await buildPreviewModules({
+      targets: [
+        {
+          name: "incremental",
+          sourceRoot,
+        },
+      ],
+      outDir,
+    });
+    expect(fs.existsSync(generatedExtra)).toBe(false);
+  });
 });

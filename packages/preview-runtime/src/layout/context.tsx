@@ -8,8 +8,10 @@ import {
   createViewportRect,
   normalizeRootScreenGuiNode,
   type RegisteredNode,
+  type RobloxLayoutRegistrationInput,
   type RobloxLayoutNodeInput,
 } from "./model";
+import { createLayoutTreeState, removeLayoutTreeNode, upsertLayoutTreeNode, type LayoutTreeState } from "./tree";
 import {
   areViewportsEqual,
   createViewportSize,
@@ -19,9 +21,9 @@ import {
   measureElementViewport,
   type ViewportSize,
 } from "./viewport";
-import { computeRegisteredLayout, initializeLayoutEngine } from "./wasm";
+import { computeFallbackLayout, computeRegisteredLayout, initializeLayoutEngine } from "./wasm";
 
-export type { ComputedRect, RobloxLayoutNodeInput } from "./model";
+export type { ComputedRect, RobloxLayoutNodeInput, RobloxLayoutRegistrationInput } from "./model";
 
 export type LayoutProviderProps = {
   children: React.ReactNode;
@@ -185,9 +187,9 @@ export function LayoutProvider(props: LayoutProviderProps) {
 
   const [isReady, setIsReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [registry, setRegistry] = React.useState<Map<string, RegisteredNode>>(() => new Map());
-  const registryRef = React.useRef(registry);
-  const [settledRegistryVersion, setSettledRegistryVersion] = React.useState(0);
+  const [treeState, setTreeState] = React.useState<LayoutTreeState>(() => createLayoutTreeState());
+  const treeStateRef = React.useRef(treeState);
+  const [settledTreeVersion, setSettledTreeVersion] = React.useState(0);
   const [computedRects, setComputedRects] = React.useState<Record<string, ComputedRect>>({});
   const containerStyle = React.useMemo<React.CSSProperties>(
     () => ({
@@ -224,65 +226,51 @@ export function LayoutProvider(props: LayoutProviderProps) {
   }, []);
 
   const registerNode = React.useCallback((node: RegisteredNode) => {
-    setRegistry((previous) => {
-      const existing = previous.get(node.id);
+    setTreeState((previous) => {
+      const existing = previous.nodes.get(node.id)?.node;
       if (existing && areNodesEqual(existing, node)) {
         return previous;
       }
 
-      const next = new Map(previous);
-      next.set(node.id, node);
-      return next;
+      return upsertLayoutTreeNode(previous, node);
     });
   }, []);
 
   const unregisterNode = React.useCallback((nodeId: string) => {
-    setRegistry((previous) => {
-      if (!previous.has(nodeId)) {
+    setTreeState((previous) => {
+      if (!previous.nodes.has(nodeId)) {
         return previous;
       }
 
-      const next = new Map(previous);
-      next.delete(nodeId);
-      return next;
-    });
-
-    setComputedRects((previous) => {
-      if (!(nodeId in previous)) {
-        return previous;
-      }
-
-      const next = { ...previous };
-      delete next[nodeId];
-      return next;
+      return removeLayoutTreeNode(previous, nodeId);
     });
   }, []);
 
   React.useEffect(() => {
-    registryRef.current = registry;
-  }, [registry]);
+    treeStateRef.current = treeState;
+  }, [treeState]);
 
   React.useEffect(() => {
     let cancelled = false;
 
     scheduleMicrotask(() => {
       if (!cancelled) {
-        setSettledRegistryVersion((previous) => previous + 1);
+        setSettledTreeVersion((previous) => previous + 1);
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [registry]);
+  }, [treeState]);
 
   React.useEffect(() => {
-    if (!isReady || !viewportReady) {
+    if (!viewportReady) {
       setComputedRects({});
       return;
     }
 
-    if (registryRef.current.size === 0) {
+    if (treeStateRef.current.nodes.size === 0) {
       setComputedRects({});
       setError(null);
       return;
@@ -291,10 +279,15 @@ export function LayoutProvider(props: LayoutProviderProps) {
     const timeoutId = globalThis.setTimeout(
       () => {
         try {
-          setComputedRects(computeRegisteredLayout(registryRef.current, viewportWidth, viewportHeight));
-          setError(null);
+          if (isReady) {
+            setComputedRects(computeRegisteredLayout(treeStateRef.current, viewportWidth, viewportHeight));
+            setError(null);
+            return;
+          }
+
+          setComputedRects(computeFallbackLayout(treeStateRef.current, viewportWidth, viewportHeight));
         } catch (nextError) {
-          setComputedRects({});
+          setComputedRects(computeFallbackLayout(treeStateRef.current, viewportWidth, viewportHeight));
           setError(`Wasm layout failed: ${toErrorMessage(nextError)}`);
         }
       },
@@ -304,7 +297,7 @@ export function LayoutProvider(props: LayoutProviderProps) {
     return () => {
       globalThis.clearTimeout(timeoutId);
     };
-  }, [debounceMs, isReady, settledRegistryVersion, viewportHeight, viewportReady, viewportWidth]);
+  }, [debounceMs, isReady, settledTreeVersion, viewportHeight, viewportReady, viewportWidth]);
 
   const getRect = React.useCallback(
     (nodeId: string) => {
@@ -381,7 +374,7 @@ export function useLayoutDebugState() {
   );
 }
 
-export function useRobloxLayout(input: RobloxLayoutNodeInput): ComputedRect | null {
+export function useRobloxLayout(input: RobloxLayoutRegistrationInput): ComputedRect | null {
   const context = React.useContext(LayoutContext);
   const inheritedParentId = React.useContext(ParentNodeContext);
   const inheritedParentRect = React.useContext(ParentRectContext);
@@ -406,7 +399,7 @@ export function useRobloxLayout(input: RobloxLayoutNodeInput): ComputedRect | nu
 
   const registerNode = context?.registerNode;
   const unregisterNode = context?.unregisterNode;
-  const computed = context && context.isReady && !context.error ? context.getRect(normalizedNode.id) : null;
+  const computed = context ? context.getRect(normalizedNode.id) : null;
 
   React.useLayoutEffect(() => {
     if (!registerNode || !unregisterNode) {
