@@ -1,4 +1,5 @@
 import robloxMock from "../source/robloxEnv";
+import { installPreviewRobloxPolyfills } from "./robloxPolyfills";
 
 const robloxMockRecord = robloxMock as unknown as Record<PropertyKey, unknown>;
 
@@ -137,6 +138,7 @@ function installMissingGlobalFallback(target: object) {
 
 export function installPreviewBrowserGlobals() {
   const globalRecord = globalThis as PreviewGlobalRecord;
+  installPreviewRobloxPolyfills();
   installMissingGlobalFallback(globalThis as object);
 
   if (globalRecord.Enum === undefined) {

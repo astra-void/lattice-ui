@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutProvider } from "../runtime";
+import { AutoMockProvider, LayoutProvider } from "../runtime";
 import {
   areViewportsEqual,
   createViewportSize,
@@ -109,20 +109,90 @@ function readPreviewDefinition(module: PreviewModule) {
   return preview;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function readNestedExport(container: unknown, exportName: string, visited = new Set<unknown>()): unknown {
+  if (!isRecord(container) || visited.has(container)) {
+    return undefined;
+  }
+
+  visited.add(container);
+
+  if (exportName in container) {
+    return container[exportName];
+  }
+
+  if (!("default" in container)) {
+    return undefined;
+  }
+
+  const defaultExport = container.default;
+  if (typeof defaultExport === "function" && defaultExport.name === exportName) {
+    return defaultExport;
+  }
+
+  return readNestedExport(defaultExport, exportName, visited);
+}
+
 function readModuleExport(module: PreviewModule, exportName: "default" | string) {
   if (exportName === "default") {
     return module.default;
   }
 
-  if (exportName in module) {
-    return module[exportName];
+  return readNestedExport(module, exportName);
+}
+
+function isRenderableComponentExport(value: unknown): boolean {
+  return typeof value === "function" || (isRecord(value) && "$$typeof" in value);
+}
+
+function describeValue(value: unknown) {
+  if (value === undefined) {
+    return "undefined";
   }
 
-  if (module.default && typeof module.default === "object" && exportName in module.default) {
-    return (module.default as Record<string, unknown>)[exportName];
+  if (value === null) {
+    return "null";
   }
 
-  return undefined;
+  if (typeof value === "function") {
+    return value.name ? `function ${value.name}` : "function";
+  }
+
+  if (Array.isArray(value)) {
+    return "array";
+  }
+
+  if (isRecord(value)) {
+    const keys = Object.keys(value).sort();
+    return keys.length > 0 ? `object with keys [${keys.join(", ")}]` : "object";
+  }
+
+  return typeof value;
+}
+
+function describeModuleExports(module: PreviewModule) {
+  const segments: string[] = [];
+  const visited = new Set<unknown>();
+  let current: unknown = module;
+  let label = "module";
+
+  while (isRecord(current) && !visited.has(current)) {
+    visited.add(current);
+    const keys = Object.keys(current).sort();
+    segments.push(`${label}: [${keys.join(", ") || "(none)"}]`);
+
+    if (!("default" in current)) {
+      break;
+    }
+
+    current = current.default;
+    label = `${label}.default`;
+  }
+
+  return segments.join("; ");
 }
 
 function getRenderModeLabel(entry: PreviewRegistryItem) {
@@ -157,14 +227,17 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
 
   if (entry.render.mode === "auto") {
     const exportValue = readModuleExport(module, entry.render.exportName);
-    if (typeof exportValue !== "function") {
-      throw new Error(`Expected \`${entry.render.exportName}\` to be a component export.`);
+    if (!isRenderableComponentExport(exportValue)) {
+      throw new Error(
+        `Expected \`${entry.render.exportName}\` to be a component export, received ${describeValue(exportValue)}. ` +
+          `Available exports: ${describeModuleExports(module)}.`,
+      );
     }
 
     const props =
       entry.render.usesPreviewProps && preview?.props && typeof preview.props === "object" ? preview.props : undefined;
 
-    return React.createElement(exportValue as React.ComponentType<Record<string, unknown>>, props);
+    return <AutoMockProvider component={exportValue as React.ComponentType<Record<string, unknown>>} props={props} />;
   }
 
   return null;

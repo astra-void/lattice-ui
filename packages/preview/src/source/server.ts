@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createAutoMockPropsPlugin } from "./autoMockPlugin";
 import { createPreviewVitePlugin } from "./plugin";
 import type { PreviewSourceTarget } from "./types";
 import type { ReactPluginModule, ViteModule, ViteTopLevelAwaitPluginModule, ViteWasmPluginModule } from "./viteTypes";
@@ -59,7 +60,13 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
     optimizeDeps: {
       exclude: ["@lattice-ui/layout-engine", "layout-engine"],
     },
-    plugins: [previewPlugin, reactPlugin(), wasmPlugin(), topLevelAwaitPlugin()],
+    plugins: [
+      createAutoMockPropsPlugin({ targets }),
+      previewPlugin,
+      reactPlugin(),
+      wasmPlugin(),
+      topLevelAwaitPlugin(),
+    ],
     root: shellRoot,
     server: {
       fs: {

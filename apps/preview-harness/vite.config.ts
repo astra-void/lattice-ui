@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import topLevelAwait from "vite-plugin-top-level-await";
 import wasm from "vite-plugin-wasm";
+import { createAutoMockPropsPlugin } from "../../packages/preview/src/source/autoMockPlugin";
 import { createPreviewVitePlugin } from "../../packages/preview/src/source/plugin";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,6 +34,9 @@ const previewTargets = [
 
 export default defineConfig({
   plugins: [
+    createAutoMockPropsPlugin({
+      targets: [...previewTargets],
+    }),
     createPreviewVitePlugin({
       projectName: "Lattice Preview",
       targets: [...previewTargets],

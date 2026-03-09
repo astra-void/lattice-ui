@@ -96,7 +96,6 @@ struct PreviewTransform<'a> {
     scope_stack: Vec<HashSet<String>>,
     errors: Vec<UnsupportedPatternError>,
     suppress_identifier_rewrite_depth: usize,
-    preserve_enum_identifier_depth: usize,
 }
 
 impl<'a> PreviewTransform<'a> {
@@ -107,7 +106,6 @@ impl<'a> PreviewTransform<'a> {
             scope_stack: vec![runtime_binding_names()],
             errors: Vec::new(),
             suppress_identifier_rewrite_depth: 0,
-            preserve_enum_identifier_depth: 0,
         }
     }
 
@@ -129,15 +127,6 @@ impl<'a> PreviewTransform<'a> {
         self.suppress_identifier_rewrite_depth -= 1;
     }
 
-    fn with_enum_root_preserved<F>(&mut self, callback: F)
-    where
-        F: FnOnce(&mut Self),
-    {
-        self.preserve_enum_identifier_depth += 1;
-        callback(self);
-        self.preserve_enum_identifier_depth -= 1;
-    }
-
     fn has_binding(&self, name: &str) -> bool {
         self.scope_stack
             .iter()
@@ -147,10 +136,6 @@ impl<'a> PreviewTransform<'a> {
 
     fn should_rewrite_identifier(&self, ident: &Ident) -> bool {
         if self.suppress_identifier_rewrite_depth > 0 {
-            return false;
-        }
-
-        if self.preserve_enum_identifier_depth > 0 && ident.sym == *"Enum" {
             return false;
         }
 
@@ -335,12 +320,7 @@ impl VisitMut for PreviewTransform<'_> {
             }
 
             if is_enum_member_chain(member_expr) {
-                self.with_enum_root_preserved(|transformer| {
-                    member_expr.obj.visit_mut_with(transformer);
-                    if let MemberProp::Computed(computed) = &mut member_expr.prop {
-                        computed.visit_mut_with(transformer);
-                    }
-                });
+                member_expr.visit_mut_children_with(self);
                 return;
             }
 

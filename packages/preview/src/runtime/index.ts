@@ -31,6 +31,12 @@ import { Presence } from "./presence";
 import { Slot } from "./slot";
 import { Box, Text } from "./stylePrimitives";
 import { useControllableState } from "./useControllableState";
+export {
+  AutoMockProvider,
+  buildAutoMockProps,
+  withAutoMockedProps,
+  type PreviewAutoMockableComponent,
+} from "./AutoMockProvider";
 
 export { React };
 export { createStrictContext, useControllableState, Slot };
