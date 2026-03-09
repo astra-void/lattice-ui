@@ -274,11 +274,13 @@ function getStatusLabel(status: PreviewEntryStatus) {
       return "ready";
     case "needs-harness":
       return "needs harness";
-    case "ambiguous":
-      return "ambiguous";
     case "error":
       return "error";
   }
+}
+
+function formatCandidateExports(candidates: string[]) {
+  return candidates.join(", ");
 }
 
 function getPrimaryDiscoveryDiagnostic(entry: PreviewRegistryItem) {
@@ -300,31 +302,50 @@ function getPrimaryDiscoveryDiagnostic(entry: PreviewRegistryItem) {
   })[0];
 }
 
-function getEntryEmptyState(entry: PreviewRegistryItem) {
-  const primaryDiscoveryDiagnostic = getPrimaryDiscoveryDiagnostic(entry);
+function getDiscoveryDiagnostic(entry: PreviewRegistryItem, code: PreviewDiscoveryDiagnostic["code"]) {
+  return entry.discoveryDiagnostics.find((diagnostic) => diagnostic.code === code);
+}
 
-  if (entry.status === "ambiguous") {
-    return {
-      body:
-        primaryDiscoveryDiagnostic?.message ??
-        "Export a default component or add `preview.render` to pick the intended preview target.",
-      eyebrow: "Ambiguous",
-      title: "Multiple component exports need disambiguation.",
-    };
+function getNeedsHarnessReasonBody(entry: PreviewRegistryItem) {
+  if (entry.render.mode !== "none") {
+    return undefined;
   }
 
+  if (entry.render.reason === "ambiguous-exports") {
+    return `Automatic selection found multiple component exports: ${formatCandidateExports(
+      entry.render.candidates ?? entry.candidateExportNames,
+    )}. Add a default export or \`preview.render\` to pick the intended preview target.`;
+  }
+
+  return "No renderable exported component was found. Add a default export or `preview.render` for composed demos.";
+}
+
+function getEntryEmptyState(entry: PreviewRegistryItem) {
+  const primaryDiscoveryDiagnostic = getPrimaryDiscoveryDiagnostic(entry);
+  const previewRenderMissingDiagnostic = getDiscoveryDiagnostic(entry, "PREVIEW_RENDER_MISSING");
+
   if (entry.status === "needs-harness") {
-    if (primaryDiscoveryDiagnostic?.code === "PREVIEW_RENDER_MISSING") {
+    if (previewRenderMissingDiagnostic) {
       return {
-        body: `${primaryDiscoveryDiagnostic.message} Add \`preview.render\` or expose one default/sole component export.`,
+        body:
+          `${previewRenderMissingDiagnostic.message} ` +
+          (getNeedsHarnessReasonBody(entry) ?? "Add `preview.render` or expose one renderable component export."),
         eyebrow: "Needs harness",
         title: "The preview export is incomplete.",
       };
     }
 
-    if (primaryDiscoveryDiagnostic?.code === "NO_COMPONENT_EXPORTS") {
+    if (entry.render.mode === "none" && entry.render.reason === "ambiguous-exports") {
       return {
-        body: `${primaryDiscoveryDiagnostic.message} Add a default export or \`preview.render\` for composed demos.`,
+        body: getNeedsHarnessReasonBody(entry),
+        eyebrow: "Needs harness",
+        title: "Multiple exported components match this file.",
+      };
+    }
+
+    if (entry.render.mode === "none" && entry.render.reason === "no-component-export") {
+      return {
+        body: getNeedsHarnessReasonBody(entry),
         eyebrow: "Needs harness",
         title: "This file is not directly previewable yet.",
       };
@@ -616,7 +637,7 @@ export function PreviewApp(props: PreviewAppProps) {
                     <p>The selected `@rbxts/react` module is being compiled into the web preview runtime.</p>
                   </div>
                 )
-              ) : selectedEntry.status === "needs-harness" || selectedEntry.status === "ambiguous" ? (
+              ) : selectedEntry.status === "needs-harness" ? (
                 <div className="preview-empty">
                   <p className="preview-empty-eyebrow">{emptyState?.eyebrow}</p>
                   <h2>{emptyState?.title}</h2>

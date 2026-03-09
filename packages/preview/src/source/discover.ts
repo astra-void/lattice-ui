@@ -5,6 +5,7 @@ import ts from "typescript";
 import { createErrorWithCause } from "../errorWithCause";
 import { isFilePathUnderRoot, resolveRealFilePath } from "./pathUtils";
 import type {
+  PreviewAutoRenderSelectionReason,
   PreviewDiscoveryDiagnostic,
   PreviewProject,
   PreviewRegistryDiagnostic,
@@ -29,6 +30,32 @@ type PreviewExportInfo = {
   hasRender: boolean;
 };
 
+type LocalRenderableDeclarationKind =
+  | "function-declaration"
+  | "variable-arrow"
+  | "variable-function"
+  | "variable-other";
+
+type LocalRenderableMetadata = {
+  name: string;
+  isRenderable: boolean;
+  matchesFileBasename: boolean;
+  declarationKind: LocalRenderableDeclarationKind;
+};
+
+type ExportedRenderableCandidate = {
+  exportName: string;
+  isRenderable: boolean;
+  matchesFileBasename: boolean;
+  declarationKind: LocalRenderableDeclarationKind;
+};
+
+type SelectRenderTargetResult = {
+  render: PreviewRenderTarget;
+  autoRenderCandidate?: "default" | string;
+  autoRenderReason?: PreviewAutoRenderSelectionReason;
+};
+
 type SourceModuleRecord = {
   filePath: string;
   relativePath: string;
@@ -36,8 +63,11 @@ type SourceModuleRecord = {
   imports: string[];
   diagnostics: PreviewRegistryDiagnostic[];
   discoveryDiagnostics: PreviewDiscoveryDiagnostic[];
-  componentExports: string[];
+  candidateExportNames: string[];
   hasDefaultComponent: boolean;
+  autoRenderCandidate?: "default" | string;
+  autoRenderReason?: PreviewAutoRenderSelectionReason;
+  render: PreviewRenderTarget;
   preview: PreviewExportInfo;
 };
 
@@ -129,6 +159,18 @@ function isComponentName(name: string) {
 
 function isRenderableInitializer(initializer: ts.Expression | undefined) {
   return Boolean(initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer)));
+}
+
+function getVariableDeclarationKind(initializer: ts.Expression | undefined): LocalRenderableDeclarationKind {
+  if (initializer && ts.isArrowFunction(initializer)) {
+    return "variable-arrow";
+  }
+
+  if (initializer && ts.isFunctionExpression(initializer)) {
+    return "variable-function";
+  }
+
+  return "variable-other";
 }
 
 function getPropertyNameText(name: ts.PropertyName) {
@@ -350,12 +392,18 @@ function resolveModuleImport(options: ResolveModuleImportOptions) {
 }
 
 function collectLocalRenderableNames(sourceFile: ts.SourceFile) {
-  const localRenderableNames = new Set<string>();
+  const fileBasename = path.basename(sourceFile.fileName, path.extname(sourceFile.fileName));
+  const localRenderableMetadata = new Map<string, LocalRenderableMetadata>();
   let localPreviewInfo: PreviewExportInfo | undefined;
 
   for (const statement of sourceFile.statements) {
     if (ts.isFunctionDeclaration(statement) && statement.name && isComponentName(statement.name.text)) {
-      localRenderableNames.add(statement.name.text);
+      localRenderableMetadata.set(statement.name.text, {
+        name: statement.name.text,
+        isRenderable: true,
+        matchesFileBasename: statement.name.text === fileBasename,
+        declarationKind: "function-declaration",
+      });
       continue;
     }
 
@@ -372,15 +420,87 @@ function collectLocalRenderableNames(sourceFile: ts.SourceFile) {
         localPreviewInfo = parsePreviewObject(declaration.initializer) ?? localPreviewInfo;
       }
 
-      if (isComponentName(declaration.name.text) && isRenderableInitializer(declaration.initializer)) {
-        localRenderableNames.add(declaration.name.text);
+      if (isComponentName(declaration.name.text)) {
+        localRenderableMetadata.set(declaration.name.text, {
+          name: declaration.name.text,
+          isRenderable: isRenderableInitializer(declaration.initializer),
+          matchesFileBasename: declaration.name.text === fileBasename,
+          declarationKind: getVariableDeclarationKind(declaration.initializer),
+        });
       }
     }
   }
 
   return {
-    localRenderableNames,
+    localRenderableMetadata,
     localPreviewInfo,
+  };
+}
+
+function selectRenderTarget(options: {
+  candidateExportNames: string[];
+  exportedRenderableCandidates: ExportedRenderableCandidate[];
+  hasDefaultComponent: boolean;
+  preview: PreviewExportInfo;
+}): SelectRenderTargetResult {
+  if (options.preview.hasRender) {
+    return {
+      render: { mode: "preview-render" },
+    };
+  }
+
+  if (options.hasDefaultComponent) {
+    return {
+      autoRenderCandidate: "default",
+      autoRenderReason: "default",
+      render: {
+        mode: "auto",
+        exportName: "default",
+        usesPreviewProps: options.preview.hasProps,
+        selectedBy: "default",
+      },
+    };
+  }
+
+  const basenameMatch = options.exportedRenderableCandidates.find((candidate) => candidate.matchesFileBasename);
+  if (basenameMatch) {
+    return {
+      autoRenderCandidate: basenameMatch.exportName,
+      autoRenderReason: "basename-match",
+      render: {
+        mode: "auto",
+        exportName: basenameMatch.exportName,
+        usesPreviewProps: options.preview.hasProps,
+        selectedBy: "basename-match",
+      },
+    };
+  }
+
+  if (options.candidateExportNames.length === 1) {
+    return {
+      autoRenderCandidate: options.candidateExportNames[0],
+      autoRenderReason: "sole-export",
+      render: {
+        mode: "auto",
+        exportName: options.candidateExportNames[0],
+        usesPreviewProps: options.preview.hasProps,
+        selectedBy: "sole-export",
+      },
+    };
+  }
+
+  return {
+    render:
+      options.candidateExportNames.length === 0
+        ? {
+            mode: "none",
+            reason: "no-component-export",
+          }
+        : {
+            mode: "none",
+            reason: "ambiguous-exports",
+            candidates: [...options.candidateExportNames],
+          },
   };
 }
 
@@ -394,13 +514,28 @@ function analyzeSourceModule(options: {
   const sourceText = fs.readFileSync(options.filePath, "utf8");
   const scriptKind = options.filePath.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
   const sourceFile = ts.createSourceFile(options.filePath, sourceText, ts.ScriptTarget.Latest, true, scriptKind);
-  const { localRenderableNames, localPreviewInfo } = collectLocalRenderableNames(sourceFile);
-  const namedExports = new Set<string>();
+  const fileBasename = path.basename(options.filePath, path.extname(options.filePath));
+  const { localRenderableMetadata, localPreviewInfo } = collectLocalRenderableNames(sourceFile);
+  const namedExportCandidates = new Map<string, ExportedRenderableCandidate>();
   const imports = new Set<string>();
   const discoveryDiagnostics = new Map<string, PreviewDiscoveryDiagnostic>();
   let hasDefaultComponent = false;
   let previewExported = false;
   let preview = localPreviewInfo;
+
+  const addNamedExportCandidate = (localName: string, exportName: string) => {
+    const localMetadata = localRenderableMetadata.get(localName);
+    if (!localMetadata?.isRenderable) {
+      return;
+    }
+
+    namedExportCandidates.set(exportName, {
+      exportName,
+      isRenderable: localMetadata.isRenderable,
+      matchesFileBasename: exportName === fileBasename,
+      declarationKind: localMetadata.declarationKind,
+    });
+  };
 
   for (const statement of sourceFile.statements) {
     const moduleSpecifier =
@@ -429,15 +564,17 @@ function analyzeSourceModule(options: {
       }
     }
 
-    if (ts.isFunctionDeclaration(statement) && statement.name && isExported(statement)) {
-      if (statement.name.text === "preview") {
+    if (ts.isFunctionDeclaration(statement) && isExported(statement)) {
+      if (statement.name?.text === "preview") {
         previewExported = true;
-      } else if (localRenderableNames.has(statement.name.text)) {
+      } else if (statement.name) {
         if (isDefaultExport(statement)) {
-          hasDefaultComponent = true;
+          hasDefaultComponent = Boolean(localRenderableMetadata.get(statement.name.text)?.isRenderable);
         } else {
-          namedExports.add(statement.name.text);
+          addNamedExportCandidate(statement.name.text, statement.name.text);
         }
+      } else if (isDefaultExport(statement)) {
+        hasDefaultComponent = true;
       }
       continue;
     }
@@ -459,17 +596,17 @@ function analyzeSourceModule(options: {
           continue;
         }
 
-        if (!isExported(statement) || !localRenderableNames.has(declaration.name.text)) {
+        if (!isExported(statement)) {
           continue;
         }
 
-        namedExports.add(declaration.name.text);
+        addNamedExportCandidate(declaration.name.text, declaration.name.text);
       }
       continue;
     }
 
     if (ts.isExportAssignment(statement)) {
-      if (ts.isIdentifier(statement.expression) && localRenderableNames.has(statement.expression.text)) {
+      if (ts.isIdentifier(statement.expression) && localRenderableMetadata.get(statement.expression.text)?.isRenderable) {
         hasDefaultComponent = true;
       } else if (ts.isArrowFunction(statement.expression) || ts.isFunctionExpression(statement.expression)) {
         hasDefaultComponent = true;
@@ -491,14 +628,14 @@ function analyzeSourceModule(options: {
           continue;
         }
 
-        if (!localRenderableNames.has(localName)) {
+        if (!localRenderableMetadata.get(localName)?.isRenderable) {
           continue;
         }
 
         if (exportName === "default") {
           hasDefaultComponent = true;
         } else {
-          namedExports.add(exportName);
+          addNamedExportCandidate(localName, exportName);
         }
       }
     }
@@ -513,6 +650,19 @@ function analyzeSourceModule(options: {
     ...error,
     relativeFile: toRelativeSourcePath(options.packageRoot, error.file),
   }));
+  const exportedRenderableCandidates = [...namedExportCandidates.values()].sort((left, right) =>
+    left.exportName.localeCompare(right.exportName),
+  );
+  const candidateExportNames = exportedRenderableCandidates.map((candidate) => candidate.exportName);
+  const resolvedPreview = previewExported
+    ? (preview ?? { hasExport: true, hasProps: false, hasRender: false })
+    : { hasExport: false, hasProps: false, hasRender: false };
+  const renderSelection = selectRenderTarget({
+    candidateExportNames,
+    exportedRenderableCandidates,
+    hasDefaultComponent,
+    preview: resolvedPreview,
+  });
 
   return {
     filePath: options.filePath,
@@ -527,11 +677,12 @@ function analyzeSourceModule(options: {
 
       return left.code.localeCompare(right.code);
     }),
-    componentExports: [...namedExports].sort((left, right) => left.localeCompare(right)),
+    candidateExportNames,
     hasDefaultComponent,
-    preview: previewExported
-      ? (preview ?? { hasExport: true, hasProps: false, hasRender: false })
-      : { hasExport: false, hasProps: false, hasRender: false },
+    autoRenderCandidate: renderSelection.autoRenderCandidate,
+    autoRenderReason: renderSelection.autoRenderReason,
+    render: renderSelection.render,
+    preview: resolvedPreview,
   };
 }
 
@@ -595,30 +746,6 @@ function collectTransitiveDiscoveryDiagnostics(
   return collected;
 }
 
-function getRenderTarget(record: SourceModuleRecord): PreviewRenderTarget {
-  if (record.preview.hasRender) {
-    return { mode: "preview-render" };
-  }
-
-  if (record.hasDefaultComponent) {
-    return {
-      mode: "auto",
-      exportName: "default",
-      usesPreviewProps: record.preview.hasProps,
-    };
-  }
-
-  if (record.componentExports.length === 1) {
-    return {
-      mode: "auto",
-      exportName: record.componentExports[0],
-      usesPreviewProps: record.preview.hasProps,
-    };
-  }
-
-  return { mode: "none" };
-}
-
 function createEntryDiscoveryDiagnostics(record: SourceModuleRecord, packageRoot: string, render: PreviewRenderTarget) {
   const diagnostics: PreviewDiscoveryDiagnostic[] = [];
 
@@ -637,7 +764,7 @@ function createEntryDiscoveryDiagnostics(record: SourceModuleRecord, packageRoot
     );
   }
 
-  if (!record.hasDefaultComponent && record.componentExports.length === 0) {
+  if (render.reason === "no-component-export") {
     diagnostics.push(
       createDiscoveryDiagnostic(
         packageRoot,
@@ -648,13 +775,13 @@ function createEntryDiscoveryDiagnostics(record: SourceModuleRecord, packageRoot
     );
   }
 
-  if (!record.hasDefaultComponent && record.componentExports.length > 1) {
+  if (render.reason === "ambiguous-exports") {
     diagnostics.push(
       createDiscoveryDiagnostic(
         packageRoot,
         record.filePath,
         "AMBIGUOUS_COMPONENT_EXPORTS",
-        `Multiple component exports need explicit disambiguation: ${record.componentExports.join(", ")}.`,
+        `Multiple component exports need explicit disambiguation: ${(render.candidates ?? record.candidateExportNames).join(", ")}.`,
       ),
     );
   }
@@ -664,7 +791,6 @@ function createEntryDiscoveryDiagnostics(record: SourceModuleRecord, packageRoot
 
 function getEntryStatus(
   diagnostics: PreviewRegistryDiagnostic[],
-  discoveryDiagnostics: PreviewDiscoveryDiagnostic[],
   render: PreviewRenderTarget,
 ) {
   if (diagnostics.length > 0) {
@@ -673,10 +799,6 @@ function getEntryStatus(
 
   if (render.mode !== "none") {
     return "ready" as const;
-  }
-
-  if (discoveryDiagnostics.some((diagnostic) => diagnostic.code === "AMBIGUOUS_COMPONENT_EXPORTS")) {
-    return "ambiguous" as const;
   }
 
   return "needs-harness" as const;
@@ -709,7 +831,7 @@ function createRegistryItem(
 
     return left.column - right.column;
   });
-  const render = getRenderTarget(record);
+  const render = record.render;
   const discoveryDiagnostics = [
     ...collectTransitiveDiscoveryDiagnostics(record.filePath, recordsByPath).values(),
     ...createEntryDiscoveryDiagnostics(record, packageRoot, render),
@@ -724,7 +846,7 @@ function createRegistryItem(
 
     return left.message.localeCompare(right.message);
   });
-  const status = getEntryStatus(diagnostics, discoveryDiagnostics, render);
+  const status = getEntryStatus(diagnostics, render);
   const title = record.preview.title?.trim() ? record.preview.title.trim() : humanizeTitle(record.relativePath);
 
   return {
@@ -736,7 +858,10 @@ function createRegistryItem(
     title,
     status,
     render,
-    exportNames: record.hasDefaultComponent ? ["default", ...record.componentExports] : [...record.componentExports],
+    candidateExportNames: [...record.candidateExportNames],
+    autoRenderCandidate: record.autoRenderCandidate,
+    autoRenderReason: record.autoRenderReason,
+    exportNames: record.hasDefaultComponent ? ["default", ...record.candidateExportNames] : [...record.candidateExportNames],
     hasDefaultExport: record.hasDefaultComponent,
     hasPreviewExport: record.preview.hasExport,
     diagnostics,

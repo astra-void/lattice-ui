@@ -100,7 +100,15 @@ function readRegistryEntries(previewPlugin: PreviewPlugin) {
     throw new Error(`Unable to parse preview registry module:\n${registryModuleCode}`);
   }
 
-  return JSON.parse(entriesMatch[1] ?? "[]") as Array<{ relativePath: string; status: string }>;
+  return JSON.parse(entriesMatch[1] ?? "[]") as Array<{
+    relativePath: string;
+    status: string;
+    render: {
+      mode: string;
+      reason?: string;
+      candidates?: string[];
+    };
+  }>;
 }
 
 describe("createPreviewVitePlugin", () => {
@@ -166,7 +174,7 @@ describe("createPreviewVitePlugin", () => {
     expect(mockServer.ws.send).toHaveBeenCalledWith({ type: "full-reload" });
   });
 
-  it("recomputes entry status for ready, ambiguous, and harness-needed edits before forcing reload", () => {
+  it("recomputes entry status and render reasons before forcing reload", () => {
     const { fixtureRoot, sourceRoot } = createFixtureRoot();
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
     fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
@@ -201,14 +209,31 @@ describe("createPreviewVitePlugin", () => {
     );
     expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
     expect(readRegistryEntries(previewPlugin)).toEqual(
-      expect.arrayContaining([expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "ambiguous" })]),
+      expect.arrayContaining([
+        expect.objectContaining({
+          relativePath: "AnimatedSlot.tsx",
+          status: "needs-harness",
+          render: expect.objectContaining({
+            mode: "none",
+            reason: "ambiguous-exports",
+            candidates: ["Alpha", "Beta"],
+          }),
+        }),
+      ]),
     );
 
     fs.writeFileSync(sourceFile, "export const value = 1;\n", "utf8");
     expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
     expect(readRegistryEntries(previewPlugin)).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "needs-harness" }),
+        expect.objectContaining({
+          relativePath: "AnimatedSlot.tsx",
+          status: "needs-harness",
+          render: expect.objectContaining({
+            mode: "none",
+            reason: "no-component-export",
+          }),
+        }),
       ]),
     );
 

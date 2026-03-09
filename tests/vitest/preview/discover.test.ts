@@ -37,7 +37,7 @@ function createTempPreviewPackage(files: Record<string, string>) {
 }
 
 describe("discoverPreviewProject", () => {
-  it("indexes source-first entries and distinguishes ready, ambiguous, and harness-needed states", () => {
+  it("indexes source-first entries and distinguishes ready and harness-needed states", () => {
     const project = discoverPreviewProject({
       packageName: "@fixtures/source-preview",
       packageRoot: fixtureRoot,
@@ -59,11 +59,15 @@ describe("discoverPreviewProject", () => {
     ]);
 
     expect(checkboxEntry).toMatchObject({
+      autoRenderCandidate: "CheckboxRoot",
+      autoRenderReason: "basename-match",
+      candidateExportNames: ["CheckboxRoot"],
       discoveryDiagnostics: [],
       status: "ready",
       render: {
         exportName: "CheckboxRoot",
         mode: "auto",
+        selectedBy: "basename-match",
         usesPreviewProps: false,
       },
     });
@@ -79,9 +83,12 @@ describe("discoverPreviewProject", () => {
     });
 
     expect(ambiguousEntry).toMatchObject({
-      status: "ambiguous",
+      candidateExportNames: ["Alpha", "Beta"],
+      status: "needs-harness",
       render: {
         mode: "none",
+        reason: "ambiguous-exports",
+        candidates: ["Alpha", "Beta"],
       },
     });
     expect(ambiguousEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toContain(
@@ -118,24 +125,145 @@ describe("discoverPreviewProject", () => {
     const previewMissingRenderEntry = project.entries.find((entry) => entry.relativePath === "PreviewMissingRender.tsx");
 
     expect(noExportsEntry).toMatchObject({
+      candidateExportNames: [],
       status: "needs-harness",
       render: {
         mode: "none",
+        reason: "no-component-export",
       },
     });
     expect(noExportsEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toEqual(["NO_COMPONENT_EXPORTS"]);
 
     expect(previewMissingRenderEntry).toMatchObject({
+      candidateExportNames: [],
       hasPreviewExport: true,
       status: "needs-harness",
       render: {
         mode: "none",
+        reason: "no-component-export",
       },
     });
     expect(previewMissingRenderEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toEqual([
       "NO_COMPONENT_EXPORTS",
       "PREVIEW_RENDER_MISSING",
     ]);
+  });
+
+  it("prefers default exports before basename and sole-export auto selection", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "src/CheckboxRoot.tsx": `
+        export default function PrimaryCheckboxRoot() {
+          return <frame />;
+        }
+
+        export function CheckboxRoot() {
+          return <frame />;
+        }
+      `,
+      "src/index.tsx": `
+        export function SoleFixture() {
+          return <frame />;
+        }
+      `,
+    });
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/selection-priority",
+      packageRoot,
+      sourceRoot,
+    });
+
+    expect(project.entries.find((entry) => entry.relativePath === "CheckboxRoot.tsx")).toMatchObject({
+      autoRenderCandidate: "default",
+      autoRenderReason: "default",
+      candidateExportNames: ["CheckboxRoot"],
+      hasDefaultExport: true,
+      status: "ready",
+      render: {
+        mode: "auto",
+        exportName: "default",
+        selectedBy: "default",
+      },
+    });
+
+    expect(project.entries.find((entry) => entry.relativePath === "index.tsx")).toMatchObject({
+      autoRenderCandidate: "SoleFixture",
+      autoRenderReason: "sole-export",
+      candidateExportNames: ["SoleFixture"],
+      hasDefaultExport: false,
+      status: "ready",
+      render: {
+        mode: "auto",
+        exportName: "SoleFixture",
+        selectedBy: "sole-export",
+      },
+    });
+  });
+
+  it("prefers basename-matching exports when helper components share the file", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "src/CheckboxRoot.tsx": `
+        export function Helper() {
+          return <frame />;
+        }
+
+        export function CheckboxRoot() {
+          return <frame />;
+        }
+      `,
+    });
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/basename-match",
+      packageRoot,
+      sourceRoot,
+    });
+
+    expect(project.entries.find((entry) => entry.relativePath === "CheckboxRoot.tsx")).toMatchObject({
+      autoRenderCandidate: "CheckboxRoot",
+      autoRenderReason: "basename-match",
+      candidateExportNames: ["CheckboxRoot", "Helper"],
+      status: "ready",
+      render: {
+        mode: "auto",
+        exportName: "CheckboxRoot",
+        selectedBy: "basename-match",
+      },
+    });
+  });
+
+  it("matches file basenames against aliased export names", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "src/CheckboxRoot.tsx": `
+        function Root() {
+          return <frame />;
+        }
+
+        function Helper() {
+          return <frame />;
+        }
+
+        export { Root as CheckboxRoot, Helper };
+      `,
+    });
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/aliased-basename",
+      packageRoot,
+      sourceRoot,
+    });
+
+    expect(project.entries.find((entry) => entry.relativePath === "CheckboxRoot.tsx")).toMatchObject({
+      autoRenderCandidate: "CheckboxRoot",
+      autoRenderReason: "basename-match",
+      candidateExportNames: ["CheckboxRoot", "Helper"],
+      status: "ready",
+      render: {
+        mode: "auto",
+        exportName: "CheckboxRoot",
+        selectedBy: "basename-match",
+      },
+    });
   });
 
   it("follows tsconfig path aliases that resolve inside the source root", () => {
@@ -223,18 +351,22 @@ describe("discoverPreviewProject", () => {
     });
 
     expect(project.entries.find((entry) => entry.relativePath === "Checkbox/CheckboxRoot.tsx")).toMatchObject({
+      autoRenderReason: "basename-match",
       status: "ready",
       render: {
         exportName: "CheckboxRoot",
         mode: "auto",
+        selectedBy: "basename-match",
       },
     });
 
     expect(project.entries.find((entry) => entry.relativePath === "Checkbox/CheckboxIndicator.tsx")).toMatchObject({
+      autoRenderReason: "basename-match",
       status: "ready",
       render: {
         exportName: "CheckboxIndicator",
         mode: "auto",
+        selectedBy: "basename-match",
         usesPreviewProps: false,
       },
     });

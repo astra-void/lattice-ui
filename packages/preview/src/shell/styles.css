@@ -358,11 +358,6 @@ code {
   color: var(--warning-ink);
 }
 
-.status-ambiguous {
-  background: var(--warning-background);
-  color: var(--warning-ink);
-}
-
 .status-error {
   background: var(--error-background);
   color: var(--error-ink);

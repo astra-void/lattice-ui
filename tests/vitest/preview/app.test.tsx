@@ -28,6 +28,9 @@ const dialogEntry = discoverPreviewProject({
 
 function createReadyEntry(id: string, title: string) {
   return {
+    autoRenderCandidate: "default" as const,
+    autoRenderReason: "default" as const,
+    candidateExportNames: [],
     diagnostics: [],
     discoveryDiagnostics: [],
     exportNames: ["default"],
@@ -39,6 +42,7 @@ function createReadyEntry(id: string, title: string) {
     render: {
       exportName: "default" as const,
       mode: "auto" as const,
+      selectedBy: "default" as const,
       usesPreviewProps: false,
     },
     sourceFilePath: `/virtual/${id}`,
@@ -108,6 +112,9 @@ describe("preview shell", () => {
       <PreviewApp
         entries={[
           {
+            autoRenderCandidate: "Broken",
+            autoRenderReason: "sole-export",
+            candidateExportNames: ["Broken"],
             diagnostics: [
               {
                 code: "UNSUPPORTED_GLOBAL",
@@ -129,6 +136,7 @@ describe("preview shell", () => {
             render: {
               exportName: "Broken",
               mode: "auto",
+              selectedBy: "sole-export",
               usesPreviewProps: false,
             },
             sourceFilePath: "/virtual/Broken.tsx",
@@ -154,6 +162,7 @@ describe("preview shell", () => {
       <PreviewApp
         entries={[
           {
+            candidateExportNames: [],
             diagnostics: [],
             discoveryDiagnostics: [
               {
@@ -171,6 +180,7 @@ describe("preview shell", () => {
             relativePath: "Checkbox/CheckboxIndicator.tsx",
             render: {
               mode: "none",
+              reason: "no-component-export",
             },
             sourceFilePath: "/virtual/CheckboxIndicator.tsx",
             status: "needs-harness",
@@ -189,13 +199,14 @@ describe("preview shell", () => {
     expect(loadModule).not.toHaveBeenCalled();
   });
 
-  it("shows ambiguous guidance with concrete discovery diagnostics", () => {
+  it("shows ambiguous guidance with concrete candidates", () => {
     const loadModule = vi.fn(() => Promise.reject(new Error("should not load")));
 
     renderPreviewApp(
       <PreviewApp
         entries={[
           {
+            candidateExportNames: ["Alpha", "Beta"],
             diagnostics: [],
             discoveryDiagnostics: [
               {
@@ -213,9 +224,11 @@ describe("preview shell", () => {
             relativePath: "Ambiguous.tsx",
             render: {
               mode: "none",
+              reason: "ambiguous-exports",
+              candidates: ["Alpha", "Beta"],
             },
             sourceFilePath: "/virtual/Ambiguous.tsx",
-            status: "ambiguous",
+            status: "needs-harness",
             targetName: "fixture",
             title: "Ambiguous",
           },
@@ -226,8 +239,53 @@ describe("preview shell", () => {
       />,
     );
 
-    expect(screen.getByText("Multiple component exports need disambiguation.")).toBeTruthy();
+    expect(screen.getByText("Multiple exported components match this file.")).toBeTruthy();
+    expect(screen.getByText(/Automatic selection found multiple component exports: Alpha, Beta\./)).toBeTruthy();
     expect(screen.getByText("AMBIGUOUS_COMPONENT_EXPORTS")).toBeTruthy();
+    expect(loadModule).not.toHaveBeenCalled();
+  });
+
+  it("shows no-component guidance without falling back to ambiguous messaging", () => {
+    const loadModule = vi.fn(() => Promise.reject(new Error("should not load")));
+
+    renderPreviewApp(
+      <PreviewApp
+        entries={[
+          {
+            candidateExportNames: [],
+            diagnostics: [],
+            discoveryDiagnostics: [
+              {
+                code: "NO_COMPONENT_EXPORTS",
+                file: "/virtual/HarnessOnly.tsx",
+                message: "No exported component candidates were found for auto-render.",
+                relativeFile: "src/HarnessOnly.tsx",
+              },
+            ],
+            exportNames: [],
+            hasDefaultExport: false,
+            hasPreviewExport: false,
+            id: "HarnessOnly.tsx",
+            packageName: "@fixtures/harness-only",
+            relativePath: "HarnessOnly.tsx",
+            render: {
+              mode: "none",
+              reason: "no-component-export",
+            },
+            sourceFilePath: "/virtual/HarnessOnly.tsx",
+            status: "needs-harness",
+            targetName: "fixture",
+            title: "Harness Only",
+          },
+        ]}
+        initialSelectedId="HarnessOnly.tsx"
+        loadModule={loadModule}
+        projectName="@lattice-ui/preview-smoke"
+      />,
+    );
+
+    expect(screen.getByText("This file is not directly previewable yet.")).toBeTruthy();
+    expect(screen.getByText("No renderable exported component was found. Add a default export or `preview.render` for composed demos.")).toBeTruthy();
     expect(loadModule).not.toHaveBeenCalled();
   });
 
@@ -297,6 +355,9 @@ describe("preview shell", () => {
       <PreviewApp
         entries={[
           {
+            autoRenderCandidate: "LoadoutEditor",
+            autoRenderReason: "sole-export",
+            candidateExportNames: ["LoadoutEditor"],
             diagnostics: [],
             discoveryDiagnostics: [],
             exportNames: ["LoadoutEditor"],
@@ -308,6 +369,7 @@ describe("preview shell", () => {
             render: {
               exportName: "LoadoutEditor",
               mode: "auto",
+              selectedBy: "sole-export",
               usesPreviewProps: false,
             },
             sourceFilePath: "/virtual/LoadoutEditor.tsx",

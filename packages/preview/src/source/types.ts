@@ -15,20 +15,27 @@ export type PreviewSourceTarget = {
   sourceRoot: string;
 };
 
+export type PreviewAutoRenderSelectionReason = "default" | "basename-match" | "sole-export";
+
+export type PreviewRenderFailureReason = "ambiguous-exports" | "no-component-export";
+
 export type PreviewRenderTarget =
   | {
       mode: "auto";
       exportName: "default" | string;
       usesPreviewProps: boolean;
+      selectedBy: PreviewAutoRenderSelectionReason;
     }
   | {
       mode: "preview-render";
     }
   | {
       mode: "none";
+      reason: PreviewRenderFailureReason;
+      candidates?: string[];
     };
 
-export type PreviewEntryStatus = "ready" | "needs-harness" | "ambiguous" | "error";
+export type PreviewEntryStatus = "ready" | "needs-harness" | "error";
 
 export type PreviewRegistryDiagnostic = UnsupportedPatternError & {
   relativeFile: string;
@@ -56,6 +63,9 @@ export type PreviewRegistryItem = {
   title: string;
   status: PreviewEntryStatus;
   render: PreviewRenderTarget;
+  candidateExportNames: string[];
+  autoRenderCandidate?: "default" | string;
+  autoRenderReason?: PreviewAutoRenderSelectionReason;
   exportNames: string[];
   hasDefaultExport: boolean;
   hasPreviewExport: boolean;

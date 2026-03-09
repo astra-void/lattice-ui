@@ -18,9 +18,9 @@ npx lattice preview
 
 1. Run `lattice preview` from a package root.
 2. The preview shell discovers real `src/**/*.tsx` files and renders them directly in the browser.
-3. Files with one unambiguous component export auto-render, even without `export const preview`.
-4. Files with multiple component exports are marked as ambiguous until you add a default export or `preview.render`.
-5. Files that need composition can opt in with `export const preview = { title?, props?, render? }`, and the shell now reports why a file still needs a harness or where transitive analysis stopped.
+3. Auto-render target selection prefers `preview.render`, then the default export, then a named export that matches the file basename, then a sole named component export.
+4. Files that still cannot be resolved to one render target stay in `needs harness`, and the shell reports whether the file has ambiguous exports or no renderable export at all.
+5. Files that need composition can opt in with `export const preview = { title?, props?, render? }`, and the shell reports why a file still needs a harness or where transitive analysis stopped.
 6. This package only exposes the source-first preview server and the preview runtime. The browser shell itself is internal.
 
 ## Preview Contract
@@ -36,7 +36,7 @@ export const preview = {
 ```
 
 - `title` overrides the sidebar/display title.
-- `props` feeds the default auto-render path when the file already has one unambiguous component export.
+- `props` feeds the auto-render path when discovery can resolve one preview target without a custom harness.
 - `render` is the escape hatch for custom harnesses and composed demos.
 
 When discovery cannot follow an import chain past the current `sourceRoot`, the shell keeps the entry previewable when possible and shows a `TRANSITIVE_ANALYSIS_LIMITED` note instead of silently skipping that branch.
