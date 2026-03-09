@@ -1,6 +1,6 @@
 import * as React from "react";
-import type { PreviewDomProps, PreviewEventTable } from "./domHost";
-import { resolvePreviewDomProps } from "./domHost";
+import { resolvePreviewDomProps } from "../hosts/resolveProps";
+import type { PreviewDomProps, PreviewEventTable } from "../hosts/types";
 
 type SlotProps = PreviewDomProps & {
   children: React.ReactElement;

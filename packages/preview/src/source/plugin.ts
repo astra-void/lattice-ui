@@ -2,8 +2,9 @@
 import path from "node:path";
 import { compile_tsx, transformPreviewSource } from "@lattice-ui/compiler";
 import ts from "typescript";
-import { discoverPreviewWorkspace } from "./discover";
 import { createErrorWithCause } from "../errorWithCause";
+import { discoverPreviewWorkspace } from "./discover";
+import { isFilePathUnderRoot, stripFileIdDecorations } from "./pathUtils";
 import {
   createUnresolvedPackageMockResolvePlugin,
   createUnresolvedPackageMockTransformPlugin,
@@ -23,11 +24,6 @@ export type CreatePreviewVitePluginOptions = {
   projectName: string;
   targets: PreviewSourceTarget[];
 };
-
-function isUnderRoot(rootPath: string, filePath: string) {
-  const relativePath = path.relative(rootPath, filePath);
-  return relativePath.length > 0 && !relativePath.startsWith("..") && !path.isAbsolute(relativePath);
-}
 
 function resolveRuntimeEntryPath() {
   const candidates = [
@@ -56,11 +52,6 @@ function resolveMockEntryPath() {
   return candidate.split(path.sep).join("/");
 }
 
-function stripQuery(id: string) {
-  const [filePath] = id.split("?", 1);
-  return filePath;
-}
-
 function stripTypeSyntax(code: string, filePath: string) {
   return ts.transpileModule(code, {
     compilerOptions: {
@@ -83,12 +74,12 @@ function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<t
 }
 
 function findTargetForFilePath(filePath: string, targets: PreviewSourceTarget[]) {
-  const extension = path.extname(filePath);
+  const extension = path.extname(stripFileIdDecorations(filePath)).toLowerCase();
   if (extension !== ".ts" && extension !== ".tsx") {
     return undefined;
   }
 
-  return targets.find((target) => isUnderRoot(target.sourceRoot, filePath));
+  return targets.find((target) => isFilePathUnderRoot(target.sourceRoot, filePath));
 }
 
 function renderRegistryModule(options: CreatePreviewVitePluginOptions) {
@@ -190,7 +181,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
       return undefined;
     },
     transform(code: string, id: string) {
-      const filePath = stripQuery(id);
+      const filePath = stripFileIdDecorations(id);
       const target = findTargetForFilePath(filePath, options.targets);
       if (!target) {
         return undefined;

@@ -1,4 +1,5 @@
 import type { UnsupportedPatternError } from "@lattice-ui/compiler";
+
 export type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "@lattice-ui/preview-runtime";
 
 export type PreviewDefinition<Props = Record<string, unknown>> = {
@@ -27,9 +28,22 @@ export type PreviewRenderTarget =
       mode: "none";
     };
 
-export type PreviewEntryStatus = "ready" | "needs-harness" | "error";
+export type PreviewEntryStatus = "ready" | "needs-harness" | "ambiguous" | "error";
 
 export type PreviewRegistryDiagnostic = UnsupportedPatternError & {
+  relativeFile: string;
+};
+
+export type PreviewDiscoveryDiagnosticCode =
+  | "AMBIGUOUS_COMPONENT_EXPORTS"
+  | "NO_COMPONENT_EXPORTS"
+  | "PREVIEW_RENDER_MISSING"
+  | "TRANSITIVE_ANALYSIS_LIMITED";
+
+export type PreviewDiscoveryDiagnostic = {
+  code: PreviewDiscoveryDiagnosticCode;
+  file: string;
+  message: string;
   relativeFile: string;
 };
 
@@ -46,6 +60,7 @@ export type PreviewRegistryItem = {
   hasDefaultExport: boolean;
   hasPreviewExport: boolean;
   diagnostics: PreviewRegistryDiagnostic[];
+  discoveryDiagnostics: PreviewDiscoveryDiagnostic[];
 };
 
 export type PreviewProject = {

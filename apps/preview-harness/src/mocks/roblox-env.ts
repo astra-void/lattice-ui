@@ -1,7 +1,6 @@
 export {
   createUniversalRobloxMock,
   createUniversalRobloxModuleMock,
-  robloxMock,
-  robloxModuleMock,
+  robloxMock,robloxMock as default, 
+  robloxModuleMock
 } from "@lattice-ui/preview-runtime";
-export { robloxMock as default } from "@lattice-ui/preview-runtime";

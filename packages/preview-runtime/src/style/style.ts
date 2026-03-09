@@ -1,14 +1,5 @@
 import type * as React from "react";
-
-type UDimLike = {
-  Scale?: number;
-  Offset?: number;
-};
-
-type UDim2Like = {
-  X?: UDimLike;
-  Y?: UDimLike;
-};
+import { serializeUDim, serializeUDim2, type UDim2Like } from "../internal/robloxValues";
 
 type Color3Like = {
   R?: number;
@@ -23,14 +14,13 @@ type RobloxStyleProps = Record<string, unknown> & {
   Visible?: boolean;
 };
 
-function toCalcLength(axis: UDimLike | undefined) {
-  if (!axis) {
+function toCalcLength(axis: unknown) {
+  if (axis === undefined || axis === null) {
     return undefined;
   }
 
-  const scale = Number(axis.Scale ?? 0);
-  const offset = Number(axis.Offset ?? 0);
-  return `calc(${scale * 100}% + ${offset}px)`;
+  const serialized = serializeUDim(axis);
+  return `calc(${serialized.Scale * 100}% + ${serialized.Offset}px)`;
 }
 
 function toRgb(color: Color3Like | undefined) {
@@ -46,9 +36,10 @@ function toRgb(color: Color3Like | undefined) {
 
 export function __rbxStyle(props: RobloxStyleProps): React.CSSProperties {
   const style: React.CSSProperties = {};
+  const size = serializeUDim2(props.Size);
 
-  const width = toCalcLength(props.Size?.X);
-  const height = toCalcLength(props.Size?.Y);
+  const width = toCalcLength(size?.X);
+  const height = toCalcLength(size?.Y);
 
   if (width) {
     style.width = width;

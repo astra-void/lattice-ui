@@ -1,5 +1,5 @@
 import * as React from "react";
-import { error } from "./helpers";
+import { error } from "../runtime/helpers";
 
 export function createStrictContext<T>(name: string) {
   const Context = React.createContext<T | undefined>(undefined);

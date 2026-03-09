@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import type { Plugin } from "vite";
+import { isFilePathUnderRoot, stripFileIdDecorations } from "./pathUtils";
 import type { PreviewComponentPropsMetadata, PreviewPropMetadata, PreviewSourceTarget } from "./types";
 
 const SUPPORTED_COMPONENT_EXTENSIONS = new Set([".jsx", ".tsx"]);
@@ -22,23 +23,14 @@ export type CreateAutoMockPropsPluginOptions = {
   targets: PreviewSourceTarget[];
 };
 
-function stripQuery(id: string) {
-  const [filePath] = id.split("?", 1);
-  return filePath;
-}
-
 function normalizeFilePath(filePath: string) {
-  const resolvedPath = path.resolve(filePath);
+  const resolvedPath = path.resolve(stripFileIdDecorations(filePath));
   return ts.sys.useCaseSensitiveFileNames ? resolvedPath : resolvedPath.toLowerCase();
 }
 
-function isUnderRoot(rootPath: string, filePath: string) {
-  const relativePath = path.relative(rootPath, filePath);
-  return relativePath.length > 0 && !relativePath.startsWith("..") && !path.isAbsolute(relativePath);
-}
-
 function isSupportedComponentFile(filePath: string) {
-  return SUPPORTED_COMPONENT_EXTENSIONS.has(path.extname(filePath)) && !filePath.endsWith(".d.tsx");
+  const normalizedPath = stripFileIdDecorations(filePath).toLowerCase();
+  return SUPPORTED_COMPONENT_EXTENSIONS.has(path.extname(normalizedPath)) && !normalizedPath.endsWith(".d.tsx");
 }
 
 function isComponentName(name: string) {
@@ -661,10 +653,10 @@ export function createAutoMockPropsPlugin(options: CreateAutoMockPropsPluginOpti
     name: "lattice-preview-auto-mock-props",
     enforce: "pre",
     transform(code, id) {
-      const filePath = stripQuery(id);
+      const filePath = stripFileIdDecorations(id);
       if (
         !isSupportedComponentFile(filePath) ||
-        !options.targets.some((target) => isUnderRoot(target.sourceRoot, filePath))
+        !options.targets.some((target) => isFilePathUnderRoot(target.sourceRoot, filePath))
       ) {
         return undefined;
       }
