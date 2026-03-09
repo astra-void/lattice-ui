@@ -1,5 +1,4 @@
-import robloxMock from "../source/robloxEnv";
-import { setupRobloxEnvironment } from "@lattice-ui/preview-runtime";
+import { robloxMock, setupRobloxEnvironment } from "@lattice-ui/preview-runtime";
 
 const robloxMockRecord = robloxMock as unknown as Record<PropertyKey, unknown>;
 

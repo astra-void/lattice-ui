@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PreviewApp } from "../../../packages/preview/src/shell/PreviewApp";
+import { PreviewThemeProvider } from "../../../packages/preview/src/shell/theme";
 import { discoverPreviewProject } from "../../../packages/preview/src/source/discover";
 
 afterEach(() => {
@@ -46,13 +47,17 @@ function createReadyEntry(id: string, title: string) {
   };
 }
 
+function renderPreviewApp(app: React.ReactElement) {
+  return render(<PreviewThemeProvider>{app}</PreviewThemeProvider>);
+}
+
 describe("preview shell", () => {
   it("renders direct-export preview entries", async () => {
     if (!checkboxEntry) {
       throw new Error("Expected checkbox preview entry to be discoverable.");
     }
 
-    render(
+    renderPreviewApp(
       <PreviewApp
         entries={[checkboxEntry]}
         initialSelectedId={checkboxEntry.id}
@@ -73,7 +78,7 @@ describe("preview shell", () => {
       throw new Error("Expected dialog preview entry to be discoverable.");
     }
 
-    render(
+    renderPreviewApp(
       <PreviewApp
         entries={[dialogEntry]}
         initialSelectedId={dialogEntry.id}
@@ -98,7 +103,7 @@ describe("preview shell", () => {
   });
 
   it("shows diagnostics states without crashing the shell", async () => {
-    render(
+    renderPreviewApp(
       <PreviewApp
         entries={[
           {
@@ -143,7 +148,7 @@ describe("preview shell", () => {
   it("shows harness guidance without loading modules for non-previewable entries", () => {
     const loadModule = vi.fn(() => Promise.reject(new Error("should not load")));
 
-    render(
+    renderPreviewApp(
       <PreviewApp
         entries={[
           {
@@ -174,7 +179,7 @@ describe("preview shell", () => {
   });
 
   it("shows an empty-project state when there are no eligible preview entries", () => {
-    render(
+    renderPreviewApp(
       <PreviewApp entries={[]} loadModule={() => Promise.reject(new Error("should not load"))} projectName="Empty" />,
     );
 
@@ -186,7 +191,7 @@ describe("preview shell", () => {
     const brokenEntry = createReadyEntry("Broken.tsx", "Broken");
     const workingEntry = createReadyEntry("Working.tsx", "Working");
 
-    render(
+    renderPreviewApp(
       <PreviewApp
         entries={[brokenEntry, workingEntry]}
         initialSelectedId={brokenEntry.id}
@@ -211,7 +216,7 @@ describe("preview shell", () => {
     const crashingEntry = createReadyEntry("Crash.tsx", "Crash");
     const workingEntry = createReadyEntry("Okay.tsx", "Okay");
 
-    render(
+    renderPreviewApp(
       <PreviewApp
         entries={[crashingEntry, workingEntry]}
         initialSelectedId={crashingEntry.id}
@@ -232,5 +237,42 @@ describe("preview shell", () => {
     expect(await screen.findByText("Preview render failed.")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: /okay/i }));
     expect(await screen.findByRole("button", { name: "Recovered preview" })).toBeTruthy();
+  });
+
+  it("renders the sole component export when a hot update leaves the registry export name stale", async () => {
+    renderPreviewApp(
+      <PreviewApp
+        entries={[
+          {
+            diagnostics: [],
+            exportNames: ["LoadoutEditor"],
+            hasDefaultExport: false,
+            hasPreviewExport: false,
+            id: "LoadoutEditor.tsx",
+            packageName: "@fixtures/stale-registry",
+            relativePath: "LoadoutEditor.tsx",
+            render: {
+              exportName: "LoadoutEditor",
+              mode: "auto",
+              usesPreviewProps: false,
+            },
+            sourceFilePath: "/virtual/LoadoutEditor.tsx",
+            status: "ready",
+            targetName: "fixture",
+            title: "Loadout Editor",
+          },
+        ]}
+        initialSelectedId="LoadoutEditor.tsx"
+        loadModule={() =>
+          Promise.resolve({
+            AnimatedSlot: () => <button type="button">Recovered stale export</button>,
+          })
+        }
+        projectName="@lattice-ui/preview-smoke"
+      />,
+    );
+
+    expect(await screen.findByRole("button", { name: "Recovered stale export" })).toBeTruthy();
+    expect(screen.queryByText("Preview render failed.")).toBeNull();
   });
 });

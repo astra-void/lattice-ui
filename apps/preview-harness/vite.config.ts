@@ -33,6 +33,14 @@ const previewTargets = [
 ] as const;
 
 export default defineConfig({
+  resolve: {
+    alias: [
+      {
+        find: "@lattice-ui/preview-runtime",
+        replacement: path.resolve(workspaceRoot, "packages/preview-runtime/src/index.ts"),
+      },
+    ],
+  },
   plugins: [
     createAutoMockPropsPlugin({
       targets: [...previewTargets],

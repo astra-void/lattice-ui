@@ -30,6 +30,13 @@ function resolveShellRoot() {
   );
 }
 
+function resolvePreviewRuntimeRootEntry() {
+  return resolvePreviewPackageEntry(
+    [path.resolve(__dirname, "../../../preview-runtime/src/index.ts"), path.resolve(__dirname, "../../../preview-runtime/dist/index.js")],
+    "preview runtime root",
+  );
+}
+
 export async function startPreviewServer(options: StartPreviewServerOptions) {
   const vite = (await import("vite")) as unknown as ViteModule;
   const reactPlugin = ((await import("@vitejs/plugin-react")) as unknown as ReactPluginModule).default;
@@ -39,6 +46,7 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
   ).default;
 
   const shellRoot = resolveShellRoot();
+  const previewRuntimeRootEntry = resolvePreviewRuntimeRootEntry();
   const targets: PreviewSourceTarget[] = [
     {
       name: options.packageName,
@@ -67,6 +75,14 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
       wasmPlugin(),
       topLevelAwaitPlugin(),
     ],
+    resolve: {
+      alias: [
+        {
+          find: "@lattice-ui/preview-runtime",
+          replacement: previewRuntimeRootEntry,
+        },
+      ],
+    },
     root: shellRoot,
     server: {
       fs: {

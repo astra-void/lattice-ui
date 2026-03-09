@@ -19,12 +19,12 @@ describe("@lattice-ui/compiler preview transform", () => {
 
     const result = transformPreviewSource(source, {
       filePath: "/virtual/compiler-transform.tsx",
-      runtimeModule: "@lattice-ui/preview/runtime",
+      runtimeModule: "@lattice-ui/preview-runtime",
       target: "compiler-transform",
     });
 
     expect(result.errors).toHaveLength(0);
-    expect(result.code).toContain('from "@lattice-ui/preview/runtime"');
+    expect(result.code).toContain('from "@lattice-ui/preview-runtime"');
     expect(result.code).toContain('from "react"');
     expect(result.code).toContain("MutableRefObject<HTMLElement | null | undefined>");
     expect(result.code).toContain("<TextLabel");
@@ -33,7 +33,7 @@ describe("@lattice-ui/compiler preview transform", () => {
   it("keeps unsupported-host diagnostics while compile_tsx still produces the browser fallback host", () => {
     const transformed = transformPreviewSource(`export const host = <viewportframe BackgroundTransparency={1} />;`, {
       filePath: "/virtual/fallback.tsx",
-      runtimeModule: "@lattice-ui/preview/runtime",
+      runtimeModule: "@lattice-ui/preview-runtime",
       target: "fallback",
     });
 

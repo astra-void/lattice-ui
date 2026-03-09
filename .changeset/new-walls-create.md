@@ -18,6 +18,7 @@
 "@lattice-ui/popover": minor
 "@lattice-ui/popper": minor
 "@lattice-ui/preview": minor
+"@lattice-ui/preview-runtime": minor
 "@lattice-ui/progress": minor
 "@lattice-ui/radio-group": minor
 "@lattice-ui/scroll-area": minor

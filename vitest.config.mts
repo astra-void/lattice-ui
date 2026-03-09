@@ -18,10 +18,6 @@ export default defineConfig({
         replacement: path.resolve(workspaceRoot, "packages/preview-runtime/src/index.ts"),
       },
       {
-        find: "@lattice-ui/preview/runtime",
-        replacement: path.resolve(workspaceRoot, "packages/preview/src/runtime/index.ts"),
-      },
-      {
         find: "@lattice-ui/preview",
         replacement: path.resolve(workspaceRoot, "packages/preview/src/index.ts"),
       },

@@ -17,7 +17,7 @@ const RUNTIME_MODULE_ID = "virtual:lattice-preview-runtime";
 const RESOLVED_RUNTIME_MODULE_ID = `\0${RUNTIME_MODULE_ID}`;
 const ENTRY_MODULE_ID_PREFIX = "virtual:lattice-preview-entry:";
 const RBX_STYLE_HELPER_NAME = "__rbxStyle";
-const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/preview/runtime";\n`;
+const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/preview-runtime";\n`;
 
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
@@ -31,14 +31,12 @@ function isUnderRoot(rootPath: string, filePath: string) {
 
 function resolveRuntimeEntryPath() {
   const candidates = [
-    path.resolve(__dirname, "../runtime/index.ts"),
-    path.resolve(__dirname, "../../src/runtime/index.ts"),
-    path.resolve(__dirname, "../runtime/index.mjs"),
-    path.resolve(__dirname, "../runtime/index.js"),
+    path.resolve(__dirname, "../../../preview-runtime/src/index.ts"),
+    path.resolve(__dirname, "../../../preview-runtime/dist/index.js"),
   ];
   const candidate = candidates.find((filePath) => fs.existsSync(filePath));
   if (!candidate) {
-    throw new Error("Unable to resolve @lattice-ui/preview runtime entry.");
+    throw new Error("Unable to resolve @lattice-ui/preview-runtime entry.");
   }
 
   return candidate.split(path.sep).join("/");
@@ -157,7 +155,11 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     handleHotUpdate(context: { file: string }) {
       if (findTargetForFilePath(context.file, options.targets)) {
         refreshRegistry(true);
+        // Avoid rendering a mixed old-registry/new-module state before the forced reload completes.
+        return [];
       }
+
+      return undefined;
     },
     load(id: string) {
       if (id === RESOLVED_REGISTRY_MODULE_ID) {

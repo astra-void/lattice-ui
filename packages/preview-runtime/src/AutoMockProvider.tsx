@@ -1,5 +1,5 @@
 import React from "react";
-import type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "../source/types";
+import type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "./previewTypes";
 
 type PreviewPrint = (...args: unknown[]) => void;
 type DeepMockMember = ((...args: unknown[]) => unknown) & Record<PropertyKey, unknown>;

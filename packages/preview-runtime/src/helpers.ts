@@ -1,4 +1,4 @@
-import robloxMock from "../source/robloxEnv";
+import robloxMock from "./robloxMock";
 
 const robloxMockRecord = robloxMock as unknown as Record<PropertyKey, unknown>;
 
@@ -16,6 +16,14 @@ export class UDim {
     this.Scale = scale;
     this.Offset = offset;
   }
+
+  add(other: UDim) {
+    return new UDim(this.Scale + other.Scale, this.Offset + other.Offset);
+  }
+
+  sub(other: UDim) {
+    return new UDim(this.Scale - other.Scale, this.Offset - other.Offset);
+  }
 }
 
 export class Vector2 {
@@ -28,29 +36,47 @@ export class Vector2 {
   }
 }
 
-export type UDim2Value = {
-  X: UDim;
-  Y: UDim;
-};
+export class UDim2 {
+  readonly X: UDim;
+  readonly Y: UDim;
+
+  constructor(xScale: number, xOffset: number, yScale: number, yOffset: number) {
+    this.X = new UDim(xScale, xOffset);
+    this.Y = new UDim(yScale, yOffset);
+  }
+
+  static fromOffset(x: number, y: number) {
+    return new UDim2(0, x, 0, y);
+  }
+
+  static fromScale(x: number, y: number) {
+    return new UDim2(x, 0, y, 0);
+  }
+
+  add(other: UDim2Value) {
+    return new UDim2(
+      this.X.Scale + other.X.Scale,
+      this.X.Offset + other.X.Offset,
+      this.Y.Scale + other.Y.Scale,
+      this.Y.Offset + other.Y.Offset,
+    );
+  }
+
+  sub(other: UDim2Value) {
+    return new UDim2(
+      this.X.Scale - other.X.Scale,
+      this.X.Offset - other.X.Offset,
+      this.Y.Scale - other.Y.Scale,
+      this.Y.Offset - other.Y.Offset,
+    );
+  }
+}
+
+export type UDim2Value = UDim2;
 
 export const Color3 = {
   fromRGB(r: number, g: number, b: number): Color3Value {
     return { r, g, b };
-  },
-} as const;
-
-export const UDim2 = {
-  fromOffset(x: number, y: number): UDim2Value {
-    return {
-      X: new UDim(0, x),
-      Y: new UDim(0, y),
-    };
-  },
-  fromScale(x: number, y: number): UDim2Value {
-    return {
-      X: new UDim(x, 0),
-      Y: new UDim(y, 0),
-    };
   },
 } as const;
 

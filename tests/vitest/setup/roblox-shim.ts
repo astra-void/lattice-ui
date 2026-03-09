@@ -28,6 +28,28 @@ class MockUDim2 {
   static fromOffset(x: number, y: number) {
     return new MockUDim2(0, x, 0, y);
   }
+
+  static fromScale(x: number, y: number) {
+    return new MockUDim2(x, 0, y, 0);
+  }
+
+  add(other: MockUDim2) {
+    return new MockUDim2(
+      this.X.Scale + other.X.Scale,
+      this.X.Offset + other.X.Offset,
+      this.Y.Scale + other.Y.Scale,
+      this.Y.Offset + other.Y.Offset,
+    );
+  }
+
+  sub(other: MockUDim2) {
+    return new MockUDim2(
+      this.X.Scale - other.X.Scale,
+      this.X.Offset - other.X.Offset,
+      this.Y.Scale - other.Y.Scale,
+      this.Y.Offset - other.Y.Offset,
+    );
+  }
 }
 
 const luauMath: LuauMath = {

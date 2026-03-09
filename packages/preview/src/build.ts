@@ -92,7 +92,7 @@ function validateTarget(target: PreviewBuildTarget) {
 
 export async function buildPreviewModules(options: BuildPreviewModulesOptions): Promise<BuildPreviewModulesResult> {
   const outDir = options.outDir ?? path.resolve(process.cwd(), "generated");
-  const runtimeModule = options.runtimeModule ?? "@lattice-ui/preview/runtime";
+  const runtimeModule = options.runtimeModule ?? "@lattice-ui/preview-runtime";
   const failOnUnsupported = options.failOnUnsupported ?? true;
 
   if (options.targets.length === 0) {

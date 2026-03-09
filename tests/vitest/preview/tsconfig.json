@@ -7,7 +7,6 @@
     "types": ["node", "react", "react-dom", "vitest/globals"],
     "paths": {
       "@lattice-ui/compiler": ["packages/compiler/index.d.ts"],
-      "@lattice-ui/preview/runtime": ["packages/preview/src/runtime/index.ts"],
       "@lattice-ui/preview-runtime": ["packages/preview-runtime/src/index.ts"]
     }
   },

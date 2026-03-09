@@ -1,6 +1,7 @@
 import React from "react";
-import { AutoMockProvider, LayoutProvider } from "../runtime";
 import {
+  AutoMockProvider,
+  LayoutProvider,
   areViewportsEqual,
   createViewportSize,
   createWindowViewport,
@@ -8,7 +9,7 @@ import {
   measureElementViewport,
   pickViewport,
   type ViewportSize,
-} from "../runtime/viewport";
+} from "@lattice-ui/preview-runtime";
 import type { PreviewDefinition, PreviewRegistryItem } from "../source/types";
 import { PreviewThemeControl } from "./theme";
 
@@ -149,6 +150,56 @@ function isRenderableComponentExport(value: unknown): boolean {
   return typeof value === "function" || (isRecord(value) && "$$typeof" in value);
 }
 
+function collectRenderableModuleExports(
+  container: unknown,
+  exportPrefix = "",
+  visited = new Set<unknown>(),
+): Array<{ exportName: string; value: unknown }> {
+  if (!isRecord(container) || visited.has(container)) {
+    return [];
+  }
+
+  visited.add(container);
+
+  const renderableExports: Array<{ exportName: string; value: unknown }> = [];
+
+  for (const [name, value] of Object.entries(container)) {
+    if (name === "__esModule" || name === "preview") {
+      continue;
+    }
+
+    const exportName = exportPrefix ? `${exportPrefix}.${name}` : name;
+    if (name === "default") {
+      if (isRenderableComponentExport(value)) {
+        renderableExports.push({ exportName: exportPrefix ? exportName : "default", value });
+      }
+
+      renderableExports.push(...collectRenderableModuleExports(value, exportName, visited));
+      continue;
+    }
+
+    if (isRenderableComponentExport(value)) {
+      renderableExports.push({ exportName, value });
+    }
+  }
+
+  return renderableExports;
+}
+
+function readSingleRenderableModuleExport(module: PreviewModule) {
+  const seenValues = new Set<unknown>();
+  const renderableExports = collectRenderableModuleExports(module).filter(({ value }) => {
+    if (seenValues.has(value)) {
+      return false;
+    }
+
+    seenValues.add(value);
+    return true;
+  });
+
+  return renderableExports.length === 1 ? renderableExports[0] : undefined;
+}
+
 function describeValue(value: unknown) {
   if (value === undefined) {
     return "undefined";
@@ -228,7 +279,11 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
 
   if (entry.render.mode === "auto") {
     const exportValue = readModuleExport(module, entry.render.exportName);
-    if (!isRenderableComponentExport(exportValue)) {
+    // Preview source edits can briefly update the module before the registry full-reload lands.
+    const fallbackExport = exportValue === undefined ? readSingleRenderableModuleExport(module) : undefined;
+    const resolvedExportValue = fallbackExport?.value ?? exportValue;
+
+    if (!isRenderableComponentExport(resolvedExportValue)) {
       throw new Error(
         `Expected \`${entry.render.exportName}\` to be a component export, received ${describeValue(exportValue)}. ` +
           `Available exports: ${describeModuleExports(module)}.`,
@@ -238,7 +293,12 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
     const props =
       entry.render.usesPreviewProps && preview?.props && typeof preview.props === "object" ? preview.props : undefined;
 
-    return <AutoMockProvider component={exportValue as React.ComponentType<Record<string, unknown>>} props={props} />;
+    return (
+      <AutoMockProvider
+        component={resolvedExportValue as React.ComponentType<Record<string, unknown>>}
+        props={props}
+      />
+    );
   }
 
   return null;

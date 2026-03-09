@@ -35,12 +35,12 @@ describe("preview source transform", () => {
 
     const result = transformPreviewSource(source, {
       filePath: "/virtual/example.tsx",
-      runtimeModule: "@lattice-ui/preview/runtime",
+      runtimeModule: "@lattice-ui/preview-runtime",
       target: "rich-hosts",
     });
 
     expect(result.errors).toHaveLength(0);
-    expect(result.code).toContain('from "@lattice-ui/preview/runtime"');
+    expect(result.code).toContain('from "@lattice-ui/preview-runtime"');
     expect(result.code).toContain('from "react"');
     expect(result.code).toContain("MutableRefObject<HTMLElement | null | undefined>");
     expect(result.code).toContain("container?: HTMLElement | null");
@@ -58,12 +58,12 @@ describe("preview source transform", () => {
 
     const result = transformPreviewSource(source, {
       filePath: "/virtual/enum-passthrough.tsx",
-      runtimeModule: "@lattice-ui/preview/runtime",
+      runtimeModule: "@lattice-ui/preview-runtime",
       target: "enum-passthrough",
     });
 
     expect(result.errors).toHaveLength(0);
-    expect(result.code).toContain("Enum.UserInputType.MouseButton1");
+    expect(result.code).toContain('__previewGlobal("Enum").UserInputType.MouseButton1');
     expect(result.code).toContain("<Frame");
   });
 
@@ -85,12 +85,12 @@ describe("preview source transform", () => {
 
     const result = transformPreviewSource(source, {
       filePath: "/virtual/merged-imports.tsx",
-      runtimeModule: "@lattice-ui/preview/runtime",
+      runtimeModule: "@lattice-ui/preview-runtime",
       target: "merged-imports",
     });
 
     expect(result.errors).toHaveLength(0);
-    expect(result.code.match(/from "@lattice-ui\/preview\/runtime"/g) ?? []).toHaveLength(1);
+    expect(result.code.match(/from "@lattice-ui\/preview-runtime"/g) ?? []).toHaveLength(1);
     expect(result.code).toContain("React");
     expect(result.code).toContain("Slot");
     expect(result.code).toContain("FocusScope");
@@ -106,7 +106,7 @@ describe("preview source transform", () => {
 
     const result = transformPreviewSource(source, {
       filePath: "/virtual/bad.tsx",
-      runtimeModule: "@lattice-ui/preview/runtime",
+      runtimeModule: "@lattice-ui/preview-runtime",
       target: "broken",
     });
 
@@ -129,7 +129,7 @@ describe("preview source transform", () => {
 
     const result = transformPreviewSource(source, {
       filePath: "/virtual/decorated-controller.tsx",
-      runtimeModule: "@lattice-ui/preview/runtime",
+      runtimeModule: "@lattice-ui/preview-runtime",
       target: "decorators",
     });
 

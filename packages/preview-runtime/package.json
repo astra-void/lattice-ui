@@ -2,12 +2,12 @@
   "name": "@lattice-ui/preview-runtime",
   "version": "0.3.2",
   "private": false,
-  "description": "Browser polyfills for Roblox runtime APIs used by Lattice UI previews.",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "types": "src/index.ts",
+  "description": "Shared browser runtime for Lattice UI previews, including Roblox globals and DOM host rendering.",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "src",
+    "dist",
     "README.md"
   ],
   "scripts": {
@@ -17,24 +17,18 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./Enum": {
-      "types": "./src/Enum.ts",
-      "import": "./src/Enum.ts",
-      "default": "./src/Enum.ts"
-    },
-    "./RunService": {
-      "types": "./src/RunService.ts",
-      "import": "./src/RunService.ts",
-      "default": "./src/RunService.ts"
-    },
-    "./task": {
-      "types": "./src/task.ts",
-      "import": "./src/task.ts",
-      "default": "./src/task.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
+  },
+  "dependencies": {
+    "@lattice-ui/layout-engine": "file:../layout-engine/pkg",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
   }
 }

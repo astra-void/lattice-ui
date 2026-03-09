@@ -13,7 +13,7 @@ import {
   UIPadding,
   UIScale,
   UIStroke,
-} from "@lattice-ui/preview/runtime";
+} from "@lattice-ui/preview-runtime";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
@@ -116,6 +116,27 @@ describe("preview runtime host mapping", () => {
     expect(frame.style.visibility).toBe("visible");
     expect(frame.style.left).toBe("12px");
     expect(frame.style.top).toBe("18px");
+    expect(frame.style.width).toBe("120px");
+    expect(frame.style.height).toBe("48px");
+  });
+
+  it("supports Roblox-style UDim2 construction and add chaining", () => {
+    const position = UDim2.fromScale(0.5, 0.5).add(UDim2.fromOffset(12, 18));
+    const size = new UDim2(0, 120, 0, 48);
+
+    expect(position).toBeInstanceOf(UDim2);
+    expect(position.X.Scale).toBe(0.5);
+    expect(position.X.Offset).toBe(12);
+    expect(position.Y.Scale).toBe(0.5);
+    expect(position.Y.Offset).toBe(18);
+
+    render(
+      <Frame Position={position} Size={size}>
+        Chained frame
+      </Frame>,
+    );
+
+    const frame = document.querySelector('[data-preview-host="frame"]') as HTMLElement;
     expect(frame.style.width).toBe("120px");
     expect(frame.style.height).toBe("48px");
   });
