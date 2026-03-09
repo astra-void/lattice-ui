@@ -11,6 +11,15 @@ declare module "@lattice-ui/layout-engine" {
 
   export default function initLayoutEngine(input?: LayoutEngineInitInput): Promise<void>;
 
+  export class LayoutSession {
+    applyNodes(nodes: unknown[]): void;
+    computeDirty(): unknown;
+    dispose(): void;
+    removeNodes(nodeIds: string[]): void;
+    setViewport(viewport: { height: number; width: number }): void;
+  }
+
+  export function createLayoutSession(): LayoutSession;
   export function compute_layout(raw_tree: unknown, viewport_width: number, viewport_height: number): unknown;
 }
 

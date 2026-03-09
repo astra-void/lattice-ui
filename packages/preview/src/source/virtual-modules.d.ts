@@ -1,15 +1,15 @@
-declare module "virtual:lattice-preview-registry" {
-  import type { PreviewEntryMeta, PreviewRegistryItem } from "./types";
+declare module "virtual:lattice-preview-workspace-index" {
+  import type { PreviewEntryPayload, PreviewWorkspaceIndex } from "@lattice-ui/preview-engine";
 
-  export const previewEntries: PreviewRegistryItem[];
-  export const previewImporters: Record<string, () => Promise<Record<string, unknown> & { __previewEntryMeta: PreviewEntryMeta }>>;
-  export const previewProjectName: string;
+  export const previewProtocolVersion: number;
+  export const previewWorkspaceIndex: PreviewWorkspaceIndex;
+  export const previewImporters: Record<string, () => Promise<Record<string, unknown> & { __previewEntryPayload: PreviewEntryPayload }>>;
 }
 
 declare module "virtual:lattice-preview-entry:*" {
-  import type { PreviewEntryMeta } from "./types";
+  import type { PreviewEntryPayload } from "@lattice-ui/preview-engine";
 
-  export const __previewEntryMeta: PreviewEntryMeta;
+  export const __previewEntryPayload: PreviewEntryPayload;
   const previewEntryModule: Record<string, unknown>;
   export default previewEntryModule;
 }

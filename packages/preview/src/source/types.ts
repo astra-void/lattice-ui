@@ -1,5 +1,4 @@
 import type { ComponentType } from "react";
-import type { UnsupportedPatternError } from "@lattice-ui/compiler";
 
 export type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "@lattice-ui/preview-runtime";
 
@@ -48,15 +47,33 @@ export type PreviewRenderTarget =
       candidates?: string[];
     };
 
-export type PreviewEntryStatus = "ready" | "needs-harness";
+export type PreviewEntryStatus =
+  | "ready"
+  | "needs-harness"
+  | "ambiguous"
+  | "blocked_by_transform"
+  | "blocked_by_runtime"
+  | "blocked_by_layout";
 
-export type PreviewRegistryDiagnostic = UnsupportedPatternError & {
+export type PreviewRegistryDiagnostic = {
+  blocking?: boolean;
+  code: string;
+  column: number;
+  file: string;
+  line: number;
+  message: string;
+  phase?: "discovery" | "layout" | "runtime" | "transform";
   relativeFile: string;
+  severity?: "error" | "info" | "warning";
+  summary?: string;
+  symbol?: string;
+  target: string;
 };
 
 export type PreviewDiscoveryDiagnosticCode =
   | "AMBIGUOUS_COMPONENT_EXPORTS"
   | "LEGACY_AUTO_RENDER_FALLBACK"
+  | "MISSING_EXPLICIT_PREVIEW_CONTRACT"
   | "NO_COMPONENT_EXPORTS"
   | "PREVIEW_RENDER_MISSING"
   | "TRANSITIVE_ANALYSIS_LIMITED";

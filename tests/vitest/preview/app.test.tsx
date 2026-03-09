@@ -115,7 +115,7 @@ describe("preview shell", () => {
     expect(screen.getByRole("button", { name: /close/i })).toBeTruthy();
   });
 
-  it("shows lazy transform diagnostics without crashing the shell", async () => {
+  it("shows compatibility-mode transform diagnostics without blocking the preview", async () => {
     renderPreviewApp(
       <PreviewApp
         entries={[
@@ -150,12 +150,15 @@ describe("preview shell", () => {
             },
             [
               {
+                blocking: false,
                 code: "UNSUPPORTED_GLOBAL",
                 column: 3,
                 file: "/virtual/Broken.tsx",
                 line: 2,
                 message: "The Roblox `game` global is not supported by preview generation.",
+                severity: "warning",
                 relativeFile: "src/Broken.tsx",
+                summary: "The Roblox `game` global is not supported by preview generation.",
                 target: "roblox",
               },
             ],
@@ -165,8 +168,66 @@ describe("preview shell", () => {
       />,
     );
 
-    expect(await screen.findByText("Transform diagnostics are blocking this preview.")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Broken preview" })).toBeTruthy();
     expect(screen.getByText("UNSUPPORTED_GLOBAL")).toBeTruthy();
+  });
+
+  it("shows blocked-by-transform guidance without rendering the canvas", async () => {
+    const loadEntry = vi.fn(() =>
+      createLoadedEntry(
+        {},
+        [
+          {
+            blocking: true,
+            code: "UNSUPPORTED_HOST_ELEMENT",
+            column: 1,
+            file: "/virtual/Blocked.tsx",
+            line: 1,
+            message: "Host element viewportframe is not supported by preview generation.",
+            relativeFile: "src/Blocked.tsx",
+            severity: "error",
+            summary: "Host element viewportframe is not supported by preview generation.",
+            target: "fixture",
+          },
+        ],
+      ),
+    );
+
+    renderPreviewApp(
+      <PreviewApp
+        entries={[
+          {
+            autoRenderCandidate: "Blocked",
+            autoRenderReason: "sole-export",
+            candidateExportNames: ["Blocked"],
+            discoveryDiagnostics: [],
+            exportNames: ["Blocked"],
+            hasDefaultExport: false,
+            hasPreviewExport: false,
+            id: "Blocked.tsx",
+            packageName: "@fixtures/blocked",
+            relativePath: "Blocked.tsx",
+            render: {
+              exportName: "Blocked",
+              mode: "auto",
+              selectedBy: "sole-export",
+              usesPreviewProps: false,
+            },
+            sourceFilePath: "/virtual/Blocked.tsx",
+            status: "blocked_by_transform",
+            targetName: "fixture",
+            title: "Blocked",
+          },
+        ]}
+        initialSelectedId="Blocked.tsx"
+        loadEntry={loadEntry}
+        projectName="@lattice-ui/preview-smoke"
+      />,
+    );
+
+    expect(await screen.findByText("This preview is blocked by transform mode.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Blocked preview" })).toBeNull();
+    expect(loadEntry).toHaveBeenCalledTimes(1);
   });
 
   it("shows harness guidance without loading modules for non-previewable entries", () => {

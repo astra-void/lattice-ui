@@ -130,17 +130,36 @@ export {
   withAutoMockedProps,
 } from "./preview";
 export type {
+  PreviewExecutionMode,
   PreviewEnumCategory,
   PreviewEnumItem,
   PreviewEnumRoot,
   PreviewPolyfillTarget,
+  PreviewRuntimeIssue,
+  PreviewRuntimeIssueContext,
+  PreviewRuntimeIssueKind,
+  PreviewRuntimeIssuePhase,
+  PreviewRuntimeReporter,
   PreviewRunService,
   RBXScriptConnection,
   RBXScriptSignal,
   TaskCallback,
   TaskLibrary,
 } from "./runtime";
-export { Enum, installPreviewRuntimeGlobals, installPreviewRuntimePolyfills, RunService, task } from "./runtime";
+export {
+  clearPreviewRuntimeIssues,
+  Enum,
+  getPreviewRuntimeIssues,
+  getPreviewRuntimeReporter,
+  installPreviewRuntimeGlobals,
+  installPreviewRuntimePolyfills,
+  normalizePreviewRuntimeError,
+  publishPreviewRuntimeIssue,
+  RunService,
+  setPreviewRuntimeIssueContext,
+  subscribePreviewRuntimeIssues,
+  task,
+} from "./runtime";
 
 export { React };
 export { createStrictContext, useControllableState, Slot };
@@ -184,6 +203,16 @@ export type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "./previ
 export type { LayerInteractEvent } from "./react";
 export { createUniversalRobloxMock, createUniversalRobloxModuleMock, robloxMock, robloxModuleMock } from "./runtime";
 export { __rbxStyle, Box, Text } from "./style/index";
+export {
+  LayoutExecutionError,
+  LayoutValidationError,
+  ModuleLoadError,
+  PreviewRuntimeError,
+  RuntimeMockError,
+  TransformExecutionError,
+  TransformValidationError,
+  UnsupportedPatternError,
+} from "./runtime";
 
 export type PreviewRuntime = {
   hosts: typeof previewRuntimeHosts;

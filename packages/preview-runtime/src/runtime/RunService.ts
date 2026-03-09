@@ -1,5 +1,5 @@
 ﻿import { subscribeToFrames } from "./frameScheduler";
-import { reportPreviewRuntimeError } from "./runtimeError";
+import { normalizePreviewRuntimeError, publishPreviewRuntimeIssue } from "./runtimeError";
 
 const RUN_SERVICE_KEY = Symbol.for("lattice-ui.preview-runtime.RunService");
 
@@ -56,7 +56,18 @@ class Signal<TArgs extends readonly unknown[]> implements RBXScriptSignal<TArgs>
       try {
         connection.invoke(...args);
       } catch (error) {
-        reportPreviewRuntimeError("RunService", error);
+        publishPreviewRuntimeIssue(
+          normalizePreviewRuntimeError(
+            {
+              code: "RUNSERVICE_CALLBACK_ERROR",
+              details: "RunService",
+              kind: "TransformExecutionError",
+              phase: "runtime",
+              summary: `RunService callback failed: ${error instanceof Error ? error.message : String(error)}`,
+            },
+            error,
+          ),
+        );
       }
     }
   }

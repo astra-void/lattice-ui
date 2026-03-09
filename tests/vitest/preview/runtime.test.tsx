@@ -1,11 +1,16 @@
 // @vitest-environment jsdom
 
 import {
+  clearPreviewRuntimeIssues,
   Color3,
   Frame,
+  getPreviewRuntimeIssues,
   LayoutProvider,
+  normalizePreviewRuntimeError,
+  publishPreviewRuntimeIssue,
   ScreenGui,
   Slot,
+  subscribePreviewRuntimeIssues,
   TextLabel,
   UDim2,
   UICorner,
@@ -13,6 +18,7 @@ import {
   UIPadding,
   UIScale,
   UIStroke,
+  type PreviewRuntimeIssue,
 } from "@lattice-ui/preview-runtime";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -21,23 +27,84 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type LayoutRect = { height: number; width: number; x: number; y: number };
 type SerializedAxis = { offset: number; scale: number };
-type LayoutTree = {
-  anchor_point?: { x: number; y: number };
-  children: LayoutTree[];
-  id?: string;
-  node_type?: string;
-  position?: { x: SerializedAxis; y: SerializedAxis };
-  size?: { x: SerializedAxis; y: SerializedAxis };
+type LayoutDebugPayload = {
+  dirtyNodeIds: string[];
+  roots: unknown[];
+  viewport: {
+    height: number;
+    width: number;
+  };
 };
-type ComputeLayout = (tree: LayoutTree, viewportWidth: number, viewportHeight: number) => Record<string, LayoutRect>;
+type LayoutNode = {
+  id: string;
+  intrinsicSize?: { height: number; width: number } | null;
+  kind?: string;
+  layout?: {
+    anchorPoint?: { x: number; y: number };
+    position?: { x: SerializedAxis; y: SerializedAxis };
+    size?: { x: SerializedAxis; y: SerializedAxis };
+  };
+  nodeType?: string;
+  parentId?: string;
+};
+type LayoutSessionResult = {
+  debug: LayoutDebugPayload;
+  dirtyNodeIds: string[];
+  rects: Record<string, LayoutRect>;
+};
+type ComputeDirty = (nodes: LayoutNode[], viewportWidth: number, viewportHeight: number) => LayoutSessionResult;
 
 const layoutEngineMocks = vi.hoisted(() => ({
-  computeLayout: vi.fn<ComputeLayout>(() => ({})),
+  computeDirty: vi.fn<ComputeDirty>((_nodes, viewportWidth, viewportHeight) => ({
+    debug: {
+      dirtyNodeIds: [],
+      roots: [],
+      viewport: {
+        height: viewportHeight,
+        width: viewportWidth,
+      },
+    },
+    dirtyNodeIds: [],
+    rects: {},
+  })),
+  createLayoutSession: vi.fn(() => {
+    const state = {
+      nodes: new Map<string, LayoutNode>(),
+      viewport: {
+        height: 0,
+        width: 0,
+      },
+    };
+
+    return {
+      applyNodes(nodes: LayoutNode[]) {
+        for (const node of nodes) {
+          state.nodes.set(node.id, JSON.parse(JSON.stringify(node)) as LayoutNode);
+        }
+      },
+      computeDirty() {
+        return layoutEngineMocks.computeDirty(
+          [...state.nodes.values()].sort((left, right) => left.id.localeCompare(right.id)),
+          state.viewport.width,
+          state.viewport.height,
+        );
+      },
+      dispose() {},
+      removeNodes(nodeIds: string[]) {
+        for (const nodeId of nodeIds) {
+          state.nodes.delete(nodeId);
+        }
+      },
+      setViewport(viewport: { height: number; width: number }) {
+        state.viewport = viewport;
+      },
+    };
+  }),
   init: vi.fn<() => Promise<void>>(() => Promise.resolve(undefined)),
 }));
 
 vi.mock("@lattice-ui/layout-engine", () => ({
-  compute_layout: layoutEngineMocks.computeLayout,
+  createLayoutSession: layoutEngineMocks.createLayoutSession,
   default: layoutEngineMocks.init,
 }));
 
@@ -45,6 +112,47 @@ type MockTreeNode = {
   id: string;
   children?: MockTreeNode[];
 };
+
+function createMockTreeRoot(nodes: LayoutNode[]): MockTreeNode {
+  const childrenByParent = new Map<string, MockTreeNode[]>();
+  const nodesById = new Map<string, MockTreeNode>();
+
+  for (const node of nodes) {
+    nodesById.set(node.id, { id: node.id, children: [] });
+  }
+
+  for (const node of nodes) {
+    if (!node.parentId || !nodesById.has(node.parentId)) {
+      continue;
+    }
+
+    const parentChildren = childrenByParent.get(node.parentId) ?? [];
+    const childNode = nodesById.get(node.id);
+    if (childNode) {
+      parentChildren.push(childNode);
+      parentChildren.sort((left, right) => left.id.localeCompare(right.id));
+      childrenByParent.set(node.parentId, parentChildren);
+    }
+  }
+
+  for (const [parentId, children] of childrenByParent.entries()) {
+    const parentNode = nodesById.get(parentId);
+    if (parentNode) {
+      parentNode.children = children;
+    }
+  }
+
+  const roots = [...nodes.values()]
+    .filter((node) => !node.parentId || !nodesById.has(node.parentId))
+    .map((node) => nodesById.get(node.id))
+    .filter((node): node is MockTreeNode => node !== undefined)
+    .sort((left, right) => left.id.localeCompare(right.id));
+
+  return {
+    children: roots,
+    id: "__root__",
+  };
+}
 
 function createMockLayoutResult(tree: MockTreeNode) {
   const result: Record<string, { height: number; width: number; x: number; y: number }> = {};
@@ -64,6 +172,30 @@ function createMockLayoutResult(tree: MockTreeNode) {
 
   visit(tree, 0);
   return result;
+}
+
+function createSessionResult(
+  rects: Record<string, LayoutRect>,
+  viewportWidth: number,
+  viewportHeight: number,
+  dirtyNodeIds: string[] = Object.keys(rects),
+): LayoutSessionResult {
+  return {
+    debug: {
+      dirtyNodeIds,
+      roots: [],
+      viewport: {
+        height: viewportHeight,
+        width: viewportWidth,
+      },
+    },
+    dirtyNodeIds,
+    rects,
+  };
+}
+
+function findNode(nodes: LayoutNode[], nodeId: string) {
+  return nodes.find((node) => node.id === nodeId);
 }
 function DelayedNestedTree() {
   const [isMounted, setIsMounted] = React.useState(false);
@@ -92,10 +224,14 @@ function DelayedNestedTree() {
 }
 
 beforeEach(() => {
-  layoutEngineMocks.computeLayout.mockReset();
-  layoutEngineMocks.computeLayout.mockImplementation(() => ({}));
+  layoutEngineMocks.computeDirty.mockReset();
+  layoutEngineMocks.computeDirty.mockImplementation((_nodes, viewportWidth, viewportHeight) =>
+    createSessionResult({}, viewportWidth, viewportHeight, []),
+  );
+  layoutEngineMocks.createLayoutSession.mockClear();
   layoutEngineMocks.init.mockReset();
   layoutEngineMocks.init.mockResolvedValue(undefined);
+  clearPreviewRuntimeIssues();
 });
 
 afterEach(() => {
@@ -390,46 +526,54 @@ describe("preview runtime host mapping", () => {
     }
   });
   it("serializes frame defaults and textlabel layout props before calling Wasm", async () => {
-    layoutEngineMocks.computeLayout.mockImplementation((tree, viewportWidth, viewportHeight) => {
+    layoutEngineMocks.computeDirty.mockImplementation((nodes, viewportWidth, viewportHeight) => {
       expect(viewportWidth).toBe(800);
       expect(viewportHeight).toBe(600);
-      expect(tree.children).toHaveLength(1);
-      expect(tree.children[0]).toMatchObject({
+      expect(findNode(nodes, "preview-node-screen")).toMatchObject({
         id: "preview-node-screen",
-        node_type: "ScreenGui",
+        kind: "root",
+        nodeType: "ScreenGui",
       });
-      expect(tree.children[0]?.children[0]).toMatchObject({
+      expect(findNode(nodes, "preview-node-frame")).toMatchObject({
         id: "preview-node-frame",
-        node_type: "Frame",
-        position: {
-          x: { offset: 0, scale: 0 },
-          y: { offset: 0, scale: 0 },
+        layout: {
+          position: {
+            x: { offset: 0, scale: 0 },
+            y: { offset: 0, scale: 0 },
+          },
+          size: {
+            x: { offset: 0, scale: 1 },
+            y: { offset: 0, scale: 1 },
+          },
         },
-        size: {
-          x: { offset: 0, scale: 1 },
-          y: { offset: 0, scale: 1 },
-        },
+        nodeType: "Frame",
+        parentId: "preview-node-screen",
       });
-      expect(tree.children[0]?.children[0]?.children[0]).toMatchObject({
+      expect(findNode(nodes, "preview-node-label")).toMatchObject({
         id: "preview-node-label",
-        node_type: "TextLabel",
-        anchor_point: { x: 0.5, y: 0.5 },
-        position: {
-          x: { offset: 0, scale: 0.5 },
-          y: { offset: 0, scale: 0.5 },
+        layout: {
+          anchorPoint: { x: 0.5, y: 0.5 },
+          position: {
+            x: { offset: 0, scale: 0.5 },
+            y: { offset: 0, scale: 0.5 },
+          },
+          size: {
+            x: { offset: 420, scale: 0 },
+            y: { offset: 40, scale: 0 },
+          },
         },
-        size: {
-          x: { offset: 420, scale: 0 },
-          y: { offset: 40, scale: 0 },
-        },
+        nodeType: "TextLabel",
       });
 
-      return {
-        __lattice_preview_root__: { height: 600, width: 800, x: 0, y: 0 },
-        "preview-node-screen": { height: 600, width: 800, x: 0, y: 0 },
-        "preview-node-frame": { height: 600, width: 800, x: 0, y: 0 },
-        "preview-node-label": { height: 40, width: 420, x: 190, y: 280 },
-      };
+      return createSessionResult(
+        {
+          "preview-node-screen": { height: 600, width: 800, x: 0, y: 0 },
+          "preview-node-frame": { height: 600, width: 800, x: 0, y: 0 },
+          "preview-node-label": { height: 40, width: 420, x: 190, y: 280 },
+        },
+        viewportWidth,
+        viewportHeight,
+      );
     });
 
     render(
@@ -471,40 +615,44 @@ describe("preview runtime host mapping", () => {
     );
 
     await waitFor(() => {
-      expect(layoutEngineMocks.computeLayout).toHaveBeenCalled();
-      const calls = layoutEngineMocks.computeLayout.mock.calls;
+      expect(layoutEngineMocks.computeDirty).toHaveBeenCalled();
+      const calls = layoutEngineMocks.computeDirty.mock.calls;
       const lastCall = calls[calls.length - 1];
       expect(lastCall).toBeDefined();
       if (!lastCall) {
-        throw new Error("Expected computeLayout to have been called.");
+        throw new Error("Expected computeDirty to have been called.");
       }
-      const [tree, viewportWidth, viewportHeight] = lastCall;
+      const [nodes, viewportWidth, viewportHeight] = lastCall;
 
       expect(viewportWidth).toBe(640);
       expect(viewportHeight).toBe(480);
-      expect(tree.children).toHaveLength(1);
-      expect(tree.children[0]).toMatchObject({
-        anchor_point: { x: 0, y: 0 },
-        node_type: "ScreenGui",
-        position: {
-          x: { offset: 0, scale: 0 },
-          y: { offset: 0, scale: 0 },
+      const rootNode = nodes.find((node) => node.kind === "root");
+      expect(rootNode).toMatchObject({
+        kind: "root",
+        layout: {
+          anchorPoint: { x: 0, y: 0 },
+          position: {
+            x: { offset: 0, scale: 0 },
+            y: { offset: 0, scale: 0 },
+          },
+          size: {
+            x: { offset: 0, scale: 1 },
+            y: { offset: 0, scale: 1 },
+          },
         },
-        size: {
-          x: { offset: 0, scale: 1 },
-          y: { offset: 0, scale: 1 },
-        },
+        nodeType: "ScreenGui",
       });
-      expect(tree.children[0]?.children).toHaveLength(1);
+      expect(nodes.filter((node) => node.parentId === rootNode?.id)).toHaveLength(1);
     });
   });
 
   it("does not call Wasm with an empty tree before delayed children register", async () => {
-    const capturedTrees: MockTreeNode[] = [];
+    const capturedNodeSets: LayoutNode[][] = [];
 
-    layoutEngineMocks.computeLayout.mockImplementation((tree) => {
-      capturedTrees.push(JSON.parse(JSON.stringify(tree)) as MockTreeNode);
-      return createMockLayoutResult(tree as MockTreeNode);
+    layoutEngineMocks.computeDirty.mockImplementation((nodes, viewportWidth, viewportHeight) => {
+      capturedNodeSets.push(JSON.parse(JSON.stringify(nodes)) as LayoutNode[]);
+      const tree = createMockTreeRoot(nodes);
+      return createSessionResult(createMockLayoutResult(tree), viewportWidth, viewportHeight);
     });
 
     render(
@@ -514,21 +662,19 @@ describe("preview runtime host mapping", () => {
     );
 
     await waitFor(() => {
-      expect(capturedTrees.length).toBeGreaterThan(0);
-      expect(capturedTrees[capturedTrees.length - 1]?.children?.[0]?.children?.[0]?.children?.[0]?.id).toBe(
-        "delayed-label",
-      );
+      expect(document.querySelector('[data-preview-node-id="delayed-label"]')).toBeTruthy();
     });
 
-    expect(capturedTrees.every((tree) => (tree.children?.length ?? 0) > 0)).toBe(true);
+    expect(capturedNodeSets.every((nodes) => nodes.length > 0)).toBe(true);
   });
 
   it("waits for nested registrations to settle before calling Wasm in strict mode", async () => {
     const capturedTrees: MockTreeNode[] = [];
 
-    layoutEngineMocks.computeLayout.mockImplementation((tree) => {
+    layoutEngineMocks.computeDirty.mockImplementation((nodes, viewportWidth, viewportHeight) => {
+      const tree = createMockTreeRoot(nodes);
       capturedTrees.push(JSON.parse(JSON.stringify(tree)) as MockTreeNode);
-      return createMockLayoutResult(tree as MockTreeNode);
+      return createSessionResult(createMockLayoutResult(tree), viewportWidth, viewportHeight);
     });
 
     render(
@@ -564,17 +710,19 @@ describe("preview runtime host mapping", () => {
   });
 
   it("normalizes nested registry ids and legacy Wasm result keys", async () => {
-    layoutEngineMocks.computeLayout.mockImplementation((tree) => {
-      expect(tree.children).toHaveLength(1);
-      expect(tree.children[0]?.id).toBe("preview-node-100");
-      expect(tree.children[0]?.children).toHaveLength(1);
-      expect(tree.children[0]?.children[0]?.id).toBe("preview-node-200");
+    layoutEngineMocks.computeDirty.mockImplementation((nodes, viewportWidth, viewportHeight) => {
+      expect(nodes).toHaveLength(2);
+      expect(findNode(nodes, "preview-node-100")?.id).toBe("preview-node-100");
+      expect(findNode(nodes, "preview-node-200")?.parentId).toBe("preview-node-100");
 
-      return {
-        __lattice_preview_root__: { height: 480, width: 640, x: 0, y: 0 },
-        "screengui:preview-node-100": { height: 240, width: 320, x: 0, y: 0 },
-        "frame:preview-node-200": { height: 32, width: 80, x: 11, y: 22 },
-      };
+      return createSessionResult(
+        {
+          "screengui:preview-node-100": { height: 240, width: 320, x: 0, y: 0 },
+          "frame:preview-node-200": { height: 32, width: 80, x: 11, y: 22 },
+        },
+        viewportWidth,
+        viewportHeight,
+      );
     });
 
     render(
@@ -597,5 +745,66 @@ describe("preview runtime host mapping", () => {
       expect(frame.style.width).toBe("80px");
       expect(frame.style.height).toBe("32px");
     });
+  });
+
+  it("normalizes runtime issues with the public taxonomy", () => {
+    const issue = normalizePreviewRuntimeError(
+      {
+        code: "LAYOUT_VALIDATION_ERROR",
+        entryId: "fixture:Broken.tsx",
+        file: "/virtual/Broken.tsx",
+        kind: "LayoutValidationError",
+        phase: "layout",
+        relativeFile: "src/Broken.tsx",
+        summary: "Unexpected layout session result type: string",
+        target: "fixture",
+      },
+      new Error("Unexpected layout session result type: string"),
+    );
+
+    expect(issue).toEqual({
+      code: "LAYOUT_VALIDATION_ERROR",
+      entryId: "fixture:Broken.tsx",
+      file: "/virtual/Broken.tsx",
+      kind: "LayoutValidationError",
+      phase: "layout",
+      relativeFile: "src/Broken.tsx",
+      summary: "Unexpected layout session result type: string",
+      target: "fixture",
+    });
+  });
+
+  it("publishes runtime issues through the shared reporter", () => {
+    const snapshots: PreviewRuntimeIssue[][] = [];
+    const unsubscribe = subscribePreviewRuntimeIssues((issues) => {
+      snapshots.push(issues);
+    });
+
+    publishPreviewRuntimeIssue({
+      code: "RUNTIME_MOCK_ERROR",
+      entryId: "fixture:Broken.tsx",
+      file: "/virtual/Broken.tsx",
+      kind: "RuntimeMockError",
+      phase: "runtime",
+      relativeFile: "src/Broken.tsx",
+      summary: "Mock resolution failed.",
+      target: "fixture",
+    });
+
+    unsubscribe();
+
+    expect(getPreviewRuntimeIssues()).toEqual([
+      {
+        code: "RUNTIME_MOCK_ERROR",
+        entryId: "fixture:Broken.tsx",
+        file: "/virtual/Broken.tsx",
+        kind: "RuntimeMockError",
+        phase: "runtime",
+        relativeFile: "src/Broken.tsx",
+        summary: "Mock resolution failed.",
+        target: "fixture",
+      },
+    ]);
+    expect(snapshots.at(-1)).toEqual(getPreviewRuntimeIssues());
   });
 });

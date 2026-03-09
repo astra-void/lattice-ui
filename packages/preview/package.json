@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@lattice-ui/compiler": "workspace:*",
+    "@lattice-ui/preview-engine": "workspace:*",
     "@lattice-ui/layout-engine": "file:../layout-engine/pkg",
     "@lattice-ui/preview-runtime": "workspace:*",
     "@vitejs/plugin-react": "^5.1.4",

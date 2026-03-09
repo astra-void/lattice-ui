@@ -1,0 +1,36 @@
+{
+  "name": "@lattice-ui/preview-engine",
+  "version": "0.3.2",
+  "private": false,
+  "description": "Core preview engine protocols, discovery, and invalidation for Lattice UI.",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "prebuild": "node ./scripts/clean-dist.mjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "watch": "tsc -p tsconfig.json -w"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./compat": {
+      "types": "./dist/compat.d.ts",
+      "import": "./dist/compat.js",
+      "default": "./dist/compat.js"
+    }
+  },
+  "dependencies": {
+    "@lattice-ui/compiler": "workspace:*",
+    "@lattice-ui/preview-runtime": "workspace:*",
+    "typescript": "5.9.3"
+  }
+}

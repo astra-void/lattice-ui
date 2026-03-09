@@ -6,7 +6,7 @@ import { createPreviewVitePlugin } from "../../../packages/preview/src/source/pl
 import type { PreviewPlugin } from "../../../packages/preview/src/source/viteTypes";
 import { getHookHandler } from "./hookTestUtils";
 
-const REGISTRY_MODULE_ID = "virtual:lattice-preview-registry";
+const WORKSPACE_INDEX_MODULE_ID = "virtual:lattice-preview-workspace-index";
 const temporaryRoots: string[] = [];
 
 type MockServer = ReturnType<typeof createMockServer>;
@@ -60,7 +60,7 @@ function createPreviewPlugin(fixtureRoot: string, sourceRoot: string): PreviewPl
 
 function createMockServer() {
   const watcherHandlers = new Map<string, Array<(filePath: string) => void>>();
-  const registryModule = { id: "\0virtual:lattice-preview-registry" };
+  const workspaceModule = { id: "\0virtual:lattice-preview-workspace-index" };
 
   return {
     emit(event: string, filePath: string) {
@@ -69,7 +69,7 @@ function createMockServer() {
       }
     },
     moduleGraph: {
-      getModuleById: vi.fn((id: string) => (id === registryModule.id ? registryModule : undefined)),
+      getModuleById: vi.fn((id: string) => (id === workspaceModule.id ? workspaceModule : undefined)),
       invalidateModule: vi.fn(),
     },
     watcher: {
@@ -85,33 +85,35 @@ function createMockServer() {
   };
 }
 
-function readRegistryEntries(previewPlugin: PreviewPlugin) {
+function readWorkspaceEntries(previewPlugin: PreviewPlugin) {
   const resolveId = getHookHandler<TestResolveIdHook>(previewPlugin.resolveId as TestResolveIdHook | undefined);
   const load = getHookHandler<TestLoadHook>(previewPlugin.load as TestLoadHook | undefined);
 
-  const resolvedRegistryId = resolveId?.(REGISTRY_MODULE_ID);
-  const registryModuleCode = load?.(resolvedRegistryId ?? REGISTRY_MODULE_ID);
-  if (typeof registryModuleCode !== "string") {
-    throw new Error("Expected the preview registry module to load as a string.");
+  const resolvedWorkspaceId = resolveId?.(WORKSPACE_INDEX_MODULE_ID);
+  const workspaceModuleCode = load?.(resolvedWorkspaceId ?? WORKSPACE_INDEX_MODULE_ID);
+  if (typeof workspaceModuleCode !== "string") {
+    throw new Error("Expected the preview workspace index module to load as a string.");
   }
 
-  const entriesMatch = registryModuleCode.match(/export const previewEntries = (\[[\s\S]*?\]);\nexport const previewImporters =/);
-  if (!entriesMatch) {
-    throw new Error(`Unable to parse preview registry module:\n${registryModuleCode}`);
+  const workspaceMatch = workspaceModuleCode.match(
+    /export const previewWorkspaceIndex = (\{[\s\S]*?\});\nexport const previewImporters =/,
+  );
+  if (!workspaceMatch) {
+    throw new Error(`Unable to parse preview workspace module:\n${workspaceModuleCode}`);
   }
 
-  return JSON.parse(entriesMatch[1] ?? "[]") as Array<{
+  return JSON.parse(workspaceMatch[1] ?? "{}").entries as Array<{
     relativePath: string;
     status: string;
-    render: {
-      mode: string;
+    renderTarget: {
+      kind: string;
       reason?: string;
       candidates?: string[];
     };
   }>;
 }
 
-function readEntryMeta(previewPlugin: PreviewPlugin, entryId: string) {
+function readEntryPayload(previewPlugin: PreviewPlugin, entryId: string) {
   const resolveId = getHookHandler<TestResolveIdHook>(previewPlugin.resolveId as TestResolveIdHook | undefined);
   const load = getHookHandler<TestLoadHook>(previewPlugin.load as TestLoadHook | undefined);
 
@@ -121,16 +123,28 @@ function readEntryMeta(previewPlugin: PreviewPlugin, entryId: string) {
     throw new Error("Expected the preview entry module to load as a string.");
   }
 
-  const metaMatch = entryModuleCode.match(/export const __previewEntryMeta = (\{[\s\S]*\});\n$/);
-  if (!metaMatch) {
+  const payloadMatch = entryModuleCode.match(/export const __previewEntryPayload = (\{[\s\S]*\});\n$/);
+  if (!payloadMatch) {
     throw new Error(`Unable to parse preview entry module:\n${entryModuleCode}`);
   }
 
-  return JSON.parse(metaMatch[1] ?? "{}") as {
+  return JSON.parse(payloadMatch[1] ?? "{}") as {
+    descriptor: {
+      status: string;
+    };
     diagnostics: Array<{
+      blocking?: boolean;
       code: string;
+      phase: string;
       relativeFile: string;
+      severity?: string;
     }>;
+    transform: {
+      mode: string;
+      outcome: {
+        kind: string;
+      };
+    };
   };
 }
 
@@ -146,11 +160,11 @@ describe("createPreviewVitePlugin", () => {
     );
 
     expect(handleHotUpdate).toBeTypeOf("function");
-    expect(handleHotUpdate?.({ file: sourceFile })).toBe(undefined);
+    expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
     expect(handleHotUpdate?.({ file: path.join(fixtureRoot, "README.md") })).toBe(undefined);
   });
 
-  it("refreshes and reloads the registry for add, delete, rename, and non-target watcher events", () => {
+  it("refreshes the workspace index and sends custom hmr updates for add, delete, rename, and non-target watcher events", () => {
     const { fixtureRoot, sourceRoot } = createFixtureRoot();
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
     const addedFile = path.join(sourceRoot, "FreshSlot.tsx");
@@ -165,11 +179,11 @@ describe("createPreviewVitePlugin", () => {
 
     configureServer?.(mockServer);
 
-    expect(readRegistryEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual(["AnimatedSlot.tsx"]);
+    expect(readWorkspaceEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual(["AnimatedSlot.tsx"]);
 
     fs.writeFileSync(addedFile, 'export function FreshSlot() { return <frame />; }\n', "utf8");
     mockServer.emit("add", addedFile);
-    expect(readRegistryEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual([
+    expect(readWorkspaceEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual([
       "AnimatedSlot.tsx",
       "FreshSlot.tsx",
     ]);
@@ -177,27 +191,32 @@ describe("createPreviewVitePlugin", () => {
     fs.renameSync(addedFile, renamedFile);
     mockServer.emit("unlink", addedFile);
     mockServer.emit("add", renamedFile);
-    expect(readRegistryEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual([
+    expect(readWorkspaceEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual([
       "AnimatedSlot.tsx",
       "RenamedSlot.tsx",
     ]);
 
     mockServer.emit("add", path.join(fixtureRoot, "README.md"));
-    expect(readRegistryEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual([
+    expect(readWorkspaceEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual([
       "AnimatedSlot.tsx",
       "RenamedSlot.tsx",
     ]);
 
     fs.rmSync(renamedFile);
     mockServer.emit("unlink", renamedFile);
-    expect(readRegistryEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual(["AnimatedSlot.tsx"]);
+    expect(readWorkspaceEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual(["AnimatedSlot.tsx"]);
 
     expect(mockServer.moduleGraph.invalidateModule).toHaveBeenCalledTimes(4);
-    expect(mockServer.ws.send).toHaveBeenCalledTimes(3);
-    expect(mockServer.ws.send).toHaveBeenCalledWith({ type: "full-reload" });
+    expect(mockServer.ws.send).toHaveBeenCalledTimes(4);
+    expect(mockServer.ws.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "lattice-preview:update",
+        type: "custom",
+      }),
+    );
   });
 
-  it("recomputes entry status and render reasons before forcing reload", () => {
+  it("recomputes entry status and render targets before sending entry-scoped updates", () => {
     const { fixtureRoot, sourceRoot } = createFixtureRoot();
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
     fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
@@ -213,7 +232,7 @@ describe("createPreviewVitePlugin", () => {
 
     configureServer?.(mockServer);
 
-    expect(readRegistryEntries(previewPlugin)).toEqual(
+    expect(readWorkspaceEntries(previewPlugin)).toEqual(
       expect.arrayContaining([expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "ready" })]),
     );
 
@@ -231,13 +250,13 @@ describe("createPreviewVitePlugin", () => {
       "utf8",
     );
     expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
-    expect(readRegistryEntries(previewPlugin)).toEqual(
+    expect(readWorkspaceEntries(previewPlugin)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           relativePath: "AnimatedSlot.tsx",
-          status: "needs-harness",
-          render: expect.objectContaining({
-            mode: "none",
+          status: "ambiguous",
+          renderTarget: expect.objectContaining({
+            kind: "none",
             reason: "ambiguous-exports",
             candidates: ["Alpha", "Beta"],
           }),
@@ -247,13 +266,13 @@ describe("createPreviewVitePlugin", () => {
 
     fs.writeFileSync(sourceFile, "export const value = 1;\n", "utf8");
     expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
-    expect(readRegistryEntries(previewPlugin)).toEqual(
+    expect(readWorkspaceEntries(previewPlugin)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           relativePath: "AnimatedSlot.tsx",
-          status: "needs-harness",
-          render: expect.objectContaining({
-            mode: "none",
+          status: "needs_harness",
+          renderTarget: expect.objectContaining({
+            kind: "none",
             reason: "no-component-export",
           }),
         }),
@@ -262,7 +281,7 @@ describe("createPreviewVitePlugin", () => {
 
     fs.writeFileSync(sourceFile, "export default function AnimatedSlot() { return <frame />; }\n", "utf8");
     expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
-    expect(readRegistryEntries(previewPlugin)).toEqual(
+    expect(readWorkspaceEntries(previewPlugin)).toEqual(
       expect.arrayContaining([expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "ready" })]),
     );
 
@@ -270,7 +289,7 @@ describe("createPreviewVitePlugin", () => {
     expect(mockServer.ws.send).toHaveBeenCalledTimes(3);
   });
 
-  it("loads lazy entry metadata with transform diagnostics on demand", () => {
+  it("loads entry payloads with transform diagnostics on demand", () => {
     const { fixtureRoot, sourceRoot } = createFixtureRoot();
     const sourceFile = path.join(sourceRoot, "Broken.tsx");
     fs.writeFileSync(
@@ -284,13 +303,24 @@ describe("createPreviewVitePlugin", () => {
     );
 
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
-    const entryMeta = readEntryMeta(previewPlugin, "fixture:Broken.tsx");
+    const entryPayload = readEntryPayload(previewPlugin, "fixture:Broken.tsx");
 
-    expect(entryMeta.diagnostics).toEqual(
+    expect(entryPayload.descriptor.status).toBe("ready");
+    expect(entryPayload.transform).toEqual({
+      mode: "compatibility",
+      outcome: {
+        fidelity: "degraded",
+        kind: "compatibility",
+      },
+    });
+    expect(entryPayload.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          blocking: false,
           code: "UNSUPPORTED_HOST_ELEMENT",
+          phase: "transform",
           relativeFile: "src/Broken.tsx",
+          severity: "warning",
         }),
       ]),
     );

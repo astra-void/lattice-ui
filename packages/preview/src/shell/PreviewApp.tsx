@@ -1,12 +1,17 @@
 import {
   AutoMockProvider,
   areViewportsEqual,
+  clearPreviewRuntimeIssues,
   createViewportSize,
   createWindowViewport,
   isViewportLargeEnough,
   LayoutProvider,
   measureElementViewport,
+  normalizePreviewRuntimeError,
   pickViewport,
+  setPreviewRuntimeIssueContext,
+  subscribePreviewRuntimeIssues,
+  type PreviewRuntimeIssue,
   type ViewportSize,
 } from "@lattice-ui/preview-runtime";
 import React from "react";
@@ -35,12 +40,12 @@ type PreviewCanvasProps = {
   entry: PreviewRegistryItem;
   isDebugMode: boolean;
   module: PreviewModule;
-  onRenderError: (message: string | null) => void;
+  onRenderError: (error: unknown | null) => void;
 };
 
 type PreviewErrorBoundaryProps = {
   children: React.ReactNode;
-  onError: (message: string | null) => void;
+  onError: (error: unknown | null) => void;
 };
 
 type PreviewErrorBoundaryState = {
@@ -67,14 +72,7 @@ class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, Pr
   }
 
   componentDidCatch(error: unknown) {
-    this.props.onError(error instanceof Error ? error.message : "Unknown preview render error.");
-  }
-
-  componentDidUpdate(previousProps: PreviewErrorBoundaryProps) {
-    if (previousProps.children !== this.props.children && this.state.errorMessage) {
-      this.setState({ errorMessage: null });
-      this.props.onError(null);
-    }
+    this.props.onError(error);
   }
 
   render() {
@@ -282,6 +280,14 @@ function getStatusLabel(status: PreviewEntryStatus) {
   switch (status) {
     case "ready":
       return "ready";
+    case "ambiguous":
+      return "ambiguous";
+    case "blocked_by_layout":
+      return "blocked by layout";
+    case "blocked_by_runtime":
+      return "blocked by runtime";
+    case "blocked_by_transform":
+      return "blocked by transform";
     case "needs-harness":
       return "needs harness";
   }
@@ -295,9 +301,10 @@ function getPrimaryDiscoveryDiagnostic(entry: PreviewRegistryItem) {
   const priority: Record<PreviewDiscoveryDiagnostic["code"], number> = {
     AMBIGUOUS_COMPONENT_EXPORTS: 0,
     PREVIEW_RENDER_MISSING: 1,
-    NO_COMPONENT_EXPORTS: 2,
-    TRANSITIVE_ANALYSIS_LIMITED: 3,
-    LEGACY_AUTO_RENDER_FALLBACK: 4,
+    MISSING_EXPLICIT_PREVIEW_CONTRACT: 2,
+    NO_COMPONENT_EXPORTS: 3,
+    TRANSITIVE_ANALYSIS_LIMITED: 4,
+    LEGACY_AUTO_RENDER_FALLBACK: 5,
   };
   const discoveryDiagnostics = entry.discoveryDiagnostics ?? [];
 
@@ -331,9 +338,18 @@ function getNeedsHarnessReasonBody(entry: PreviewRegistryItem) {
 
 function getEntryEmptyState(entry: PreviewRegistryItem) {
   const primaryDiscoveryDiagnostic = getPrimaryDiscoveryDiagnostic(entry);
+  const missingExplicitDiagnostic = getDiscoveryDiagnostic(entry, "MISSING_EXPLICIT_PREVIEW_CONTRACT");
   const previewRenderMissingDiagnostic = getDiscoveryDiagnostic(entry, "PREVIEW_RENDER_MISSING");
 
-  if (entry.status === "needs-harness") {
+  if (entry.status === "needs-harness" || entry.status === "ambiguous") {
+    if (missingExplicitDiagnostic) {
+      return {
+        body: missingExplicitDiagnostic.message,
+        eyebrow: "Needs harness",
+        title: "Explicit preview contract is required.",
+      };
+    }
+
     if (previewRenderMissingDiagnostic) {
       return {
         body:
@@ -368,6 +384,15 @@ function getEntryEmptyState(entry: PreviewRegistryItem) {
       title: "This file is not directly previewable yet.",
     };
   }
+}
+
+function isLoadableEntryStatus(status: PreviewEntryStatus) {
+  return (
+    status === "ready" ||
+    status === "blocked_by_transform" ||
+    status === "blocked_by_runtime" ||
+    status === "blocked_by_layout"
+  );
 }
 
 function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
@@ -502,7 +527,7 @@ function PreviewCanvas(props: PreviewCanvasProps) {
           ref={viewportRef}
         >
           <LayoutProvider viewportHeight={viewport.height} viewportWidth={viewport.width}>
-            <PreviewErrorBoundary onError={props.onRenderError}>
+            <PreviewErrorBoundary key={props.entry.id} onError={props.onRenderError}>
               {createPreviewNode(props.entry, props.module)}
             </PreviewErrorBoundary>
           </LayoutProvider>
@@ -518,11 +543,15 @@ export function PreviewApp(props: PreviewAppProps) {
   );
   const [isDebugMode, setIsDebugMode] = React.useState(false);
   const [loadedEntry, setLoadedEntry] = React.useState<LoadedPreviewEntry | undefined>();
-  const [loadError, setLoadError] = React.useState<string | null>(null);
-  const [renderError, setRenderError] = React.useState<string | null>(null);
+  const [loadIssue, setLoadIssue] = React.useState<PreviewRuntimeIssue | null>(null);
+  const [renderIssue, setRenderIssue] = React.useState<PreviewRuntimeIssue | null>(null);
+  const [runtimeIssues, setRuntimeIssues] = React.useState<PreviewRuntimeIssue[]>([]);
   const selectedEntry = props.entries.find((entry) => entry.id === selectedId) ?? props.entries[0];
   const selectedEntryDiscoveryDiagnostics = selectedEntry?.discoveryDiagnostics ?? [];
   const selectedEntryDiagnostics = loadedEntry?.meta.diagnostics ?? [];
+  const selectedEntryBlockingDiagnostics = selectedEntryDiagnostics.filter(
+    (diagnostic) => diagnostic.blocking ?? diagnostic.severity !== "warning",
+  );
   const emptyState = selectedEntry ? getEntryEmptyState(selectedEntry) : undefined;
 
   React.useEffect(() => {
@@ -536,17 +565,47 @@ export function PreviewApp(props: PreviewAppProps) {
   }, [selectedEntry]);
 
   React.useEffect(() => {
-    if (!selectedEntry || selectedEntry.status !== "ready") {
+    const unsubscribe = subscribePreviewRuntimeIssues((issues) => {
+      setRuntimeIssues(issues);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  React.useEffect(() => {
+    clearPreviewRuntimeIssues();
+    setPreviewRuntimeIssueContext(
+      selectedEntry
+        ? {
+            entryId: selectedEntry.id,
+            file: selectedEntry.sourceFilePath,
+            relativeFile: selectedEntry.relativePath,
+            target: selectedEntry.targetName,
+          }
+        : null,
+    );
+    setLoadIssue(null);
+    setRenderIssue(null);
+
+    return () => {
+      setPreviewRuntimeIssueContext(null);
+    };
+  }, [selectedEntry]);
+
+  React.useEffect(() => {
+    if (!selectedEntry || !isLoadableEntryStatus(selectedEntry.status)) {
       setLoadedEntry(undefined);
-      setLoadError(null);
-      setRenderError(null);
+      setLoadIssue(null);
+      setRenderIssue(null);
       return;
     }
 
     let cancelled = false;
     setLoadedEntry(undefined);
-    setLoadError(null);
-    setRenderError(null);
+    setLoadIssue(null);
+    setRenderIssue(null);
 
     props
       .loadEntry(selectedEntry.id)
@@ -557,7 +616,17 @@ export function PreviewApp(props: PreviewAppProps) {
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          setLoadError(error instanceof Error ? error.message : "Unknown preview load error.");
+          setLoadIssue(
+            normalizePreviewRuntimeError(
+              {
+                code: "MODULE_LOAD_ERROR",
+                kind: "ModuleLoadError",
+                phase: "runtime",
+                summary: `Preview module failed to load: ${error instanceof Error ? error.message : String(error)}`,
+              },
+              error,
+            ),
+          );
         }
       });
 
@@ -626,7 +695,7 @@ export function PreviewApp(props: PreviewAppProps) {
             <section className="preview-card">
               {selectedEntry.status === "ready" ? (
                 loadedEntry ? (
-                  selectedEntryDiagnostics.length > 0 ? (
+                  selectedEntryBlockingDiagnostics.length > 0 ? (
                     <div className="preview-empty">
                       <p className="preview-empty-eyebrow">Diagnostics</p>
                       <h2>Transform diagnostics are blocking this preview.</h2>
@@ -637,14 +706,31 @@ export function PreviewApp(props: PreviewAppProps) {
                       entry={selectedEntry}
                       isDebugMode={isDebugMode}
                       module={loadedEntry.module}
-                      onRenderError={setRenderError}
+                      onRenderError={(error) => {
+                        if (error == null) {
+                          setRenderIssue(null);
+                          return;
+                        }
+
+                        setRenderIssue(
+                          normalizePreviewRuntimeError(
+                            {
+                              code: "RENDER_ERROR",
+                              kind: "TransformExecutionError",
+                              phase: "runtime",
+                              summary: error instanceof Error ? error.message : String(error),
+                            },
+                            error,
+                          ),
+                        );
+                      }}
                     />
                   )
-                ) : loadError ? (
+                ) : loadIssue ? (
                   <div className="preview-empty">
                     <p className="preview-empty-eyebrow">Load error</p>
                     <h2>Preview module failed to load.</h2>
-                    <p>{loadError}</p>
+                    <p>{loadIssue.summary}</p>
                   </div>
                 ) : (
                   <div className="preview-empty">
@@ -653,13 +739,39 @@ export function PreviewApp(props: PreviewAppProps) {
                     <p>The selected `@rbxts/react` module is being compiled into the web preview runtime.</p>
                   </div>
                 )
-              ) : selectedEntry.status === "needs-harness" ? (
+              ) : selectedEntry.status === "blocked_by_transform" ? (
+                loadedEntry ? (
+                  <div className="preview-empty">
+                    <p className="preview-empty-eyebrow">Transform blocked</p>
+                    <h2>This preview is blocked by transform mode.</h2>
+                    <p>Switch to compatibility mode or fix the blocking diagnostics below.</p>
+                  </div>
+                ) : loadIssue ? (
+                  <div className="preview-empty">
+                    <p className="preview-empty-eyebrow">Load error</p>
+                    <h2>Preview diagnostics could not be loaded.</h2>
+                    <p>{loadIssue.summary}</p>
+                  </div>
+                ) : (
+                  <div className="preview-empty">
+                    <p className="preview-empty-eyebrow">Loading</p>
+                    <h2>Preparing transform diagnostics.</h2>
+                    <p>The selected entry is blocked, but its diagnostics are still loading.</p>
+                  </div>
+                )
+              ) : selectedEntry.status === "blocked_by_runtime" || selectedEntry.status === "blocked_by_layout" ? (
+                <div className="preview-empty">
+                  <p className="preview-empty-eyebrow">Runtime blocked</p>
+                  <h2>Preview execution is blocked.</h2>
+                  <p>Review the runtime and layout issues below.</p>
+                </div>
+              ) : (
                 <div className="preview-empty">
                   <p className="preview-empty-eyebrow">{emptyState?.eyebrow}</p>
                   <h2>{emptyState?.title}</h2>
                   <p>{emptyState?.body}</p>
                 </div>
-              ) : null}
+              )}
             </section>
 
             <section className="diagnostics-card">
@@ -669,16 +781,17 @@ export function PreviewApp(props: PreviewAppProps) {
                   <h3>Source analysis</h3>
                 </div>
                 <div className="diagnostics-summary">
-                  <span>{selectedEntryDiagnostics.length} blocking issue(s)</span>
+                  <span>{selectedEntryBlockingDiagnostics.length + runtimeIssues.length + (renderIssue ? 1 : 0) + (loadIssue ? 1 : 0)} blocking issue(s)</span>
                   <span>{selectedEntryDiscoveryDiagnostics.length} discover note(s)</span>
-                  {renderError ? <span>render error</span> : undefined}
-                  {loadError ? <span>load error</span> : undefined}
+                  {renderIssue ? <span>render error</span> : undefined}
+                  {loadIssue ? <span>load error</span> : undefined}
                 </div>
               </div>
               {selectedEntryDiagnostics.length === 0 &&
               selectedEntryDiscoveryDiagnostics.length === 0 &&
-              !renderError &&
-              !loadError ? (
+              runtimeIssues.length === 0 &&
+              !renderIssue &&
+              !loadIssue ? (
                 <p className="diagnostics-empty">No diagnostics for this entry.</p>
               ) : (
                 <div className="diagnostics-list">
@@ -688,7 +801,7 @@ export function PreviewApp(props: PreviewAppProps) {
                       key={`${diagnostic.relativeFile}:${diagnostic.line}:${diagnostic.column}:${diagnostic.code}`}
                     >
                       <p className="diagnostic-code">{diagnostic.code}</p>
-                      <p className="diagnostic-message">{diagnostic.message}</p>
+                      <p className="diagnostic-message">{diagnostic.summary ?? diagnostic.message}</p>
                       <p className="diagnostic-location">
                         {diagnostic.relativeFile}:{diagnostic.line}:{diagnostic.column}
                       </p>
@@ -704,16 +817,28 @@ export function PreviewApp(props: PreviewAppProps) {
                       <p className="diagnostic-location">{diagnostic.relativeFile}</p>
                     </article>
                   ))}
-                  {loadError ? (
+                  {runtimeIssues.map((issue, index) => (
+                    <article
+                      className="diagnostic-item diagnostic-item-runtime"
+                      key={`${issue.code}:${issue.kind}:${issue.relativeFile}:${index}`}
+                    >
+                      <p className="diagnostic-code">{issue.code}</p>
+                      <p className="diagnostic-message">{issue.summary}</p>
+                      <p className="diagnostic-location">
+                        {issue.relativeFile}:{issue.kind}:{index + 1}
+                      </p>
+                    </article>
+                  ))}
+                  {loadIssue ? (
                     <article className="diagnostic-item diagnostic-item-runtime">
-                      <p className="diagnostic-code">LOAD_ERROR</p>
-                      <p className="diagnostic-message">{loadError}</p>
+                      <p className="diagnostic-code">{loadIssue.code}</p>
+                      <p className="diagnostic-message">{loadIssue.summary}</p>
                     </article>
                   ) : undefined}
-                  {renderError ? (
+                  {renderIssue ? (
                     <article className="diagnostic-item diagnostic-item-runtime">
-                      <p className="diagnostic-code">RENDER_ERROR</p>
-                      <p className="diagnostic-message">{renderError}</p>
+                      <p className="diagnostic-code">{renderIssue.code}</p>
+                      <p className="diagnostic-message">{renderIssue.summary}</p>
                     </article>
                   ) : undefined}
                 </div>

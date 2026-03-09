@@ -1,24 +1,35 @@
-﻿import fs from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
+import ts from "typescript";
+import { compile_tsx, transformPreviewSource } from "@lattice-ui/compiler";
+import {
+  createPreviewEngine,
+  PREVIEW_ENGINE_PROTOCOL_VERSION,
+  type PreviewExecutionMode,
+  type PreviewSelectionMode,
+  type PreviewSourceTarget,
+} from "@lattice-ui/preview-engine";
 import { stripFileIdDecorations } from "./pathUtils";
 import {
   createUnresolvedPackageMockResolvePlugin,
   createUnresolvedPackageMockTransformPlugin,
 } from "./robloxPackageMockPlugin";
-import { PreviewSourceIndex } from "./sourceIndex";
-import type { PreviewSourceTarget } from "./types";
 import type { PreviewDevServer, PreviewPlugin, PreviewPluginOption } from "./viteTypes";
 
-const REGISTRY_MODULE_ID = "virtual:lattice-preview-registry";
-const RESOLVED_REGISTRY_MODULE_ID = `\0${REGISTRY_MODULE_ID}`;
+const WORKSPACE_INDEX_MODULE_ID = "virtual:lattice-preview-workspace-index";
+const RESOLVED_WORKSPACE_INDEX_MODULE_ID = `\0${WORKSPACE_INDEX_MODULE_ID}`;
 const RUNTIME_MODULE_ID = "virtual:lattice-preview-runtime";
 const RESOLVED_RUNTIME_MODULE_ID = `\0${RUNTIME_MODULE_ID}`;
 const ENTRY_MODULE_ID_PREFIX = "virtual:lattice-preview-entry:";
 const RESOLVED_ENTRY_MODULE_ID_PREFIX = `\0${ENTRY_MODULE_ID_PREFIX}`;
+const RBX_STYLE_HELPER_NAME = "__rbxStyle";
+const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/preview-runtime";\n`;
 
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
+  selectionMode?: PreviewSelectionMode;
   targets: PreviewSourceTarget[];
+  transformMode?: PreviewExecutionMode;
 };
 
 function resolveRuntimeEntryPath() {
@@ -48,9 +59,30 @@ function resolveMockEntryPath() {
   return candidate.split(path.sep).join("/");
 }
 
-function renderRegistryModule(sourceIndex: PreviewSourceIndex) {
-  const workspace = sourceIndex.getWorkspace();
-  const importers = workspace.entries
+function stripTypeSyntax(code: string, filePath: string) {
+  return ts.transpileModule(code, {
+    compilerOptions: {
+      jsx: ts.JsxEmit.Preserve,
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ESNext,
+      verbatimModuleSyntax: true,
+    },
+    fileName: filePath,
+  }).outputText;
+}
+
+function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<typeof transformPreviewSource>[1]) {
+  try {
+    return transformPreviewSource(sourceText, options);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse preview source ${options.filePath}: ${detail}`);
+  }
+}
+
+function getWorkspaceModuleCode(previewEngine: ReturnType<typeof createPreviewEngine>) {
+  const workspaceIndex = previewEngine.getWorkspaceIndex();
+  const importers = workspaceIndex.entries
     .map(
       (entry) =>
         `  ${JSON.stringify(entry.id)}: () => import(${JSON.stringify(
@@ -59,51 +91,75 @@ function renderRegistryModule(sourceIndex: PreviewSourceIndex) {
     )
     .join("\n");
 
-  return {
-    code: `export const previewProjectName = ${JSON.stringify(workspace.projectName)};
-export const previewEntries = ${JSON.stringify(workspace.entries, null, 2)};
+  return `export const previewProtocolVersion = ${JSON.stringify(PREVIEW_ENGINE_PROTOCOL_VERSION)};
+export const previewWorkspaceIndex = ${JSON.stringify(workspaceIndex, null, 2)};
 export const previewImporters = {
 ${importers}
 };
-`,
-    workspace,
-  };
+`;
 }
 
-function renderEntryModule(sourceIndex: PreviewSourceIndex, entryId: string) {
-  const entry = sourceIndex.getWorkspace().entries.find((candidate) => candidate.id === entryId);
+function renderEntryModule(previewEngine: ReturnType<typeof createPreviewEngine>, entryId: string) {
+  const entry = previewEngine.getWorkspaceIndex().entries.find((candidate) => candidate.id === entryId);
   if (!entry) {
     throw new Error(`No preview entry registered for \`${entryId}\`.`);
   }
 
-  const meta = sourceIndex.getEntryMeta(entryId);
+  const payload = previewEngine.getEntryPayload(entryId);
+  if (payload.descriptor.status !== "ready") {
+    return `export const __previewEntryPayload = ${JSON.stringify(payload, null, 2)};
+const __previewBlockedModule = {};
+export default __previewBlockedModule;
+`;
+  }
+
   const sourceFilePath = entry.sourceFilePath.split(path.sep).join("/");
 
   return `import * as __previewModule from ${JSON.stringify(sourceFilePath)};
 export * from ${JSON.stringify(sourceFilePath)};
 const __previewDefault = __previewModule.default;
 export default __previewDefault;
-export const __previewEntryMeta = ${JSON.stringify(meta, null, 2)};
+export const __previewEntryPayload = ${JSON.stringify(payload, null, 2)};
 `;
+}
+
+function isWatchedCandidate(targets: PreviewSourceTarget[], previewEngine: ReturnType<typeof createPreviewEngine>, filePath: string) {
+  const normalizedFilePath = stripFileIdDecorations(filePath);
+  const extension = path.extname(normalizedFilePath).toLowerCase();
+  if (extension !== ".ts" && extension !== ".tsx") {
+    return false;
+  }
+
+  if (previewEngine.getTargetForFilePath(normalizedFilePath)) {
+    return true;
+  }
+
+  return targets.some((target) => normalizedFilePath.startsWith(target.sourceRoot));
 }
 
 export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions): PreviewPluginOption {
   const runtimeEntryPath = resolveRuntimeEntryPath();
   const mockEntryPath = resolveMockEntryPath();
-  const sourceIndex = new PreviewSourceIndex(options);
+  const previewEngine = createPreviewEngine({
+    projectName: options.projectName,
+    runtimeModule: runtimeEntryPath,
+    selectionMode: options.selectionMode ?? "compat",
+    targets: options.targets,
+    transformMode: options.transformMode ?? "compatibility",
+  });
   let server: PreviewDevServer | undefined;
 
-  const invalidateVirtualModules = (filePath: string) => {
+  const invalidateVirtualModules = (entryIds: string[]) => {
     if (!server) {
       return;
     }
 
-    const registryModule = server.moduleGraph.getModuleById(RESOLVED_REGISTRY_MODULE_ID);
-    if (registryModule) {
-      server.moduleGraph.invalidateModule(registryModule);
+    const workspaceModule = server.moduleGraph.getModuleById(RESOLVED_WORKSPACE_INDEX_MODULE_ID);
+    if (workspaceModule) {
+      server.moduleGraph.invalidateModule(workspaceModule);
     }
 
-    for (const entryId of sourceIndex.getImpactedEntryIds(filePath)) {
+    for (const entryId of entryIds) {
       const entryModule = server.moduleGraph.getModuleById(
         `${RESOLVED_ENTRY_MODULE_ID_PREFIX}${encodeURIComponent(entryId)}`,
       );
@@ -113,17 +169,23 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     }
   };
 
-  const refreshSourceIndex = (filePath: string) => {
-    const previousHash = sourceIndex.getWorkspaceHash();
-    invalidateVirtualModules(filePath);
-    sourceIndex.invalidateFile(filePath);
-    const nextHash = sourceIndex.getWorkspaceHash();
+  const refreshPreviewEngine = (filePath: string) => {
+    const update = previewEngine.invalidateFiles([filePath]);
+    invalidateVirtualModules(update.changedEntryIds);
 
-    if (server && previousHash !== nextHash) {
-      server.ws.send({ type: "full-reload" });
+    if (server) {
+      if (update.requiresFullReload) {
+        server.ws.send({ type: "full-reload" });
+      } else {
+        server.ws.send({
+          data: update,
+          event: "lattice-preview:update",
+          type: "custom",
+        });
+      }
     }
 
-    return previousHash !== nextHash;
+    return update;
   };
 
   const previewPlugin: PreviewPlugin = {
@@ -132,29 +194,27 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     configureServer(configuredServer: PreviewDevServer) {
       server = configuredServer;
       configuredServer.watcher.on("add", (filePath: string) => {
-        if (sourceIndex.findTargetForFilePath(filePath)) {
-          refreshSourceIndex(filePath);
+        if (isWatchedCandidate(options.targets, previewEngine, filePath)) {
+          refreshPreviewEngine(filePath);
         }
       });
       configuredServer.watcher.on("unlink", (filePath: string) => {
-        if (sourceIndex.findTargetForFilePath(filePath)) {
-          refreshSourceIndex(filePath);
+        if (isWatchedCandidate(options.targets, previewEngine, filePath)) {
+          refreshPreviewEngine(filePath);
         }
       });
     },
     handleHotUpdate(context: { file: string }) {
-      if (sourceIndex.findTargetForFilePath(context.file)) {
-        if (refreshSourceIndex(context.file)) {
-          // Avoid rendering a mixed old-registry/new-module state before the forced reload completes.
-          return [];
-        }
+      if (!isWatchedCandidate(options.targets, previewEngine, context.file)) {
+        return undefined;
       }
 
-      return undefined;
+      refreshPreviewEngine(context.file);
+      return [];
     },
     load(id: string) {
-      if (id === RESOLVED_REGISTRY_MODULE_ID) {
-        return renderRegistryModule(sourceIndex).code;
+      if (id === RESOLVED_WORKSPACE_INDEX_MODULE_ID) {
+        return getWorkspaceModuleCode(previewEngine);
       }
 
       if (id === RESOLVED_RUNTIME_MODULE_ID) {
@@ -163,14 +223,14 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
 
       if (id.startsWith(RESOLVED_ENTRY_MODULE_ID_PREFIX)) {
         const entryId = decodeURIComponent(id.slice(RESOLVED_ENTRY_MODULE_ID_PREFIX.length));
-        return renderEntryModule(sourceIndex, entryId);
+        return renderEntryModule(previewEngine, entryId);
       }
 
       return undefined;
     },
     resolveId(id: string) {
-      if (id === REGISTRY_MODULE_ID) {
-        return RESOLVED_REGISTRY_MODULE_ID;
+      if (id === WORKSPACE_INDEX_MODULE_ID) {
+        return RESOLVED_WORKSPACE_INDEX_MODULE_ID;
       }
 
       if (id === RUNTIME_MODULE_ID) {
@@ -185,20 +245,32 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     },
     transform(code: string, id: string) {
       const filePath = stripFileIdDecorations(id);
-      const target = sourceIndex.findTargetForFilePath(filePath);
+      const target = previewEngine.getTargetForFilePath(filePath);
       if (!target) {
         return undefined;
       }
 
-      const transformed = sourceIndex.getTransformedModule({
-        code,
+      const transformed = transformPreviewSourceOrThrow(code, {
         filePath,
+        mode: options.transformMode ?? "compatibility",
         runtimeModule: runtimeEntryPath,
-        target,
+        target: target.name,
       });
+      if (transformed.code === null) {
+        const diagnosticMessage =
+          transformed.diagnostics.map((diagnostic) => `${diagnostic.code}: ${diagnostic.summary}`).join("\n") ||
+          "Preview transform did not emit executable code.";
+        throw new Error(`Transform mode ${options.transformMode ?? "compatibility"} blocked ${filePath}.\n${diagnosticMessage}`);
+      }
+
+      let transformedCode = compile_tsx(transformed.code);
+      transformedCode = stripTypeSyntax(transformedCode, filePath);
+      if (transformedCode.includes(RBX_STYLE_HELPER_NAME) && !transformedCode.includes(RBX_STYLE_IMPORT.trim())) {
+        transformedCode = `${RBX_STYLE_IMPORT}${transformedCode}`;
+      }
 
       return {
-        code: transformed.code,
+        code: transformedCode,
         map: null,
       };
     },

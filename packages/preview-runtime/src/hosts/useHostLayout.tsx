@@ -1,24 +1,13 @@
 import * as React from "react";
-import {
-  FULL_SIZE_UDIM2,
-  normalizePreviewNodeId,
-  type SerializedUDim2,
-  type SerializedVector2,
-  serializeUDim2,
-  serializeVector2,
-  ZERO_UDIM2,
-} from "../internal/robloxValues";
+import { normalizePreviewNodeId } from "../internal/robloxValues";
 import { LayoutNodeParentProvider, useLayoutDebugState, useRobloxLayout } from "../layout/context";
-import { type ComputedRect } from "../layout/model";
-import { type LayoutHostName, layoutHostNodeType, type PreviewDomProps } from "./types";
-
-type LayoutInput = {
-  anchorPoint: SerializedVector2;
-  id?: string;
-  parentId?: string;
-  position: SerializedUDim2;
-  size?: SerializedUDim2;
-};
+import { type LayoutHostName, type PreviewDomProps } from "./types";
+import {
+  domPresentationAdapter,
+  type LayoutDebugState,
+  type PreviewHostNode,
+  patchPreviewHostNodeDomProps,
+} from "./domAdapter";
 
 let previewNodeIdCounter = 0;
 
@@ -26,24 +15,9 @@ function getStringValue(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
-function getDefaultSize(host: LayoutHostName): SerializedUDim2 | undefined {
-  if (host === "frame" || host === "screengui") {
-    return FULL_SIZE_UDIM2;
-  }
-
-  return undefined;
-}
-
-function getLayoutInput(host: LayoutHostName, props: PreviewDomProps): LayoutInput {
+function getLayoutParentId(props: PreviewDomProps) {
   const source = props as Record<string, unknown>;
-
-  return {
-    anchorPoint: serializeVector2(source.AnchorPoint ?? source.anchorPoint),
-    id: getStringValue(source.Id ?? source.id),
-    parentId: getStringValue(source.ParentId ?? source.parentId),
-    position: serializeUDim2(source.Position ?? source.position, ZERO_UDIM2) ?? ZERO_UDIM2,
-    size: serializeUDim2(source.Size ?? source.size, getDefaultSize(host)),
-  };
+  return getStringValue(source.ParentId ?? source.parentId);
 }
 
 function useGeneratedPreviewNodeId(): string {
@@ -56,49 +30,10 @@ function useGeneratedPreviewNodeId(): string {
   return idRef.current;
 }
 
-function resolveNodeId(generatedId: string, layoutInput: LayoutInput): string {
-  return normalizePreviewNodeId(layoutInput.id) ?? generatedId;
-}
-
-function shouldMeasureHost(host: LayoutHostName, props: PreviewDomProps) {
-  if (props.Size !== undefined || props.size !== undefined) {
-    return false;
-  }
-
-  return host === "imagelabel" || host === "textbutton" || host === "textlabel" || host === "textbox";
-}
-
-function readMeasuredSize(element: HTMLElement | null) {
-  if (!element) {
-    return null;
-  }
-
-  const rect = element.getBoundingClientRect();
-  if (!Number.isFinite(rect.width) || !Number.isFinite(rect.height)) {
-    return null;
-  }
-
-  return {
-    height: Math.max(0, rect.height),
-    width: Math.max(0, rect.width),
-  };
-}
-
-function toMeasuredLayoutSize(measuredSize: ReturnType<typeof readMeasuredSize>): SerializedUDim2 | undefined {
-  if (!measuredSize) {
-    return undefined;
-  }
-
-  return {
-    X: {
-      Offset: measuredSize.width,
-      Scale: 0,
-    },
-    Y: {
-      Offset: measuredSize.height,
-      Scale: 0,
-    },
-  };
+function resolveNodeId(generatedId: string, props: PreviewDomProps): string {
+  const source = props as Record<string, unknown>;
+  const explicitId = getStringValue(source.Id ?? source.id);
+  return normalizePreviewNodeId(explicitId) ?? generatedId;
 }
 
 function useMeasurementRevision(elementRef: React.RefObject<HTMLElement | null>, enabled: boolean) {
@@ -114,15 +49,18 @@ function useMeasurementRevision(elementRef: React.RefObject<HTMLElement | null>,
       return;
     }
 
-    let lastSize = readMeasuredSize(element);
+    let lastWidth = element.getBoundingClientRect().width;
+    let lastHeight = element.getBoundingClientRect().height;
     setRevision((previous) => previous + 1);
+
     const notifyIfChanged = () => {
-      const nextSize = readMeasuredSize(element);
-      if (lastSize?.width === nextSize?.width && lastSize?.height === nextSize?.height) {
+      const rect = element.getBoundingClientRect();
+      if (lastWidth === rect.width && lastHeight === rect.height) {
         return;
       }
 
-      lastSize = nextSize;
+      lastWidth = rect.width;
+      lastHeight = rect.height;
       setRevision((previous) => previous + 1);
     };
 
@@ -149,82 +87,66 @@ function useMeasurementRevision(elementRef: React.RefObject<HTMLElement | null>,
   return revision;
 }
 
-type LayoutDebugState = ReturnType<typeof useLayoutDebugState>;
-
-function toDebugAttributeValue(
-  value: React.CSSProperties[keyof React.CSSProperties] | number | string | undefined | null,
-): string | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  return String(value);
-}
-
-export function withLayoutDiagnostics(
-  domProps: React.HTMLAttributes<HTMLElement>,
-  computed: ComputedRect | null,
-  diagnostics: LayoutDebugState,
-) {
-  const style = domProps.style as React.CSSProperties | undefined;
-
-  return {
-    ...domProps,
-    "data-layout-computed-height": computed?.height ?? undefined,
-    "data-layout-computed-width": computed?.width ?? undefined,
-    "data-layout-context": diagnostics.hasContext ? "true" : "false",
-    "data-layout-parent-height": diagnostics.inheritedParentRect?.height ?? undefined,
-    "data-layout-parent-width": diagnostics.inheritedParentRect?.width ?? undefined,
-    "data-layout-style-height": toDebugAttributeValue(style?.height),
-    "data-layout-style-width": toDebugAttributeValue(style?.width),
-    "data-layout-viewport-height": diagnostics.viewport?.height ?? undefined,
-    "data-layout-viewport-ready": diagnostics.viewportReady ? "true" : "false",
-    "data-layout-viewport-width": diagnostics.viewport?.width ?? undefined,
-  };
-}
-
 export function useHostLayout(host: LayoutHostName, props: PreviewDomProps) {
   const elementRef = React.useRef<HTMLElement | null>(null);
   const generatedId = useGeneratedPreviewNodeId();
-  const layoutInput = React.useMemo(() => getLayoutInput(host, props), [host, props]);
-  const measurementEnabled = React.useMemo(() => shouldMeasureHost(host, props), [host, props]);
-  const measurementVersion = useMeasurementRevision(elementRef, measurementEnabled);
-  const measuredLayoutSize = React.useMemo(
-    () => (measurementEnabled ? toMeasuredLayoutSize(readMeasuredSize(elementRef.current)) : undefined),
-    [measurementEnabled, measurementVersion],
+  const nodeId = React.useMemo(() => resolveNodeId(generatedId, props), [generatedId, props]);
+  const normalizedParentId = React.useMemo(
+    () => normalizePreviewNodeId(getLayoutParentId(props)),
+    [props],
   );
-  const normalizedParentId = React.useMemo(() => normalizePreviewNodeId(layoutInput.parentId), [layoutInput.parentId]);
-  const measure = React.useCallback(() => readMeasuredSize(elementRef.current), []);
 
-  const nodeId = React.useMemo(() => resolveNodeId(generatedId, layoutInput), [generatedId, layoutInput]);
+  const normalizedNode = React.useMemo(
+    () =>
+      domPresentationAdapter.normalize({
+        host,
+        nodeId,
+        parentId: normalizedParentId,
+        props,
+      }),
+    [host, nodeId, normalizedParentId, props],
+  );
 
-  const nodeData = React.useMemo(
+  const measurementVersion = useMeasurementRevision(elementRef, normalizedNode.measurementEnabled);
+  const intrinsicSize = React.useMemo(
+    () => domPresentationAdapter.measure(normalizedNode, elementRef.current),
+    [measurementVersion, normalizedNode],
+  );
+
+  const layoutNode = React.useMemo<PreviewHostNode>(
     () => ({
-      anchorPoint: layoutInput.anchorPoint,
-      canMeasure: measurementEnabled,
-      id: nodeId,
-      measure: measurementEnabled ? measure : undefined,
-      measurementVersion,
-      nodeType: layoutHostNodeType[host],
-      parentId: normalizedParentId,
-      position: layoutInput.position,
-      size: layoutInput.size ?? measuredLayoutSize,
+      ...normalizedNode,
+      intrinsicSize,
     }),
-    [host, layoutInput.anchorPoint, layoutInput.position, layoutInput.size, measure, measuredLayoutSize, measurementEnabled, measurementVersion, nodeId, normalizedParentId],
+    [intrinsicSize, normalizedNode],
   );
 
-  const computed = useRobloxLayout(nodeData);
-  const diagnostics = useLayoutDebugState();
+  const computed = useRobloxLayout(layoutNode);
+  const diagnostics = useLayoutDebugState(nodeId) as LayoutDebugState;
+
+  const hostNode = React.useMemo(
+    () => ({
+      ...layoutNode,
+      computed,
+      layoutDebug: diagnostics,
+    }),
+    [computed, diagnostics, layoutNode],
+  );
 
   return {
     computed,
     diagnostics,
     elementRef,
+    hostNode,
     nodeId,
+    patchDomProps: React.useCallback(
+      (domProps: PreviewHostNode["presentationHints"]["domProps"]) => patchPreviewHostNodeDomProps(hostNode, domProps),
+      [hostNode],
+    ),
   };
 }
 
-export function withNodeParent(nodeId: string, rect: ComputedRect | null, children: React.ReactNode) {
+export function withNodeParent(nodeId: string, rect: ReturnType<typeof useRobloxLayout>, children: React.ReactNode) {
   return (
     <LayoutNodeParentProvider nodeId={nodeId} rect={rect}>
       {children}

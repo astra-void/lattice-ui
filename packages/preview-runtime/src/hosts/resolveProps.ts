@@ -102,7 +102,7 @@ function coerceTextValue(value: unknown): string | undefined {
   return String(value);
 }
 
-function applyComputedLayout(style: React.CSSProperties, computed: ComputedRect | null): void {
+export function applyComputedLayoutStyle(style: React.CSSProperties, computed: ComputedRect | null): void {
   delete style.left;
   delete style.top;
   delete style.width;
@@ -197,7 +197,7 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
   };
 
   if (options.applyComputedLayout !== false) {
-    applyComputedLayout(computedStyle, options.computed);
+    applyComputedLayoutStyle(computedStyle, options.computed);
   }
 
   computedStyle.boxSizing = computedStyle.boxSizing ?? "border-box";

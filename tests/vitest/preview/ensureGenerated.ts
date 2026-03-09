@@ -24,6 +24,7 @@ export function ensurePreviewGenerated() {
         },
       ],
       outDir,
+      transformMode: "compatibility",
     }).then(() => outDir);
   }
 

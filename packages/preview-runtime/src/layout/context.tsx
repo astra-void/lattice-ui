@@ -1,17 +1,19 @@
 import * as React from "react";
 import { normalizePreviewNodeId } from "../internal/robloxValues";
+import { normalizePreviewRuntimeError, publishPreviewRuntimeIssue } from "../runtime/runtimeError";
+import { LayoutController } from "./controller";
 import {
   adaptRobloxNodeInput,
-  areNodesEqual,
-  type ComputedRect,
-  computeRectFromParentRect,
+  computeNodeRect,
+  createEmptyLayoutResult,
   createViewportRect,
-  normalizeRootScreenGuiNode,
-  type RegisteredNode,
+  type ComputedRect,
+  type PreviewLayoutDebugNode,
+  type PreviewLayoutNode,
+  type PreviewLayoutResult,
   type RobloxLayoutRegistrationInput,
   type RobloxLayoutNodeInput,
 } from "./model";
-import { createLayoutTreeState, removeLayoutTreeNode, upsertLayoutTreeNode, type LayoutTreeState } from "./tree";
 import {
   areViewportsEqual,
   createViewportSize,
@@ -21,7 +23,7 @@ import {
   measureElementViewport,
   type ViewportSize,
 } from "./viewport";
-import { computeFallbackLayout, computeRegisteredLayout, initializeLayoutEngine } from "./wasm";
+import { createWasmLayoutSession, initializeLayoutEngine } from "./wasm";
 
 export type { ComputedRect, RobloxLayoutNodeInput, RobloxLayoutRegistrationInput } from "./model";
 
@@ -34,9 +36,10 @@ export type LayoutProviderProps = {
 
 type LayoutContextValue = {
   error: string | null;
+  getDebugNode: (nodeId: string) => PreviewLayoutDebugNode | null;
   getRect: (nodeId: string) => ComputedRect | null;
   isReady: boolean;
-  registerNode: (node: RegisteredNode) => void;
+  registerNode: (node: ReturnType<typeof adaptRobloxNodeInput>) => void;
   unregisterNode: (nodeId: string) => void;
   viewport: ViewportSize;
   viewportReady: boolean;
@@ -93,6 +96,10 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
+function isValidationError(error: unknown) {
+  return error instanceof Error && error.message.startsWith("Unexpected ");
+}
+
 function useMeasuredViewport(containerRef: React.RefObject<HTMLDivElement | null>): ViewportSize | null {
   const [viewport, setViewport] = React.useState<ViewportSize | null>(null);
 
@@ -140,6 +147,14 @@ function useMeasuredViewport(containerRef: React.RefObject<HTMLDivElement | null
 }
 
 export function LayoutProvider(props: LayoutProviderProps) {
+  const controllerRef = React.useRef<LayoutController | null>(null);
+  if (controllerRef.current === null) {
+    controllerRef.current = new LayoutController({
+      sessionFactory: () => createWasmLayoutSession(),
+    });
+  }
+
+  const controller = controllerRef.current;
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const measuredViewport = useMeasuredViewport(containerRef);
   const explicitViewport = React.useMemo(
@@ -187,10 +202,11 @@ export function LayoutProvider(props: LayoutProviderProps) {
 
   const [isReady, setIsReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [treeState, setTreeState] = React.useState<LayoutTreeState>(() => createLayoutTreeState());
-  const treeStateRef = React.useRef(treeState);
+  const [treeVersion, setTreeVersion] = React.useState(0);
   const [settledTreeVersion, setSettledTreeVersion] = React.useState(0);
-  const [computedRects, setComputedRects] = React.useState<Record<string, ComputedRect>>({});
+  const [layoutResult, setLayoutResult] = React.useState<PreviewLayoutResult>(() =>
+    createEmptyLayoutResult(ZERO_VIEWPORT),
+  );
   const containerStyle = React.useMemo<React.CSSProperties>(
     () => ({
       display: "block",
@@ -217,38 +233,44 @@ export function LayoutProvider(props: LayoutProviderProps) {
         if (!cancelled) {
           setIsReady(false);
           setError(`Wasm init failed: ${toErrorMessage(nextError)}`);
+          publishPreviewRuntimeIssue(
+            normalizePreviewRuntimeError(
+              {
+                code: "LAYOUT_WASM_INIT_FAILED",
+                kind: "ModuleLoadError",
+                phase: "layout",
+                summary: `Wasm init failed: ${toErrorMessage(nextError)}`,
+                target: "@lattice-ui/layout-engine",
+              },
+              nextError,
+            ),
+          );
         }
       });
 
     return () => {
       cancelled = true;
+      controller.dispose();
     };
-  }, []);
+  }, [controller]);
 
-  const registerNode = React.useCallback((node: RegisteredNode) => {
-    setTreeState((previous) => {
-      const existing = previous.nodes.get(node.id)?.node;
-      if (existing && areNodesEqual(existing, node)) {
-        return previous;
+  const registerNode = React.useCallback(
+    (node: ReturnType<typeof adaptRobloxNodeInput>) => {
+      if (controller.upsertNode(node)) {
+        setTreeVersion((previous) => previous + 1);
       }
+    },
+    [controller],
+  );
 
-      return upsertLayoutTreeNode(previous, node);
-    });
-  }, []);
-
-  const unregisterNode = React.useCallback((nodeId: string) => {
-    setTreeState((previous) => {
-      if (!previous.nodes.has(nodeId)) {
-        return previous;
+  const unregisterNode = React.useCallback(
+    (nodeId: string) => {
+      if (controller.removeNode(nodeId)) {
+        setTreeVersion((previous) => previous + 1);
       }
-
-      return removeLayoutTreeNode(previous, nodeId);
-    });
-  }, []);
-
-  React.useEffect(() => {
-    treeStateRef.current = treeState;
-  }, [treeState]);
+    },
+    [controller],
+  );
 
   React.useEffect(() => {
     let cancelled = false;
@@ -262,54 +284,93 @@ export function LayoutProvider(props: LayoutProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [treeState]);
+  }, [treeVersion]);
 
   React.useEffect(() => {
     if (!viewportReady) {
-      setComputedRects({});
+      setLayoutResult(createEmptyLayoutResult({ height: viewportHeight, width: viewportWidth }));
       return;
     }
 
-    if (treeStateRef.current.nodes.size === 0) {
-      setComputedRects({});
+    controller.setViewport({
+      height: viewportHeight,
+      width: viewportWidth,
+    });
+
+    if (!controller.hasNodes()) {
+      setLayoutResult(createEmptyLayoutResult({ height: viewportHeight, width: viewportWidth }));
       setError(null);
       return;
     }
 
-    const timeoutId = globalThis.setTimeout(
-      () => {
+    const timeoutId = globalThis.setTimeout(() => {
+      try {
+        const nextResult = controller.compute(isReady);
+        setLayoutResult(nextResult);
+        setError(null);
+      } catch (nextError) {
+        publishPreviewRuntimeIssue(
+          normalizePreviewRuntimeError(
+            {
+              code: isValidationError(nextError) ? "LAYOUT_VALIDATION_ERROR" : "LAYOUT_WASM_COMPUTE_FAILED",
+              kind: isValidationError(nextError) ? "LayoutValidationError" : "LayoutExecutionError",
+              phase: "layout",
+              summary: `Wasm layout failed: ${toErrorMessage(nextError)}`,
+              target: "@lattice-ui/layout-engine",
+            },
+            nextError,
+          ),
+        );
         try {
-          if (isReady) {
-            setComputedRects(computeRegisteredLayout(treeStateRef.current, viewportWidth, viewportHeight));
-            setError(null);
-            return;
-          }
-
-          setComputedRects(computeFallbackLayout(treeStateRef.current, viewportWidth, viewportHeight));
-        } catch (nextError) {
-          setComputedRects(computeFallbackLayout(treeStateRef.current, viewportWidth, viewportHeight));
+          const fallbackResult = controller.compute(false);
+          setLayoutResult(fallbackResult);
           setError(`Wasm layout failed: ${toErrorMessage(nextError)}`);
+        } catch (fallbackError) {
+          publishPreviewRuntimeIssue(
+            normalizePreviewRuntimeError(
+              {
+                code: isValidationError(fallbackError)
+                  ? "LAYOUT_VALIDATION_ERROR"
+                  : "LAYOUT_FALLBACK_COMPUTE_FAILED",
+                kind: isValidationError(fallbackError) ? "LayoutValidationError" : "LayoutExecutionError",
+                phase: "layout",
+                summary: `Fallback layout failed: ${toErrorMessage(fallbackError)}`,
+                target: "@lattice-ui/layout-engine",
+              },
+              fallbackError,
+            ),
+          );
+          setLayoutResult(createEmptyLayoutResult({ height: viewportHeight, width: viewportWidth }));
+          setError(`Fallback layout failed: ${toErrorMessage(fallbackError)}`);
         }
-      },
-      Math.max(0, debounceMs),
-    );
+      }
+    }, Math.max(0, debounceMs));
 
     return () => {
       globalThis.clearTimeout(timeoutId);
     };
-  }, [debounceMs, isReady, settledTreeVersion, viewportHeight, viewportReady, viewportWidth]);
+  }, [controller, debounceMs, isReady, settledTreeVersion, viewportHeight, viewportReady, viewportWidth]);
 
   const getRect = React.useCallback(
     (nodeId: string) => {
       const normalizedNodeId = normalizePreviewNodeId(nodeId) ?? nodeId;
-      return computedRects[normalizedNodeId] ?? null;
+      return layoutResult.rects[normalizedNodeId] ?? null;
     },
-    [computedRects],
+    [layoutResult.rects],
+  );
+
+  const getDebugNode = React.useCallback(
+    (nodeId: string) => {
+      const normalizedNodeId = normalizePreviewNodeId(nodeId) ?? nodeId;
+      return controller.getDebugNode(normalizedNodeId);
+    },
+    [controller],
   );
 
   const contextValue = React.useMemo<LayoutContextValue>(
     () => ({
       error,
+      getDebugNode,
       getRect,
       isReady,
       registerNode,
@@ -317,7 +378,7 @@ export function LayoutProvider(props: LayoutProviderProps) {
       viewport: resolvedViewport ?? ZERO_VIEWPORT,
       viewportReady,
     }),
-    [error, getRect, isReady, registerNode, resolvedViewport, unregisterNode, viewportReady],
+    [error, getDebugNode, getRect, isReady, registerNode, resolvedViewport, unregisterNode, viewportReady],
   );
 
   return (
@@ -359,27 +420,42 @@ export function useLayoutEngineStatus() {
   };
 }
 
-export function useLayoutDebugState() {
+export function useLayoutDebugState(nodeId?: string) {
   const context = React.useContext(LayoutContext);
   const inheritedParentRect = React.useContext(ParentRectContext);
+  const debugNode = nodeId ? context?.getDebugNode(nodeId) ?? null : null;
 
   return React.useMemo(
     () => ({
+      debugNode,
       hasContext: context !== null,
-      inheritedParentRect,
+      inheritedParentRect: debugNode?.parentConstraints ?? inheritedParentRect,
       viewport: context?.viewport ?? null,
       viewportReady: context?.viewportReady ?? false,
     }),
-    [context, inheritedParentRect],
+    [context, debugNode, inheritedParentRect],
   );
 }
 
-export function useRobloxLayout(input: RobloxLayoutRegistrationInput): ComputedRect | null {
+function isPreviewLayoutNode(input: RobloxLayoutRegistrationInput | PreviewLayoutNode): input is PreviewLayoutNode {
+  return "layout" in input && "kind" in input && typeof input.nodeType === "string";
+}
+
+export function useRobloxLayout(input: RobloxLayoutRegistrationInput | PreviewLayoutNode): ComputedRect | null {
   const context = React.useContext(LayoutContext);
   const inheritedParentId = React.useContext(ParentNodeContext);
   const inheritedParentRect = React.useContext(ParentRectContext);
   const parentId = input.parentId ?? inheritedParentId;
-  const normalizedNode = React.useMemo(() => adaptRobloxNodeInput(input, parentId), [input, parentId]);
+  const normalizedNode = React.useMemo(
+    () =>
+      isPreviewLayoutNode(input)
+        ? {
+            ...input,
+            parentId: input.parentId ?? parentId,
+          }
+        : adaptRobloxNodeInput(input, parentId),
+    [input, parentId],
+  );
   const fallbackViewportWidth = context?.viewport.width ?? DEFAULT_VIEWPORT_WIDTH;
   const fallbackViewportHeight = context?.viewport.height ?? DEFAULT_VIEWPORT_HEIGHT;
   const fallbackViewportRect = React.useMemo(
@@ -387,30 +463,24 @@ export function useRobloxLayout(input: RobloxLayoutRegistrationInput): ComputedR
     [fallbackViewportHeight, fallbackViewportWidth],
   );
   const fallbackParentRect = inheritedParentRect ?? fallbackViewportRect;
-  const fallbackLayoutNode = React.useMemo(
-    () => (parentId === undefined ? normalizeRootScreenGuiNode(normalizedNode) : normalizedNode),
-    [normalizedNode, parentId],
+  const fallbackRect = React.useMemo(
+    () => computeNodeRect(normalizedNode, fallbackParentRect).rect,
+    [fallbackParentRect, normalizedNode],
   );
-
-  const fallbackRect = React.useMemo<ComputedRect>(
-    () => computeRectFromParentRect(fallbackLayoutNode, fallbackParentRect),
-    [fallbackLayoutNode, fallbackParentRect],
-  );
-
-  const registerNode = context?.registerNode;
-  const unregisterNode = context?.unregisterNode;
+  const register = context?.registerNode;
+  const unregister = context?.unregisterNode;
   const computed = context ? context.getRect(normalizedNode.id) : null;
 
   React.useLayoutEffect(() => {
-    if (!registerNode || !unregisterNode) {
+    if (!register || !unregister) {
       return;
     }
 
-    registerNode(normalizedNode);
+    register(normalizedNode);
     return () => {
-      unregisterNode(normalizedNode.id);
+      unregister(normalizedNode.id);
     };
-  }, [normalizedNode, registerNode, unregisterNode]);
+  }, [normalizedNode, register, unregister]);
 
   if (context && !context.viewportReady) {
     return null;

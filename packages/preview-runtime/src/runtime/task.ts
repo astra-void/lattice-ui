@@ -1,5 +1,5 @@
 ﻿import { subscribeToFrames } from "./frameScheduler";
-import { reportPreviewRuntimeError } from "./runtimeError";
+import { normalizePreviewRuntimeError, publishPreviewRuntimeIssue } from "./runtimeError";
 
 export type TaskCallback<TArgs extends readonly unknown[] = readonly unknown[]> = (...args: TArgs) => void;
 export type TaskHandle = ReturnType<typeof globalThis.setTimeout>;
@@ -39,7 +39,18 @@ export function delay<TArgs extends readonly unknown[]>(
       try {
         callback(...args);
       } catch (error) {
-        reportPreviewRuntimeError("task.delay", error);
+        publishPreviewRuntimeIssue(
+          normalizePreviewRuntimeError(
+            {
+              code: "TASK_DELAY_ERROR",
+              details: "task.delay",
+              kind: "TransformExecutionError",
+              phase: "runtime",
+              summary: `task.delay failed: ${error instanceof Error ? error.message : String(error)}`,
+            },
+            error,
+          ),
+        );
       }
     },
     normalizeDelay(seconds) * 1000,
@@ -55,7 +66,18 @@ export function spawn<TArgs extends readonly unknown[], TResult>(
   try {
     return callback(...args);
   } catch (error) {
-    reportPreviewRuntimeError("task.spawn", error);
+    publishPreviewRuntimeIssue(
+      normalizePreviewRuntimeError(
+        {
+          code: "TASK_SPAWN_ERROR",
+          details: "task.spawn",
+          kind: "TransformExecutionError",
+          phase: "runtime",
+          summary: `task.spawn failed: ${error instanceof Error ? error.message : String(error)}`,
+        },
+        error,
+      ),
+    );
     return undefined;
   }
 }
@@ -65,7 +87,18 @@ export function defer<TArgs extends readonly unknown[]>(callback: TaskCallback<T
     try {
       callback(...args);
     } catch (error) {
-      reportPreviewRuntimeError("task.defer", error);
+      publishPreviewRuntimeIssue(
+        normalizePreviewRuntimeError(
+          {
+            code: "TASK_DEFER_ERROR",
+            details: "task.defer",
+            kind: "TransformExecutionError",
+            phase: "runtime",
+            summary: `task.defer failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+          error,
+        ),
+      );
     }
   });
 }

@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import type { PreviewExecutionMode, PreviewSelectionMode, PreviewSourceTarget } from "@lattice-ui/preview-engine";
 import { createAutoMockPropsPlugin } from "./autoMockPlugin";
 import { createPreviewVitePlugin } from "./plugin";
-import type { PreviewSourceTarget } from "./types";
 import type { ReactPluginModule, ViteModule, ViteTopLevelAwaitPluginModule, ViteWasmPluginModule } from "./viteTypes";
 
 const DEFAULT_PORT = 4174;
@@ -11,7 +11,9 @@ export type StartPreviewServerOptions = {
   packageName: string;
   packageRoot: string;
   port?: number;
+  selectionMode?: PreviewSelectionMode;
   sourceRoot: string;
+  transformMode?: PreviewExecutionMode;
 };
 
 function resolvePreviewPackageEntry(candidates: string[], label: string) {
@@ -61,7 +63,9 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
 
   const previewPlugin = createPreviewVitePlugin({
     projectName: options.packageName,
+    selectionMode: options.selectionMode,
     targets,
+    transformMode: options.transformMode ?? "compatibility",
   });
 
   const server = await vite.createServer({

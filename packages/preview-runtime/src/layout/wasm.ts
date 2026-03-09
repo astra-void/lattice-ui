@@ -1,7 +1,7 @@
-import initLayoutEngine, { compute_layout } from "@lattice-ui/layout-engine";
+import initLayoutEngine, { createLayoutSession } from "@lattice-ui/layout-engine";
 import layoutEngineWasmUrl from "@lattice-ui/layout-engine/layout_engine_bg.wasm?url";
-import { type ComputedRect, normalizeLayoutMap, SYNTHETIC_ROOT_ID } from "./model";
-import { computeSerializedTreeLayout, serializeLayoutTree, type LayoutTreeState } from "./tree";
+import { type LayoutSessionLike } from "./controller";
+import { normalizePreviewLayoutResult, type PreviewLayoutNode } from "./model";
 
 let layoutEngineInitPromise: Promise<void> | undefined;
 
@@ -18,22 +18,35 @@ export function initializeLayoutEngine(): Promise<void> {
   return layoutEngineInitPromise;
 }
 
-export function computeRegisteredLayout(
-  treeState: LayoutTreeState,
-  viewportWidth: number,
-  viewportHeight: number,
-): Record<string, ComputedRect> {
-  const tree = serializeLayoutTree(treeState);
-  const rawResult = compute_layout(tree, viewportWidth, viewportHeight) as unknown;
-  const computedLayouts = normalizeLayoutMap(rawResult);
-  delete computedLayouts[SYNTHETIC_ROOT_ID];
-  return computedLayouts;
+class WasmLayoutSessionAdapter implements LayoutSessionLike {
+  private readonly session = createLayoutSession();
+  private viewport = {
+    height: 0,
+    width: 0,
+  };
+
+  public applyNodes(nodes: PreviewLayoutNode[]): void {
+    this.session.applyNodes(nodes);
+  }
+
+  public computeDirty() {
+    return normalizePreviewLayoutResult(this.session.computeDirty() as unknown, this.viewport);
+  }
+
+  public dispose(): void {
+    this.session.dispose();
+  }
+
+  public removeNodes(nodeIds: string[]): void {
+    this.session.removeNodes(nodeIds);
+  }
+
+  public setViewport(viewport: { height: number; width: number }): void {
+    this.viewport = viewport;
+    this.session.setViewport(viewport);
+  }
 }
 
-export function computeFallbackLayout(
-  treeState: LayoutTreeState,
-  viewportWidth: number,
-  viewportHeight: number,
-): Record<string, ComputedRect> {
-  return computeSerializedTreeLayout(serializeLayoutTree(treeState), viewportWidth, viewportHeight);
+export function createWasmLayoutSession(): LayoutSessionLike {
+  return new WasmLayoutSessionAdapter();
 }

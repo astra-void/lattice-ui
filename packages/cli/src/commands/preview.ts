@@ -9,6 +9,7 @@ type ParsedPreviewArgs =
       packageName: string;
       packageRoot: string;
       sourceRoot: string;
+      transformMode: "compatibility";
     }
   | {
       mode: "help";
@@ -20,6 +21,7 @@ type PreviewModule = {
     packageRoot: string;
     port?: number;
     sourceRoot: string;
+    transformMode?: "strict-fidelity" | "compatibility" | "mocked" | "design-time";
   }) => Promise<void>;
 };
 
@@ -116,6 +118,7 @@ export function resolvePreviewDevContext(cwd: string) {
     packageName,
     packageRoot,
     sourceRoot,
+    transformMode: "compatibility" as const,
   };
 }
 

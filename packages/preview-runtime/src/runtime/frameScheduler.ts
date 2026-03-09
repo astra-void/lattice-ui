@@ -1,4 +1,4 @@
-﻿import { reportPreviewRuntimeError } from "./runtimeError";
+﻿import { normalizePreviewRuntimeError, publishPreviewRuntimeIssue } from "./runtimeError";
 
 const FRAME_SCHEDULER_KEY = Symbol.for("lattice-ui.preview-runtime.frameScheduler");
 
@@ -76,7 +76,18 @@ class FrameScheduler {
           elapsedTime: this.elapsedTime,
         });
       } catch (error) {
-        reportPreviewRuntimeError("frame", error);
+        publishPreviewRuntimeIssue(
+          normalizePreviewRuntimeError(
+            {
+              code: "FRAME_CALLBACK_ERROR",
+              details: "frame",
+              kind: "TransformExecutionError",
+              phase: "runtime",
+              summary: `Frame callback failed: ${error instanceof Error ? error.message : String(error)}`,
+            },
+            error,
+          ),
+        );
       }
     }
 

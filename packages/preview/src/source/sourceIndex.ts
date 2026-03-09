@@ -283,10 +283,11 @@ export class PreviewSourceIndex {
 
     const transformed = transformPreviewSourceOrThrow(sourceText, {
       filePath,
+      mode: "compatibility",
       runtimeModule: options.runtimeModule,
       target: options.target.name,
     });
-    let transformedCode = compile_tsx(transformed.code);
+    let transformedCode = transformed.code === null ? "" : compile_tsx(transformed.code);
     transformedCode = stripTypeSyntax(transformedCode, filePath);
     if (transformedCode.includes(RBX_STYLE_HELPER_NAME) && !transformedCode.includes(RBX_STYLE_IMPORT.trim())) {
       transformedCode = `${RBX_STYLE_IMPORT}${transformedCode}`;
@@ -296,9 +297,19 @@ export class PreviewSourceIndex {
       cacheKey,
       code: transformedCode,
       diagnostics: sortDiagnostics(
-        transformed.errors.map((error) => ({
-          ...error,
-          relativeFile: toRelativeSourcePath(options.target.packageRoot, error.file),
+        transformed.diagnostics.map((diagnostic) => ({
+          blocking: diagnostic.blocking,
+          code: diagnostic.code,
+          column: diagnostic.column,
+          file: diagnostic.file,
+          line: diagnostic.line,
+          message: diagnostic.summary,
+          phase: "transform" as const,
+          relativeFile: toRelativeSourcePath(options.target.packageRoot, diagnostic.file),
+          severity: diagnostic.severity,
+          summary: diagnostic.summary,
+          symbol: diagnostic.symbol,
+          target: diagnostic.target,
         })),
       ),
       filePath,
