@@ -223,6 +223,7 @@ pub fn compile_tsx(code: String) -> napi::Result<String> {
     let mut module = parse_file_as_module(
         &fm,
         Syntax::Typescript(TsSyntax {
+            decorators: true,
             tsx: true,
             ..Default::default()
         }),

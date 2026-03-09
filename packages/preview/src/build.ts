@@ -8,6 +8,10 @@ import {
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
 
+function isTransformableSourceFile(fileName: string) {
+  return SOURCE_EXTENSIONS.has(path.extname(fileName)) && !fileName.endsWith(".d.ts") && !fileName.endsWith(".d.tsx");
+}
+
 export type PreviewBuildTarget = {
   name: string;
   sourceRoot: string;
@@ -52,12 +56,21 @@ function listSourceFiles(dirPath: string): string[] {
       continue;
     }
 
-    if (SOURCE_EXTENSIONS.has(path.extname(entry.name))) {
+    if (isTransformableSourceFile(entry.name)) {
       files.push(entryPath);
     }
   }
 
   return files.sort((left, right) => left.localeCompare(right));
+}
+
+function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<typeof transformPreviewSource>[1]) {
+  try {
+    return transformPreviewSource(sourceText, options);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse preview source ${options.filePath}: ${detail}`);
+  }
 }
 
 function validateTarget(target: PreviewBuildTarget) {
@@ -95,7 +108,7 @@ export async function buildPreviewModules(options: BuildPreviewModulesOptions): 
 
     for (const sourceFile of sourceFiles) {
       const sourceText = fs.readFileSync(sourceFile, "utf8");
-      const transformResult = transformPreviewSource(sourceText, {
+      const transformResult = transformPreviewSourceOrThrow(sourceText, {
         filePath: sourceFile,
         runtimeModule,
         target: target.name,

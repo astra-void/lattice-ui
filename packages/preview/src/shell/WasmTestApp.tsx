@@ -150,7 +150,8 @@ export function WasmTestApp() {
           );
         }
 
-        await initLayoutEngine({ module_or_path: bytes });
+        const blobUrl = URL.createObjectURL(new Blob([bytes], { type: "application/wasm" }));
+        await initLayoutEngine({ module_or_path: blobUrl });
 
         if (cancelled) {
           return;

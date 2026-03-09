@@ -1,7 +1,7 @@
 ﻿// @vitest-environment jsdom
 
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { Enum, RunService, setupRobloxEnvironment, task } from "@lattice-ui/preview-runtime";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 class RafController {
   private readonly callbacks = new Map<number, FrameRequestCallback>();
@@ -129,21 +129,15 @@ describe.sequential("@lattice-ui/preview-runtime", () => {
       "delayed",
     );
 
-    task.spawn(
-      (label: string) => {
-        events.push(label);
-      },
-      "spawned",
-    );
+    task.spawn((label: string) => {
+      events.push(label);
+    }, "spawned");
     task.spawn(() => {
       throw new Error("spawn failure");
     });
-    task.defer(
-      (label: string) => {
-        events.push(label);
-      },
-      "deferred",
-    );
+    task.defer((label: string) => {
+      events.push(label);
+    }, "deferred");
 
     expect(events).toEqual(["spawned"]);
 

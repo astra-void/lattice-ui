@@ -45,5 +45,3 @@ describe("@lattice-ui/compiler preview transform", () => {
     expect(compiled).toContain("BackgroundTransparency: 1");
   });
 });
-
-

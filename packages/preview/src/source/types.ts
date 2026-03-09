@@ -59,4 +59,3 @@ export type PreviewWorkspace = {
   entries: PreviewRegistryItem[];
   targets: PreviewSourceTarget[];
 };
-

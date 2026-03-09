@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { discoverPreviewProject, discoverPreviewWorkspace } from "../../../packages/preview/src/source/discover";
@@ -96,6 +98,32 @@ describe("discoverPreviewProject", () => {
     });
 
     expect(project.entries).toEqual([]);
+  });
+
+  it("ignores ambient declaration files when indexing a source root", () => {
+    const packageRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-discover-"));
+    const sourceRoot = path.join(packageRoot, "src");
+
+    fs.mkdirSync(sourceRoot, { recursive: true });
+    fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ name: "@fixtures/ambient" }), "utf8");
+    fs.writeFileSync(
+      path.join(sourceRoot, "index.tsx"),
+      'export function AmbientFixture() { return <frame Text="ok" />; }\n',
+      "utf8",
+    );
+    fs.writeFileSync(
+      path.join(sourceRoot, "external-modules.d.ts"),
+      'declare module "virtual:fixture" { export const value: string; }\n',
+      "utf8",
+    );
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/ambient",
+      packageRoot,
+      sourceRoot,
+    });
+
+    expect(project.entries.map((entry) => entry.relativePath)).toEqual(["index.tsx"]);
   });
 });
 

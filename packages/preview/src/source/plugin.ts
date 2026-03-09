@@ -2,11 +2,11 @@
 import path from "node:path";
 import { compile_tsx, transformPreviewSource } from "@lattice-ui/compiler";
 import ts from "typescript";
+import { discoverPreviewWorkspace } from "./discover";
 import {
   createUnresolvedPackageMockResolvePlugin,
   createUnresolvedPackageMockTransformPlugin,
 } from "./robloxPackageMockPlugin";
-import { discoverPreviewWorkspace } from "./discover";
 import type { PreviewSourceTarget } from "./types";
 import type { PreviewDevServer, PreviewPlugin, PreviewPluginOption } from "./viteTypes";
 
@@ -73,6 +73,16 @@ function stripTypeSyntax(code: string, filePath: string) {
     fileName: filePath,
   }).outputText;
 }
+
+function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<typeof transformPreviewSource>[1]) {
+  try {
+    return transformPreviewSource(sourceText, options);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse preview source ${options.filePath}: ${detail}`);
+  }
+}
+
 function findTargetForFilePath(filePath: string, targets: PreviewSourceTarget[]) {
   const extension = path.extname(filePath);
   if (extension !== ".ts" && extension !== ".tsx") {
@@ -183,7 +193,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
         return undefined;
       }
 
-      const transformed = transformPreviewSource(code, {
+      const transformed = transformPreviewSourceOrThrow(code, {
         filePath,
         runtimeModule: runtimeEntryPath,
         target: target.name,

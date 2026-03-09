@@ -25,7 +25,7 @@ class FrameScheduler {
         return;
       }
 
-      if (this.subscribers.size() === 0) {
+      if (this.subscribers.size === 0) {
         this.stop();
       }
     };
@@ -80,7 +80,7 @@ class FrameScheduler {
       }
     }
 
-    if (this.subscribers.size() === 0) {
+    if (this.subscribers.size === 0) {
       this.stop();
       return;
     }

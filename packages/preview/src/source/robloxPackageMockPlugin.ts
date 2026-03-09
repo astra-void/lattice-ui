@@ -11,7 +11,7 @@ const UNSUPPORTED_RESOLVED_EXTENSIONS = new Set([".lua", ".luau"]);
 function normalizeResolvedId(id: string) {
   return stripQuery(id)
     .split("#", 1)[0]!
-    .replace(/^\/\@id\/__x00__/, "\0");
+    .replace(/^\/@id\/__x00__/, "\0");
 }
 
 function isMockResolvedId(id: string) {

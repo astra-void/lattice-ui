@@ -61,8 +61,8 @@ class Signal<TArgs extends readonly unknown[]> implements RBXScriptSignal<TArgs>
     }
   }
 
-  public getsize() {
-    return this.connections.size();
+  public get size() {
+    return this.connections.size;
   }
 
   public disconnect(connection: SignalConnection<TArgs>) {

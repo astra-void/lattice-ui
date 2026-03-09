@@ -20,6 +20,10 @@
     "preview:harness:dev": "pnpm --dir apps/preview-harness exec vite",
     "preview:harness:build": "pnpm --dir apps/preview-harness exec vite build",
     "preview:harness:typecheck": "pnpm --filter @lattice-ui/preview typecheck && pnpm --filter @lattice-ui/cli typecheck && pnpm --dir apps/preview-harness exec tsc -p tsconfig.json --noEmit",
+    "layout-engine:build": "cd packages/layout-engine && PATH=\"$HOME/.cargo/bin:$PATH\" wasm-pack build --target web --out-dir pkg",
+    "layout-engine:build:release": "cd packages/layout-engine && PATH=\"$HOME/.cargo/bin:$PATH\" wasm-pack build --release --target web --out-dir pkg",
+    "layout-engine:build:rust": "cd packages/layout-engine && PATH=\"$HOME/.cargo/bin:$PATH\" cargo build",
+    "layout-engine:test": "cd packages/layout-engine && PATH=\"$HOME/.cargo/bin:$PATH\" cargo test",
     "test": "pnpm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest --watch",
@@ -104,5 +108,5 @@
       "esbuild"
     ]
   },
-  "packageManager": "pnpm@10.30.3"
+  "packageManager": "pnpm@10.31.0"
 }

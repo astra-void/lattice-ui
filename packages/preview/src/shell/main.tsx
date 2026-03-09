@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { installPreviewBrowserGlobals } from "./installPreviewBrowserGlobals";
 import { PreviewWorkspaceApp } from "./PreviewWorkspaceApp";
 import { WasmTestApp } from "./WasmTestApp";
-import { installPreviewBrowserGlobals } from "./installPreviewBrowserGlobals";
 
 installPreviewBrowserGlobals();
 

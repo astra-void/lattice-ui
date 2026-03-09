@@ -78,8 +78,8 @@ pub struct UnsupportedPatternError {
 #[allow(non_snake_case)]
 #[napi(object)]
 pub struct TransformPreviewSourceOptions {
-    pub filePath: String,
-    pub runtimeModule: String,
+    pub file_path: String,
+    pub runtime_module: String,
     pub target: String,
 }
 
@@ -169,7 +169,7 @@ impl<'a> PreviewTransform<'a> {
         UnsupportedPatternError {
             code: code.to_owned(),
             message,
-            file: self.options.filePath.clone(),
+            file: self.options.file_path.clone(),
             line: location.line as u32,
             column: (location.col_display + 1) as u32,
             symbol,
@@ -196,7 +196,7 @@ impl VisitMut for PreviewTransform<'_> {
         });
         module.body = merge_runtime_imports(
             std::mem::take(&mut module.body),
-            &self.options.runtimeModule,
+            &self.options.runtime_module,
         );
     }
 
@@ -295,12 +295,12 @@ impl VisitMut for PreviewTransform<'_> {
     fn visit_mut_import_decl(&mut self, import_decl: &mut ImportDecl) {
         let module_name = import_decl.src.value.to_string_lossy().into_owned();
         let next_module = if is_preview_runtime_alias_source(&module_name) {
-            Some(self.options.runtimeModule.clone())
+            Some(self.options.runtime_module.clone())
         } else if module_name == "@rbxts/react" {
             Some("react".to_owned())
         } else if module_name.starts_with('.') {
             Some(resolve_relative_module_specifier(
-                &self.options.filePath,
+                &self.options.file_path,
                 &module_name,
             ))
         } else {
@@ -319,7 +319,7 @@ impl VisitMut for PreviewTransform<'_> {
             let module_name = src.value.to_string_lossy().into_owned();
             if module_name.starts_with('.') {
                 named_export.src = Some(Box::new(string_literal(
-                    &resolve_relative_module_specifier(&self.options.filePath, &module_name),
+                    &resolve_relative_module_specifier(&self.options.file_path, &module_name),
                 )));
             }
         }
@@ -495,13 +495,14 @@ pub fn transform_preview_source(
     options: TransformPreviewSourceOptions,
 ) -> napi::Result<TransformPreviewSourceResult> {
     let cm: Lrc<SourceMap> = Default::default();
-    let is_tsx = options.filePath.ends_with(".tsx");
-    let file = cm.new_source_file(FileName::Custom(options.filePath.clone()).into(), code);
+    let is_tsx = options.file_path.ends_with(".tsx");
+    let file = cm.new_source_file(FileName::Custom(options.file_path.clone()).into(), code);
 
     let mut recovered_errors = Vec::new();
     let mut module = parse_file_as_module(
         &file,
         Syntax::Typescript(TsSyntax {
+            decorators: true,
             tsx: is_tsx,
             ..Default::default()
         }),
@@ -1035,7 +1036,7 @@ fn maybe_rewrite_jsx_host_name(
     errors.push(UnsupportedPatternError {
         code: "UNSUPPORTED_HOST_ELEMENT".to_owned(),
         message: format!("Host element {host_name} is not supported by preview generation."),
-        file: options.filePath.clone(),
+        file: options.file_path.clone(),
         line: location.line as u32,
         column: (location.col_display + 1) as u32,
         symbol: Some(host_name.to_owned()),

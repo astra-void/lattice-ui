@@ -1,6 +1,6 @@
 ﻿import { Enum } from "./Enum";
-import { RunService } from "./RunService";
 import { installPreviewRuntimeGlobals } from "./installPreviewRuntimeGlobals";
+import { RunService } from "./RunService";
 import { task } from "./task";
 
 export interface SetupRobloxEnvironmentTarget {
@@ -27,10 +27,10 @@ export function setupRobloxEnvironment(
   return initializedTarget;
 }
 
-export { Enum } from "./Enum";
 export type { PreviewEnumCategory, PreviewEnumItem, PreviewEnumRoot } from "./Enum";
-export { RunService } from "./RunService";
-export type { PreviewRunService, RBXScriptConnection, RBXScriptSignal } from "./RunService";
+export { Enum } from "./Enum";
 export { installPreviewRuntimeGlobals } from "./installPreviewRuntimeGlobals";
-export { task } from "./task";
+export type { PreviewRunService, RBXScriptConnection, RBXScriptSignal } from "./RunService";
+export { RunService } from "./RunService";
 export type { TaskCallback, TaskLibrary } from "./task";
+export { task } from "./task";

@@ -27,7 +27,7 @@ export interface PreviewEnumRoot {
 const proxyCache = new Map<string, EnumProxy>();
 
 function formatPath(path: readonly string[]) {
-  if (path.size() === 0) {
+  if (path.length === 0) {
     return "Enum";
   }
 
@@ -51,7 +51,7 @@ function hashPath(path: readonly string[]) {
 }
 
 function getItemValue(path: readonly string[]) {
-  const itemName = path[path.size() - 1];
+  const itemName = path[path.length - 1];
   const fromValueMatch = /^Value(-?\d+)$/.exec(itemName ?? "");
   if (fromValueMatch) {
     return Number(fromValueMatch[1]);
@@ -69,11 +69,11 @@ function getCategoryProxy(path: readonly string[]) {
 }
 
 function getReservedKeys(path: readonly string[]) {
-  if (path.size() === 0) {
+  if (path.length === 0) {
     return ["GetEnums"];
   }
 
-  if (path.size() === 1) {
+  if (path.length === 1) {
     return ["Name", "GetEnumItems", "FromName", "FromValue"];
   }
 
@@ -90,12 +90,12 @@ function resolveProxyMember(path: readonly string[], property: PropertyKey): unk
   }
 
   if (property === Symbol.toStringTag) {
-    return path.size() >= 2 ? "EnumItem" : "Enum";
+    return path.length >= 2 ? "EnumItem" : "Enum";
   }
 
   if (property === Symbol.toPrimitive) {
     return (hint: string) => {
-      if (hint === "number" && path.size() >= 2) {
+      if (hint === "number" && path.length >= 2) {
         return getItemValue(path);
       }
 
@@ -108,13 +108,13 @@ function resolveProxyMember(path: readonly string[], property: PropertyKey): unk
   }
 
   if (property === "valueOf") {
-    return () => (path.size() >= 2 ? getItemValue(path) : 0);
+    return () => (path.length >= 2 ? getItemValue(path) : 0);
   }
 
   if (property === "toJSON") {
-    if (path.size() >= 2) {
+    if (path.length >= 2) {
       return () => ({
-        Name: path[path.size() - 1],
+        Name: path[path.length - 1],
         Value: getItemValue(path),
       });
     }
@@ -122,7 +122,7 @@ function resolveProxyMember(path: readonly string[], property: PropertyKey): unk
     return () => formatPath(path);
   }
 
-  if (path.size() === 0) {
+  if (path.length === 0) {
     if (property === "GetEnums") {
       return () => [];
     }
@@ -138,7 +138,7 @@ function resolveProxyMember(path: readonly string[], property: PropertyKey): unk
     return undefined;
   }
 
-  if (path.size() === 1) {
+  if (path.length === 1) {
     const categoryName = path[0];
 
     if (property === "Name") {
@@ -165,7 +165,7 @@ function resolveProxyMember(path: readonly string[], property: PropertyKey): unk
   }
 
   const categoryName = path[0];
-  const itemName = path[path.size() - 1];
+  const itemName = path[path.length - 1];
 
   if (property === "Name") {
     return itemName;
@@ -198,7 +198,7 @@ function createEnumProxy(path: readonly string[]): EnumProxy {
   }
 
   const reservedKeys = getReservedKeys(path);
-  const proxy = new Proxy(Object.create(undefined) as EnumProxy, {
+  const proxy = new Proxy(Object.create(null) as EnumProxy, {
     get(_target, property) {
       return resolveProxyMember(path, property);
     },

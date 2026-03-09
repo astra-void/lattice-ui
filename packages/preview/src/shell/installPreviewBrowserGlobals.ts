@@ -92,13 +92,13 @@ function createEnumRoot() {
 
 function createMissingGlobalFallback(basePrototype: object | null) {
   return new Proxy(basePrototype ?? Object.prototype, {
-    get(target, property, receiver) {
+    get(target, property) {
       if (property === previewGlobalFallbackMarker) {
         return true;
       }
 
       if (Reflect.has(target, property)) {
-        return Reflect.get(target, property, receiver);
+        return (target as Record<PropertyKey, unknown>)[property];
       }
 
       if (typeof property !== "string") {
@@ -118,7 +118,7 @@ function createMissingGlobalFallback(basePrototype: object | null) {
 }
 
 function installMissingGlobalFallback(target: object) {
-  const prototypeHost = Object.getPrototypeOf(target);
+  const prototypeHost: unknown = Object.getPrototypeOf(target);
   if (!prototypeHost || (typeof prototypeHost !== "object" && typeof prototypeHost !== "function")) {
     return;
   }
