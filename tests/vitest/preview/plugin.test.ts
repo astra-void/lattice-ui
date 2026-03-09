@@ -3,10 +3,17 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPreviewVitePlugin } from "../../../packages/preview/src/source/plugin";
+import type { PreviewPlugin } from "../../../packages/preview/src/source/viteTypes";
 import { getHookHandler } from "./hookTestUtils";
 
 const REGISTRY_MODULE_ID = "virtual:lattice-preview-registry";
 const temporaryRoots: string[] = [];
+
+type MockServer = ReturnType<typeof createMockServer>;
+type TestResolveIdHook = (id: string) => string | undefined;
+type TestLoadHook = (id: string) => string | undefined;
+type TestConfigureServerHook = (server: MockServer) => void;
+type TestHotUpdateHook = (context: { file: string }) => [] | undefined;
 
 afterEach(() => {
   for (const root of temporaryRoots.splice(0)) {
@@ -26,7 +33,7 @@ function createFixtureRoot() {
   };
 }
 
-function createPreviewPlugin(fixtureRoot: string, sourceRoot: string) {
+function createPreviewPlugin(fixtureRoot: string, sourceRoot: string): PreviewPlugin {
   const plugins = createPreviewVitePlugin({
     projectName: "Fixture Preview",
     targets: [
@@ -39,7 +46,16 @@ function createPreviewPlugin(fixtureRoot: string, sourceRoot: string) {
     ],
   });
 
-  return Array.isArray(plugins) ? plugins[1] : undefined;
+  if (!Array.isArray(plugins)) {
+    throw new Error("Expected the preview Vite plugin factory to return a plugin array.");
+  }
+
+  const previewPlugin = plugins[1];
+  if (!previewPlugin || typeof previewPlugin !== "object" || Array.isArray(previewPlugin)) {
+    throw new Error("Expected the preview Vite plugin to be the second object plugin.");
+  }
+
+  return previewPlugin as PreviewPlugin;
 }
 
 function createMockServer() {
@@ -69,12 +85,12 @@ function createMockServer() {
   };
 }
 
-function readRegistryEntries(previewPlugin: ReturnType<typeof createPreviewPlugin>) {
-  const resolveId = getHookHandler(previewPlugin && typeof previewPlugin === "object" ? previewPlugin.resolveId : undefined);
-  const load = getHookHandler(previewPlugin && typeof previewPlugin === "object" ? previewPlugin.load : undefined);
+function readRegistryEntries(previewPlugin: PreviewPlugin) {
+  const resolveId = getHookHandler<TestResolveIdHook>(previewPlugin.resolveId as TestResolveIdHook | undefined);
+  const load = getHookHandler<TestLoadHook>(previewPlugin.load as TestLoadHook | undefined);
 
-  const resolvedRegistryId = resolveId?.call({} as never, REGISTRY_MODULE_ID) as string | undefined;
-  const registryModuleCode = load?.call({} as never, resolvedRegistryId ?? REGISTRY_MODULE_ID);
+  const resolvedRegistryId = resolveId?.(REGISTRY_MODULE_ID);
+  const registryModuleCode = load?.(resolvedRegistryId ?? REGISTRY_MODULE_ID);
   if (typeof registryModuleCode !== "string") {
     throw new Error("Expected the preview registry module to load as a string.");
   }
@@ -94,15 +110,13 @@ describe("createPreviewVitePlugin", () => {
     fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
 
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
-    const handleHotUpdate = getHookHandler(
-      previewPlugin && typeof previewPlugin === "object" ? previewPlugin.handleHotUpdate : undefined,
+    const handleHotUpdate = getHookHandler<TestHotUpdateHook>(
+      previewPlugin.handleHotUpdate as TestHotUpdateHook | undefined,
     );
 
     expect(handleHotUpdate).toBeTypeOf("function");
-    expect(handleHotUpdate?.call({} as never, { file: sourceFile } as never)).toEqual([]);
-    expect(handleHotUpdate?.call({} as never, { file: path.join(fixtureRoot, "README.md") } as never)).toBe(
-      undefined,
-    );
+    expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
+    expect(handleHotUpdate?.({ file: path.join(fixtureRoot, "README.md") })).toBe(undefined);
   });
 
   it("refreshes and reloads the registry for add, delete, rename, and non-target watcher events", () => {
@@ -113,12 +127,12 @@ describe("createPreviewVitePlugin", () => {
     fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
 
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
-    const configureServer = getHookHandler(
-      previewPlugin && typeof previewPlugin === "object" ? previewPlugin.configureServer : undefined,
+    const configureServer = getHookHandler<TestConfigureServerHook>(
+      previewPlugin.configureServer as TestConfigureServerHook | undefined,
     );
     const mockServer = createMockServer();
 
-    configureServer?.call({} as never, mockServer as never);
+    configureServer?.(mockServer);
 
     expect(readRegistryEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual(["AnimatedSlot.tsx"]);
 
@@ -158,15 +172,15 @@ describe("createPreviewVitePlugin", () => {
     fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
 
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
-    const configureServer = getHookHandler(
-      previewPlugin && typeof previewPlugin === "object" ? previewPlugin.configureServer : undefined,
+    const configureServer = getHookHandler<TestConfigureServerHook>(
+      previewPlugin.configureServer as TestConfigureServerHook | undefined,
     );
-    const handleHotUpdate = getHookHandler(
-      previewPlugin && typeof previewPlugin === "object" ? previewPlugin.handleHotUpdate : undefined,
+    const handleHotUpdate = getHookHandler<TestHotUpdateHook>(
+      previewPlugin.handleHotUpdate as TestHotUpdateHook | undefined,
     );
     const mockServer = createMockServer();
 
-    configureServer?.call({} as never, mockServer as never);
+    configureServer?.(mockServer);
 
     expect(readRegistryEntries(previewPlugin)).toEqual(
       expect.arrayContaining([expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "ready" })]),
@@ -185,13 +199,13 @@ describe("createPreviewVitePlugin", () => {
       `,
       "utf8",
     );
-    expect(handleHotUpdate?.call({} as never, { file: sourceFile } as never)).toEqual([]);
+    expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
     expect(readRegistryEntries(previewPlugin)).toEqual(
       expect.arrayContaining([expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "ambiguous" })]),
     );
 
     fs.writeFileSync(sourceFile, "export const value = 1;\n", "utf8");
-    expect(handleHotUpdate?.call({} as never, { file: sourceFile } as never)).toEqual([]);
+    expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
     expect(readRegistryEntries(previewPlugin)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "needs-harness" }),
@@ -199,7 +213,7 @@ describe("createPreviewVitePlugin", () => {
     );
 
     fs.writeFileSync(sourceFile, "export default function AnimatedSlot() { return <frame />; }\n", "utf8");
-    expect(handleHotUpdate?.call({} as never, { file: sourceFile } as never)).toEqual([]);
+    expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
     expect(readRegistryEntries(previewPlugin)).toEqual(
       expect.arrayContaining([expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "ready" })]),
     );
