@@ -8,14 +8,16 @@ import {
   SYNTHETIC_ROOT_ID,
 } from "./model";
 
-let layoutEngineInitPromise: Promise<void> | null = null;
+let layoutEngineInitPromise: Promise<void> | undefined;
 
 export function initializeLayoutEngine(): Promise<void> {
   if (!layoutEngineInitPromise) {
-    layoutEngineInitPromise = initLayoutEngine({ module_or_path: layoutEngineWasmUrl }).catch((error: unknown) => {
-      layoutEngineInitPromise = null;
-      throw error;
-    });
+    layoutEngineInitPromise = initLayoutEngine({ module_or_path: layoutEngineWasmUrl })
+      .then(() => undefined)
+      .catch((error: unknown) => {
+        layoutEngineInitPromise = undefined;
+        throw error;
+      });
   }
 
   return layoutEngineInitPromise;

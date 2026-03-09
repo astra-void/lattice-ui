@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 describe("createAutoMockPropsPlugin", () => {
-  it("injects preview props metadata for anonymous default exported components", async () => {
+  it("injects preview props metadata for anonymous default exported components behind decorated ids", async () => {
     const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-auto-mock-"));
     temporaryRoots.push(fixtureRoot);
 
@@ -57,7 +57,7 @@ describe("createAutoMockPropsPlugin", () => {
     });
 
     const transform = getHookHandler(plugin.transform);
-    const transformed = await transform?.call({} as never, source, sourceFile);
+    const transformed = await transform?.call({} as never, source, `${sourceFile}?source=preview#component`);
 
     expect(transformed && typeof transformed === "object" ? transformed.code : transformed).toContain(
       "const __previewDefaultExport =",
@@ -67,5 +67,48 @@ describe("createAutoMockPropsPlugin", () => {
     );
     expect(transformed && typeof transformed === "object" ? transformed.code : transformed).toContain('"index"');
     expect(transformed && typeof transformed === "object" ? transformed.code : transformed).toContain('"spell"');
+  });
+
+  it("matches source files when the configured source root is a symlink", async () => {
+    const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-auto-mock-symlink-"));
+    temporaryRoots.push(fixtureRoot);
+
+    const realSourceRoot = path.join(fixtureRoot, "real-src");
+    const linkedSourceRoot = path.join(fixtureRoot, "linked-src");
+    const sourceFile = path.join(realSourceRoot, "Symlinked.tsx");
+    const source = 'export default function Symlinked(props: { label: string }) { return <textlabel Text={props.label} />; }\n';
+
+    fs.mkdirSync(realSourceRoot, { recursive: true });
+    fs.writeFileSync(
+      path.join(fixtureRoot, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          jsx: "react-jsx",
+          module: "esnext",
+          target: "esnext",
+        },
+      }),
+      "utf8",
+    );
+    fs.writeFileSync(sourceFile, source, "utf8");
+    fs.symlinkSync(realSourceRoot, linkedSourceRoot);
+
+    const plugin = createAutoMockPropsPlugin({
+      targets: [
+        {
+          name: "fixture",
+          packageRoot: fixtureRoot,
+          sourceRoot: linkedSourceRoot,
+        },
+      ],
+    });
+
+    const transform = getHookHandler(plugin.transform);
+    const transformed = await transform?.call({} as never, source, sourceFile);
+
+    expect(transformed && typeof transformed === "object" ? transformed.code : transformed).toContain(
+      "Symlinked.__previewProps",
+    );
+    expect(transformed && typeof transformed === "object" ? transformed.code : transformed).toContain('"label"');
   });
 });

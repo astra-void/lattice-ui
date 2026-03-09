@@ -11,6 +11,23 @@ function normalizeComparablePath(filePath: string) {
   return ts.sys.useCaseSensitiveFileNames ? slashNormalizedPath : slashNormalizedPath.toLowerCase();
 }
 
+function getComparablePathVariants(filePath: string) {
+  const resolvedPath = normalizeComparablePath(resolveFilePath(filePath));
+  const comparablePaths = new Set<string>([resolvedPath]);
+
+  try {
+    comparablePaths.add(
+      normalizeComparablePath(
+        fs.realpathSync.native?.(resolveFilePath(filePath)) ?? fs.realpathSync(resolveFilePath(filePath)),
+      ),
+    );
+  } catch {
+    // Keep the resolved path when the file no longer exists (for example unlink watcher events).
+  }
+
+  return [...comparablePaths];
+}
+
 export function stripFileIdDecorations(filePath: string) {
   const searchIndex = filePath.search(/[?#]/);
   return searchIndex === -1 ? filePath : filePath.slice(0, searchIndex);
@@ -31,17 +48,21 @@ export function resolveRealFilePath(filePath: string) {
 }
 
 export function canonicalizeFilePath(filePath: string) {
-  return normalizeComparablePath(resolveRealFilePath(filePath));
+  return getComparablePathVariants(filePath)[0]!;
 }
 
 export function isFilePathUnderRoot(rootPath: string, filePath: string) {
-  const canonicalRootPath = canonicalizeFilePath(rootPath);
-  const canonicalFilePath = canonicalizeFilePath(filePath);
+  const comparableRootPaths = getComparablePathVariants(rootPath);
+  const comparableFilePaths = getComparablePathVariants(filePath);
 
-  if (canonicalFilePath === canonicalRootPath) {
-    return false;
-  }
+  return comparableFilePaths.some((comparableFilePath) =>
+    comparableRootPaths.some((comparableRootPath) => {
+      if (comparableFilePath === comparableRootPath) {
+        return false;
+      }
 
-  const rootPrefix = canonicalRootPath.endsWith("/") ? canonicalRootPath : `${canonicalRootPath}/`;
-  return canonicalFilePath.startsWith(rootPrefix);
+      const rootPrefix = comparableRootPath.endsWith("/") ? comparableRootPath : `${comparableRootPath}/`;
+      return comparableFilePath.startsWith(rootPrefix);
+    }),
+  );
 }

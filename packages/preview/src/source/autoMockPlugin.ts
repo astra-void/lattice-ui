@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import type { Plugin } from "vite";
-import { isFilePathUnderRoot, stripFileIdDecorations } from "./pathUtils";
+import { isFilePathUnderRoot, resolveRealFilePath, stripFileIdDecorations } from "./pathUtils";
 import type { PreviewComponentPropsMetadata, PreviewPropMetadata, PreviewSourceTarget } from "./types";
 
 const SUPPORTED_COMPONENT_EXTENSIONS = new Set([".jsx", ".tsx"]);
@@ -24,7 +24,7 @@ export type CreateAutoMockPropsPluginOptions = {
 };
 
 function normalizeFilePath(filePath: string) {
-  const resolvedPath = path.resolve(stripFileIdDecorations(filePath));
+  const resolvedPath = resolveRealFilePath(filePath);
   return ts.sys.useCaseSensitiveFileNames ? resolvedPath : resolvedPath.toLowerCase();
 }
 

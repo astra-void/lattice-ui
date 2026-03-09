@@ -1,1 +1,1 @@
-export const nestedLabel = game.GetService("Players").Name;
+export const nestedLabel = game.IsA("ViewportFrame") ? "Players" : "Unknown";

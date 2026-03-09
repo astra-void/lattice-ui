@@ -32,7 +32,10 @@ function resolveShellRoot() {
 
 function resolvePreviewRuntimeRootEntry() {
   return resolvePreviewPackageEntry(
-    [path.resolve(__dirname, "../../../preview-runtime/src/index.ts"), path.resolve(__dirname, "../../../preview-runtime/dist/index.js")],
+    [
+      path.resolve(__dirname, "../../../preview-runtime/src/index.ts"),
+      path.resolve(__dirname, "../../../preview-runtime/dist/index.js"),
+    ],
     "preview runtime root",
   );
 }

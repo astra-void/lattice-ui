@@ -1,16 +1,43 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { discoverPreviewProject, discoverPreviewWorkspace } from "../../../packages/preview/src/source/discover";
 
 const fixtureRoot = path.resolve(__dirname, "fixtures/source-preview");
 const fixtureSourceRoot = path.join(fixtureRoot, "src");
 const checkboxPackageRoot = path.resolve(__dirname, "../../../packages/checkbox");
 const previewPackageRoot = path.resolve(__dirname, "../../../packages/preview");
+const temporaryRoots: string[] = [];
+
+afterEach(() => {
+  for (const root of temporaryRoots.splice(0)) {
+    fs.rmSync(root, { force: true, recursive: true });
+  }
+});
+
+function createTempPreviewPackage(files: Record<string, string>) {
+  const packageRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-discover-"));
+  temporaryRoots.push(packageRoot);
+
+  for (const [relativePath, content] of Object.entries(files)) {
+    const filePath = path.join(packageRoot, relativePath);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, content, "utf8");
+  }
+
+  if (!fs.existsSync(path.join(packageRoot, "package.json"))) {
+    fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ name: "@fixtures/temp-preview" }), "utf8");
+  }
+
+  return {
+    packageRoot,
+    sourceRoot: path.join(packageRoot, "src"),
+  };
+}
 
 describe("discoverPreviewProject", () => {
-  it("indexes source-first entries with auto render, harness, and diagnostics states", () => {
+  it("indexes source-first entries and distinguishes ready, ambiguous, and harness-needed states", () => {
     const project = discoverPreviewProject({
       packageName: "@fixtures/source-preview",
       packageRoot: fixtureRoot,
@@ -32,6 +59,7 @@ describe("discoverPreviewProject", () => {
     ]);
 
     expect(checkboxEntry).toMatchObject({
+      discoveryDiagnostics: [],
       status: "ready",
       render: {
         exportName: "CheckboxRoot",
@@ -41,6 +69,7 @@ describe("discoverPreviewProject", () => {
     });
 
     expect(dialogEntry).toMatchObject({
+      discoveryDiagnostics: [],
       hasPreviewExport: true,
       status: "ready",
       title: "Dialog Root",
@@ -50,19 +79,140 @@ describe("discoverPreviewProject", () => {
     });
 
     expect(ambiguousEntry).toMatchObject({
+      status: "ambiguous",
+      render: {
+        mode: "none",
+      },
+    });
+    expect(ambiguousEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "AMBIGUOUS_COMPONENT_EXPORTS",
+    );
+
+    expect(brokenEntry?.status).toBe("error");
+    expect(brokenEntry?.diagnostics.map((diagnostic) => diagnostic.code)).toContain("UNSUPPORTED_HOST_ELEMENT");
+    expect(nestedEntry?.status).toBe("error");
+    expect(nestedEntry?.diagnostics.map((diagnostic) => diagnostic.relativeFile)).toContain(
+      "src/support/nestedLabel.ts",
+    );
+  });
+
+  it("emits concrete discover diagnostics for harness-required files", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "src/NoExports.tsx": "export const value = 1;\n",
+      "src/PreviewMissingRender.tsx": `
+        export const preview = {
+          title: "Incomplete Preview",
+        };
+
+        export const value = 1;
+      `,
+    });
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/harness-diagnostics",
+      packageRoot,
+      sourceRoot,
+    });
+
+    const noExportsEntry = project.entries.find((entry) => entry.relativePath === "NoExports.tsx");
+    const previewMissingRenderEntry = project.entries.find((entry) => entry.relativePath === "PreviewMissingRender.tsx");
+
+    expect(noExportsEntry).toMatchObject({
       status: "needs-harness",
       render: {
         mode: "none",
       },
     });
+    expect(noExportsEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toEqual(["NO_COMPONENT_EXPORTS"]);
 
-    expect(brokenEntry?.status).toBe("error");
-    expect(brokenEntry?.diagnostics.map((diagnostic) => diagnostic.code)).toContain("UNSUPPORTED_GLOBAL");
+    expect(previewMissingRenderEntry).toMatchObject({
+      hasPreviewExport: true,
+      status: "needs-harness",
+      render: {
+        mode: "none",
+      },
+    });
+    expect(previewMissingRenderEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "NO_COMPONENT_EXPORTS",
+      "PREVIEW_RENDER_MISSING",
+    ]);
+  });
 
-    expect(nestedEntry?.status).toBe("error");
-    expect(nestedEntry?.diagnostics.map((diagnostic) => diagnostic.relativeFile)).toContain(
-      "src/support/nestedLabel.ts",
+  it("follows tsconfig path aliases that resolve inside the source root", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "tsconfig.json": JSON.stringify(
+        {
+          compilerOptions: {
+            baseUrl: ".",
+            paths: {
+              "@src/*": ["src/*"],
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      "src/AliasNested.tsx": `
+        import { unsupportedHost } from "@src/support/unsupported";
+
+        export function AliasNested() {
+          return unsupportedHost;
+        }
+      `,
+      "src/support/unsupported.tsx": "export const unsupportedHost = <viewportframe />;\n",
+    });
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/aliased-source",
+      packageRoot,
+      sourceRoot,
+    });
+
+    const aliasEntry = project.entries.find((entry) => entry.relativePath === "AliasNested.tsx");
+
+    expect(aliasEntry?.status).toBe("error");
+    expect(aliasEntry?.diagnostics.map((diagnostic) => diagnostic.code)).toContain("UNSUPPORTED_HOST_ELEMENT");
+    expect(aliasEntry?.diagnostics.map((diagnostic) => diagnostic.relativeFile)).toContain("src/support/unsupported.tsx");
+  });
+
+  it("reports a limitation when aliased imports resolve outside the source root", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "tsconfig.json": JSON.stringify(
+        {
+          compilerOptions: {
+            baseUrl: ".",
+            paths: {
+              "@shared/*": ["shared/*"],
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      "src/AliasOutside.tsx": `
+        import { sharedLabel } from "@shared/label";
+
+        export function AliasOutside() {
+          return <textlabel Text={sharedLabel} />;
+        }
+      `,
+      "shared/label.ts": 'export const sharedLabel = "Outside source root";\n',
+    });
+
+    const project = discoverPreviewProject({
+      packageName: "@fixtures/aliased-outside",
+      packageRoot,
+      sourceRoot,
+    });
+
+    const aliasOutsideEntry = project.entries.find((entry) => entry.relativePath === "AliasOutside.tsx");
+
+    expect(aliasOutsideEntry?.status).toBe("ready");
+    expect(aliasOutsideEntry?.diagnostics).toEqual([]);
+    expect(aliasOutsideEntry?.discoveryDiagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "TRANSITIVE_ANALYSIS_LIMITED",
     );
+    expect(aliasOutsideEntry?.discoveryDiagnostics[0]?.message).toContain("@shared/label");
   });
 
   it("allows context-dependent subcomponents to auto-render without a preview export", () => {
@@ -101,21 +251,10 @@ describe("discoverPreviewProject", () => {
   });
 
   it("ignores ambient declaration files when indexing a source root", () => {
-    const packageRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-discover-"));
-    const sourceRoot = path.join(packageRoot, "src");
-
-    fs.mkdirSync(sourceRoot, { recursive: true });
-    fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ name: "@fixtures/ambient" }), "utf8");
-    fs.writeFileSync(
-      path.join(sourceRoot, "index.tsx"),
-      'export function AmbientFixture() { return <frame Text="ok" />; }\n',
-      "utf8",
-    );
-    fs.writeFileSync(
-      path.join(sourceRoot, "external-modules.d.ts"),
-      'declare module "virtual:fixture" { export const value: string; }\n',
-      "utf8",
-    );
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "src/index.tsx": 'export function AmbientFixture() { return <frame Text="ok" />; }\n',
+      "src/external-modules.d.ts": 'declare module "virtual:fixture" { export const value: string; }\n',
+    });
 
     const project = discoverPreviewProject({
       packageName: "@fixtures/ambient",

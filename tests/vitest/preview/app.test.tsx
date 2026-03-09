@@ -29,6 +29,7 @@ const dialogEntry = discoverPreviewProject({
 function createReadyEntry(id: string, title: string) {
   return {
     diagnostics: [],
+    discoveryDiagnostics: [],
     exportNames: ["default"],
     hasDefaultExport: true,
     hasPreviewExport: false,
@@ -118,6 +119,7 @@ describe("preview shell", () => {
                 target: "roblox",
               },
             ],
+            discoveryDiagnostics: [],
             exportNames: ["Broken"],
             hasDefaultExport: false,
             hasPreviewExport: false,
@@ -153,9 +155,17 @@ describe("preview shell", () => {
         entries={[
           {
             diagnostics: [],
+            discoveryDiagnostics: [
+              {
+                code: "PREVIEW_RENDER_MISSING",
+                file: "/virtual/CheckboxIndicator.tsx",
+                message: "The file exports `preview`, but it does not define a callable `preview.render`.",
+                relativeFile: "src/Checkbox/CheckboxIndicator.tsx",
+              },
+            ],
             exportNames: ["CheckboxIndicator"],
             hasDefaultExport: false,
-            hasPreviewExport: false,
+            hasPreviewExport: true,
             id: "Checkbox/CheckboxIndicator.tsx",
             packageName: "@lattice-ui/checkbox",
             relativePath: "Checkbox/CheckboxIndicator.tsx",
@@ -174,7 +184,50 @@ describe("preview shell", () => {
       />,
     );
 
-    expect(screen.getByText("This file is not directly previewable yet.")).toBeTruthy();
+    expect(screen.getByText("The preview export is incomplete.")).toBeTruthy();
+    expect(screen.getByText("PREVIEW_RENDER_MISSING")).toBeTruthy();
+    expect(loadModule).not.toHaveBeenCalled();
+  });
+
+  it("shows ambiguous guidance with concrete discovery diagnostics", () => {
+    const loadModule = vi.fn(() => Promise.reject(new Error("should not load")));
+
+    renderPreviewApp(
+      <PreviewApp
+        entries={[
+          {
+            diagnostics: [],
+            discoveryDiagnostics: [
+              {
+                code: "AMBIGUOUS_COMPONENT_EXPORTS",
+                file: "/virtual/Ambiguous.tsx",
+                message: "Multiple component exports need explicit disambiguation: Alpha, Beta.",
+                relativeFile: "src/Ambiguous.tsx",
+              },
+            ],
+            exportNames: ["Alpha", "Beta"],
+            hasDefaultExport: false,
+            hasPreviewExport: false,
+            id: "Ambiguous.tsx",
+            packageName: "@fixtures/ambiguous",
+            relativePath: "Ambiguous.tsx",
+            render: {
+              mode: "none",
+            },
+            sourceFilePath: "/virtual/Ambiguous.tsx",
+            status: "ambiguous",
+            targetName: "fixture",
+            title: "Ambiguous",
+          },
+        ]}
+        initialSelectedId="Ambiguous.tsx"
+        loadModule={loadModule}
+        projectName="@lattice-ui/preview-smoke"
+      />,
+    );
+
+    expect(screen.getByText("Multiple component exports need disambiguation.")).toBeTruthy();
+    expect(screen.getByText("AMBIGUOUS_COMPONENT_EXPORTS")).toBeTruthy();
     expect(loadModule).not.toHaveBeenCalled();
   });
 
@@ -245,6 +298,7 @@ describe("preview shell", () => {
         entries={[
           {
             diagnostics: [],
+            discoveryDiagnostics: [],
             exportNames: ["LoadoutEditor"],
             hasDefaultExport: false,
             hasPreviewExport: false,

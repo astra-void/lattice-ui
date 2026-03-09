@@ -10,7 +10,12 @@ import {
   type ViewportSize,
 } from "@lattice-ui/preview-runtime";
 import React from "react";
-import type { PreviewDefinition, PreviewRegistryItem } from "../source/types";
+import type {
+  PreviewDefinition,
+  PreviewDiscoveryDiagnostic,
+  PreviewEntryStatus,
+  PreviewRegistryItem,
+} from "../source/types";
 import { PreviewThemeControl } from "./theme";
 
 type PreviewModule = Record<string, unknown> & {
@@ -263,6 +268,84 @@ function getRenderModeLabel(entry: PreviewRegistryItem) {
   return "none";
 }
 
+function getStatusLabel(status: PreviewEntryStatus) {
+  switch (status) {
+    case "ready":
+      return "ready";
+    case "needs-harness":
+      return "needs harness";
+    case "ambiguous":
+      return "ambiguous";
+    case "error":
+      return "error";
+  }
+}
+
+function getPrimaryDiscoveryDiagnostic(entry: PreviewRegistryItem) {
+  const priority: Record<PreviewDiscoveryDiagnostic["code"], number> = {
+    AMBIGUOUS_COMPONENT_EXPORTS: 0,
+    PREVIEW_RENDER_MISSING: 1,
+    NO_COMPONENT_EXPORTS: 2,
+    TRANSITIVE_ANALYSIS_LIMITED: 3,
+  };
+  const discoveryDiagnostics = entry.discoveryDiagnostics ?? [];
+
+  return [...discoveryDiagnostics].sort((left, right) => {
+    const priorityDelta = priority[left.code] - priority[right.code];
+    if (priorityDelta !== 0) {
+      return priorityDelta;
+    }
+
+    return left.message.localeCompare(right.message);
+  })[0];
+}
+
+function getEntryEmptyState(entry: PreviewRegistryItem) {
+  const primaryDiscoveryDiagnostic = getPrimaryDiscoveryDiagnostic(entry);
+
+  if (entry.status === "ambiguous") {
+    return {
+      body:
+        primaryDiscoveryDiagnostic?.message ??
+        "Export a default component or add `preview.render` to pick the intended preview target.",
+      eyebrow: "Ambiguous",
+      title: "Multiple component exports need disambiguation.",
+    };
+  }
+
+  if (entry.status === "needs-harness") {
+    if (primaryDiscoveryDiagnostic?.code === "PREVIEW_RENDER_MISSING") {
+      return {
+        body: `${primaryDiscoveryDiagnostic.message} Add \`preview.render\` or expose one default/sole component export.`,
+        eyebrow: "Needs harness",
+        title: "The preview export is incomplete.",
+      };
+    }
+
+    if (primaryDiscoveryDiagnostic?.code === "NO_COMPONENT_EXPORTS") {
+      return {
+        body: `${primaryDiscoveryDiagnostic.message} Add a default export or \`preview.render\` for composed demos.`,
+        eyebrow: "Needs harness",
+        title: "This file is not directly previewable yet.",
+      };
+    }
+
+    return {
+      body:
+        primaryDiscoveryDiagnostic?.message ??
+        "Add a default export or `export const preview = { render: ... }` when the file needs explicit harnessing.",
+      eyebrow: "Needs harness",
+      title: "This file is not directly previewable yet.",
+    };
+  }
+
+  return {
+    body: "Fix the unsupported patterns below, then save again.",
+    eyebrow: "Diagnostics",
+    title: "Transform diagnostics are blocking this preview.",
+  };
+}
+
 function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
   const preview = readPreviewDefinition(module);
 
@@ -294,10 +377,7 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
       entry.render.usesPreviewProps && preview?.props && typeof preview.props === "object" ? preview.props : undefined;
 
     return (
-      <AutoMockProvider
-        component={resolvedExportValue as React.ComponentType<Record<string, unknown>>}
-        props={props}
-      />
+      <AutoMockProvider component={resolvedExportValue as React.ComponentType<Record<string, unknown>>} props={props} />
     );
   }
 
@@ -417,6 +497,8 @@ export function PreviewApp(props: PreviewAppProps) {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [renderError, setRenderError] = React.useState<string | null>(null);
   const selectedEntry = props.entries.find((entry) => entry.id === selectedId) ?? props.entries[0];
+  const selectedEntryDiscoveryDiagnostics = selectedEntry?.discoveryDiagnostics ?? [];
+  const emptyState = selectedEntry ? getEntryEmptyState(selectedEntry) : undefined;
 
   React.useEffect(() => {
     if (!selectedEntry || typeof window === "undefined") {
@@ -475,7 +557,7 @@ export function PreviewApp(props: PreviewAppProps) {
               onClick={() => React.startTransition(() => setSelectedId(entry.id))}
               type="button"
             >
-              <span className={`status-pill status-${entry.status}`}>{entry.status}</span>
+              <span className={`status-pill status-${entry.status}`}>{getStatusLabel(entry.status)}</span>
               <span className="sidebar-item-copy">
                 <span className="sidebar-item-title">{entry.title}</span>
                 <span className="sidebar-item-target">{entry.targetName}</span>
@@ -534,20 +616,17 @@ export function PreviewApp(props: PreviewAppProps) {
                     <p>The selected `@rbxts/react` module is being compiled into the web preview runtime.</p>
                   </div>
                 )
-              ) : selectedEntry.status === "needs-harness" ? (
+              ) : selectedEntry.status === "needs-harness" || selectedEntry.status === "ambiguous" ? (
                 <div className="preview-empty">
-                  <p className="preview-empty-eyebrow">Needs harness</p>
-                  <h2>This file is not directly previewable yet.</h2>
-                  <p>
-                    Add a default export or <code>export const preview = {`{ render: ... }`}</code> when the file needs
-                    explicit disambiguation.
-                  </p>
+                  <p className="preview-empty-eyebrow">{emptyState?.eyebrow}</p>
+                  <h2>{emptyState?.title}</h2>
+                  <p>{emptyState?.body}</p>
                 </div>
               ) : (
                 <div className="preview-empty">
-                  <p className="preview-empty-eyebrow">Diagnostics</p>
-                  <h2>Transform diagnostics are blocking this preview.</h2>
-                  <p>Fix the unsupported patterns below, then save again.</p>
+                  <p className="preview-empty-eyebrow">{emptyState?.eyebrow}</p>
+                  <h2>{emptyState?.title}</h2>
+                  <p>{emptyState?.body}</p>
                 </div>
               )}
             </section>
@@ -559,12 +638,16 @@ export function PreviewApp(props: PreviewAppProps) {
                   <h3>Source analysis</h3>
                 </div>
                 <div className="diagnostics-summary">
-                  <span>{selectedEntry.diagnostics.length} static issue(s)</span>
+                  <span>{selectedEntry.diagnostics.length} blocking issue(s)</span>
+                  <span>{selectedEntryDiscoveryDiagnostics.length} discover note(s)</span>
                   {renderError ? <span>render error</span> : undefined}
                   {loadError ? <span>load error</span> : undefined}
                 </div>
               </div>
-              {selectedEntry.diagnostics.length === 0 && !renderError && !loadError ? (
+              {selectedEntry.diagnostics.length === 0 &&
+              selectedEntryDiscoveryDiagnostics.length === 0 &&
+              !renderError &&
+              !loadError ? (
                 <p className="diagnostics-empty">No diagnostics for this entry.</p>
               ) : (
                 <div className="diagnostics-list">
@@ -578,6 +661,16 @@ export function PreviewApp(props: PreviewAppProps) {
                       <p className="diagnostic-location">
                         {diagnostic.relativeFile}:{diagnostic.line}:{diagnostic.column}
                       </p>
+                    </article>
+                  ))}
+                  {selectedEntryDiscoveryDiagnostics.map((diagnostic) => (
+                    <article
+                      className="diagnostic-item diagnostic-item-discovery"
+                      key={`${diagnostic.relativeFile}:${diagnostic.code}:${diagnostic.message}`}
+                    >
+                      <p className="diagnostic-code">{diagnostic.code}</p>
+                      <p className="diagnostic-message">{diagnostic.message}</p>
+                      <p className="diagnostic-location">{diagnostic.relativeFile}</p>
                     </article>
                   ))}
                   {loadError ? (

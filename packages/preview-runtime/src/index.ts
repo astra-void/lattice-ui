@@ -129,7 +129,17 @@ export {
   type PreviewAutoMockableComponent,
   withAutoMockedProps,
 } from "./preview";
-export type { PreviewEnumCategory, PreviewEnumItem, PreviewEnumRoot, PreviewPolyfillTarget, PreviewRunService, RBXScriptConnection, RBXScriptSignal, TaskCallback, TaskLibrary } from "./runtime";
+export type {
+  PreviewEnumCategory,
+  PreviewEnumItem,
+  PreviewEnumRoot,
+  PreviewPolyfillTarget,
+  PreviewRunService,
+  RBXScriptConnection,
+  RBXScriptSignal,
+  TaskCallback,
+  TaskLibrary,
+} from "./runtime";
 export { Enum, installPreviewRuntimeGlobals, installPreviewRuntimePolyfills, RunService, task } from "./runtime";
 
 export { React };

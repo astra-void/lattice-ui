@@ -8,6 +8,7 @@ type PreviewGlobalRecord = typeof globalThis & {
 };
 
 const globalRecord = globalThis as PreviewGlobalRecord;
+const previewGlobalFallbackMarker = Symbol.for("lattice.preview.browserGlobalsFallback");
 const initialEnum = globalRecord.Enum;
 const globalPrototypeHost = Object.getPrototypeOf(globalThis);
 const initialGlobalPrototypeParent = globalPrototypeHost ? Object.getPrototypeOf(globalPrototypeHost) : null;
@@ -99,5 +100,48 @@ describe("installPreviewBrowserGlobals", () => {
     expect(result.tweenInfoInstance).toBeDefined();
     expect(result.service).toBeDefined();
     expect(result.workspaceValue).toBeDefined();
+  });
+
+  it("repairs a marker-only fallback chain on reinstall", () => {
+    delete globalRecord.Enum;
+
+    if (!globalPrototypeHost || !windowPrototypeHost) {
+      throw new Error("Expected both global and window prototype hosts to exist.");
+    }
+
+    Object.setPrototypeOf(
+      globalPrototypeHost,
+      Object.defineProperty({}, previewGlobalFallbackMarker, {
+        configurable: true,
+        value: true,
+      }),
+    );
+    Object.setPrototypeOf(
+      windowPrototypeHost,
+      Object.defineProperty({}, previewGlobalFallbackMarker, {
+        configurable: true,
+        value: true,
+      }),
+    );
+
+    installPreviewBrowserGlobals();
+
+    expect(Function(`"use strict"; return typeof tostring === "function" && typeof TweenInfo === "function";`)()).toBe(
+      true,
+    );
+    expect((window as typeof window & { game?: unknown }).game).toBeDefined();
+  });
+
+  it("does not stack fallback wrappers across repeated installs", () => {
+    if (!globalPrototypeHost) {
+      throw new Error("Expected a global prototype host.");
+    }
+
+    installPreviewBrowserGlobals();
+    const initialFallback = Object.getPrototypeOf(globalPrototypeHost);
+
+    installPreviewBrowserGlobals();
+
+    expect(Object.getPrototypeOf(globalPrototypeHost)).toBe(initialFallback);
   });
 });

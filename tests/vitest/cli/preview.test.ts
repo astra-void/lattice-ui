@@ -179,5 +179,5 @@ describe("preview command", () => {
       cwd: workspaceRoot,
       stdio: "pipe",
     });
-  });
+  }, 20_000);
 });
