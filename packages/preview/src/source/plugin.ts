@@ -3,6 +3,7 @@ import path from "node:path";
 import { compile_tsx, transformPreviewSource } from "@lattice-ui/compiler";
 import ts from "typescript";
 import { discoverPreviewWorkspace } from "./discover";
+import { createErrorWithCause } from "../errorWithCause";
 import {
   createUnresolvedPackageMockResolvePlugin,
   createUnresolvedPackageMockTransformPlugin,
@@ -79,7 +80,7 @@ function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<t
     return transformPreviewSource(sourceText, options);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse preview source ${options.filePath}: ${detail}`);
+    throw createErrorWithCause(`Failed to parse preview source ${options.filePath}: ${detail}`, error);
   }
 }
 

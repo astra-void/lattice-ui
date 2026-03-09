@@ -10,6 +10,7 @@ import {
   type ViewportSize,
 } from "../runtime/viewport";
 import type { PreviewDefinition, PreviewRegistryItem } from "../source/types";
+import { PreviewThemeControl } from "./theme";
 
 type PreviewModule = Record<string, unknown> & {
   default?: unknown;
@@ -434,11 +435,7 @@ export function PreviewApp(props: PreviewAppProps) {
                 <h2>{selectedEntry.title}</h2>
               </div>
               <div className="header-controls">
-                <div className="header-meta">
-                  <span>{selectedEntry.targetName}</span>
-                  <span>{selectedEntry.relativePath}</span>
-                  <span>{selectedEntry.hasPreviewExport ? "Has preview export" : "Direct export render"}</span>
-                </div>
+                <PreviewThemeControl />
                 <label className="debug-toggle">
                   <input
                     checked={isDebugMode}
@@ -447,6 +444,11 @@ export function PreviewApp(props: PreviewAppProps) {
                   />
                   <span>Debug mode</span>
                 </label>
+                <div className="header-meta">
+                  <span>{selectedEntry.targetName}</span>
+                  <span>{selectedEntry.relativePath}</span>
+                  <span>{selectedEntry.hasPreviewExport ? "Has preview export" : "Direct export render"}</span>
+                </div>
               </div>
             </header>
 

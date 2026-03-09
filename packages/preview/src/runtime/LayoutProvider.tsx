@@ -91,7 +91,6 @@ type LayoutContextValue = {
 
 const SYNTHETIC_ROOT_ID = "__lattice_preview_root__";
 const DEFAULT_DEBOUNCE_MS = 12;
-const DEBUG_FALLBACK_SIZE = 24;
 const ZERO_VIEWPORT: ViewportSize = {
   height: 0,
   width: 0,
@@ -330,10 +329,9 @@ function resolveAxis(udim: SolverUDim, parentAxisSize: number) {
 function computeRectFromParentRect(
   node: Pick<RegisteredNode, "anchorPoint" | "position" | "size">,
   parentRect: ComputedRect,
-  minimumSize = 0,
 ): ComputedRect {
-  const width = Math.max(resolveAxis(node.size.x, parentRect.width), minimumSize);
-  const height = Math.max(resolveAxis(node.size.y, parentRect.height), minimumSize);
+  const width = resolveAxis(node.size.x, parentRect.width);
+  const height = resolveAxis(node.size.y, parentRect.height);
 
   return {
     height,
@@ -461,6 +459,10 @@ export function LayoutProvider(props: LayoutProviderProps) {
       return measuredViewport;
     }
 
+    if (hasPositiveViewport(explicitViewport)) {
+      return explicitViewport;
+    }
+
     if (measuredViewport !== null) {
       return null;
     }
@@ -472,12 +474,12 @@ export function LayoutProvider(props: LayoutProviderProps) {
       return "measured-parent";
     }
 
-    if (measuredViewport !== null) {
-      return "unresolved";
-    }
-
     if (hasPositiveViewport(explicitViewport)) {
       return "explicit";
+    }
+
+    if (measuredViewport !== null) {
+      return "unresolved";
     }
 
     return "none";
@@ -718,7 +720,7 @@ export function useRobloxLayout(input: RobloxLayoutNodeInput): ComputedRect | nu
   );
 
   const fallbackRect = React.useMemo<ComputedRect>(
-    () => computeRectFromParentRect(fallbackLayoutNode, fallbackParentRect, DEBUG_FALLBACK_SIZE),
+    () => computeRectFromParentRect(fallbackLayoutNode, fallbackParentRect),
     [fallbackLayoutNode, fallbackParentRect],
   );
 

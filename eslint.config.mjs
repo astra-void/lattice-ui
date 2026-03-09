@@ -23,7 +23,6 @@ export default defineConfig([
     "**/dist/**",
     "**/.astro/**",
     "**/include/**",
-    "tests/vitest/**",
     "apps/preview-harness/src/generated/**",
     "packages/preview/generated/**",
     "packages/layout-engine/pkg/**",

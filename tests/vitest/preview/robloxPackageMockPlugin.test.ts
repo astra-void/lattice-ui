@@ -4,6 +4,7 @@ import {
   createUnresolvedPackageMockTransformPlugin,
   UNRESOLVED_MOCK_MODULE_ID,
 } from "../../../packages/preview/src/source/robloxPackageMockPlugin";
+import { getHookHandler } from "./hookTestUtils";
 
 describe("unresolved package mock plugin", () => {
   it("rewrites unresolved, non-browser, or virtual-mock bare imports to the shared mock module", async () => {
@@ -20,9 +21,10 @@ describe("unresolved package mock plugin", () => {
       const lazy = import("not-real-package");
     `;
 
-    const result = await plugin.transform?.call(
+    const transform = getHookHandler(plugin.transform);
+    const result = await transform?.call(
       {
-        resolve(specifier: string) {
+        async resolve(specifier: string) {
           if (specifier === "react") {
             return { id: "/virtual/react.js" };
           }
@@ -37,7 +39,7 @@ describe("unresolved package mock plugin", () => {
 
           return null;
         },
-      },
+      } as never,
       source,
       "/virtual/mana-bar.ts",
     );
@@ -57,14 +59,16 @@ describe("unresolved package mock plugin", () => {
 
   it("resolves bare packages with non-browser module entries to the virtual mock", async () => {
     const plugin = createUnresolvedPackageMockResolvePlugin("/virtual/mock-env.ts");
-    const resolved = await plugin.resolveId?.call(
+    const resolveId = getHookHandler(plugin.resolveId);
+    const resolved = await resolveId?.call(
       {
-        resolve() {
+        async resolve() {
           return { id: "/virtual/init.lua?import" };
         },
-      },
+      } as never,
       "resolved-lua-package",
       "/virtual/ManaBar.tsx",
+      { attributes: {}, isEntry: false },
     );
 
     expect(resolved).toBe("\0virtual:lattice-preview-unresolved-env");
@@ -72,19 +76,23 @@ describe("unresolved package mock plugin", () => {
 
   it("resolves unresolved bare packages to a single virtual module", async () => {
     const plugin = createUnresolvedPackageMockResolvePlugin("/virtual/mock-env.ts");
-    const resolved = await plugin.resolveId?.call(
+    const resolveId = getHookHandler(plugin.resolveId);
+    const resolved = await resolveId?.call(
       {
-        resolve() {
+        async resolve() {
           return null;
         },
-      },
+      } as never,
       "@missing/vendor",
       "/virtual/ManaBar.tsx",
+      { attributes: {}, isEntry: false },
     );
-    const loaded = resolved ? await plugin.load?.call(undefined, resolved) : undefined;
+    const load = getHookHandler(plugin.load);
+    const resolvedId = typeof resolved === "string" ? resolved : resolved ? resolved.id : undefined;
+    const loaded = resolvedId ? await load?.call({} as never, resolvedId) : undefined;
     const code = typeof loaded === "string" ? loaded : (loaded?.code ?? "");
 
-    expect(resolved).toBe("\0virtual:lattice-preview-unresolved-env");
+    expect(resolvedId).toBe("\0virtual:lattice-preview-unresolved-env");
     expect(code).toContain('import mock, { robloxModuleMock } from "/virtual/mock-env.ts";');
   });
 });

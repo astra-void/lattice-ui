@@ -6,6 +6,7 @@ import type { PreviewComponentPropsMetadata, PreviewPropMetadata, PreviewSourceT
 
 const SUPPORTED_COMPONENT_EXTENSIONS = new Set([".jsx", ".tsx"]);
 const MAX_SERIALIZED_OBJECT_PROPERTIES = 16;
+const SYNTHETIC_DEFAULT_EXPORT_NAME = "__previewDefaultExport";
 const TYPE_FORMAT_FLAGS =
   ts.TypeFormatFlags.NoTruncation |
   ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope |
@@ -46,6 +47,10 @@ function isComponentName(name: string) {
 
 function hasExportModifier(node: ts.Node) {
   return (ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Export) !== 0;
+}
+
+function isDefaultExport(node: ts.Node) {
+  return (ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Default) !== 0;
 }
 
 function findNearestTsconfig(filePath: string) {
@@ -262,6 +267,23 @@ function getDeclarationSignature(declaration: ComponentDeclaration, checker: ts.
   }
 
   return undefined;
+}
+
+function getExpressionSignature(expression: ts.Expression, checker: ts.TypeChecker): ts.Signature | undefined {
+  if (ts.isArrowFunction(expression) || ts.isFunctionExpression(expression)) {
+    return checker.getSignatureFromDeclaration(expression);
+  }
+
+  const type = checker.getTypeAtLocation(expression);
+  return checker.getSignaturesOfType(type, ts.SignatureKind.Call)[0];
+}
+
+function isAnonymousDefaultExportExpression(expression: ts.Expression): boolean {
+  if (ts.isParenthesizedExpression(expression)) {
+    return isAnonymousDefaultExportExpression(expression.expression);
+  }
+
+  return ts.isArrowFunction(expression) || ts.isFunctionExpression(expression) || ts.isClassExpression(expression);
 }
 
 function includesUndefined(type: ts.Type): boolean {
@@ -496,6 +518,15 @@ function createComponentMetadata(
   checker: ts.TypeChecker,
 ): PreviewComponentPropsMetadata | undefined {
   const signature = getDeclarationSignature(declaration, checker);
+  return createMetadataFromSignature(componentName, signature, declaration, checker);
+}
+
+function createMetadataFromSignature(
+  componentName: string,
+  signature: ts.Signature | undefined,
+  declarationNode: ts.Node,
+  checker: ts.TypeChecker,
+): PreviewComponentPropsMetadata | undefined {
   if (!signature) {
     return undefined;
   }
@@ -508,18 +539,104 @@ function createComponentMetadata(
     };
   }
 
-  const declarationNode = propsParameter.valueDeclaration ?? declaration;
-  const propsType = checker.getTypeOfSymbolAtLocation(propsParameter, declarationNode);
+  const propsDeclarationNode = propsParameter.valueDeclaration ?? declarationNode;
+  const propsType = checker.getTypeOfSymbolAtLocation(propsParameter, propsDeclarationNode);
   const props: Record<string, PreviewPropMetadata> = {};
 
   for (const propertySymbol of checker.getPropertiesOfType(propsType)) {
-    props[propertySymbol.getName()] = serializePropertySymbol(propertySymbol, checker, declarationNode, new Set());
+    props[propertySymbol.getName()] = serializePropertySymbol(propertySymbol, checker, propsDeclarationNode, new Set());
   }
 
   return {
     componentName,
     props,
   };
+}
+
+function createAnonymousDefaultExportMetadata(sourceFile: ts.SourceFile, checker: ts.TypeChecker) {
+  for (const statement of sourceFile.statements) {
+    if (
+      ts.isExportAssignment(statement) &&
+      !statement.isExportEquals &&
+      isAnonymousDefaultExportExpression(statement.expression)
+    ) {
+      const targetExpression = ts.isParenthesizedExpression(statement.expression)
+        ? statement.expression.expression
+        : statement.expression;
+      const signature = getExpressionSignature(targetExpression, checker);
+      const metadata = createMetadataFromSignature(SYNTHETIC_DEFAULT_EXPORT_NAME, signature, targetExpression, checker);
+
+      if (metadata) {
+        return {
+          metadata,
+          name: SYNTHETIC_DEFAULT_EXPORT_NAME,
+        };
+      }
+    }
+
+    if (
+      ts.isFunctionDeclaration(statement) &&
+      hasExportModifier(statement) &&
+      isDefaultExport(statement) &&
+      !statement.name
+    ) {
+      const metadata = createMetadataFromSignature(
+        SYNTHETIC_DEFAULT_EXPORT_NAME,
+        checker.getSignatureFromDeclaration(statement),
+        statement,
+        checker,
+      );
+
+      if (metadata) {
+        return {
+          metadata,
+          name: SYNTHETIC_DEFAULT_EXPORT_NAME,
+        };
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function replaceSourceRange(sourceText: string, start: number, end: number, replacement: string) {
+  return `${sourceText.slice(0, start)}${replacement}${sourceText.slice(end)}`;
+}
+
+function normalizeAnonymousDefaultExport(sourceFile: ts.SourceFile, code: string) {
+  for (const statement of sourceFile.statements) {
+    if (
+      ts.isExportAssignment(statement) &&
+      !statement.isExportEquals &&
+      isAnonymousDefaultExportExpression(statement.expression)
+    ) {
+      const expressionText = code.slice(statement.expression.getStart(sourceFile), statement.expression.end);
+      return replaceSourceRange(
+        code,
+        statement.getStart(sourceFile),
+        statement.end,
+        `const ${SYNTHETIC_DEFAULT_EXPORT_NAME} = ${expressionText};\nexport default ${SYNTHETIC_DEFAULT_EXPORT_NAME};`,
+      );
+    }
+
+    if (
+      (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) &&
+      hasExportModifier(statement) &&
+      isDefaultExport(statement) &&
+      !statement.name
+    ) {
+      const statementText = code.slice(statement.getStart(sourceFile), statement.end);
+      const declarationText = statementText.replace(/^export\s+default\s+/, "");
+      return replaceSourceRange(
+        code,
+        statement.getStart(sourceFile),
+        statement.end,
+        `const ${SYNTHETIC_DEFAULT_EXPORT_NAME} = ${declarationText};\nexport default ${SYNTHETIC_DEFAULT_EXPORT_NAME};`,
+      );
+    }
+  }
+
+  return code;
 }
 
 function injectComponentMetadata(
@@ -564,7 +681,9 @@ export function createAutoMockPropsPlugin(options: CreateAutoMockPropsPluginOpti
 
       const checker = program.getTypeChecker();
       const localDeclarations = collectLocalComponentDeclarations(sourceFile);
-      if (localDeclarations.size === 0) {
+      const defaultExportMetadata = createAnonymousDefaultExportMetadata(sourceFile, checker);
+
+      if (localDeclarations.size === 0 && !defaultExportMetadata) {
         return undefined;
       }
 
@@ -580,7 +699,12 @@ export function createAutoMockPropsPlugin(options: CreateAutoMockPropsPluginOpti
         })
         .filter((value): value is { metadata: PreviewComponentPropsMetadata; name: string } => value !== undefined);
 
-      const transformedCode = injectComponentMetadata(code, injectedMetadata);
+      if (defaultExportMetadata) {
+        injectedMetadata.push(defaultExportMetadata);
+      }
+
+      const normalizedCode = defaultExportMetadata ? normalizeAnonymousDefaultExport(sourceFile, code) : code;
+      const transformedCode = injectComponentMetadata(normalizedCode, injectedMetadata);
       if (!transformedCode) {
         return undefined;
       }

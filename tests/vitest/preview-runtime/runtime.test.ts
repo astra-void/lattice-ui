@@ -1,6 +1,6 @@
 ﻿// @vitest-environment jsdom
 
-import { Enum, RunService, setupRobloxEnvironment, task } from "@lattice-ui/preview-runtime";
+import { Enum, RunService, setupRobloxEnvironment, task, type SetupRobloxEnvironmentTarget } from "@lattice-ui/preview-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 class RafController {
@@ -12,13 +12,13 @@ class RafController {
   private now = 0;
 
   public constructor() {
-    globalThis.requestAnimationFrame = (callback) => {
+    globalThis.requestAnimationFrame = (callback: FrameRequestCallback) => {
       const handle = this.nextHandle++;
       this.callbacks.set(handle, callback);
       return handle;
     };
 
-    globalThis.cancelAnimationFrame = (handle) => {
+    globalThis.cancelAnimationFrame = (handle: number) => {
       this.callbacks.delete(handle);
     };
   }
@@ -57,13 +57,15 @@ afterEach(() => {
 
 describe.sequential("@lattice-ui/preview-runtime", () => {
   it("provides a deep Enum proxy with stable Name and Value access", () => {
-    expect(Enum.KeyCode.Return.Name).toBe("Return");
-    expect(Enum.KeyCode.Return.EnumType.Name).toBe("KeyCode");
-    expect(Enum.TextXAlignment.Center.Name).toBe("Center");
-    expect(Enum.TextXAlignment.FromName("Left").Name).toBe("Left");
-    expect(Enum.TextXAlignment.FromValue(7).Value).toBe(7);
-    expect(String(Enum.KeyCode.Return)).toBe("Enum.KeyCode.Return");
-    expect(Enum.KeyCode.Return.Value).toBeTypeOf("number");
+    const previewEnum = Enum as Record<string, any>;
+
+    expect(previewEnum.KeyCode.Return.Name).toBe("Return");
+    expect(previewEnum.KeyCode.Return.EnumType.Name).toBe("KeyCode");
+    expect(previewEnum.TextXAlignment.Center.Name).toBe("Center");
+    expect(previewEnum.TextXAlignment.FromName("Left").Name).toBe("Left");
+    expect(previewEnum.TextXAlignment.FromValue(7).Value).toBe(7);
+    expect(String(previewEnum.KeyCode.Return)).toBe("Enum.KeyCode.Return");
+    expect(previewEnum.KeyCode.Return.Value).toBeTypeOf("number");
   });
 
   it("shares one RAF loop between task.wait and RunService listeners", async () => {
@@ -93,13 +95,13 @@ describe.sequential("@lattice-ui/preview-runtime", () => {
     rafController = new RafController();
 
     const order: string[] = [];
-    const renderConnection = RunService.RenderStepped.Connect((deltaTime) => {
+    const renderConnection = RunService.RenderStepped.Connect((deltaTime: number) => {
       order.push(`render:${deltaTime.toFixed(3)}`);
     });
-    const steppedConnection = RunService.Stepped.Connect((time, deltaTime) => {
+    const steppedConnection = RunService.Stepped.Connect((time: number, deltaTime: number) => {
       order.push(`stepped:${time.toFixed(3)}:${deltaTime.toFixed(3)}`);
     });
-    const heartbeatConnection = RunService.Heartbeat.Connect((deltaTime) => {
+    const heartbeatConnection = RunService.Heartbeat.Connect((deltaTime: number) => {
       order.push(`heartbeat:${deltaTime.toFixed(3)}`);
     });
 
@@ -114,20 +116,13 @@ describe.sequential("@lattice-ui/preview-runtime", () => {
     heartbeatConnection.Disconnect();
   });
 
-  it("uses RAF timing for task.wait and task.delay, and keeps spawn and defer isolated", async () => {
+  it("uses RAF timing for task.wait and keeps spawn and defer isolated", async () => {
     rafController = new RafController();
 
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const events: string[] = [];
 
     const waitPromise = task.wait();
-    const delayPromise = task.delay(
-      0.025,
-      (label: string) => {
-        events.push(label);
-      },
-      "delayed",
-    );
 
     task.spawn((label: string) => {
       events.push(label);
@@ -149,17 +144,31 @@ describe.sequential("@lattice-ui/preview-runtime", () => {
 
     await expect(waitPromise).resolves.toBeCloseTo(0.016, 3);
     expect(events).toEqual(["spawned", "deferred"]);
-
-    await rafController.step(12);
-    await delayPromise;
-
-    expect(events).toEqual(["spawned", "deferred", "delayed"]);
     expect(errorSpy).toHaveBeenCalledOnce();
+  });
+
+  it("uses window timers for task.delay and lets task.cancel abort pending callbacks", () => {
+    vi.useFakeTimers();
+
+    const delayed = vi.fn();
+    const cancelled = vi.fn();
+
+    task.delay(0.025, delayed, "delayed");
+    const cancelledHandle = task.delay(0.05, cancelled, "cancelled");
+    task.cancel(cancelledHandle);
+
+    vi.advanceTimersByTime(24);
+    expect(delayed).not.toHaveBeenCalled();
+    expect(cancelled).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(delayed).toHaveBeenCalledWith("delayed");
+    expect(cancelled).not.toHaveBeenCalled();
   });
 
   it("setupRobloxEnvironment installs globals without overwriting an existing target", () => {
     const existingTask = {} as typeof task;
-    const target = {
+    const target: SetupRobloxEnvironmentTarget = {
       task: existingTask,
     };
 
@@ -168,5 +177,19 @@ describe.sequential("@lattice-ui/preview-runtime", () => {
     expect(target.Enum).toBe(Enum);
     expect(target.RunService).toBe(RunService);
     expect(target.task).toBe(existingTask);
+  });
+
+  it("installs Luau-style globals and prototype helpers", () => {
+    setupRobloxEnvironment();
+    const previewGlobal = globalThis as typeof globalThis & {
+      print?: (...args: unknown[]) => void;
+      tostring?: (value: unknown) => string;
+    };
+
+    expect(previewGlobal.tostring?.(1)).toBe("1");
+    expect("Spell".size()).toBe(5);
+    expect("Spell".sub(2, 4)).toBe("pel");
+    expect([1, 2, 3].size()).toBe(3);
+    expect(typeof previewGlobal.print).toBe("function");
   });
 });

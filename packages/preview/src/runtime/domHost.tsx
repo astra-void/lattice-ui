@@ -2,6 +2,7 @@ import * as React from "react";
 import type { Color3Value, UDim2Value, Vector2 } from "./helpers";
 import { toCssColor } from "./helpers";
 import { type ComputedRect, LayoutNodeParentProvider, useLayoutDebugState, useRobloxLayout } from "./LayoutProvider";
+import { mapRobloxFont, useTextScaleStyle } from "./textStyles";
 
 export type PreviewEventTable = {
   Activated?: (event: Event) => void;
@@ -37,6 +38,8 @@ type SerializedVector2 = {
   Y: number;
 };
 
+type HostModifierName = "uicorner" | "uiscale" | "uistroke";
+
 type HostName =
   | "frame"
   | "textbutton"
@@ -62,6 +65,7 @@ type HostName =
 type LayoutHostName = "frame" | "textbutton" | "screengui" | "textlabel" | "textbox" | "imagelabel" | "scrollingframe";
 
 let previewNodeIdCounter = 0;
+const PREVIEW_DECORATOR_HOST_MARKER = Symbol.for("lattice.preview.decoratorHost");
 
 export type PreviewDomProps = {
   Active?: boolean;
@@ -75,9 +79,11 @@ export type PreviewDomProps = {
   Change?: {
     Text?: (element: HTMLInputElement) => void;
   };
+  Color?: Color3Value;
   CornerRadius?: unknown;
   Event?: PreviewEventTable;
   FillDirection?: string;
+  Font?: unknown;
   HorizontalAlignment?: string;
   Id?: string;
   Image?: string;
@@ -95,12 +101,14 @@ export type PreviewDomProps = {
   Position?: UDim2Like;
   ScrollBarThickness?: number;
   ScrollingDirection?: string;
+  Scale?: number;
   Selectable?: boolean;
   Size?: UDim2Like;
   SortOrder?: string;
-  Text?: string;
+  Text?: unknown;
   TextColor3?: Color3Value;
   TextEditable?: boolean;
+  TextScaled?: boolean;
   TextSize?: number;
   TextTransparency?: number;
   TextWrapped?: boolean;
@@ -248,6 +256,14 @@ function getStringValue(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function coerceTextValue(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  return String(value);
+}
+
 function toFiniteNumber(value: unknown, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -319,6 +335,131 @@ function serializeVector2(value: unknown, fallback: SerializedVector2 = ZERO_VEC
     X: toFiniteNumber(record.X ?? record.x, fallback.X),
     Y: toFiniteNumber(record.Y ?? record.y, fallback.Y),
   };
+}
+
+function getDecoratorHost(type: unknown) {
+  if (typeof type !== "object" && typeof type !== "function") {
+    return undefined;
+  }
+
+  return (type as { [PREVIEW_DECORATOR_HOST_MARKER]?: HostModifierName })[PREVIEW_DECORATOR_HOST_MARKER];
+}
+
+function toTransformOrigin(anchorPoint: SerializedVector2) {
+  return `${anchorPoint.X * 100}% ${anchorPoint.Y * 100}%`;
+}
+
+function resolveCornerRadius(value: unknown, computed: ComputedRect | null) {
+  const radius = serializeUDim(value);
+  const referenceSize = computed ? Math.min(computed.width, computed.height) : 0;
+  return `${Math.max(0, referenceSize * radius.Scale + radius.Offset)}px`;
+}
+
+function appendStyleValue(
+  existing: React.CSSProperties[keyof React.CSSProperties] | undefined,
+  next: string,
+  separator: string,
+) {
+  if (!existing) {
+    return next;
+  }
+
+  return `${String(existing)}${separator}${next}`;
+}
+
+type HoistedModifierState = {
+  cornerRadius?: string;
+  scale?: number;
+  strokeShadow?: string;
+};
+
+function collectHoistedModifierState(
+  state: HoistedModifierState,
+  host: HostModifierName,
+  props: PreviewDomProps,
+  computed: ComputedRect | null,
+) {
+  switch (host) {
+    case "uicorner":
+      state.cornerRadius = resolveCornerRadius(props.CornerRadius, computed);
+      break;
+    case "uiscale":
+      state.scale = toFiniteNumber(props.Scale, 1);
+      break;
+    case "uistroke": {
+      const thickness = Math.max(0, toFiniteNumber(props.Thickness, 1));
+      const color = props.Color ? toCssColor(props.Color, props.Transparency) : undefined;
+      if (thickness > 0 && color) {
+        state.strokeShadow = `inset 0 0 0 ${thickness}px ${color}`;
+      }
+      break;
+    }
+  }
+}
+
+function collectRenderableChildren(
+  children: React.ReactNode,
+  state: HoistedModifierState,
+  computed: ComputedRect | null,
+): React.ReactNode[] {
+  const renderableChildren: React.ReactNode[] = [];
+
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) {
+      if (child !== undefined && child !== null && child !== false) {
+        renderableChildren.push(child);
+      }
+      return;
+    }
+
+    const decoratorHost = getDecoratorHost(child.type);
+    if (decoratorHost) {
+      collectHoistedModifierState(state, decoratorHost, child.props as PreviewDomProps, computed);
+      return;
+    }
+
+    if (child.type === React.Fragment) {
+      const fragmentProps = child.props as { children?: React.ReactNode };
+      const fragmentChildren = collectRenderableChildren(fragmentProps.children, state, computed);
+      if (fragmentChildren.length > 0) {
+        renderableChildren.push(React.cloneElement(child, undefined, ...fragmentChildren));
+      }
+      return;
+    }
+
+    renderableChildren.push(child);
+  });
+
+  return renderableChildren;
+}
+
+function extractHoistedChildren(children: React.ReactNode, computed: ComputedRect | null) {
+  const state: HoistedModifierState = {};
+  const renderableChildren = collectRenderableChildren(children, state, computed);
+
+  return {
+    children: renderableChildren,
+    state,
+  };
+}
+
+function applyHoistedModifierStyles(
+  style: React.CSSProperties,
+  state: HoistedModifierState,
+  anchorPoint: SerializedVector2,
+) {
+  if (state.cornerRadius) {
+    style.borderRadius = state.cornerRadius;
+  }
+
+  if (state.scale !== undefined && Number.isFinite(state.scale) && state.scale !== 1) {
+    style.transform = appendStyleValue(style.transform, `scale(${state.scale})`, " ");
+    style.transformOrigin = toTransformOrigin(anchorPoint);
+  }
+
+  if (state.strokeShadow) {
+    style.boxShadow = appendStyleValue(style.boxShadow, state.strokeShadow, ", ");
+  }
 }
 
 function getDefaultSize(host: LayoutHostName) {
@@ -470,24 +611,33 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
     BackgroundTransparency,
     BorderSizePixel,
     Change,
+    Color,
+    CornerRadius,
     Event,
+    Font,
     Id,
     Image,
+    ImageColor3,
+    ImageTransparency,
     Modal,
     Name,
     ParentId,
     PlaceholderText,
     Position,
+    Scale,
     Selectable,
     Size,
     Text,
     TextColor3,
     TextEditable,
+    TextScaled,
     TextSize,
     TextTransparency,
     TextWrapped,
     TextXAlignment,
     TextYAlignment,
+    Thickness,
+    Transparency,
     Visible,
     ZIndex,
     children,
@@ -502,13 +652,22 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
   void Active;
   void AnchorPoint;
   void AutoButtonColor;
+  void Color;
+  void CornerRadius;
+  void Font;
   void Id;
+  void ImageColor3;
+  void ImageTransparency;
   void Modal;
   void Name;
   void ParentId;
   void Position;
+  void Scale;
   void Size;
+  void TextScaled;
   void TextTransparency;
+  void Thickness;
+  void Transparency;
 
   const forwarded = pickForwardedDomProps(rest);
   const computedStyle: React.CSSProperties = {
@@ -518,6 +677,13 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
   if (options.applyComputedLayout !== false) {
     applyComputedLayout(computedStyle, options.computed);
   }
+
+  computedStyle.boxSizing = computedStyle.boxSizing ?? "border-box";
+  computedStyle.flexShrink = computedStyle.flexShrink ?? 0;
+  computedStyle.margin = computedStyle.margin ?? 0;
+  computedStyle.minHeight = computedStyle.minHeight ?? 0;
+  computedStyle.minWidth = computedStyle.minWidth ?? 0;
+  computedStyle.padding = computedStyle.padding ?? 0;
 
   if (Visible === false) {
     computedStyle.display = "none";
@@ -537,6 +703,17 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
     computedStyle.color = toCssColor(TextColor3);
   }
 
+  const fontStyle = mapRobloxFont(Font);
+  if (fontStyle.fontFamily) {
+    computedStyle.fontFamily = fontStyle.fontFamily;
+  }
+  if (fontStyle.fontStyle) {
+    computedStyle.fontStyle = fontStyle.fontStyle;
+  }
+  if (fontStyle.fontWeight) {
+    computedStyle.fontWeight = fontStyle.fontWeight;
+  }
+
   if (TextSize !== undefined) {
     computedStyle.fontSize = `${TextSize}px`;
     computedStyle.lineHeight = 1.2;
@@ -552,13 +729,25 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
 
   if (TextWrapped) {
     computedStyle.whiteSpace = "pre-wrap";
+    computedStyle.overflowWrap = "break-word";
+  } else if (options.host === "textbutton" || options.host === "textlabel" || options.host === "textbox") {
+    computedStyle.whiteSpace = "pre";
   }
 
-  if (options.host === "textlabel" || options.host === "textbox") {
+  if (options.host === "textbutton" || options.host === "textlabel") {
     computedStyle.display = computedStyle.display === "none" ? "none" : "flex";
     computedStyle.flexDirection = "column";
     computedStyle.justifyContent = toJustifyContent(TextYAlignment);
     computedStyle.textAlign = toTextAlign(TextXAlignment);
+  }
+
+  if (options.host === "textbox") {
+    computedStyle.textAlign = toTextAlign(TextXAlignment);
+  }
+
+  if (options.host === "textbutton" || options.host === "textbox") {
+    computedStyle.appearance = computedStyle.appearance ?? "none";
+    computedStyle.backgroundClip = computedStyle.backgroundClip ?? "padding-box";
   }
 
   if (options.host === "imagelabel") {
@@ -612,49 +801,101 @@ export function resolvePreviewDomProps(props: PreviewDomProps, options: ResolveO
       tabIndex: Selectable === false ? -1 : (forwarded.tabIndex as number | undefined),
     },
     image: Image,
-    text: Text,
+    text: coerceTextValue(Text),
   };
 }
 
+function useMergedRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
+  return React.useCallback(
+    (value: T | null) => {
+      for (const ref of refs) {
+        if (!ref) {
+          continue;
+        }
+
+        if (typeof ref === "function") {
+          ref(value);
+          continue;
+        }
+
+        (ref as React.MutableRefObject<T | null>).current = value;
+      }
+    },
+    [refs],
+  );
+}
+
+function prepareResolvedHost(
+  props: PreviewDomProps,
+  resolved: ReturnType<typeof resolvePreviewDomProps>,
+  computed: ComputedRect | null,
+) {
+  const { children, state } = extractHoistedChildren(resolved.children, computed);
+  const domStyle = {
+    ...(resolved.domProps.style as React.CSSProperties | undefined),
+  };
+
+  applyHoistedModifierStyles(domStyle, state, serializeVector2(props.AnchorPoint));
+
+  return {
+    ...resolved,
+    children,
+    domProps: {
+      ...resolved.domProps,
+      style: domStyle,
+    },
+  };
+}
+
+function renderHostText(text: string | undefined) {
+  if (!text) {
+    return undefined;
+  }
+
+  return (
+    <span
+      className="preview-host-text"
+      style={{
+        display: "block",
+        width: "100%",
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
 function createDecoratorHost(displayName: string, host: HostName) {
-  const Component = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
-    const nodeId = useGeneratedPreviewNodeId();
-    const resolved = resolvePreviewDomProps(props, {
-      applyComputedLayout: false,
-      computed: null,
-      host,
-      nodeId,
-    });
-
-    const style = {
-      ...(resolved.domProps.style as React.CSSProperties),
-      display: "none",
-    };
-
-    return (
-      <span {...resolved.domProps} aria-hidden="true" ref={forwardedRef as React.Ref<HTMLSpanElement>} style={style} />
-    );
-  });
+  const Component = React.forwardRef<HTMLElement, PreviewDomProps>(() => null);
 
   Component.displayName = displayName;
+  if (host === "uicorner" || host === "uiscale" || host === "uistroke") {
+    (Component as typeof Component & { [PREVIEW_DECORATOR_HOST_MARKER]?: HostModifierName })[
+      PREVIEW_DECORATOR_HOST_MARKER
+    ] = host;
+  }
   return Component;
 }
 
 export const Frame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, diagnostics, nodeId } = useHostLayout("frame", props);
-  const resolved = resolvePreviewDomProps(props, {
+  const prepared = prepareResolvedHost(
+    props,
+    resolvePreviewDomProps(props, {
+      computed,
+      host: "frame",
+      nodeId,
+    }),
     computed,
-    host: "frame",
-    nodeId,
-  });
+  );
 
   return (
     <div
-      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
       ref={forwardedRef as React.Ref<HTMLDivElement>}
     >
-      {resolved.text ? <span className="preview-host-text">{resolved.text}</span> : undefined}
-      {withNodeParent(nodeId, computed, resolved.children)}
+      {renderHostText(prepared.text)}
+      {withNodeParent(nodeId, computed, prepared.children)}
     </div>
   );
 });
@@ -662,21 +903,47 @@ Frame.displayName = "PreviewFrame";
 
 export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, diagnostics, nodeId } = useHostLayout("textbutton", props);
-  const resolved = resolvePreviewDomProps(props, {
+  const innerRef = React.useRef<HTMLButtonElement | null>(null);
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLButtonElement>, innerRef);
+  const prepared = prepareResolvedHost(
+    props,
+    resolvePreviewDomProps(props, {
+      computed,
+      host: "textbutton",
+      nodeId,
+    }),
     computed,
-    host: "textbutton",
-    nodeId,
+  );
+  const textScaleStyle = useTextScaleStyle({
+    elementRef: innerRef,
+    enabled: props.TextScaled === true,
+    fontFamily: prepared.domProps.style?.fontFamily as string | undefined,
+    fontStyle: prepared.domProps.style?.fontStyle as React.CSSProperties["fontStyle"] | undefined,
+    fontWeight: prepared.domProps.style?.fontWeight as React.CSSProperties["fontWeight"] | undefined,
+    lineHeight: prepared.domProps.style?.lineHeight,
+    text: prepared.text,
+    wrapped: props.TextWrapped === true,
   });
+  const domProps = React.useMemo(
+    () => ({
+      ...prepared.domProps,
+      style: {
+        ...(prepared.domProps.style as React.CSSProperties | undefined),
+        ...(textScaleStyle ?? {}),
+      },
+    }),
+    [prepared.domProps, textScaleStyle],
+  );
 
   return (
     <button
-      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
-      disabled={resolved.disabled}
-      ref={forwardedRef as React.Ref<HTMLButtonElement>}
+      {...withLayoutDiagnostics(domProps, computed, diagnostics)}
+      disabled={prepared.disabled}
+      ref={mergedRef}
       type="button"
     >
-      {resolved.text ? <span className="preview-host-text">{resolved.text}</span> : undefined}
-      {withNodeParent(nodeId, computed, resolved.children)}
+      {renderHostText(prepared.text)}
+      {withNodeParent(nodeId, computed, prepared.children)}
     </button>
   );
 });
@@ -684,18 +951,22 @@ TextButton.displayName = "PreviewTextButton";
 
 export const ScreenGui = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, diagnostics, nodeId } = useHostLayout("screengui", props);
-  const resolved = resolvePreviewDomProps(props, {
+  const prepared = prepareResolvedHost(
+    props,
+    resolvePreviewDomProps(props, {
+      computed,
+      host: "screengui",
+      nodeId,
+    }),
     computed,
-    host: "screengui",
-    nodeId,
-  });
+  );
 
   return (
     <div
-      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
       ref={forwardedRef as React.Ref<HTMLDivElement>}
     >
-      {withNodeParent(nodeId, computed, resolved.children)}
+      {withNodeParent(nodeId, computed, prepared.children)}
     </div>
   );
 });
@@ -703,19 +974,42 @@ ScreenGui.displayName = "PreviewScreenGui";
 
 export const TextLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, diagnostics, nodeId } = useHostLayout("textlabel", props);
-  const resolved = resolvePreviewDomProps(props, {
+  const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLDivElement>, innerRef);
+  const prepared = prepareResolvedHost(
+    props,
+    resolvePreviewDomProps(props, {
+      computed,
+      host: "textlabel",
+      nodeId,
+    }),
     computed,
-    host: "textlabel",
-    nodeId,
+  );
+  const textScaleStyle = useTextScaleStyle({
+    elementRef: innerRef,
+    enabled: props.TextScaled === true,
+    fontFamily: prepared.domProps.style?.fontFamily as string | undefined,
+    fontStyle: prepared.domProps.style?.fontStyle as React.CSSProperties["fontStyle"] | undefined,
+    fontWeight: prepared.domProps.style?.fontWeight as React.CSSProperties["fontWeight"] | undefined,
+    lineHeight: prepared.domProps.style?.lineHeight,
+    text: prepared.text,
+    wrapped: props.TextWrapped === true,
   });
+  const domProps = React.useMemo(
+    () => ({
+      ...prepared.domProps,
+      style: {
+        ...(prepared.domProps.style as React.CSSProperties | undefined),
+        ...(textScaleStyle ?? {}),
+      },
+    }),
+    [prepared.domProps, textScaleStyle],
+  );
 
   return (
-    <div
-      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
-      ref={forwardedRef as React.Ref<HTMLDivElement>}
-    >
-      {resolved.text}
-      {withNodeParent(nodeId, computed, resolved.children)}
+    <div {...withLayoutDiagnostics(domProps, computed, diagnostics)} ref={mergedRef}>
+      {renderHostText(prepared.text)}
+      {withNodeParent(nodeId, computed, prepared.children)}
     </div>
   );
 });
@@ -723,18 +1017,44 @@ TextLabel.displayName = "PreviewTextLabel";
 
 export const TextBox = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, diagnostics, nodeId } = useHostLayout("textbox", props);
-  const resolved = resolvePreviewDomProps(props, {
+  const innerRef = React.useRef<HTMLInputElement | null>(null);
+  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLInputElement>, innerRef);
+  const prepared = prepareResolvedHost(
+    props,
+    resolvePreviewDomProps(props, {
+      computed,
+      host: "textbox",
+      nodeId,
+    }),
     computed,
-    host: "textbox",
-    nodeId,
+  );
+  const textScaleStyle = useTextScaleStyle({
+    elementRef: innerRef,
+    enabled: props.TextScaled === true,
+    fontFamily: prepared.domProps.style?.fontFamily as string | undefined,
+    fontStyle: prepared.domProps.style?.fontStyle as React.CSSProperties["fontStyle"] | undefined,
+    fontWeight: prepared.domProps.style?.fontWeight as React.CSSProperties["fontWeight"] | undefined,
+    lineHeight: prepared.domProps.style?.lineHeight,
+    text: prepared.text,
+    wrapped: props.TextWrapped === true,
   });
+  const domProps = React.useMemo(
+    () => ({
+      ...prepared.domProps,
+      style: {
+        ...(prepared.domProps.style as React.CSSProperties | undefined),
+        ...(textScaleStyle ?? {}),
+      },
+    }),
+    [prepared.domProps, textScaleStyle],
+  );
 
   return (
     <input
-      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
-      defaultValue={resolved.text}
-      disabled={resolved.disabled}
-      ref={forwardedRef as React.Ref<HTMLInputElement>}
+      {...withLayoutDiagnostics(domProps, computed, diagnostics)}
+      defaultValue={prepared.text}
+      disabled={prepared.disabled}
+      ref={mergedRef}
       type="text"
     />
   );
@@ -743,18 +1063,22 @@ TextBox.displayName = "PreviewTextBox";
 
 export const ImageLabel = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, diagnostics, nodeId } = useHostLayout("imagelabel", props);
-  const resolved = resolvePreviewDomProps(props, {
+  const prepared = prepareResolvedHost(
+    props,
+    resolvePreviewDomProps(props, {
+      computed,
+      host: "imagelabel",
+      nodeId,
+    }),
     computed,
-    host: "imagelabel",
-    nodeId,
-  });
+  );
 
   return (
     <img
-      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
       alt=""
       ref={forwardedRef as React.Ref<HTMLImageElement>}
-      src={typeof resolved.image === "string" ? resolved.image : undefined}
+      src={typeof prepared.image === "string" ? prepared.image : undefined}
     />
   );
 });
@@ -762,18 +1086,22 @@ ImageLabel.displayName = "PreviewImageLabel";
 
 export const ScrollingFrame = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, diagnostics, nodeId } = useHostLayout("scrollingframe", props);
-  const resolved = resolvePreviewDomProps(props, {
+  const prepared = prepareResolvedHost(
+    props,
+    resolvePreviewDomProps(props, {
+      computed,
+      host: "scrollingframe",
+      nodeId,
+    }),
     computed,
-    host: "scrollingframe",
-    nodeId,
-  });
+  );
 
   return (
     <div
-      {...withLayoutDiagnostics(resolved.domProps, computed, diagnostics)}
+      {...withLayoutDiagnostics(prepared.domProps, computed, diagnostics)}
       ref={forwardedRef as React.Ref<HTMLDivElement>}
     >
-      {withNodeParent(nodeId, computed, resolved.children)}
+      {withNodeParent(nodeId, computed, prepared.children)}
     </div>
   );
 });

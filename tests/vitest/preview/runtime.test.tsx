@@ -1,24 +1,39 @@
 // @vitest-environment jsdom
 
 import {
+  Color3,
   Frame,
   LayoutProvider,
   ScreenGui,
   Slot,
   TextLabel,
   UDim2,
+  UICorner,
   UIListLayout,
   UIPadding,
   UIScale,
+  UIStroke,
 } from "@lattice-ui/preview/runtime";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+type LayoutRect = { height: number; width: number; x: number; y: number };
+type SerializedAxis = { offset: number; scale: number };
+type LayoutTree = {
+  anchor_point?: { x: number; y: number };
+  children: LayoutTree[];
+  id?: string;
+  node_type?: string;
+  position?: { x: SerializedAxis; y: SerializedAxis };
+  size?: { x: SerializedAxis; y: SerializedAxis };
+};
+type ComputeLayout = (tree: LayoutTree, viewportWidth: number, viewportHeight: number) => Record<string, LayoutRect>;
+
 const layoutEngineMocks = vi.hoisted(() => ({
-  computeLayout: vi.fn(() => ({})),
-  init: vi.fn(() => Promise.resolve(undefined)),
+  computeLayout: vi.fn<ComputeLayout>(() => ({})),
+  init: vi.fn<() => Promise<void>>(() => Promise.resolve(undefined)),
 }));
 
 vi.mock("@lattice-ui/layout-engine", () => ({
@@ -103,7 +118,6 @@ describe("preview runtime host mapping", () => {
     expect(frame.style.top).toBe("18px");
     expect(frame.style.width).toBe("120px");
     expect(frame.style.height).toBe("48px");
-    expect(frame.style.outline).toContain("red");
   });
 
   it("merges slot and child activated handlers", async () => {
@@ -124,21 +138,125 @@ describe("preview runtime host mapping", () => {
     expect(slotActivated).toHaveBeenCalledTimes(1);
   });
 
-  it("renders expanded host support without leaking preview-only props to the DOM", () => {
+  it("hoists decorator hosts into parent CSS without leaking preview-only props to the DOM", () => {
     render(
-      <Frame>
+      <Frame Size={UDim2.fromOffset(120, 40)}>
         <UIListLayout FillDirection="vertical" SortOrder="layout-order" />
         <UIPadding PaddingLeft="10px" />
+        <UICorner CornerRadius={{ Offset: 14, Scale: 0 }} />
         <UIScale Scale={1.25} />
+        <UIStroke Color={Color3.fromRGB(10, 20, 30)} Thickness={1} />
         <TextLabel Text="Hello preview" TextXAlignment="left" />
       </Frame>,
     );
 
+    const frame = document.querySelector('[data-preview-host="frame"]') as HTMLElement;
     expect(screen.getByText("Hello preview")).toBeTruthy();
-    expect(document.querySelector('[data-preview-host="uilistlayout"]')).toBeTruthy();
-    expect(document.querySelector('[data-preview-host="uiscale"]')).toBeTruthy();
+    expect(frame.style.borderRadius).toBe("14px");
+    expect(frame.style.transform).toContain("scale(1.25)");
+    expect(frame.style.boxShadow).toContain("inset 0 0 0 1px");
+    expect(document.querySelector('[data-preview-host="uicorner"]')).toBeNull();
+    expect(document.querySelector('[data-preview-host="uistroke"]')).toBeNull();
+    expect(document.querySelector('[data-preview-host="uiscale"]')).toBeNull();
     expect(document.querySelector("[filldirection]")).toBeNull();
     expect(document.querySelector("[scale]")).toBeNull();
+  });
+
+  it("maps Roblox fonts and scales text into the host bounds", async () => {
+    const originalResizeObserver = globalThis.ResizeObserver;
+
+    class MockResizeObserver {
+      public constructor(private readonly callback: ResizeObserverCallback) {}
+
+      public disconnect() {}
+
+      public observe(target: Element) {
+        this.callback(
+          [
+            {
+              contentRect: { height: 24, width: 90 } as DOMRectReadOnly,
+              target,
+            } as ResizeObserverEntry,
+          ],
+          this as unknown as ResizeObserver,
+        );
+      }
+
+      public unobserve() {}
+    }
+
+    globalThis.ResizeObserver = MockResizeObserver as typeof ResizeObserver;
+
+    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        const element = this;
+        if (element.dataset.previewHost === "textlabel") {
+          return {
+            bottom: 24,
+            height: 24,
+            left: 0,
+            right: 90,
+            toJSON: () => ({}),
+            top: 0,
+            width: 90,
+            x: 0,
+            y: 0,
+          } as DOMRect;
+        }
+
+        return {
+          bottom: 0,
+          height: 0,
+          left: 0,
+          right: 0,
+          toJSON: () => ({}),
+          top: 0,
+          width: 0,
+          x: 0,
+          y: 0,
+        } as DOMRect;
+      },
+    );
+
+    const scrollWidthSpy = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function getWidth(
+      this: HTMLElement,
+    ) {
+      const element = this;
+      const fontSize = Number.parseFloat(element.style.fontSize || "16");
+      const textLength = (element.textContent ?? " ").length;
+      return Math.ceil(textLength * fontSize * 0.58);
+    });
+    const scrollHeightSpy = vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(
+      function getHeight(this: HTMLElement) {
+        const element = this;
+        const fontSize = Number.parseFloat(element.style.fontSize || "16");
+        return Math.ceil(fontSize * 1.2);
+      },
+    );
+
+    try {
+      render(
+        <TextLabel
+          Font={{ Name: "GothamBold" }}
+          Size={UDim2.fromOffset(90, 24)}
+          Text="Scaled"
+          TextScaled={true}
+        />,
+      );
+
+      const label = document.querySelector('[data-preview-host="textlabel"]') as HTMLElement;
+      await waitFor(() => {
+        expect(Number.parseFloat(label.style.fontSize)).toBeGreaterThan(0);
+      });
+
+      expect(label.style.fontFamily).toContain("Gotham");
+      expect(label.style.fontWeight).toBe("700");
+    } finally {
+      globalThis.ResizeObserver = originalResizeObserver;
+      getBoundingClientRectSpy.mockRestore();
+      scrollWidthSpy.mockRestore();
+      scrollHeightSpy.mockRestore();
+    }
   });
 
   it("renders a viewport-filling layout provider container", () => {
@@ -168,7 +286,6 @@ describe("preview runtime host mapping", () => {
     expect(screenGui.style.top).toBe("0px");
     expect(screenGui.style.width).toBe("640px");
     expect(screenGui.style.height).toBe("480px");
-    expect(screenGui.style.outline).toContain("red");
   });
 
   it("derives nested scale fallback rects from parent rects when Wasm is unavailable", async () => {
@@ -197,9 +314,6 @@ describe("preview runtime host mapping", () => {
       expect(label.style.width).toBe("420px");
       expect(label.style.height).toBe("40px");
     });
-
-    expect(frame.style.outline).toContain("red");
-    expect(label.style.outline).toContain("red");
   });
   it("serializes frame defaults and textlabel layout props before calling Wasm", async () => {
     layoutEngineMocks.computeLayout.mockImplementation((tree, viewportWidth, viewportHeight) => {
@@ -285,19 +399,11 @@ describe("preview runtime host mapping", () => {
     await waitFor(() => {
       expect(layoutEngineMocks.computeLayout).toHaveBeenCalled();
       const calls = layoutEngineMocks.computeLayout.mock.calls;
-      const lastCall = calls[calls.length - 1] as [
-        {
-          children: Array<{
-            anchor_point: { x: number; y: number };
-            children: unknown[];
-            node_type: string;
-            position: { x: { offset: number; scale: number }; y: { offset: number; scale: number } };
-            size: { x: { offset: number; scale: number }; y: { offset: number; scale: number } };
-          }>;
-        },
-        number,
-        number,
-      ];
+      const lastCall = calls[calls.length - 1];
+      expect(lastCall).toBeDefined();
+      if (!lastCall) {
+        throw new Error("Expected computeLayout to have been called.");
+      }
       const [tree, viewportWidth, viewportHeight] = lastCall;
 
       expect(viewportWidth).toBe(640);

@@ -6,7 +6,9 @@ import { task } from "./task";
 export interface SetupRobloxEnvironmentTarget {
   Enum?: typeof Enum;
   RunService?: typeof RunService;
+  print?: (...args: unknown[]) => void;
   task?: typeof task;
+  tostring?: (value: unknown) => string;
 }
 
 /**
@@ -30,6 +32,8 @@ export function setupRobloxEnvironment(
 export type { PreviewEnumCategory, PreviewEnumItem, PreviewEnumRoot } from "./Enum";
 export { Enum } from "./Enum";
 export { installPreviewRuntimeGlobals } from "./installPreviewRuntimeGlobals";
+export type { PreviewPolyfillTarget } from "./polyfills";
+export { installPreviewRuntimePolyfills } from "./polyfills";
 export type { PreviewRunService, RBXScriptConnection, RBXScriptSignal } from "./RunService";
 export { RunService } from "./RunService";
 export type { TaskCallback, TaskLibrary } from "./task";

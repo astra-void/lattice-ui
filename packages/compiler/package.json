@@ -26,6 +26,6 @@
     "binaryName": "lattice_ui_compiler"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.0.0"
+    "@napi-rs/cli": "^3.5.1"
   }
 }

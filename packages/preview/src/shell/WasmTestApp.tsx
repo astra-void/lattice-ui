@@ -1,6 +1,7 @@
 import initLayoutEngine, { compute_layout } from "@lattice-ui/layout-engine";
 import layoutEngineWasmUrl from "@lattice-ui/layout-engine/layout_engine_bg.wasm?url";
 import React from "react";
+import { PreviewThemeControl } from "./theme";
 
 type UDim = {
   scale: number;
@@ -122,6 +123,36 @@ function normalizeLayoutResult(raw: unknown): Record<string, ComputedRect> {
   return normalized;
 }
 
+type WasmShellProps = {
+  children: React.ReactNode;
+  detail: string;
+  meta: string;
+  status: string;
+};
+
+function WasmShell(props: WasmShellProps) {
+  return (
+    <main className="wasm-shell">
+      <header className="wasm-header">
+        <div className="wasm-header-copy">
+          <p className="section-eyebrow">Wasm playground</p>
+          <h1>Layout Engine</h1>
+          <p>Smoke-test the layout Wasm bridge with a mock Roblox tree and browser-hosted viewport.</p>
+        </div>
+        <div className="header-controls">
+          <PreviewThemeControl />
+          <div className="header-meta">
+            <span>{props.status}</span>
+            <span>{props.detail}</span>
+            <span>{props.meta}</span>
+          </div>
+        </div>
+      </header>
+      {props.children}
+    </main>
+  );
+}
+
 export function WasmTestApp() {
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [layoutResult, setLayoutResult] = React.useState<Record<string, ComputedRect>>({});
@@ -129,6 +160,7 @@ export function WasmTestApp() {
 
   React.useEffect(() => {
     let cancelled = false;
+    let blobUrl: string | null = null;
 
     const onUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
@@ -150,7 +182,7 @@ export function WasmTestApp() {
           );
         }
 
-        const blobUrl = URL.createObjectURL(new Blob([bytes], { type: "application/wasm" }));
+        blobUrl = URL.createObjectURL(new Blob([bytes], { type: "application/wasm" }));
         await initLayoutEngine({ module_or_path: blobUrl });
 
         if (cancelled) {
@@ -184,74 +216,104 @@ export function WasmTestApp() {
 
     return () => {
       cancelled = true;
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
     };
   }, []);
 
+  const renderedNodes = Object.entries(layoutResult).filter(([id]) => id !== "Root");
+
   if (!isLoaded && !error) {
     return (
-      <div style={{ display: "grid", height: "100vh", placeItems: "center" }}>
-        <h2>Loading Wasm Engine...</h2>
-      </div>
+      <WasmShell
+        detail={`Viewport ${VIEWPORT_WIDTH} x ${VIEWPORT_HEIGHT}`}
+        meta="Awaiting Wasm fetch"
+        status="Initializing engine"
+      >
+        <section className="wasm-card">
+          <div className="preview-empty preview-empty-centered">
+            <p className="preview-empty-eyebrow">Loading</p>
+            <h2>Loading Wasm engine.</h2>
+            <p>Fetching and validating the layout binary before computing the mock tree.</p>
+          </div>
+        </section>
+      </WasmShell>
     );
   }
 
   if (error) {
     return (
-      <div
-        style={{
-          alignItems: "center",
-          background: "#ffebee",
-          color: "#b71c1c",
-          display: "grid",
-          gap: 12,
-          height: "100vh",
-          justifyItems: "center",
-          padding: 24,
-          textAlign: "center",
-        }}
+      <WasmShell
+        detail={`Viewport ${VIEWPORT_WIDTH} x ${VIEWPORT_HEIGHT}`}
+        meta="Initialization failed"
+        status="Wasm error"
       >
-        <h2>Wasm Initialization Error</h2>
-        <pre style={{ margin: 0, maxWidth: 900, whiteSpace: "pre-wrap" }}>{error}</pre>
-      </div>
+        <section className="wasm-card">
+          <div className="preview-empty preview-empty-centered">
+            <p className="preview-empty-eyebrow">Error</p>
+            <h2>Wasm initialization failed.</h2>
+            <p>The layout engine could not be booted inside the preview shell.</p>
+            <pre className="wasm-error-copy">{error}</pre>
+          </div>
+        </section>
+      </WasmShell>
     );
   }
 
   return (
-    <div style={{ alignItems: "center", display: "grid", height: "100vh", justifyItems: "center" }}>
-      <div
-        style={{
-          background: "#bdbdbd",
-          border: "1px solid #888",
-          height: VIEWPORT_HEIGHT,
-          overflow: "hidden",
-          position: "relative",
-          width: VIEWPORT_WIDTH,
-        }}
-      >
-        {Object.entries(layoutResult)
-          .filter(([id]) => id !== "Root")
-          .map(([id, rect]) => (
-            <div
-              key={id}
-              style={{
-                background: "#1976d2",
-                color: "#fff",
-                fontSize: 14,
-                fontWeight: 700,
-                height: `${rect.height}px`,
-                left: `${rect.x}px`,
-                lineHeight: `${rect.height}px`,
-                position: "absolute",
-                textAlign: "center",
-                top: `${rect.y}px`,
-                width: `${rect.width}px`,
-              }}
-            >
-              {id} ({Math.round(rect.x)}, {Math.round(rect.y)})
-            </div>
-          ))}
-      </div>
-    </div>
+    <WasmShell
+      detail={`Viewport ${VIEWPORT_WIDTH} x ${VIEWPORT_HEIGHT}`}
+      meta={`${renderedNodes.length} node(s) rendered`}
+      status="Engine ready"
+    >
+      <section className="wasm-card">
+        <div className="canvas-meta wasm-meta">
+          <div>
+            <p className="meta-label">Mode</p>
+            <p className="meta-value">Mock tree</p>
+          </div>
+          <div>
+            <p className="meta-label">Viewport</p>
+            <p className="meta-value">
+              {VIEWPORT_WIDTH} x {VIEWPORT_HEIGHT}
+            </p>
+          </div>
+          <div>
+            <p className="meta-label">Nodes</p>
+            <p className="meta-value">{renderedNodes.length}</p>
+          </div>
+          <div>
+            <p className="meta-label">Wasm</p>
+            <p className="meta-value">Validated</p>
+          </div>
+        </div>
+        <div className="wasm-stage">
+          <div
+            className="wasm-viewport"
+            style={{
+              height: VIEWPORT_HEIGHT,
+              width: VIEWPORT_WIDTH,
+            }}
+          >
+            {renderedNodes.map(([id, rect]) => (
+              <div
+                className="wasm-node"
+                key={id}
+                style={{
+                  height: rect.height,
+                  left: rect.x,
+                  top: rect.y,
+                  width: rect.width,
+                }}
+              >
+                {id} ({Math.round(rect.x)}, {Math.round(rect.y)})
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </WasmShell>
   );
 }

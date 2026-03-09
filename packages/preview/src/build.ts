@@ -5,6 +5,7 @@ import {
   type UnsupportedPatternCode,
   type UnsupportedPatternError,
 } from "@lattice-ui/compiler";
+import { createErrorWithCause } from "./errorWithCause";
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
 
@@ -69,7 +70,7 @@ function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<t
     return transformPreviewSource(sourceText, options);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse preview source ${options.filePath}: ${detail}`);
+    throw createErrorWithCause(`Failed to parse preview source ${options.filePath}: ${detail}`, error);
   }
 }
 

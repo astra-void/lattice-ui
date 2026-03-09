@@ -5,19 +5,25 @@ use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct UDim {
+    #[serde(alias = "Scale")]
     pub scale: f32,
+    #[serde(alias = "Offset")]
     pub offset: f32,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct UDim2 {
+    #[serde(alias = "X")]
     pub x: UDim,
+    #[serde(alias = "Y")]
     pub y: UDim,
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct Vector2 {
+    #[serde(alias = "X")]
     pub x: f32,
+    #[serde(alias = "Y")]
     pub y: f32,
 }
 
@@ -110,6 +116,7 @@ pub fn compute_layout(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     fn assert_close(actual: f32, expected: f32) {
         let delta = (actual - expected).abs();
@@ -207,5 +214,40 @@ mod tests {
         assert_close(child_rect.y, 90.0);
         assert_close(child_rect.width, 310.0);
         assert_close(child_rect.height, 280.0);
+    }
+
+    #[test]
+    fn parses_uppercase_udim_aliases_for_offset_layout() {
+        let root: RobloxNode = serde_json::from_value(json!({
+            "id": "root",
+            "node_type": "Frame",
+            "size": {
+                "X": { "Scale": 0.0, "Offset": 18.0 },
+                "Y": { "Scale": 0.0, "Offset": 12.0 }
+            },
+            "position": {
+                "X": { "Scale": 0.0, "Offset": 4.0 },
+                "Y": { "Scale": 0.0, "Offset": 6.0 }
+            },
+            "anchor_point": {
+                "X": 0.0,
+                "Y": 0.0
+            },
+            "children": []
+        }))
+        .expect("uppercase aliases should deserialize");
+
+        let viewport_rect = ComputedRect {
+            x: 0.0,
+            y: 0.0,
+            width: 100.0,
+            height: 100.0,
+        };
+
+        let rect = compute_node_rect(&root, &viewport_rect);
+        assert_close(rect.x, 4.0);
+        assert_close(rect.y, 6.0);
+        assert_close(rect.width, 18.0);
+        assert_close(rect.height, 12.0);
     }
 }

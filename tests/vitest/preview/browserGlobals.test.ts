@@ -48,8 +48,9 @@ describe("installPreviewBrowserGlobals", () => {
     };
 
     expect(enumRoot.GetEnums()).toEqual([]);
-    expect(enumRoot.KeyCode.Return).toMatchObject({ Name: "Return", Value: 0 });
-    expect(enumRoot.KeyCode.FromName("Escape")).toMatchObject({ Name: "Escape", Value: 0 });
+    expect(enumRoot.KeyCode.Return).toMatchObject({ Name: "Return" });
+    expect(enumRoot.KeyCode.Return.Value).toEqual(expect.any(Number));
+    expect(enumRoot.KeyCode.FromName("Escape")).toMatchObject({ Name: "Escape" });
     expect(enumRoot.TextXAlignment.Center.Name).toBe("Center");
   });
 
@@ -70,6 +71,8 @@ describe("installPreviewBrowserGlobals", () => {
     const result = Function(`
       "use strict";
       return {
+        stringSize: "Spell".size(),
+        tostringValue: tostring(42),
         tweenInfoType: typeof TweenInfo,
         taskDelayType: typeof task.delay,
         tostringType: typeof tostring,
@@ -78,6 +81,8 @@ describe("installPreviewBrowserGlobals", () => {
         workspaceValue: workspace,
       };
     `)() as {
+      stringSize: number;
+      tostringValue: string;
       tweenInfoType: string;
       taskDelayType: string;
       tostringType: string;
@@ -86,6 +91,8 @@ describe("installPreviewBrowserGlobals", () => {
       workspaceValue: unknown;
     };
 
+    expect(result.stringSize).toBe(5);
+    expect(result.tostringValue).toBe("42");
     expect(result.tweenInfoType).toBe("function");
     expect(result.taskDelayType).toBe("function");
     expect(result.tostringType).toBe("function");
