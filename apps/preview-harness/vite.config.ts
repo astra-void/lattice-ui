@@ -4,50 +4,35 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import topLevelAwait from "vite-plugin-top-level-await";
 import wasm from "vite-plugin-wasm";
+import { loadPreviewConfig } from "../../packages/preview/src/config";
 import { createAutoMockPropsPlugin } from "../../packages/preview/src/source/autoMockPlugin";
 import { createPreviewVitePlugin } from "../../packages/preview/src/source/plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, "../..");
-
-const previewTargets = [
-  {
-    name: "checkbox",
-    packageName: "@lattice-ui/checkbox",
-    packageRoot: path.resolve(workspaceRoot, "packages/checkbox"),
-    sourceRoot: path.resolve(workspaceRoot, "packages/checkbox/src"),
-  },
-  {
-    name: "switch",
-    packageName: "@lattice-ui/switch",
-    packageRoot: path.resolve(workspaceRoot, "packages/switch"),
-    sourceRoot: path.resolve(workspaceRoot, "packages/switch/src"),
-  },
-  {
-    name: "dialog",
-    packageName: "@lattice-ui/dialog",
-    packageRoot: path.resolve(workspaceRoot, "packages/dialog"),
-    sourceRoot: path.resolve(workspaceRoot, "packages/dialog/src"),
-  },
-] as const;
+const previewRuntimeEntry = path.resolve(workspaceRoot, "packages/preview-runtime/src/index.ts");
+const previewConfig = await loadPreviewConfig({ cwd: __dirname });
 
 export default defineConfig({
   resolve: {
     alias: [
       {
         find: "@lattice-ui/preview-runtime",
-        replacement: path.resolve(workspaceRoot, "packages/preview-runtime/src/index.ts"),
+        replacement: previewConfig.runtimeModule ?? previewRuntimeEntry,
       },
     ],
   },
   plugins: [
     createAutoMockPropsPlugin({
-      targets: [...previewTargets],
+      targets: previewConfig.targets,
     }),
     createPreviewVitePlugin({
-      projectName: "Lattice Preview",
-      targets: [...previewTargets],
+      projectName: previewConfig.projectName,
+      runtimeModule: previewConfig.runtimeModule ?? previewRuntimeEntry,
+      selectionMode: previewConfig.selectionMode,
+      targets: previewConfig.targets,
+      transformMode: previewConfig.transformMode,
     }),
     react(),
     wasm(),
@@ -59,8 +44,10 @@ export default defineConfig({
   },
   server: {
     fs: {
-      allow: [workspaceRoot, ...previewTargets.flatMap((target) => [target.packageRoot, target.sourceRoot])],
+      allow: previewConfig.server.fsAllow,
     },
-    port: 4174,
+    host: previewConfig.server.host,
+    open: previewConfig.server.open,
+    port: previewConfig.server.port,
   },
 });

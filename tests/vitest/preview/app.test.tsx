@@ -1,64 +1,158 @@
 // @vitest-environment jsdom
 
-import path from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { PreviewDiagnostic, PreviewEntryDescriptor, PreviewEntryPayload } from "@lattice-ui/preview-engine";
+import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "../../../packages/preview-engine/src/types";
 import { PreviewApp } from "../../../packages/preview/src/shell/PreviewApp";
 import { PreviewThemeProvider } from "../../../packages/preview/src/shell/theme";
-import { discoverPreviewProject } from "../../../packages/preview/src/source/discover";
 
 afterEach(() => {
   cleanup();
 });
 
-const fixtureRoot = path.resolve(__dirname, "fixtures/source-preview");
-const checkboxPackageRoot = path.resolve(__dirname, "../../../packages/checkbox");
-const checkboxEntry = discoverPreviewProject({
-  packageName: "@lattice-ui/checkbox",
-  packageRoot: checkboxPackageRoot,
-  sourceRoot: path.join(checkboxPackageRoot, "src"),
-}).entries.find((entry) => entry.relativePath === "Checkbox/CheckboxRoot.tsx");
-const dialogEntry = discoverPreviewProject({
-  packageName: "@fixtures/source-preview",
-  packageRoot: fixtureRoot,
-  sourceRoot: path.join(fixtureRoot, "src"),
-}).entries.find((entry) => entry.relativePath === "DialogRoot.tsx");
-
-function createLoadedEntry(module: Record<string, unknown>, diagnostics: Array<Record<string, unknown>> = []) {
-  return Promise.resolve({
-    meta: {
-      diagnostics,
+function createEntryDescriptor(
+  overrides: Partial<PreviewEntryDescriptor> & Pick<PreviewEntryDescriptor, "id" | "relativePath" | "title">,
+): PreviewEntryDescriptor {
+  return {
+    candidateExportNames: [],
+    capabilities: {
+      supportsHotUpdate: true,
+      supportsLayoutDebug: true,
+      supportsPropsEditing: true,
+      supportsRuntimeMock: true,
     },
+    diagnosticsSummary: {
+      byPhase: {
+        discovery: 0,
+        layout: 0,
+        runtime: 0,
+        transform: 0,
+      },
+      hasBlocking: false,
+      total: 0,
+    },
+    hasDefaultExport: false,
+    hasPreviewExport: false,
+    id: overrides.id,
+    packageName: overrides.packageName ?? "@fixtures/preview-shell",
+    relativePath: overrides.relativePath,
+    renderTarget:
+      overrides.renderTarget ??
+      ({
+        exportName: "default",
+        kind: "component",
+        usesPreviewProps: false,
+      } as const),
+    selection:
+      overrides.selection ??
+      ({
+        kind: "compat",
+        reason: "default",
+      } as const),
+    sourceFilePath: overrides.sourceFilePath ?? `/virtual/${overrides.id}`,
+    status: overrides.status ?? "ready",
+    targetName: overrides.targetName ?? "fixture",
+    title: overrides.title,
+    ...overrides,
+  };
+}
+
+function createDiagnostic(
+  overrides: Partial<PreviewDiagnostic> & Pick<PreviewDiagnostic, "code" | "phase" | "summary">,
+): PreviewDiagnostic {
+  return {
+    code: overrides.code,
+    entryId: overrides.entryId ?? "fixture:entry",
+    file: overrides.file ?? "/virtual/fixture.tsx",
+    phase: overrides.phase,
+    relativeFile: overrides.relativeFile ?? "src/fixture.tsx",
+    severity: overrides.severity ?? "warning",
+    summary: overrides.summary,
+    target: overrides.target ?? "fixture",
+    ...overrides,
+  };
+}
+
+function createPayload(entry: PreviewEntryDescriptor, diagnostics: PreviewDiagnostic[] = []): PreviewEntryPayload {
+  return {
+    descriptor: entry,
+    diagnostics,
+    graphTrace: {
+      boundaryHops: [],
+      imports: [],
+      selection: {
+        importChain: [],
+        symbolChain: [],
+      },
+    },
+    protocolVersion: PREVIEW_ENGINE_PROTOCOL_VERSION,
+    runtimeAdapter: {
+      kind: "react-dom",
+      moduleId: "virtual:lattice-preview-runtime",
+    },
+    transform: {
+      mode: "compatibility",
+      outcome:
+        entry.status === "blocked_by_transform"
+          ? {
+              fidelity: "degraded",
+              kind: "blocked",
+            }
+          : {
+              fidelity: "preserved",
+              kind: "ready",
+            },
+    },
+  };
+}
+
+function createLoadedEntry(
+  entry: PreviewEntryDescriptor,
+  module: Record<string, unknown>,
+  diagnostics: PreviewDiagnostic[] = [],
+) {
+  return Promise.resolve({
     module,
+    payload: createPayload(entry, diagnostics),
   });
 }
 
-function createReadyEntry(id: string, title: string) {
-  return {
-    autoRenderCandidate: "default" as const,
-    autoRenderReason: "default" as const,
-    candidateExportNames: [],
-    discoveryDiagnostics: [],
-    exportNames: ["default"],
-    hasDefaultExport: true,
-    hasPreviewExport: false,
-    id,
-    packageName: "@fixtures/preview-shell",
-    relativePath: id,
-    render: {
-      exportName: "default" as const,
-      mode: "auto" as const,
-      selectedBy: "default" as const,
-      usesPreviewProps: false,
-    },
-    sourceFilePath: `/virtual/${id}`,
-    status: "ready" as const,
-    targetName: "fixture",
-    title,
-  };
-}
+const checkboxEntry = createEntryDescriptor({
+  candidateExportNames: ["CheckboxRoot"],
+  id: "Checkbox/CheckboxRoot.tsx",
+  packageName: "@lattice-ui/checkbox",
+  relativePath: "Checkbox/CheckboxRoot.tsx",
+  renderTarget: {
+    exportName: "CheckboxRoot",
+    kind: "component",
+    usesPreviewProps: false,
+  },
+  selection: {
+    kind: "compat",
+    reason: "basename-match",
+  },
+  targetName: "checkbox",
+  title: "Checkbox Root",
+});
+
+const dialogEntry = createEntryDescriptor({
+  hasPreviewExport: true,
+  id: "DialogRoot.tsx",
+  packageName: "@fixtures/source-preview",
+  relativePath: "DialogRoot.tsx",
+  renderTarget: {
+    contract: "preview.render",
+    kind: "harness",
+  },
+  selection: {
+    contract: "preview.render",
+    kind: "explicit",
+  },
+  title: "Dialog Root",
+});
 
 function renderPreviewApp(app: React.ReactElement) {
   return render(<PreviewThemeProvider>{app}</PreviewThemeProvider>);
@@ -66,16 +160,12 @@ function renderPreviewApp(app: React.ReactElement) {
 
 describe("preview shell", () => {
   it("renders direct-export preview entries", async () => {
-    if (!checkboxEntry) {
-      throw new Error("Expected checkbox preview entry to be discoverable.");
-    }
-
     renderPreviewApp(
       <PreviewApp
         entries={[checkboxEntry]}
         initialSelectedId={checkboxEntry.id}
         loadEntry={() =>
-          createLoadedEntry({
+          createLoadedEntry(checkboxEntry, {
             CheckboxRoot: () => <button type="button">Unchecked</button>,
           })
         }
@@ -87,16 +177,12 @@ describe("preview shell", () => {
   });
 
   it("renders harness-based previews from the preview export contract", async () => {
-    if (!dialogEntry) {
-      throw new Error("Expected dialog preview entry to be discoverable.");
-    }
-
     renderPreviewApp(
       <PreviewApp
         entries={[dialogEntry]}
         initialSelectedId={dialogEntry.id}
         loadEntry={() =>
-          createLoadedEntry({
+          createLoadedEntry(dialogEntry, {
             preview: {
               render: () => (
                 <div>
@@ -116,51 +202,45 @@ describe("preview shell", () => {
   });
 
   it("shows compatibility-mode transform diagnostics without blocking the preview", async () => {
+    const brokenEntry = createEntryDescriptor({
+      candidateExportNames: ["Broken"],
+      id: "Broken.tsx",
+      relativePath: "Broken.tsx",
+      renderTarget: {
+        exportName: "Broken",
+        kind: "component",
+        usesPreviewProps: false,
+      },
+      selection: {
+        kind: "compat",
+        reason: "sole-export",
+      },
+      targetName: "broken",
+      title: "Broken",
+    });
+
     renderPreviewApp(
       <PreviewApp
-        entries={[
-          {
-            autoRenderCandidate: "Broken",
-            autoRenderReason: "sole-export",
-            candidateExportNames: ["Broken"],
-            discoveryDiagnostics: [],
-            exportNames: ["Broken"],
-            hasDefaultExport: false,
-            hasPreviewExport: false,
-            id: "Broken.tsx",
-            packageName: "@fixtures/broken",
-            relativePath: "Broken.tsx",
-            render: {
-              exportName: "Broken",
-              mode: "auto",
-              selectedBy: "sole-export",
-              usesPreviewProps: false,
-            },
-            sourceFilePath: "/virtual/Broken.tsx",
-            status: "ready",
-            targetName: "broken",
-            title: "Broken",
-          },
-        ]}
+        entries={[brokenEntry]}
         initialSelectedId="Broken.tsx"
         loadEntry={() =>
           createLoadedEntry(
+            brokenEntry,
             {
               Broken: () => <button type="button">Broken preview</button>,
             },
             [
-              {
+              createDiagnostic({
                 blocking: false,
                 code: "UNSUPPORTED_GLOBAL",
-                column: 3,
+                entryId: brokenEntry.id,
                 file: "/virtual/Broken.tsx",
-                line: 2,
-                message: "The Roblox `game` global is not supported by preview generation.",
-                severity: "warning",
+                phase: "transform",
                 relativeFile: "src/Broken.tsx",
+                severity: "warning",
                 summary: "The Roblox `game` global is not supported by preview generation.",
                 target: "roblox",
-              },
+              }),
             ],
           )
         }
@@ -173,52 +253,44 @@ describe("preview shell", () => {
   });
 
   it("shows blocked-by-transform guidance without rendering the canvas", async () => {
+    const blockedEntry = createEntryDescriptor({
+      candidateExportNames: ["Blocked"],
+      id: "Blocked.tsx",
+      relativePath: "Blocked.tsx",
+      renderTarget: {
+        exportName: "Blocked",
+        kind: "component",
+        usesPreviewProps: false,
+      },
+      selection: {
+        kind: "compat",
+        reason: "sole-export",
+      },
+      status: "blocked_by_transform",
+      title: "Blocked",
+    });
     const loadEntry = vi.fn(() =>
       createLoadedEntry(
+        blockedEntry,
         {},
         [
-          {
+          createDiagnostic({
             blocking: true,
             code: "UNSUPPORTED_HOST_ELEMENT",
-            column: 1,
+            entryId: blockedEntry.id,
             file: "/virtual/Blocked.tsx",
-            line: 1,
-            message: "Host element viewportframe is not supported by preview generation.",
+            phase: "transform",
             relativeFile: "src/Blocked.tsx",
             severity: "error",
             summary: "Host element viewportframe is not supported by preview generation.",
-            target: "fixture",
-          },
+          }),
         ],
       ),
     );
 
     renderPreviewApp(
       <PreviewApp
-        entries={[
-          {
-            autoRenderCandidate: "Blocked",
-            autoRenderReason: "sole-export",
-            candidateExportNames: ["Blocked"],
-            discoveryDiagnostics: [],
-            exportNames: ["Blocked"],
-            hasDefaultExport: false,
-            hasPreviewExport: false,
-            id: "Blocked.tsx",
-            packageName: "@fixtures/blocked",
-            relativePath: "Blocked.tsx",
-            render: {
-              exportName: "Blocked",
-              mode: "auto",
-              selectedBy: "sole-export",
-              usesPreviewProps: false,
-            },
-            sourceFilePath: "/virtual/Blocked.tsx",
-            status: "blocked_by_transform",
-            targetName: "fixture",
-            title: "Blocked",
-          },
-        ]}
+        entries={[blockedEntry]}
         initialSelectedId="Blocked.tsx"
         loadEntry={loadEntry}
         projectName="@lattice-ui/preview-smoke"
@@ -232,36 +304,41 @@ describe("preview shell", () => {
 
   it("shows harness guidance without loading modules for non-previewable entries", () => {
     const loadEntry = vi.fn(() => Promise.reject(new Error("should not load")));
+    const harnessEntry = createEntryDescriptor({
+      candidateExportNames: [],
+      hasPreviewExport: true,
+      id: "Checkbox/CheckboxIndicator.tsx",
+      packageName: "@lattice-ui/checkbox",
+      relativePath: "Checkbox/CheckboxIndicator.tsx",
+      renderTarget: {
+        kind: "none",
+        reason: "no-component-export",
+      },
+      selection: {
+        kind: "unresolved",
+        reason: "no-component-export",
+      },
+      status: "needs_harness",
+      targetName: "checkbox",
+      title: "Checkbox Indicator",
+    });
 
     renderPreviewApp(
       <PreviewApp
-        entries={[
-          {
-            candidateExportNames: [],
-            discoveryDiagnostics: [
-              {
-                code: "PREVIEW_RENDER_MISSING",
-                file: "/virtual/CheckboxIndicator.tsx",
-                message: "The file exports `preview`, but it does not define a usable `preview.entry` or callable `preview.render`.",
-                relativeFile: "src/Checkbox/CheckboxIndicator.tsx",
-              },
-            ],
-            exportNames: ["CheckboxIndicator"],
-            hasDefaultExport: false,
-            hasPreviewExport: true,
-            id: "Checkbox/CheckboxIndicator.tsx",
-            packageName: "@lattice-ui/checkbox",
-            relativePath: "Checkbox/CheckboxIndicator.tsx",
-            render: {
-              mode: "none",
-              reason: "no-component-export",
-            },
-            sourceFilePath: "/virtual/CheckboxIndicator.tsx",
-            status: "needs-harness",
-            targetName: "checkbox",
-            title: "Checkbox Indicator",
-          },
-        ]}
+        entries={[harnessEntry]}
+        entryPayloads={{
+          [harnessEntry.id]: createPayload(harnessEntry, [
+            createDiagnostic({
+              code: "PREVIEW_RENDER_MISSING",
+              entryId: harnessEntry.id,
+              file: "/virtual/CheckboxIndicator.tsx",
+              phase: "discovery",
+              relativeFile: "src/Checkbox/CheckboxIndicator.tsx",
+              summary:
+                "The file exports `preview`, but it does not define a usable `preview.entry` or callable `preview.render`.",
+            }),
+          ]),
+        }}
         initialSelectedId="Checkbox/CheckboxIndicator.tsx"
         loadEntry={loadEntry}
         projectName="@lattice-ui/preview-smoke"
@@ -275,37 +352,39 @@ describe("preview shell", () => {
 
   it("shows ambiguous guidance with concrete candidates", () => {
     const loadEntry = vi.fn(() => Promise.reject(new Error("should not load")));
+    const ambiguousEntry = createEntryDescriptor({
+      candidateExportNames: ["Alpha", "Beta"],
+      id: "Ambiguous.tsx",
+      packageName: "@fixtures/ambiguous",
+      relativePath: "Ambiguous.tsx",
+      renderTarget: {
+        candidates: ["Alpha", "Beta"],
+        kind: "none",
+        reason: "ambiguous-exports",
+      },
+      selection: {
+        kind: "unresolved",
+        reason: "ambiguous-exports",
+      },
+      status: "ambiguous",
+      title: "Ambiguous",
+    });
 
     renderPreviewApp(
       <PreviewApp
-        entries={[
-          {
-            candidateExportNames: ["Alpha", "Beta"],
-            discoveryDiagnostics: [
-              {
-                code: "AMBIGUOUS_COMPONENT_EXPORTS",
-                file: "/virtual/Ambiguous.tsx",
-                message: "Multiple component exports need explicit disambiguation: Alpha, Beta.",
-                relativeFile: "src/Ambiguous.tsx",
-              },
-            ],
-            exportNames: ["Alpha", "Beta"],
-            hasDefaultExport: false,
-            hasPreviewExport: false,
-            id: "Ambiguous.tsx",
-            packageName: "@fixtures/ambiguous",
-            relativePath: "Ambiguous.tsx",
-            render: {
-              mode: "none",
-              reason: "ambiguous-exports",
-              candidates: ["Alpha", "Beta"],
-            },
-            sourceFilePath: "/virtual/Ambiguous.tsx",
-            status: "needs-harness",
-            targetName: "fixture",
-            title: "Ambiguous",
-          },
-        ]}
+        entries={[ambiguousEntry]}
+        entryPayloads={{
+          [ambiguousEntry.id]: createPayload(ambiguousEntry, [
+            createDiagnostic({
+              code: "AMBIGUOUS_COMPONENT_EXPORTS",
+              entryId: ambiguousEntry.id,
+              file: "/virtual/Ambiguous.tsx",
+              phase: "discovery",
+              relativeFile: "src/Ambiguous.tsx",
+              summary: "Multiple component exports need explicit disambiguation: Alpha, Beta.",
+            }),
+          ]),
+        }}
         initialSelectedId="Ambiguous.tsx"
         loadEntry={loadEntry}
         projectName="@lattice-ui/preview-smoke"
@@ -320,36 +399,38 @@ describe("preview shell", () => {
 
   it("shows no-component guidance without falling back to ambiguous messaging", () => {
     const loadEntry = vi.fn(() => Promise.reject(new Error("should not load")));
+    const harnessOnlyEntry = createEntryDescriptor({
+      candidateExportNames: [],
+      id: "HarnessOnly.tsx",
+      packageName: "@fixtures/harness-only",
+      relativePath: "HarnessOnly.tsx",
+      renderTarget: {
+        kind: "none",
+        reason: "no-component-export",
+      },
+      selection: {
+        kind: "unresolved",
+        reason: "no-component-export",
+      },
+      status: "needs_harness",
+      title: "Harness Only",
+    });
 
     renderPreviewApp(
       <PreviewApp
-        entries={[
-          {
-            candidateExportNames: [],
-            discoveryDiagnostics: [
-              {
-                code: "NO_COMPONENT_EXPORTS",
-                file: "/virtual/HarnessOnly.tsx",
-                message: "No exported component candidates were found for auto-render.",
-                relativeFile: "src/HarnessOnly.tsx",
-              },
-            ],
-            exportNames: [],
-            hasDefaultExport: false,
-            hasPreviewExport: false,
-            id: "HarnessOnly.tsx",
-            packageName: "@fixtures/harness-only",
-            relativePath: "HarnessOnly.tsx",
-            render: {
-              mode: "none",
-              reason: "no-component-export",
-            },
-            sourceFilePath: "/virtual/HarnessOnly.tsx",
-            status: "needs-harness",
-            targetName: "fixture",
-            title: "Harness Only",
-          },
-        ]}
+        entries={[harnessOnlyEntry]}
+        entryPayloads={{
+          [harnessOnlyEntry.id]: createPayload(harnessOnlyEntry, [
+            createDiagnostic({
+              code: "NO_COMPONENT_EXPORTS",
+              entryId: harnessOnlyEntry.id,
+              file: "/virtual/HarnessOnly.tsx",
+              phase: "discovery",
+              relativeFile: "src/HarnessOnly.tsx",
+              summary: "No exported component candidates were found for preview entry selection.",
+            }),
+          ]),
+        }}
         initialSelectedId="HarnessOnly.tsx"
         loadEntry={loadEntry}
         projectName="@lattice-ui/preview-smoke"
@@ -357,7 +438,9 @@ describe("preview shell", () => {
     );
 
     expect(screen.getByText("This file is not directly previewable yet.")).toBeTruthy();
-    expect(screen.getByText("No renderable exported component was found. Add `preview.entry` or `preview.render` for composed demos.")).toBeTruthy();
+    expect(
+      screen.getByText("No renderable exported component was found. Add `preview.entry` or `preview.render` for composed demos."),
+    ).toBeTruthy();
     expect(loadEntry).not.toHaveBeenCalled();
   });
 
@@ -371,8 +454,16 @@ describe("preview shell", () => {
 
   it("clears load errors when the user selects another ready entry", async () => {
     const user = userEvent.setup();
-    const brokenEntry = createReadyEntry("Broken.tsx", "Broken");
-    const workingEntry = createReadyEntry("Working.tsx", "Working");
+    const brokenEntry = createEntryDescriptor({
+      id: "Broken.tsx",
+      relativePath: "Broken.tsx",
+      title: "Broken",
+    });
+    const workingEntry = createEntryDescriptor({
+      id: "Working.tsx",
+      relativePath: "Working.tsx",
+      title: "Working",
+    });
 
     renderPreviewApp(
       <PreviewApp
@@ -381,7 +472,7 @@ describe("preview shell", () => {
         loadEntry={(id) =>
           id === brokenEntry.id
             ? Promise.reject(new Error("Intentional load failure."))
-            : createLoadedEntry({
+            : createLoadedEntry(workingEntry, {
                 default: () => <button type="button">Healthy preview</button>,
               })
         }
@@ -396,22 +487,33 @@ describe("preview shell", () => {
 
   it("clears render errors when the user switches to another entry", async () => {
     const user = userEvent.setup();
-    const crashingEntry = createReadyEntry("Crash.tsx", "Crash");
-    const workingEntry = createReadyEntry("Okay.tsx", "Okay");
+    const crashingEntry = createEntryDescriptor({
+      id: "Crash.tsx",
+      relativePath: "Crash.tsx",
+      title: "Crash",
+    });
+    const workingEntry = createEntryDescriptor({
+      id: "Okay.tsx",
+      relativePath: "Okay.tsx",
+      title: "Okay",
+    });
 
     renderPreviewApp(
       <PreviewApp
         entries={[crashingEntry, workingEntry]}
         initialSelectedId={crashingEntry.id}
         loadEntry={(id) =>
-          createLoadedEntry({
-            default:
-              id === crashingEntry.id
-                ? () => {
-                    throw new Error("Intentional render failure.");
-                  }
-                : () => <button type="button">Recovered preview</button>,
-          })
+          createLoadedEntry(
+            id === crashingEntry.id ? crashingEntry : workingEntry,
+            {
+              default:
+                id === crashingEntry.id
+                  ? () => {
+                      throw new Error("Intentional render failure.");
+                    }
+                  : () => <button type="button">Recovered preview</button>,
+            },
+          )
         }
         projectName="@lattice-ui/preview-smoke"
       />,
@@ -423,35 +525,29 @@ describe("preview shell", () => {
   });
 
   it("renders the sole component export when a hot update leaves the registry export name stale", async () => {
+    const staleEntry = createEntryDescriptor({
+      candidateExportNames: ["LoadoutEditor"],
+      id: "LoadoutEditor.tsx",
+      packageName: "@fixtures/stale-registry",
+      relativePath: "LoadoutEditor.tsx",
+      renderTarget: {
+        exportName: "LoadoutEditor",
+        kind: "component",
+        usesPreviewProps: false,
+      },
+      selection: {
+        kind: "compat",
+        reason: "sole-export",
+      },
+      title: "Loadout Editor",
+    });
+
     renderPreviewApp(
       <PreviewApp
-        entries={[
-          {
-            autoRenderCandidate: "LoadoutEditor",
-            autoRenderReason: "sole-export",
-            candidateExportNames: ["LoadoutEditor"],
-            discoveryDiagnostics: [],
-            exportNames: ["LoadoutEditor"],
-            hasDefaultExport: false,
-            hasPreviewExport: false,
-            id: "LoadoutEditor.tsx",
-            packageName: "@fixtures/stale-registry",
-            relativePath: "LoadoutEditor.tsx",
-            render: {
-              exportName: "LoadoutEditor",
-              mode: "auto",
-              selectedBy: "sole-export",
-              usesPreviewProps: false,
-            },
-            sourceFilePath: "/virtual/LoadoutEditor.tsx",
-            status: "ready",
-            targetName: "fixture",
-            title: "Loadout Editor",
-          },
-        ]}
+        entries={[staleEntry]}
         initialSelectedId="LoadoutEditor.tsx"
         loadEntry={() =>
-          createLoadedEntry({
+          createLoadedEntry(staleEntry, {
             AnimatedSlot: () => <button type="button">Recovered stale export</button>,
           })
         }

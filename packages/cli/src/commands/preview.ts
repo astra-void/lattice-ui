@@ -5,22 +5,30 @@ import { usageError, validationError } from "../core/errors";
 
 type ParsedPreviewArgs =
   | {
-      mode: "dev";
-      packageName: string;
-      packageRoot: string;
-      sourceRoot: string;
-      transformMode: "compatibility";
+      configFile?: string;
+      headless: boolean;
+      mode: "run";
     }
   | {
       mode: "help";
     };
 
 type PreviewModule = {
-  startPreviewServer: (options: {
-    packageName: string;
-    packageRoot: string;
+  createPreviewHeadlessSession: (options?: {
+    configFile?: string;
+    cwd?: string;
+  }) => Promise<{
+    dispose(): void;
+    getSnapshot(): unknown;
+  }>;
+  startPreviewServer: (options?: {
+    configFile?: string;
+    cwd?: string;
+    packageName?: string;
+    packageRoot?: string;
     port?: number;
-    sourceRoot: string;
+    runtimeModule?: string;
+    sourceRoot?: string;
     transformMode?: "strict-fidelity" | "compatibility" | "mocked" | "design-time";
   }) => Promise<void>;
 };
@@ -36,14 +44,16 @@ const dynamicImport = new Function("specifier", "return import(specifier);") as 
 const PREVIEW_HELP_TEXT = `Lattice Preview
 
 Usage:
-  lattice preview
+  lattice preview [--config <path>] [--headless]
 
 Notes:
-  Run \`lattice preview\` from a package root to preview that package's real src/**/*.tsx files in a web shell.
-  Source-first preview is the only supported workflow.
+  Run \`lattice preview\` from a package root for zero-config preview, or add \`lattice.preview.config.ts\` to drive workspace preview.
+  \`--headless\` prints the resolved preview snapshot as JSON and exits.
 
 Examples:
   npx lattice preview
+  npx lattice preview --config ./lattice.preview.config.ts
+  npx lattice preview --headless
 `;
 
 function canImportTypeScriptSource() {
@@ -55,7 +65,9 @@ function isPreviewModule(value: unknown): value is PreviewModule {
     typeof value === "object" &&
     value !== null &&
     "startPreviewServer" in value &&
-    typeof value.startPreviewServer === "function"
+    typeof value.startPreviewServer === "function" &&
+    "createPreviewHeadlessSession" in value &&
+    typeof value.createPreviewHeadlessSession === "function"
   );
 }
 
@@ -90,8 +102,7 @@ async function loadPreviewModule(): Promise<PreviewModule> {
     return loadPreviewModuleFromImport(pathToFileURL(localDistPath).href);
   }
 
-  const previewModuleId = "@lattice-ui/preview";
-  return loadPreviewModuleFromImport(previewModuleId);
+  return loadPreviewModuleFromImport("@lattice-ui/preview");
 }
 
 function printPreviewHelp() {
@@ -128,11 +139,11 @@ function removedPreviewSubcommandError(command: "generate" | "init") {
   );
 }
 
-export function parsePreviewArgs(argv: string[], cwd = process.cwd()): ParsedPreviewArgs {
+export function parsePreviewArgs(argv: string[]): ParsedPreviewArgs {
   if (argv.length === 0) {
     return {
-      mode: "dev",
-      ...resolvePreviewDevContext(cwd),
+      headless: false,
+      mode: "run",
     };
   }
 
@@ -149,19 +160,70 @@ export function parsePreviewArgs(argv: string[], cwd = process.cwd()): ParsedPre
     throw removedPreviewSubcommandError(first);
   }
 
-  throw usageError(`Unknown preview command: ${first}`);
+  let configFile: string | undefined;
+  let headless = false;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+
+    if (token === "--headless") {
+      headless = true;
+      continue;
+    }
+
+    if (token === "--config") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw usageError("Missing value for --config.");
+      }
+      configFile = value;
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--config=")) {
+      configFile = token.slice("--config=".length);
+      continue;
+    }
+
+    if (token.startsWith("-")) {
+      throw usageError(`Unknown preview option: ${token}`);
+    }
+
+    throw usageError(`Unknown preview command: ${token}`);
+  }
+
+  return {
+    configFile,
+    headless,
+    mode: "run",
+  };
 }
 
 export async function runPreviewCommand(argv: string[], cwd = process.cwd()) {
-  const parsed = parsePreviewArgs(argv, cwd);
+  const parsed = parsePreviewArgs(argv);
 
   if (parsed.mode === "help") {
     printPreviewHelp();
     return;
   }
 
-  if (parsed.mode === "dev") {
-    const previewModule = await loadPreviewModule();
-    await previewModule.startPreviewServer(parsed);
+  const previewModule = await loadPreviewModule();
+  if (parsed.headless) {
+    const session = await previewModule.createPreviewHeadlessSession({
+      configFile: parsed.configFile ? path.resolve(cwd, parsed.configFile) : undefined,
+      cwd,
+    });
+    try {
+      process.stdout.write(`${JSON.stringify(session.getSnapshot(), null, 2)}\n`);
+    } finally {
+      session.dispose();
+    }
+    return;
   }
+
+  await previewModule.startPreviewServer({
+    configFile: parsed.configFile ? path.resolve(cwd, parsed.configFile) : undefined,
+    cwd,
+  });
 }

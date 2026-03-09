@@ -41,6 +41,49 @@ function createTempWorkspacePackage(files: Record<string, string>) {
   };
 }
 
+function createTempWorkspacePackages(packages: Record<string, Record<string, string>>) {
+  const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-build-workspace-"));
+  temporaryRoots.push(workspaceRoot);
+  fs.writeFileSync(path.join(workspaceRoot, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\n', "utf8");
+
+  const packageMap = new Map<
+    string,
+    {
+      packageRoot: string;
+      sourceRoot: string;
+    }
+  >();
+
+  for (const [packageName, files] of Object.entries(packages)) {
+    const packageSlug = packageName.split("/").pop() ?? packageName;
+    const packageRoot = path.join(workspaceRoot, "packages", packageSlug);
+    const sourceRoot = path.join(packageRoot, "src");
+    packageMap.set(packageName, { packageRoot, sourceRoot });
+
+    for (const [relativePath, content] of Object.entries(files)) {
+      const filePath = path.join(packageRoot, relativePath);
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, content, "utf8");
+    }
+
+    if (!fs.existsSync(path.join(packageRoot, "package.json"))) {
+      fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ name: packageName }, null, 2), "utf8");
+    }
+  }
+
+  return {
+    getPackage(packageName: string) {
+      const target = packageMap.get(packageName);
+      if (!target) {
+        throw new Error(`Unknown workspace package: ${packageName}`);
+      }
+
+      return target;
+    },
+    workspaceRoot,
+  };
+}
+
 function createBuildOptions(
   packageRoot: string,
   sourceRoot: string,
@@ -365,5 +408,101 @@ describe("buildPreviewArtifacts", () => {
     );
     expect(invalidated.reusedArtifacts.length).toBeGreaterThan(0);
     expect(invalidated.reusedArtifacts.length).toBeLessThan(invalidated.builtArtifacts.length);
+  });
+
+  it("rebuilds target-owned modules when a workspace package dependency changes", async () => {
+    const workspace = createTempWorkspacePackages({
+      "@fixtures/shared": {
+        "package.json": JSON.stringify({ name: "@fixtures/shared" }, null, 2),
+        "src/theme.ts": 'export const themeName = "base";\n',
+        "tsconfig.json": JSON.stringify(
+          {
+            compilerOptions: {
+              jsx: "preserve",
+              module: "ESNext",
+              moduleResolution: "Node",
+              target: "ESNext",
+            },
+            include: ["src/**/*.ts", "src/**/*.tsx"],
+          },
+          null,
+          2,
+        ),
+      },
+      "@fixtures/ui": {
+        "package.json": JSON.stringify({ name: "@fixtures/ui" }, null, 2),
+        "src/Entry.tsx": `
+          import { themeName } from "@shared/theme";
+
+          export function Entry() {
+            return <textlabel Text={themeName} />;
+          }
+        `,
+        "src/Static.tsx": `
+          export function Static() {
+            return <frame />;
+          }
+        `,
+        "tsconfig.json": JSON.stringify(
+          {
+            compilerOptions: {
+              baseUrl: "./src",
+              jsx: "preserve",
+              module: "ESNext",
+              moduleResolution: "Node",
+              paths: {
+                "@shared/*": ["../../shared/src/*"],
+              },
+              target: "ESNext",
+            },
+            include: ["src/**/*.ts", "src/**/*.tsx"],
+            references: [{ path: "../shared" }],
+          },
+          null,
+          2,
+        ),
+      },
+    });
+
+    const sharedTarget = workspace.getPackage("@fixtures/shared");
+    const uiTarget = workspace.getPackage("@fixtures/ui");
+    const outDir = path.join(workspace.workspaceRoot, "generated");
+
+    await buildPreviewArtifacts({
+      artifactKinds: ["module"],
+      outDir,
+      projectName: "Workspace Build",
+      targets: [
+        {
+          name: "ui",
+          packageName: "@fixtures/ui",
+          packageRoot: uiTarget.packageRoot,
+          sourceRoot: uiTarget.sourceRoot,
+        },
+      ],
+      workspaceRoot: workspace.workspaceRoot,
+    });
+
+    fs.writeFileSync(path.join(sharedTarget.sourceRoot, "theme.ts"), 'export const themeName = "updated";\n', "utf8");
+
+    const rebuilt = await buildPreviewArtifacts({
+      artifactKinds: ["module"],
+      outDir,
+      projectName: "Workspace Build",
+      targets: [
+        {
+          name: "ui",
+          packageName: "@fixtures/ui",
+          packageRoot: uiTarget.packageRoot,
+          sourceRoot: uiTarget.sourceRoot,
+        },
+      ],
+      workspaceRoot: workspace.workspaceRoot,
+    });
+
+    const artifactsById = new Map(rebuilt.builtArtifacts.map((artifact) => [artifact.id, artifact]));
+    expect(artifactsById.get("ui:Entry.tsx")?.reusedFromCache).toBe(false);
+    expect(artifactsById.get("ui:Static.tsx")?.reusedFromCache).toBe(true);
+    expect(rebuilt.builtArtifacts.some((artifact) => artifact.sourceFilePath.includes("/shared/"))).toBe(false);
   });
 });

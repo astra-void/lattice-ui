@@ -2,8 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import type { Plugin } from "vite";
+import type { PreviewSourceTarget } from "@lattice-ui/preview-engine";
 import { isFilePathUnderRoot, resolveRealFilePath, stripFileIdDecorations } from "./pathUtils";
-import type { PreviewComponentPropsMetadata, PreviewPropMetadata, PreviewSourceTarget } from "./types";
+import type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "@lattice-ui/preview-runtime";
 
 const SUPPORTED_COMPONENT_EXTENSIONS = new Set([".jsx", ".tsx"]);
 const MAX_SERIALIZED_OBJECT_PROPERTIES = 16;

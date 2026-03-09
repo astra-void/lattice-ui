@@ -96,7 +96,7 @@ function readWorkspaceEntries(previewPlugin: PreviewPlugin) {
   }
 
   const workspaceMatch = workspaceModuleCode.match(
-    /export const previewWorkspaceIndex = (\{[\s\S]*?\});\nexport const previewImporters =/,
+    /export const previewWorkspaceIndex = (\{[\s\S]*?\});\nexport const previewEntryPayloads =/,
   );
   if (!workspaceMatch) {
     throw new Error(`Unable to parse preview workspace module:\n${workspaceModuleCode}`);

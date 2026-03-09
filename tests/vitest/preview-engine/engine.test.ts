@@ -33,6 +33,49 @@ function createTempPreviewPackage(files: Record<string, string>) {
   };
 }
 
+function createTempPreviewWorkspace(packages: Record<string, Record<string, string>>) {
+  const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lattice-preview-workspace-engine-"));
+  temporaryRoots.push(workspaceRoot);
+  fs.writeFileSync(path.join(workspaceRoot, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\n', "utf8");
+
+  const packageMap = new Map<
+    string,
+    {
+      packageRoot: string;
+      sourceRoot: string;
+    }
+  >();
+
+  for (const [packageName, files] of Object.entries(packages)) {
+    const packageSlug = packageName.split("/").pop() ?? packageName;
+    const packageRoot = path.join(workspaceRoot, "packages", packageSlug);
+    const sourceRoot = path.join(packageRoot, "src");
+    packageMap.set(packageName, { packageRoot, sourceRoot });
+
+    for (const [relativePath, content] of Object.entries(files)) {
+      const filePath = path.join(packageRoot, relativePath);
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, content, "utf8");
+    }
+
+    if (!fs.existsSync(path.join(packageRoot, "package.json"))) {
+      fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ name: packageName }, null, 2), "utf8");
+    }
+  }
+
+  return {
+    getPackage(packageName: string) {
+      const target = packageMap.get(packageName);
+      if (!target) {
+        throw new Error(`Unknown workspace package: ${packageName}`);
+      }
+
+      return target;
+    },
+    workspaceRoot,
+  };
+}
+
 function createEngineForPackage(
   packageRoot: string,
   sourceRoot: string,
@@ -162,6 +205,243 @@ describe("createPreviewEngine", () => {
       status: "ready",
       title: "Explicit Card",
     });
+  });
+
+  it("follows tsconfig path aliases across workspace package boundaries", () => {
+    const workspace = createTempPreviewWorkspace({
+      "@fixtures/shared": {
+        "package.json": JSON.stringify({ name: "@fixtures/shared" }, null, 2),
+        "src/Card.tsx": `
+          export function SharedCard() {
+            return <frame />;
+          }
+        `,
+        "tsconfig.json": JSON.stringify(
+          {
+            compilerOptions: {
+              jsx: "preserve",
+              module: "ESNext",
+              moduleResolution: "Node",
+              target: "ESNext",
+            },
+            include: ["src/**/*.ts", "src/**/*.tsx"],
+          },
+          null,
+          2,
+        ),
+      },
+      "@fixtures/ui": {
+        "package.json": JSON.stringify({ name: "@fixtures/ui" }, null, 2),
+        "src/Entry.tsx": `
+          import { SharedCard } from "@shared/Card";
+
+          export { SharedCard as UiCard };
+
+          export const preview = {
+            entry: SharedCard,
+            title: "UI Card",
+          };
+        `,
+        "tsconfig.json": JSON.stringify(
+          {
+            compilerOptions: {
+              baseUrl: "./src",
+              jsx: "preserve",
+              module: "ESNext",
+              moduleResolution: "Node",
+              paths: {
+                "@shared/*": ["../../shared/src/*"],
+              },
+              target: "ESNext",
+            },
+            include: ["src/**/*.ts", "src/**/*.tsx"],
+            references: [{ path: "../shared" }],
+          },
+          null,
+          2,
+        ),
+      },
+    });
+
+    const sharedTarget = workspace.getPackage("@fixtures/shared");
+    const uiTarget = workspace.getPackage("@fixtures/ui");
+    const engine = createPreviewEngine({
+      projectName: "Workspace Preview",
+      selectionMode: "strict",
+      targets: [
+        {
+          name: "ui",
+          packageName: "@fixtures/ui",
+          packageRoot: uiTarget.packageRoot,
+          sourceRoot: uiTarget.sourceRoot,
+        },
+      ],
+      transformMode: "compatibility",
+    });
+
+    expect(engine.getWorkspaceIndex().entries).toEqual([
+      expect.objectContaining({
+        relativePath: "Entry.tsx",
+        renderTarget: expect.objectContaining({
+          exportName: "UiCard",
+          kind: "component",
+        }),
+        selection: expect.objectContaining({
+          contract: "preview.entry",
+          kind: "explicit",
+        }),
+        status: "ready",
+      }),
+    ]);
+
+    const payload = sanitizePaths(engine.getEntryPayload("ui:Entry.tsx"), workspace.workspaceRoot);
+    expect(payload.diagnostics.some((diagnostic) => diagnostic.code === "TRANSITIVE_ANALYSIS_LIMITED")).toBe(false);
+    expect(payload.graphTrace).toMatchObject({
+      boundaryHops: [
+        {
+          fromFile: "<pkg>/packages/ui/src/Entry.tsx",
+          fromPackageRoot: "<pkg>/packages/ui",
+          toFile: "<pkg>/packages/shared/src/Card.tsx",
+          toPackageRoot: "<pkg>/packages/shared",
+        },
+      ],
+      imports: [
+        expect.objectContaining({
+          importerProjectConfigPath: "<pkg>/packages/ui/tsconfig.json",
+          resolution: "resolved",
+          resolutionKind: "source-file",
+          resolvedFile: "<pkg>/packages/shared/src/Card.tsx",
+          resolvedProjectConfigPath: "<pkg>/packages/shared/tsconfig.json",
+          specifier: "@shared/Card",
+        }),
+      ],
+      selection: expect.objectContaining({
+        importChain: ["<pkg>/packages/ui/src/Entry.tsx", "<pkg>/packages/shared/src/Card.tsx"],
+        resolvedExportName: "UiCard",
+      }),
+      traversedProjects: expect.arrayContaining([
+        expect.objectContaining({ configPath: "<pkg>/packages/ui/tsconfig.json", packageRoot: "<pkg>/packages/ui" }),
+        expect.objectContaining({
+          configPath: "<pkg>/packages/shared/tsconfig.json",
+          packageRoot: "<pkg>/packages/shared",
+        }),
+      ]),
+    });
+    expect(sharedTarget.sourceRoot).toBe(path.join(workspace.workspaceRoot, "packages", "shared", "src"));
+  });
+
+  it("resolves workspace package declaration outputs back to source and invalidates dependents", () => {
+    const workspace = createTempPreviewWorkspace({
+      "@fixtures/shared": {
+        "package.json": JSON.stringify(
+          {
+            name: "@fixtures/shared",
+            types: "dist/index.d.ts",
+          },
+          null,
+          2,
+        ),
+        "dist/index.d.ts": `export { SharedCard } from "../src/index";\n`,
+        "src/index.tsx": `
+          export function SharedCard() {
+            return <frame />;
+          }
+        `,
+        "tsconfig.json": JSON.stringify(
+          {
+            compilerOptions: {
+              composite: true,
+              jsx: "preserve",
+              module: "ESNext",
+              moduleResolution: "Node",
+              outDir: "dist",
+              rootDir: "src",
+              target: "ESNext",
+            },
+            include: ["src/**/*.ts", "src/**/*.tsx"],
+          },
+          null,
+          2,
+        ),
+      },
+      "@fixtures/ui": {
+        "package.json": JSON.stringify({ name: "@fixtures/ui" }, null, 2),
+        "src/Entry.tsx": `
+          import { SharedCard } from "@fixtures/shared";
+
+          export { SharedCard as DeclaredCard };
+
+          export const preview = {
+            entry: SharedCard,
+          };
+        `,
+        "tsconfig.json": JSON.stringify(
+          {
+            compilerOptions: {
+              jsx: "preserve",
+              module: "ESNext",
+              moduleResolution: "Node",
+              target: "ESNext",
+            },
+            include: ["src/**/*.ts", "src/**/*.tsx"],
+            references: [{ path: "../shared" }],
+          },
+          null,
+          2,
+        ),
+      },
+    });
+
+    const sharedTarget = workspace.getPackage("@fixtures/shared");
+    const uiTarget = workspace.getPackage("@fixtures/ui");
+    const engine = createPreviewEngine({
+      projectName: "Workspace Preview",
+      selectionMode: "strict",
+      targets: [
+        {
+          name: "ui",
+          packageName: "@fixtures/ui",
+          packageRoot: uiTarget.packageRoot,
+          sourceRoot: uiTarget.sourceRoot,
+        },
+      ],
+      transformMode: "compatibility",
+    });
+
+    expect(engine.getWorkspaceIndex().entries).toEqual([
+      expect.objectContaining({
+        relativePath: "Entry.tsx",
+        renderTarget: expect.objectContaining({
+          exportName: "DeclaredCard",
+          kind: "component",
+        }),
+      }),
+    ]);
+
+    const payload = sanitizePaths(engine.getEntryPayload("ui:Entry.tsx"), workspace.workspaceRoot);
+    expect(payload.graphTrace.imports).toEqual([
+      expect.objectContaining({
+        resolution: "resolved",
+        resolutionKind: "workspace-package",
+        resolvedFile: "<pkg>/packages/shared/src/index.tsx",
+        specifier: "@fixtures/shared",
+      }),
+    ]);
+
+    fs.writeFileSync(
+      path.join(sharedTarget.sourceRoot, "index.tsx"),
+      `
+        export function SharedCard() {
+          return <textlabel Text="updated" />;
+        }
+      `,
+      "utf8",
+    );
+
+    const update = engine.invalidateFiles([path.join(sharedTarget.sourceRoot, "index.tsx")]);
+    expect(update.changedEntryIds).toEqual(["ui:Entry.tsx"]);
+    expect(update.removedEntryIds).toEqual([]);
+    expect(update.requiresFullReload).toBe(false);
   });
 
   it("emits stable workspace and payload protocol snapshots", () => {

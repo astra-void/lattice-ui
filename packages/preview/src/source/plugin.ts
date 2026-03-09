@@ -27,6 +27,7 @@ const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/
 
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
+  runtimeModule?: string;
   selectionMode?: PreviewSelectionMode;
   targets: PreviewSourceTarget[];
   transformMode?: PreviewExecutionMode;
@@ -82,6 +83,7 @@ function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<t
 
 function getWorkspaceModuleCode(previewEngine: ReturnType<typeof createPreviewEngine>) {
   const workspaceIndex = previewEngine.getWorkspaceIndex();
+  const entryPayloads = Object.fromEntries(workspaceIndex.entries.map((entry) => [entry.id, previewEngine.getEntryPayload(entry.id)]));
   const importers = workspaceIndex.entries
     .map(
       (entry) =>
@@ -93,6 +95,7 @@ function getWorkspaceModuleCode(previewEngine: ReturnType<typeof createPreviewEn
 
   return `export const previewProtocolVersion = ${JSON.stringify(PREVIEW_ENGINE_PROTOCOL_VERSION)};
 export const previewWorkspaceIndex = ${JSON.stringify(workspaceIndex, null, 2)};
+export const previewEntryPayloads = ${JSON.stringify(entryPayloads, null, 2)};
 export const previewImporters = {
 ${importers}
 };
@@ -138,7 +141,7 @@ function isWatchedCandidate(targets: PreviewSourceTarget[], previewEngine: Retur
 }
 
 export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions): PreviewPluginOption {
-  const runtimeEntryPath = resolveRuntimeEntryPath();
+  const runtimeEntryPath = options.runtimeModule ?? resolveRuntimeEntryPath();
   const mockEntryPath = resolveMockEntryPath();
   const previewEngine = createPreviewEngine({
     projectName: options.projectName,

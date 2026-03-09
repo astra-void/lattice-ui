@@ -14,14 +14,14 @@ import {
   type PreviewRuntimeIssue,
   type ViewportSize,
 } from "@lattice-ui/preview-runtime";
-import React from "react";
 import type {
   PreviewDefinition,
-  PreviewDiscoveryDiagnostic,
-  PreviewEntryMeta,
+  PreviewDiagnostic,
+  PreviewEntryDescriptor,
+  PreviewEntryPayload,
   PreviewEntryStatus,
-  PreviewRegistryItem,
-} from "../source/types";
+} from "@lattice-ui/preview-engine";
+import React from "react";
 import { PreviewThemeControl } from "./theme";
 
 type PreviewModule = Record<string, unknown> & {
@@ -30,14 +30,15 @@ type PreviewModule = Record<string, unknown> & {
 };
 
 type PreviewAppProps = {
-  entries: PreviewRegistryItem[];
+  entries: PreviewEntryDescriptor[];
+  entryPayloads?: Record<string, PreviewEntryPayload>;
   initialSelectedId?: string;
   loadEntry: (id: string) => Promise<LoadedPreviewEntry>;
   projectName: string;
 };
 
 type PreviewCanvasProps = {
-  entry: PreviewRegistryItem;
+  entry: PreviewEntryDescriptor;
   isDebugMode: boolean;
   module: PreviewModule;
   onRenderError: (error: unknown | null) => void;
@@ -53,8 +54,8 @@ type PreviewErrorBoundaryState = {
 };
 
 type LoadedPreviewEntry = {
-  meta: PreviewEntryMeta;
   module: PreviewModule;
+  payload?: PreviewEntryPayload;
 };
 
 class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, PreviewErrorBoundaryState> {
@@ -90,7 +91,7 @@ class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, Pr
   }
 }
 
-function getInitialSelectedId(entries: PreviewRegistryItem[], explicitSelectedId?: string) {
+function getInitialSelectedId(entries: PreviewEntryDescriptor[], explicitSelectedId?: string) {
   if (explicitSelectedId && entries.some((entry) => entry.id === explicitSelectedId)) {
     return explicitSelectedId;
   }
@@ -256,21 +257,87 @@ function describeModuleExports(module: PreviewModule) {
   return segments.join("; ");
 }
 
-function getRenderModeLabel(entry: PreviewRegistryItem) {
-  if (entry.render.mode === "preview-render") {
+function createDiscoveryDiagnostics(entry: PreviewEntryDescriptor): PreviewDiagnostic[] {
+  if (entry.selection.kind === "compat") {
+    return [
+      {
+        code: "LEGACY_AUTO_RENDER_FALLBACK",
+        entryId: entry.id,
+        file: entry.sourceFilePath,
+        phase: "discovery",
+        relativeFile: entry.relativePath,
+        severity: "warning",
+        summary:
+          `This entry still relies on legacy export inference (${entry.selection.reason}). ` +
+          "Add `preview.entry` or `preview.render` to make preview selection explicit.",
+        target: entry.targetName,
+      },
+    ];
+  }
+
+  if (entry.renderTarget.kind !== "none") {
+    return [];
+  }
+
+  switch (entry.renderTarget.reason) {
+    case "ambiguous-exports":
+      return [
+        {
+          code: "AMBIGUOUS_COMPONENT_EXPORTS",
+          entryId: entry.id,
+          file: entry.sourceFilePath,
+          phase: "discovery",
+          relativeFile: entry.relativePath,
+          severity: "warning",
+          summary: `Multiple component exports need explicit disambiguation: ${entry.candidateExportNames.join(", ")}.`,
+          target: entry.targetName,
+        },
+      ];
+    case "missing-explicit-contract":
+      return [
+        {
+          code: "MISSING_EXPLICIT_PREVIEW_CONTRACT",
+          entryId: entry.id,
+          file: entry.sourceFilePath,
+          phase: "discovery",
+          relativeFile: entry.relativePath,
+          severity: "warning",
+          summary: "Add `preview.entry` or `preview.render` to make the preview target explicit.",
+          target: entry.targetName,
+        },
+      ];
+    case "no-component-export":
+    default:
+      return [
+        {
+          code: "NO_COMPONENT_EXPORTS",
+          entryId: entry.id,
+          file: entry.sourceFilePath,
+          phase: "discovery",
+          relativeFile: entry.relativePath,
+          severity: "warning",
+          summary: "No exported component candidates were found for preview entry selection.",
+          target: entry.targetName,
+        },
+      ];
+  }
+}
+
+function getRenderModeLabel(entry: PreviewEntryDescriptor) {
+  if (entry.renderTarget.kind === "harness") {
     return "preview.render";
   }
 
-  if (entry.render.mode === "preview-entry") {
+  if (entry.selection.kind === "explicit" && entry.selection.contract === "preview.entry") {
     return "preview.entry";
   }
 
-  if (entry.render.mode === "auto" && entry.render.exportName === "default") {
+  if (entry.renderTarget.kind === "component" && entry.renderTarget.exportName === "default") {
     return "default export";
   }
 
-  if (entry.render.mode === "auto") {
-    return entry.render.exportName;
+  if (entry.renderTarget.kind === "component") {
+    return entry.renderTarget.exportName;
   }
 
   return "none";
@@ -288,7 +355,7 @@ function getStatusLabel(status: PreviewEntryStatus) {
       return "blocked by runtime";
     case "blocked_by_transform":
       return "blocked by transform";
-    case "needs-harness":
+    case "needs_harness":
       return "needs harness";
   }
 }
@@ -297,8 +364,8 @@ function formatCandidateExports(candidates: string[]) {
   return candidates.join(", ");
 }
 
-function getPrimaryDiscoveryDiagnostic(entry: PreviewRegistryItem) {
-  const priority: Record<PreviewDiscoveryDiagnostic["code"], number> = {
+function getPrimaryDiscoveryDiagnostic(discoveryDiagnostics: PreviewDiagnostic[]) {
+  const priority: Record<string, number> = {
     AMBIGUOUS_COMPONENT_EXPORTS: 0,
     PREVIEW_RENDER_MISSING: 1,
     MISSING_EXPLICIT_PREVIEW_CONTRACT: 2,
@@ -306,45 +373,44 @@ function getPrimaryDiscoveryDiagnostic(entry: PreviewRegistryItem) {
     TRANSITIVE_ANALYSIS_LIMITED: 4,
     LEGACY_AUTO_RENDER_FALLBACK: 5,
   };
-  const discoveryDiagnostics = entry.discoveryDiagnostics ?? [];
 
   return [...discoveryDiagnostics].sort((left, right) => {
-    const priorityDelta = priority[left.code] - priority[right.code];
+    const priorityDelta = (priority[left.code] ?? Number.MAX_SAFE_INTEGER) - (priority[right.code] ?? Number.MAX_SAFE_INTEGER);
     if (priorityDelta !== 0) {
       return priorityDelta;
     }
 
-    return left.message.localeCompare(right.message);
+    return left.summary.localeCompare(right.summary);
   })[0];
 }
 
-function getDiscoveryDiagnostic(entry: PreviewRegistryItem, code: PreviewDiscoveryDiagnostic["code"]) {
-  return entry.discoveryDiagnostics.find((diagnostic) => diagnostic.code === code);
+function getDiscoveryDiagnostic(discoveryDiagnostics: PreviewDiagnostic[], code: string) {
+  return discoveryDiagnostics.find((diagnostic) => diagnostic.code === code);
 }
 
-function getNeedsHarnessReasonBody(entry: PreviewRegistryItem) {
-  if (entry.render.mode !== "none") {
+function getNeedsHarnessReasonBody(entry: PreviewEntryDescriptor) {
+  if (entry.renderTarget.kind !== "none") {
     return undefined;
   }
 
-  if (entry.render.reason === "ambiguous-exports") {
+  if (entry.renderTarget.reason === "ambiguous-exports") {
     return `Automatic selection found multiple component exports: ${formatCandidateExports(
-      entry.render.candidates ?? entry.candidateExportNames,
+      entry.renderTarget.candidates ?? entry.candidateExportNames,
     )}. Add \`preview.entry\` or \`preview.render\` to pick the intended preview target.`;
   }
 
   return "No renderable exported component was found. Add `preview.entry` or `preview.render` for composed demos.";
 }
 
-function getEntryEmptyState(entry: PreviewRegistryItem) {
-  const primaryDiscoveryDiagnostic = getPrimaryDiscoveryDiagnostic(entry);
-  const missingExplicitDiagnostic = getDiscoveryDiagnostic(entry, "MISSING_EXPLICIT_PREVIEW_CONTRACT");
-  const previewRenderMissingDiagnostic = getDiscoveryDiagnostic(entry, "PREVIEW_RENDER_MISSING");
+function getEntryEmptyState(entry: PreviewEntryDescriptor, discoveryDiagnostics: PreviewDiagnostic[]) {
+  const primaryDiscoveryDiagnostic = getPrimaryDiscoveryDiagnostic(discoveryDiagnostics);
+  const missingExplicitDiagnostic = getDiscoveryDiagnostic(discoveryDiagnostics, "MISSING_EXPLICIT_PREVIEW_CONTRACT");
+  const previewRenderMissingDiagnostic = getDiscoveryDiagnostic(discoveryDiagnostics, "PREVIEW_RENDER_MISSING");
 
-  if (entry.status === "needs-harness" || entry.status === "ambiguous") {
+  if (entry.status === "needs_harness" || entry.status === "ambiguous") {
     if (missingExplicitDiagnostic) {
       return {
-        body: missingExplicitDiagnostic.message,
+        body: missingExplicitDiagnostic.summary,
         eyebrow: "Needs harness",
         title: "Explicit preview contract is required.",
       };
@@ -353,14 +419,14 @@ function getEntryEmptyState(entry: PreviewRegistryItem) {
     if (previewRenderMissingDiagnostic) {
       return {
         body:
-          `${previewRenderMissingDiagnostic.message} ` +
+          `${previewRenderMissingDiagnostic.summary} ` +
           (getNeedsHarnessReasonBody(entry) ?? "Add `preview.entry` or `preview.render` to make the preview target explicit."),
         eyebrow: "Needs harness",
         title: "The preview export is incomplete.",
       };
     }
 
-    if (entry.render.mode === "none" && entry.render.reason === "ambiguous-exports") {
+    if (entry.renderTarget.kind === "none" && entry.renderTarget.reason === "ambiguous-exports") {
       return {
         body: getNeedsHarnessReasonBody(entry),
         eyebrow: "Needs harness",
@@ -368,7 +434,7 @@ function getEntryEmptyState(entry: PreviewRegistryItem) {
       };
     }
 
-    if (entry.render.mode === "none" && entry.render.reason === "no-component-export") {
+    if (entry.renderTarget.kind === "none" && entry.renderTarget.reason === "no-component-export") {
       return {
         body: getNeedsHarnessReasonBody(entry),
         eyebrow: "Needs harness",
@@ -378,7 +444,7 @@ function getEntryEmptyState(entry: PreviewRegistryItem) {
 
     return {
       body:
-        primaryDiscoveryDiagnostic?.message ??
+        primaryDiscoveryDiagnostic?.summary ??
         "Add `export const preview = { entry: Component }` or `render: () => ...` when the file needs explicit harnessing.",
       eyebrow: "Needs harness",
       title: "This file is not directly previewable yet.",
@@ -395,10 +461,10 @@ function isLoadableEntryStatus(status: PreviewEntryStatus) {
   );
 }
 
-function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
+function createPreviewNode(entry: PreviewEntryDescriptor, module: PreviewModule) {
   const preview = readPreviewDefinition(module);
 
-  if (entry.render.mode === "preview-render") {
+  if (entry.renderTarget.kind === "harness") {
     if (!preview?.render || typeof preview.render !== "function") {
       throw new Error(
         "This entry is marked as preview.render but the module does not export a callable preview.render.",
@@ -409,21 +475,21 @@ function createPreviewNode(entry: PreviewRegistryItem, module: PreviewModule) {
     return <Harness />;
   }
 
-  if (entry.render.mode === "preview-entry" || entry.render.mode === "auto") {
-    const exportValue = readModuleExport(module, entry.render.exportName);
+  if (entry.renderTarget.kind === "component") {
+    const exportValue = readModuleExport(module, entry.renderTarget.exportName);
     // Preview source edits can briefly update the module before the registry full-reload lands.
     const fallbackExport = exportValue === undefined ? readSingleRenderableModuleExport(module) : undefined;
     const resolvedExportValue = fallbackExport?.value ?? exportValue;
 
     if (!isRenderableComponentExport(resolvedExportValue)) {
       throw new Error(
-        `Expected \`${entry.render.exportName}\` to be a component export, received ${describeValue(exportValue)}. ` +
+        `Expected \`${entry.renderTarget.exportName}\` to be a component export, received ${describeValue(exportValue)}. ` +
           `Available exports: ${describeModuleExports(module)}.`,
       );
     }
 
     const props =
-      entry.render.usesPreviewProps && preview?.props && typeof preview.props === "object" ? preview.props : undefined;
+      entry.renderTarget.usesPreviewProps && preview?.props && typeof preview.props === "object" ? preview.props : undefined;
 
     return (
       <AutoMockProvider component={resolvedExportValue as React.ComponentType<Record<string, unknown>>} props={props} />
@@ -492,11 +558,13 @@ function PreviewCanvas(props: PreviewCanvasProps) {
   const preview = readPreviewDefinition(props.module);
   const { viewport, viewportRef } = usePreviewViewport();
   const subtitle =
-    props.entry.render.mode === "preview-render"
+    props.entry.renderTarget.kind === "harness"
       ? "Custom harness"
-      : props.entry.render.mode === "auto" && props.entry.render.usesPreviewProps
-        ? "Auto render with preview.props"
-        : "Auto render";
+      : props.entry.renderTarget.kind === "component" && props.entry.renderTarget.usesPreviewProps
+        ? "Component render with preview.props"
+        : props.entry.selection.kind === "compat"
+          ? "Legacy compatibility render"
+          : "Component render";
 
   return (
     <div className="preview-canvas">
@@ -547,12 +615,19 @@ export function PreviewApp(props: PreviewAppProps) {
   const [renderIssue, setRenderIssue] = React.useState<PreviewRuntimeIssue | null>(null);
   const [runtimeIssues, setRuntimeIssues] = React.useState<PreviewRuntimeIssue[]>([]);
   const selectedEntry = props.entries.find((entry) => entry.id === selectedId) ?? props.entries[0];
-  const selectedEntryDiscoveryDiagnostics = selectedEntry?.discoveryDiagnostics ?? [];
-  const selectedEntryDiagnostics = loadedEntry?.meta.diagnostics ?? [];
+  const selectedEntryPayload =
+    (selectedEntry ? props.entryPayloads?.[selectedEntry.id] : undefined) ?? loadedEntry?.payload;
+  const selectedEntryDiscoveryDiagnostics =
+    selectedEntry == null
+      ? []
+      : (selectedEntryPayload?.diagnostics.filter((diagnostic) => diagnostic.phase === "discovery") ??
+        createDiscoveryDiagnostics(selectedEntry));
+  const selectedEntryDiagnostics =
+    selectedEntryPayload?.diagnostics.filter((diagnostic) => diagnostic.phase !== "discovery") ?? [];
   const selectedEntryBlockingDiagnostics = selectedEntryDiagnostics.filter(
     (diagnostic) => diagnostic.blocking ?? diagnostic.severity !== "warning",
   );
-  const emptyState = selectedEntry ? getEntryEmptyState(selectedEntry) : undefined;
+  const emptyState = selectedEntry ? getEntryEmptyState(selectedEntry, selectedEntryDiscoveryDiagnostics) : undefined;
 
   React.useEffect(() => {
     if (!selectedEntry || typeof window === "undefined") {
@@ -684,9 +759,11 @@ export function PreviewApp(props: PreviewAppProps) {
                   <span>{selectedEntry.targetName}</span>
                   <span>{selectedEntry.relativePath}</span>
                   <span>
-                    {selectedEntry.render.mode === "preview-render" || selectedEntry.render.mode === "preview-entry"
+                    {selectedEntry.selection.kind === "explicit"
                       ? "Explicit preview contract"
-                      : "Legacy export inference"}
+                      : selectedEntry.selection.kind === "compat"
+                        ? "Legacy export inference"
+                        : "Unresolved preview contract"}
                   </span>
                 </div>
               </div>
@@ -798,22 +875,20 @@ export function PreviewApp(props: PreviewAppProps) {
                   {selectedEntryDiagnostics.map((diagnostic) => (
                     <article
                       className="diagnostic-item"
-                      key={`${diagnostic.relativeFile}:${diagnostic.line}:${diagnostic.column}:${diagnostic.code}`}
+                      key={`${diagnostic.relativeFile}:${diagnostic.code}:${diagnostic.summary}`}
                     >
                       <p className="diagnostic-code">{diagnostic.code}</p>
-                      <p className="diagnostic-message">{diagnostic.summary ?? diagnostic.message}</p>
-                      <p className="diagnostic-location">
-                        {diagnostic.relativeFile}:{diagnostic.line}:{diagnostic.column}
-                      </p>
+                      <p className="diagnostic-message">{diagnostic.summary}</p>
+                      <p className="diagnostic-location">{diagnostic.relativeFile}</p>
                     </article>
                   ))}
                   {selectedEntryDiscoveryDiagnostics.map((diagnostic) => (
                     <article
                       className="diagnostic-item diagnostic-item-discovery"
-                      key={`${diagnostic.relativeFile}:${diagnostic.code}:${diagnostic.message}`}
+                      key={`${diagnostic.relativeFile}:${diagnostic.code}:${diagnostic.summary}`}
                     >
                       <p className="diagnostic-code">{diagnostic.code}</p>
-                      <p className="diagnostic-message">{diagnostic.message}</p>
+                      <p className="diagnostic-message">{diagnostic.summary}</p>
                       <p className="diagnostic-location">{diagnostic.relativeFile}</p>
                     </article>
                   ))}

@@ -104,6 +104,44 @@ declare module "@lattice-ui/preview-runtime" {
     height: number;
     width: number;
   };
+  export type ComputedRect = {
+    height: number;
+    width: number;
+    x: number;
+    y: number;
+  };
+  export type PreviewLayoutNodeKind = "host" | "layout" | "root";
+  export type PreviewLayoutDebugNode = {
+    children: PreviewLayoutDebugNode[];
+    debugLabel?: string;
+    id: string;
+    intrinsicSize: {
+      height: number;
+      width: number;
+    } | null;
+    kind: PreviewLayoutNodeKind;
+    layoutSource: "explicit-size" | "intrinsic-size" | "root-default";
+    nodeType: string;
+    parentConstraints: ComputedRect | null;
+    parentId?: string;
+    provenance: {
+      detail: string;
+      source: "fallback" | "wasm";
+    };
+    rect: ComputedRect | null;
+    styleHints?: {
+      height?: string;
+      width?: string;
+    };
+  };
+  export type PreviewLayoutDebugPayload = {
+    dirtyNodeIds: string[];
+    roots: PreviewLayoutDebugNode[];
+    viewport: {
+      height: number;
+      width: number;
+    };
+  };
   export type PreviewRuntimeIssueKind =
     | "ModuleLoadError"
     | "TransformExecutionError"
@@ -168,11 +206,28 @@ declare module "@lattice-ui/preview-runtime" {
 }
 
 declare module "@lattice-ui/preview-engine" {
+  import type { ComponentType } from "react";
+
   export type PreviewAutoRenderSelectionReason = "default" | "basename-match" | "sole-export";
   export type PreviewExecutionMode = "strict-fidelity" | "compatibility" | "mocked" | "design-time";
   export type PreviewSelectionMode = "compat" | "strict";
+  export type PreviewEntryStatus =
+    | "ready"
+    | "needs_harness"
+    | "ambiguous"
+    | "blocked_by_transform"
+    | "blocked_by_runtime"
+    | "blocked_by_layout";
 
   export type PreviewDiagnosticPhase = "discovery" | "layout" | "runtime" | "transform";
+  export type PreviewDiagnosticSeverity = "error" | "info" | "warning";
+
+  export type PreviewDefinition<Props = Record<string, unknown>> = {
+    entry?: ComponentType<Props>;
+    props?: Props;
+    render?: () => unknown;
+    title?: string;
+  };
 
   export type PreviewDiagnostic = {
     blocking?: boolean;
@@ -182,10 +237,23 @@ declare module "@lattice-ui/preview-engine" {
     file: string;
     phase: PreviewDiagnosticPhase;
     relativeFile: string;
-    severity: "error" | "info" | "warning";
+    severity: PreviewDiagnosticSeverity;
     summary: string;
     symbol?: string;
     target: string;
+  };
+
+  export type PreviewEntryCapabilities = {
+    supportsHotUpdate: boolean;
+    supportsLayoutDebug: boolean;
+    supportsPropsEditing: boolean;
+    supportsRuntimeMock: boolean;
+  };
+
+  export type PreviewDiagnosticsSummary = {
+    byPhase: Record<PreviewDiagnosticPhase, number>;
+    hasBlocking: boolean;
+    total: number;
   };
 
   export type PreviewRenderTarget =
@@ -220,6 +288,8 @@ declare module "@lattice-ui/preview-engine" {
 
   export type PreviewEntryDescriptor = {
     candidateExportNames: string[];
+    capabilities: PreviewEntryCapabilities;
+    diagnosticsSummary: PreviewDiagnosticsSummary;
     hasDefaultExport: boolean;
     hasPreviewExport: boolean;
     id: string;
@@ -228,7 +298,7 @@ declare module "@lattice-ui/preview-engine" {
     renderTarget: PreviewRenderTarget;
     selection: PreviewSelection;
     sourceFilePath: string;
-    status: "ready" | "needs_harness" | "ambiguous" | "blocked_by_transform" | "blocked_by_runtime" | "blocked_by_layout";
+    status: PreviewEntryStatus;
     targetName: string;
     title: string;
   };
@@ -322,18 +392,22 @@ declare module "@lattice-ui/preview-engine" {
 
   export const PREVIEW_ENGINE_PROTOCOL_VERSION: number;
 
+  export interface PreviewEngine {
+    dispose(): void;
+    getEntryPayload(entryId: string): PreviewEntryPayload;
+    getTargetForFilePath(filePath: string): PreviewSourceTarget | undefined;
+    getWorkspaceIndex(): PreviewWorkspaceIndex;
+    invalidateFiles(filePaths: string[]): PreviewEngineUpdate;
+    onUpdate(listener: (update: PreviewEngineUpdate) => void): () => void;
+  }
+
   export function createPreviewEngine(options: {
     projectName: string;
     runtimeModule?: string;
     selectionMode?: PreviewSelectionMode;
     targets: PreviewSourceTarget[];
     transformMode?: PreviewExecutionMode;
-  }): {
-    getEntryPayload(entryId: string): PreviewEntryPayload;
-    getTargetForFilePath(filePath: string): PreviewSourceTarget | undefined;
-    getWorkspaceIndex(): PreviewWorkspaceIndex;
-    invalidateFiles(filePaths: string[]): PreviewEngineUpdate;
-  };
+  }): PreviewEngine;
 
   export function buildPreviewArtifacts(options: PreviewBuildOptions): Promise<PreviewBuildResult>;
 }

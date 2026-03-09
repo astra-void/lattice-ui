@@ -8,6 +8,7 @@ import {
 import { discoverWorkspaceState, type DiscoveredEntryState, type WorkspaceDiscoverySnapshot } from "./discover";
 import { resolveRealFilePath } from "./pathUtils";
 import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
+import { isTransformableSourceFile } from "./workspaceGraph";
 import type {
   CreatePreviewEngineOptions,
   PreviewDiagnostic,
@@ -184,7 +185,7 @@ function computeTransformState(
   let outcome = createDefaultTransformOutcome(mode);
 
   for (const dependencyPath of entryState.dependencyPaths) {
-    if (!fs.existsSync(dependencyPath)) {
+    if (!fs.existsSync(dependencyPath) || !isTransformableSourceFile(dependencyPath)) {
       continue;
     }
 

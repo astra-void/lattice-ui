@@ -10,6 +10,7 @@ import {
 } from "@lattice-ui/compiler";
 import { createPreviewEngine } from "./engine";
 import { isFilePathUnderRoot, resolveRealFilePath } from "./pathUtils";
+import { createWorkspaceGraphService } from "./workspaceGraph";
 import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
 import type {
   PreviewBuildArtifactKind,
@@ -524,25 +525,18 @@ function createBuildTargetContexts(targets: PreviewSourceTarget[]) {
   });
 }
 
-function createModuleRecords(targetContexts: BuildTargetContext[], workspaceRoot: string) {
+function createModuleRecords(targetContexts: BuildTargetContext[], graphService: ReturnType<typeof createWorkspaceGraphService>) {
   const fileHashCache = new Map<string, string>();
-  const dependencyMemo = new Map<string, string[]>();
   const records: SourceModuleRecord[] = [];
 
   for (const context of targetContexts) {
-    const sourceFiles = listTargetSourceFiles(context.target, context.parsedConfig);
+    const sourceFiles = graphService.listTargetSourceFiles(context.target);
     for (const sourceFilePath of sourceFiles) {
       const sourceText = fs.readFileSync(sourceFilePath, "utf8");
       const sourceHash = hashText(sourceText);
       fileHashCache.set(sourceFilePath, sourceHash);
 
-      const dependencyPaths = resolveTransitiveDependencyPaths(
-        sourceFilePath,
-        context.parsedConfig,
-        workspaceRoot,
-        dependencyMemo,
-        new Set<string>(),
-      );
+      const dependencyPaths = graphService.collectTransitiveDependencyPaths(sourceFilePath);
       const dependencyGraphHash = hashText(
         dependencyPaths
           .map((dependencyPath) => {
@@ -834,7 +828,11 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
   >();
 
   const targetContexts = createBuildTargetContexts(targets);
-  const moduleRecords = artifactKinds.includes("module") ? createModuleRecords(targetContexts, workspaceRoot) : [];
+  const graphService = createWorkspaceGraphService({
+    targets,
+    workspaceRoot,
+  });
+  const moduleRecords = artifactKinds.includes("module") ? createModuleRecords(targetContexts, graphService) : [];
 
   await runWithConcurrency(concurrency, moduleRecords, async (record) => {
     const cacheKey = createModuleCacheKey(record, {

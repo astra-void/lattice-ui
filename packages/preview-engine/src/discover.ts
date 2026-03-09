@@ -3,6 +3,12 @@ import path from "node:path";
 import ts from "typescript";
 import { applyLegacyInferenceAdapter } from "./compat";
 import { isFilePathUnderRoot, resolveRealFilePath } from "./pathUtils";
+import {
+  createWorkspaceGraphService,
+  isTransformableSourceFile,
+  type WorkspaceGraphService,
+  type WorkspaceProject,
+} from "./workspaceGraph";
 import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
 import type {
   CreatePreviewEngineOptions,
@@ -20,13 +26,6 @@ import type {
   PreviewWorkspaceIndex,
 } from "./types";
 
-const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
-const DEFAULT_COMPILER_OPTIONS: ts.CompilerOptions = {
-  jsx: ts.JsxEmit.Preserve,
-  module: ts.ModuleKind.ESNext,
-  moduleResolution: ts.ModuleResolutionKind.NodeJs,
-  target: ts.ScriptTarget.ESNext,
-};
 const PREVIEW_PACKAGE_ENTRY_EXCLUDES = ["runtime/", "shell/"];
 
 type PreviewExportInfo = {
@@ -70,12 +69,13 @@ type ExportBinding =
       sourceFilePath: string;
     };
 
-type RawDiagnostic = Omit<PreviewDiagnostic, "entryId" | "relativeFile">;
+type RawDiagnostic = Omit<PreviewDiagnostic, "entryId" | "relativeFile"> & {
+  packageRoot: string;
+};
 
 type TargetContext = {
   packageName: string;
   packageRoot: string;
-  parsedConfig?: ts.ParsedCommandLine;
   sourceRoot: string;
   targetName: string;
   workspaceRoot: string;
@@ -90,6 +90,9 @@ type RawSourceModuleRecord = {
   imports: string[];
   isTsx: boolean;
   localRenderableMetadata: Map<string, LocalRenderableMetadata>;
+  ownerPackageName?: string;
+  ownerPackageRoot: string;
+  project?: WorkspaceProject;
   preview: PreviewExportInfo;
   previewExported: boolean;
   rawDiagnostics: RawDiagnostic[];
@@ -120,17 +123,6 @@ export type WorkspaceDiscoverySnapshot = {
   workspaceIndex: PreviewWorkspaceIndex;
 };
 
-type ResolveModuleImportOptions = {
-  importerFilePath: string;
-  parsedConfig?: ts.ParsedCommandLine;
-  specifier: string;
-  workspaceRoot: string;
-};
-
-function isTransformableSourceFile(fileName: string) {
-  return SOURCE_EXTENSIONS.has(path.extname(fileName)) && !fileName.endsWith(".d.ts") && !fileName.endsWith(".d.tsx");
-}
-
 function listSourceFiles(dirPath: string): string[] {
   if (!fs.existsSync(dirPath)) {
     return [];
@@ -152,20 +144,6 @@ function listSourceFiles(dirPath: string): string[] {
   }
 
   return files.sort((left, right) => left.localeCompare(right));
-}
-
-function listTargetEntryFiles(target: Pick<PreviewSourceTarget, "sourceRoot">, parsedConfig?: ts.ParsedCommandLine) {
-  const sourceRoot = resolveRealFilePath(target.sourceRoot);
-  const programFiles =
-    parsedConfig?.fileNames
-      .map((fileName) => resolveRealFilePath(fileName))
-      .filter((fileName) => isTransformableSourceFile(fileName) && isFilePathUnderRoot(sourceRoot, fileName)) ?? [];
-
-  if (programFiles.length > 0) {
-    return [...new Set(programFiles)].sort((left, right) => left.localeCompare(right));
-  }
-
-  return listSourceFiles(sourceRoot);
 }
 
 function toRelativePath(rootPath: string, filePath: string) {
@@ -271,60 +249,39 @@ function parsePreviewObject(node: ts.Expression | undefined): PreviewExportInfo 
   };
 }
 
-function findNearestTsconfig(filePath: string) {
-  return ts.findConfigFile(path.dirname(filePath), ts.sys.fileExists, "tsconfig.json");
-}
+function findWorkspaceRoot(startPath: string | string[]) {
+  const startPaths = Array.isArray(startPath) ? startPath : [startPath];
+  const resolvedStartPaths = startPaths.map((candidate) => resolveRealFilePath(candidate));
+  const markerRoots = resolvedStartPaths.map((candidate) => {
+    let current = candidate;
 
-function parseTsconfig(tsconfigPath: string) {
-  const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
-  if (configFile.error) {
-    const message = ts.formatDiagnostic(configFile.error, {
-      getCanonicalFileName: (value) => value,
-      getCurrentDirectory: () => process.cwd(),
-      getNewLine: () => "\n",
-    });
-    throw new Error(`Failed to read TypeScript config ${tsconfigPath}: ${message}`);
-  }
+    while (true) {
+      if (fs.existsSync(path.join(current, "pnpm-workspace.yaml")) || fs.existsSync(path.join(current, ".git"))) {
+        return current;
+      }
 
-  const parsed = ts.parseJsonConfigFileContent(
-    configFile.config,
-    ts.sys,
-    path.dirname(tsconfigPath),
-    undefined,
-    tsconfigPath,
-  );
-  if (parsed.errors.length > 0) {
-    const message = ts.formatDiagnostics(parsed.errors, {
-      getCanonicalFileName: (value) => value,
-      getCurrentDirectory: () => process.cwd(),
-      getNewLine: () => "\n",
-    });
-    throw new Error(`Failed to parse TypeScript config ${tsconfigPath}: ${message}`);
-  }
+      const parent = path.dirname(current);
+      if (parent === current) {
+        return candidate;
+      }
 
-  return parsed;
-}
-
-function getParsedTsconfig(sourceRoot: string) {
-  const tsconfigPath = findNearestTsconfig(sourceRoot);
-  return tsconfigPath ? parseTsconfig(tsconfigPath) : undefined;
-}
-
-function findWorkspaceRoot(startPath: string) {
-  let current = resolveRealFilePath(startPath);
-
-  while (true) {
-    if (fs.existsSync(path.join(current, "pnpm-workspace.yaml")) || fs.existsSync(path.join(current, ".git"))) {
-      return current;
+      current = parent;
     }
+  });
 
-    const parent = path.dirname(current);
-    if (parent === current) {
-      return resolveRealFilePath(startPath);
+  let commonPath = markerRoots[0] ?? process.cwd();
+  for (const candidate of markerRoots.slice(1)) {
+    while (!isFilePathUnderRoot(commonPath, candidate)) {
+      const parent = path.dirname(commonPath);
+      if (parent === commonPath) {
+        return commonPath;
+      }
+
+      commonPath = parent;
     }
-
-    current = parent;
   }
+
+  return commonPath;
 }
 
 function findNearestPackageRoot(filePath: string) {
@@ -342,144 +299,6 @@ function findNearestPackageRoot(filePath: string) {
 
     current = parent;
   }
-}
-
-function shouldReportTransitiveLimit(options: {
-  parsedConfig?: ts.ParsedCommandLine;
-  resolvedFilePath?: string;
-  specifier: string;
-  workspaceRoot: string;
-}) {
-  if (options.specifier.startsWith(".")) {
-    return true;
-  }
-
-  if (options.resolvedFilePath && isFilePathUnderRoot(options.workspaceRoot, options.resolvedFilePath)) {
-    return true;
-  }
-
-  if (!options.resolvedFilePath && (options.parsedConfig?.options.baseUrl || options.parsedConfig?.options.paths)) {
-    return true;
-  }
-
-  return false;
-}
-
-function createRawDiagnostic(
-  code: PreviewDiscoveryDiagnosticCode,
-  file: string,
-  summary: string,
-  target: string,
-  severity: PreviewDiagnostic["severity"] = "warning",
-  importChain?: string[],
-): RawDiagnostic {
-  return {
-    code,
-    file,
-    importChain,
-    phase: "discovery",
-    severity,
-    summary,
-    target,
-  };
-}
-
-function resolveModuleImport(options: ResolveModuleImportOptions) {
-  const compilerOptions = options.parsedConfig?.options ?? DEFAULT_COMPILER_OPTIONS;
-  const resolution = ts.resolveModuleName(options.specifier, options.importerFilePath, compilerOptions, ts.sys);
-  const resolvedFilePath = resolution.resolvedModule?.resolvedFileName
-    ? resolveRealFilePath(resolution.resolvedModule.resolvedFileName)
-    : undefined;
-
-  if (!resolvedFilePath) {
-    return shouldReportTransitiveLimit({
-      parsedConfig: options.parsedConfig,
-      specifier: options.specifier,
-      workspaceRoot: options.workspaceRoot,
-    })
-      ? {
-          diagnostic: createRawDiagnostic(
-            "TRANSITIVE_ANALYSIS_LIMITED",
-            options.importerFilePath,
-            `Transitive analysis stopped at ${JSON.stringify(options.specifier)}: ` +
-              `it could not be resolved from ${options.importerFilePath}.`,
-            "preview-engine",
-            "warning",
-            [options.importerFilePath],
-          ),
-          edge: {
-            crossesPackageBoundary: false,
-            importerFile: options.importerFilePath,
-            resolution: "stopped" as const,
-            specifier: options.specifier,
-            stopReason: "unresolved-import",
-          },
-        }
-      : undefined;
-  }
-
-  if (!isTransformableSourceFile(resolvedFilePath)) {
-    return shouldReportTransitiveLimit({
-      parsedConfig: options.parsedConfig,
-      resolvedFilePath,
-      specifier: options.specifier,
-      workspaceRoot: options.workspaceRoot,
-    })
-      ? {
-          diagnostic: createRawDiagnostic(
-            "TRANSITIVE_ANALYSIS_LIMITED",
-            options.importerFilePath,
-            `Transitive analysis stopped at ${JSON.stringify(options.specifier)}: ` +
-              `it resolves to a non-transformable file (${resolvedFilePath}).`,
-            "preview-engine",
-            "warning",
-            [options.importerFilePath],
-          ),
-          edge: {
-            crossesPackageBoundary: false,
-            importerFile: options.importerFilePath,
-            resolution: "stopped" as const,
-            resolvedFile: resolvedFilePath,
-            specifier: options.specifier,
-            stopReason: "non-transformable-import",
-          },
-        }
-      : undefined;
-  }
-
-  if (!isFilePathUnderRoot(options.workspaceRoot, resolvedFilePath)) {
-    return {
-      diagnostic: createRawDiagnostic(
-        "TRANSITIVE_ANALYSIS_LIMITED",
-        options.importerFilePath,
-        `Transitive analysis stopped at ${JSON.stringify(options.specifier)}: ` +
-          `it resolves outside the current workspace (${resolvedFilePath}).`,
-        "preview-engine",
-        "warning",
-        [options.importerFilePath],
-      ),
-      edge: {
-        crossesPackageBoundary: false,
-        importerFile: options.importerFilePath,
-        resolution: "stopped" as const,
-        resolvedFile: resolvedFilePath,
-        specifier: options.specifier,
-        stopReason: "outside-workspace",
-      },
-    };
-  }
-
-  return {
-    edge: {
-      crossesPackageBoundary:
-        findNearestPackageRoot(options.importerFilePath) !== findNearestPackageRoot(resolvedFilePath),
-      importerFile: options.importerFilePath,
-      resolution: "resolved" as const,
-      resolvedFile: resolvedFilePath,
-      specifier: options.specifier,
-    },
-    resolvedImport: resolvedFilePath,
-  };
 }
 
 function collectLocalRenderableNames(sourceFile: ts.SourceFile) {
@@ -528,11 +347,12 @@ function collectLocalRenderableNames(sourceFile: ts.SourceFile) {
   };
 }
 
-function parseModuleRecord(filePath: string, target: TargetContext): RawSourceModuleRecord {
+function parseModuleRecord(filePath: string, target: TargetContext, graphService: WorkspaceGraphService): RawSourceModuleRecord {
   const sourceText = fs.readFileSync(filePath, "utf8");
   const scriptKind = filePath.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
   const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true, scriptKind);
   const { localPreviewInfo, localRenderableMetadata } = collectLocalRenderableNames(sourceFile);
+  const fileContext = graphService.getFileContext(filePath);
   const importBindings = new Map<string, ImportBinding>();
   const exportBindings = new Map<string, ExportBinding[]>();
   const exportAllSources: string[] = [];
@@ -555,11 +375,9 @@ function parseModuleRecord(filePath: string, target: TargetContext): RawSourceMo
 
   for (const statement of sourceFile.statements) {
     if (ts.isImportDeclaration(statement) && statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier)) {
-      const resolvedImport = resolveModuleImport({
+      const resolvedImport = graphService.resolveImport({
         importerFilePath: filePath,
-        parsedConfig: target.parsedConfig,
         specifier: statement.moduleSpecifier.text,
-        workspaceRoot: target.workspaceRoot,
       });
 
       if (resolvedImport?.edge) {
@@ -567,16 +385,18 @@ function parseModuleRecord(filePath: string, target: TargetContext): RawSourceMo
       }
 
       if (resolvedImport?.diagnostic) {
-        addDiagnostic(resolvedImport.diagnostic);
+        addDiagnostic({
+          ...resolvedImport.diagnostic,
+        });
       }
 
-      if (resolvedImport?.resolvedImport) {
-        imports.add(resolvedImport.resolvedImport);
+      if (resolvedImport?.followedFilePath) {
+        imports.add(resolvedImport.followedFilePath);
         const clause = statement.importClause;
         if (clause?.name) {
           importBindings.set(clause.name.text, {
             importedName: "default",
-            sourceFilePath: resolvedImport.resolvedImport,
+            sourceFilePath: resolvedImport.followedFilePath,
           });
         }
 
@@ -584,7 +404,7 @@ function parseModuleRecord(filePath: string, target: TargetContext): RawSourceMo
           for (const element of clause.namedBindings.elements) {
             importBindings.set(element.name.text, {
               importedName: element.propertyName?.text ?? element.name.text,
-              sourceFilePath: resolvedImport.resolvedImport,
+              sourceFilePath: resolvedImport.followedFilePath,
             });
           }
         }
@@ -672,11 +492,9 @@ function parseModuleRecord(filePath: string, target: TargetContext): RawSourceMo
       continue;
     }
 
-    const resolvedImport = resolveModuleImport({
+    const resolvedImport = graphService.resolveImport({
       importerFilePath: filePath,
-      parsedConfig: target.parsedConfig,
       specifier: statement.moduleSpecifier.text,
-      workspaceRoot: target.workspaceRoot,
     });
 
     if (resolvedImport?.edge) {
@@ -684,17 +502,19 @@ function parseModuleRecord(filePath: string, target: TargetContext): RawSourceMo
     }
 
     if (resolvedImport?.diagnostic) {
-      addDiagnostic(resolvedImport.diagnostic);
+      addDiagnostic({
+        ...resolvedImport.diagnostic,
+      });
     }
 
-    if (!resolvedImport?.resolvedImport) {
+    if (!resolvedImport?.followedFilePath) {
       continue;
     }
 
-    imports.add(resolvedImport.resolvedImport);
+    imports.add(resolvedImport.followedFilePath);
 
     if (!statement.exportClause) {
-      exportAllSources.push(resolvedImport.resolvedImport);
+      exportAllSources.push(resolvedImport.followedFilePath);
       continue;
     }
 
@@ -713,7 +533,7 @@ function parseModuleRecord(filePath: string, target: TargetContext): RawSourceMo
       addExportBinding(exportName, {
         importedName,
         kind: "re-export",
-        sourceFilePath: resolvedImport.resolvedImport,
+        sourceFilePath: resolvedImport.followedFilePath,
       });
     }
   }
@@ -725,8 +545,11 @@ function parseModuleRecord(filePath: string, target: TargetContext): RawSourceMo
     graphEdges,
     importBindings,
     imports: [...imports].sort((left, right) => left.localeCompare(right)),
-    isTsx: filePath.endsWith(".tsx"),
+    isTsx: filePath.endsWith(".tsx") && isTransformableSourceFile(filePath),
     localRenderableMetadata,
+    ownerPackageName: fileContext.packageName,
+    ownerPackageRoot: fileContext.packageRoot,
+    project: fileContext.project,
     preview:
       previewExported
         ? (preview ?? { hasEntry: false, hasExport: true, hasProps: false, hasRender: false })
@@ -970,7 +793,6 @@ function collectTransitivePaths(
 
 function collectTransitiveDiagnostics(
   entryId: string,
-  packageRoot: string,
   filePath: string,
   recordsByPath: Map<string, RawSourceModuleRecord>,
   visited = new Set<string>(),
@@ -990,14 +812,14 @@ function collectTransitiveDiagnostics(
     const nextDiagnostic: PreviewDiagnostic = {
       ...diagnostic,
       entryId,
-      relativeFile: toRelativePath(packageRoot, diagnostic.file),
+      relativeFile: toRelativePath(diagnostic.packageRoot, diagnostic.file),
     };
     const key = `${nextDiagnostic.code}:${nextDiagnostic.file}:${nextDiagnostic.summary}`;
     diagnostics.set(key, nextDiagnostic);
   }
 
   for (const importPath of record.imports) {
-    collectTransitiveDiagnostics(entryId, packageRoot, importPath, recordsByPath, visited, diagnostics);
+    collectTransitiveDiagnostics(entryId, importPath, recordsByPath, visited, diagnostics);
   }
 
   return diagnostics;
@@ -1011,6 +833,7 @@ function collectTransitiveGraphTrace(
   const visited = new Set<string>();
   const imports = new Map<string, PreviewGraphImportEdge>();
   const boundaryHops = new Map<string, PreviewGraphTrace["boundaryHops"][number]>();
+  const traversedProjects = new Map<string, NonNullable<PreviewGraphTrace["traversedProjects"]>[number]>();
   let stopReason: string | undefined;
 
   const visit = (filePath: string) => {
@@ -1022,6 +845,14 @@ function collectTransitiveGraphTrace(
     const record = recordsByPath.get(filePath);
     if (!record) {
       return;
+    }
+
+    if (record.project) {
+      traversedProjects.set(record.project.configPath, {
+        configPath: record.project.configPath,
+        packageName: record.ownerPackageName,
+        packageRoot: record.ownerPackageRoot,
+      });
     }
 
     for (const edge of record.graphEdges) {
@@ -1059,6 +890,13 @@ function collectTransitiveGraphTrace(
       return left.specifier.localeCompare(right.specifier);
     }),
     selection: selectionTrace,
+    ...(traversedProjects.size > 0
+      ? {
+          traversedProjects: [...traversedProjects.values()].sort((left, right) =>
+            left.configPath.localeCompare(right.configPath),
+          ),
+        }
+      : {}),
     ...(stopReason ? { stopReason } : {}),
   } satisfies PreviewGraphTrace;
 }
@@ -1179,7 +1017,7 @@ function buildDescriptor(
   const hasDefaultExport = hasRenderableDefaultExport(record, recordsByPath);
   const entryId = `${record.target.targetName}:${record.relativePath}`;
   const baseDiagnostics = [
-    ...collectTransitiveDiagnostics(entryId, record.target.packageRoot, record.filePath, recordsByPath).values(),
+    ...collectTransitiveDiagnostics(entryId, record.filePath, recordsByPath).values(),
   ];
   const compatClassification = applyLegacyInferenceAdapter({
     candidateExportNames,
@@ -1346,19 +1184,19 @@ function buildDescriptor(
 }
 
 function createTargetContext(target: PreviewSourceTarget): TargetContext {
+  const workspaceRoot = findWorkspaceRoot(target.packageRoot);
   return {
     packageName: target.packageName ?? target.name,
     packageRoot: resolveRealFilePath(target.packageRoot),
-    parsedConfig: getParsedTsconfig(target.sourceRoot),
     sourceRoot: resolveRealFilePath(target.sourceRoot),
     targetName: target.name,
-    workspaceRoot: findWorkspaceRoot(target.packageRoot),
+    workspaceRoot,
   };
 }
 
-function discoverTargetRecords(target: TargetContext) {
+function discoverTargetRecords(target: TargetContext, graphService: WorkspaceGraphService) {
   const recordsByPath = new Map<string, RawSourceModuleRecord>();
-  const pending = [...listTargetEntryFiles(target, target.parsedConfig)];
+  const pending = [...graphService.listTargetSourceFiles(target)];
 
   while (pending.length > 0) {
     const nextFilePath = pending.pop();
@@ -1366,7 +1204,7 @@ function discoverTargetRecords(target: TargetContext) {
       continue;
     }
 
-    const record = parseModuleRecord(nextFilePath, target);
+    const record = parseModuleRecord(nextFilePath, target, graphService);
     recordsByPath.set(nextFilePath, record);
 
     for (const importPath of record.imports) {
@@ -1381,12 +1219,22 @@ function discoverTargetRecords(target: TargetContext) {
 
 export function discoverWorkspaceState(options: Pick<CreatePreviewEngineOptions, "projectName" | "selectionMode" | "targets">) {
   const selectionMode = options.selectionMode ?? "compat";
+  const targetContexts = options.targets.map(createTargetContext);
+  const graphService = createWorkspaceGraphService({
+    targets: targetContexts.map((target) => ({
+      name: target.targetName,
+      packageName: target.packageName,
+      packageRoot: target.packageRoot,
+      sourceRoot: target.sourceRoot,
+    })),
+    workspaceRoot: findWorkspaceRoot(targetContexts.map((target) => target.packageRoot)),
+  });
   const entryStatesById = new Map<string, DiscoveredEntryState>();
   const entryDependencyPathsById = new Map<string, string[]>();
   const entries: PreviewEntryDescriptor[] = [];
 
-  for (const target of options.targets.map(createTargetContext)) {
-    const recordsByPath = discoverTargetRecords(target);
+  for (const target of targetContexts) {
+    const recordsByPath = discoverTargetRecords(target, graphService);
     const entryRecords = [...recordsByPath.values()]
       .filter((record) => record.isTsx)
       .filter((record) => isFilePathUnderRoot(target.sourceRoot, record.filePath))

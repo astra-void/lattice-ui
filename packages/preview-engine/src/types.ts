@@ -135,8 +135,17 @@ export type PreviewDiagnostic = {
 export type PreviewGraphImportEdge = {
   crossesPackageBoundary: boolean;
   importerFile: string;
+  importerProjectConfigPath?: string;
+  originalResolvedFile?: string;
   resolution: "resolved" | "stopped";
+  resolutionKind?:
+    | "declaration-file"
+    | "external-dependency"
+    | "project-reference-source"
+    | "source-file"
+    | "workspace-package";
   resolvedFile?: string;
+  resolvedProjectConfigPath?: string;
   specifier: string;
   stopReason?: string;
 };
@@ -159,6 +168,11 @@ export type PreviewGraphTrace = {
   imports: PreviewGraphImportEdge[];
   selection: PreviewSelectionTrace;
   stopReason?: string;
+  traversedProjects?: Array<{
+    configPath: string;
+    packageName?: string;
+    packageRoot: string;
+  }>;
 };
 
 export type PreviewEntryDescriptor = {

@@ -1,6 +1,10 @@
 # @lattice-ui/preview
 
-Preview Roblox-first Lattice UI modules in a source-first React DOM shell.
+Source-first preview bootstrap for Lattice UI workspaces.
+
+`@lattice-ui/preview-engine` owns workspace/index/entry/build protocol types.  
+`@lattice-ui/preview-runtime` owns runtime issues and layout debug payload types.  
+`@lattice-ui/preview` is the config, server, CLI, and headless bootstrap layer on top of those protocols.
 
 ## Install
 
@@ -8,55 +12,147 @@ Preview Roblox-first Lattice UI modules in a source-first React DOM shell.
 npm install -D @lattice-ui/preview @lattice-ui/cli
 ```
 
-## Source-First Preview
+## Zero-Config Preview
+
+Run preview from a package root:
 
 ```bash
 npx lattice preview
 ```
 
-## Workflow
+This keeps the current package-root workflow:
 
-1. Run `lattice preview` from a package root.
-2. The preview shell discovers real `src/**/*.tsx` files and renders them directly in the browser.
-3. Explicit preview selection prefers `preview.render`, then `preview.entry`.
-4. Default export / basename / sole-export inference still exists as a deprecated fallback, and the shell reports a `LEGACY_AUTO_RENDER_FALLBACK` note until the file is migrated.
-5. Files that still cannot be resolved to one render target stay in `needs harness`, and the shell reports whether the file has ambiguous exports or no renderable export at all.
-6. This package only exposes the source-first preview server and the preview runtime. The browser shell itself is internal.
+- package root must contain `package.json`
+- preview source root defaults to `src`
+- dev preview defaults to `selectionMode: "compat"` and `transformMode: "compatibility"`
 
-## Preview Contract
+## Config File
+
+For workspace preview, add `lattice.preview.config.ts`:
 
 ```ts
-export const preview = {
-  title: "Dialog Root",
-  entry: DialogRoot,
-  props: {
-    defaultChecked: true,
-  },
-  render: () => <frame />,
+import {
+  createWorkspaceTargetsDiscovery,
+  definePreviewConfig,
+} from "@lattice-ui/preview";
+
+export default definePreviewConfig({
+  projectName: "Lattice Preview",
+  targetDiscovery: createWorkspaceTargetsDiscovery({
+    workspaceRoot: ".",
+    include: ["@lattice-ui/*"],
+    exclude: ["internal-*"],
+  }),
+});
+```
+
+`lattice preview` resolves config in this order:
+
+1. `--config <path>`
+2. nearest `lattice.preview.config.ts` found by walking upward from `cwd`
+3. zero-config package-root mode
+
+## Public Bootstrap API
+
+`@lattice-ui/preview` exposes:
+
+- `definePreviewConfig(config)`
+- `loadPreviewConfig(options?)`
+- `startPreviewServer(configOrOptions)`
+- `createPreviewHeadlessSession(configOrOptions)`
+- `createPackageTargetDiscovery(options?)`
+- `createStaticTargetsDiscovery(targets)`
+- `createWorkspaceTargetsDiscovery(options)`
+
+Headless mode is available from the CLI too:
+
+```bash
+npx lattice preview --headless
+```
+
+That prints:
+
+```ts
+type PreviewHeadlessSnapshot = {
+  protocolVersion: number;
+  workspaceIndex: PreviewWorkspaceIndex;
+  entries: Record<string, PreviewEntryPayload>;
 };
 ```
 
-- `title` overrides the sidebar/display title.
-- `entry` makes the preview target explicit for direct component renders.
-- `props` feeds the `preview.entry` path when discovery can resolve one preview target without a custom harness.
-- `render` is the escape hatch for custom harnesses and composed demos.
-- `render` wins over `entry` when both are present.
+## Preview Contract
 
-Legacy fallback note:
+Core selection is fixed to explicit preview contracts:
 
-- Files without `preview.entry` or `preview.render` can still render via default export / basename / sole-export inference for now.
-- That inference is deprecated and intentionally surfaced in diagnostics so packages can migrate incrementally.
+```ts
+export function DialogPreview() {
+  return <frame />;
+}
 
-When discovery cannot follow an import chain past the current `sourceRoot`, the shell keeps the entry previewable when possible and shows a `TRANSITIVE_ANALYSIS_LIMITED` note instead of silently skipping that branch.
+export const preview = {
+  title: "Dialog",
+  entry: DialogPreview,
+};
+```
 
-## Supported Preview Transform Surface
+Supported explicit contracts:
 
-- Host elements: `frame`, `textbutton`, `screengui`, `textlabel`, `textbox`, `imagelabel`, `scrollingframe`, `uicorner`, `uipadding`, `uilistlayout`, `uigridlayout`, `uistroke`
-- Enum values: `TextXAlignment`, `TextYAlignment`, `FillDirection`, `SortOrder`, `AutomaticSize`, `ScrollingDirection`, and the preview key subset used for DOM keyboard events
-- Runtime helpers: `@lattice-ui/core`, `@lattice-ui/layer`, and `@lattice-ui/focus` imports are rewritten to `@lattice-ui/preview-runtime`
+- `preview.entry`
+- `preview.render`
 
-Unsupported Roblox globals, services, or runtime-only instance patterns fail generation with diagnostics in this format:
+Legacy default-export / basename / sole-export inference still exists only as compat behavior. It is surfaced as diagnostics and should not be treated as the core engine contract.
+
+Selection pipeline:
 
 ```text
-<CODE> <file>:<line>:<column> <message>
+preview contract -> entry descriptor -> render target
 ```
+
+## Protocol Boundary
+
+The browser shell stays internal.
+
+The public protocol is not the shell UI. It is the exported engine/runtime schema:
+
+- `PreviewWorkspaceIndex`
+- `PreviewEntryPayload`
+- `PreviewDiagnostic`
+- `PreviewRuntimeIssue`
+- `PreviewLayoutDebugPayload`
+
+Use `@lattice-ui/preview-engine` and `@lattice-ui/preview-runtime` as the source of truth for those contracts.
+
+## Target Discovery Adapters
+
+Built-in target discovery helpers:
+
+- `createPackageTargetDiscovery()` for zero-config single-package preview
+- `createStaticTargetsDiscovery()` for explicit target arrays
+- `createWorkspaceTargetsDiscovery()` for monorepo or external workspace scanning
+
+Example static target setup:
+
+```ts
+import {
+  createStaticTargetsDiscovery,
+  definePreviewConfig,
+} from "@lattice-ui/preview";
+
+export default definePreviewConfig({
+  projectName: "Lattice Preview",
+  targetDiscovery: createStaticTargetsDiscovery([
+    {
+      name: "checkbox",
+      packageName: "@lattice-ui/checkbox",
+      packageRoot: "./packages/checkbox",
+      sourceRoot: "./packages/checkbox/src",
+    },
+  ]),
+});
+```
+
+## Notes
+
+- discovery graph limitations such as `TRANSITIVE_ANALYSIS_LIMITED` are still reported as diagnostics in this phase
+- browser preview remains internal UI over public protocol data
+- docs generation, watch-streaming headless mode, and broader workspace bootstrap generalization land in later phases

@@ -200,6 +200,7 @@ export {
 export { DismissableLayer, FocusScope, Portal, PortalProvider, Presence, usePortalContext } from "./react";
 export { __previewGlobal, Color3, UDim, UDim2, Vector2, typeIs, pairs, error, isPreviewElement };
 export type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "./preview";
+export type { PreviewLayoutDebugNode, PreviewLayoutDebugPayload } from "./layout";
 export type { LayerInteractEvent } from "./react";
 export { createUniversalRobloxMock, createUniversalRobloxModuleMock, robloxMock, robloxModuleMock } from "./runtime";
 export { __rbxStyle, Box, Text } from "./style/index";

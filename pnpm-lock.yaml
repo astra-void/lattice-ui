@@ -560,7 +560,10 @@ importers:
         version: link:../compiler
       '@lattice-ui/layout-engine':
         specifier: file:../layout-engine/pkg
-        version: file:packages/layout-engine/pkg
+        version: layout-engine@file:packages/layout-engine/pkg
+      '@lattice-ui/preview-engine':
+        specifier: workspace:*
+        version: link:../preview-engine
       '@lattice-ui/preview-runtime':
         specifier: workspace:*
         version: link:../preview-runtime
@@ -590,11 +593,23 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
 
+  packages/preview-engine:
+    dependencies:
+      '@lattice-ui/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@lattice-ui/preview-runtime':
+        specifier: workspace:*
+        version: link:../preview-runtime
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/preview-runtime:
     dependencies:
       '@lattice-ui/layout-engine':
         specifier: file:../layout-engine/pkg
-        version: file:packages/layout-engine/pkg
+        version: layout-engine@file:packages/layout-engine/pkg
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -1868,9 +1883,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
-
-  '@lattice-ui/layout-engine@file:packages/layout-engine/pkg':
-    resolution: {directory: packages/layout-engine/pkg, type: directory}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -3963,6 +3975,9 @@ packages:
   klona@2.0.6:
     resolution: {integrity: sha512-dhG34DXATL5hSxJbIexCft8FChFXtmskoZYnoPWjXQuebWYCNkVeV3KkGegCK9CP1oswI/vQibS2GY7Em/sJJA==}
     engines: {node: '>= 8'}
+
+  layout-engine@file:packages/layout-engine/pkg:
+    resolution: {directory: packages/layout-engine/pkg, type: directory}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -6331,8 +6346,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@lattice-ui/layout-engine@file:packages/layout-engine/pkg': {}
-
   '@manypkg/find-root@1.1.0':
     dependencies:
       '@babel/runtime': 7.28.6
@@ -8623,6 +8636,8 @@ snapshots:
   kleur@4.1.5: {}
 
   klona@2.0.6: {}
+
+  layout-engine@file:packages/layout-engine/pkg: {}
 
   levn@0.4.1:
     dependencies:

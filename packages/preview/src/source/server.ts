@@ -1,6 +1,9 @@
-import fs from "node:fs";
 import path from "node:path";
-import type { PreviewExecutionMode, PreviewSelectionMode, PreviewSourceTarget } from "@lattice-ui/preview-engine";
+import fs from "node:fs";
+import { searchForWorkspaceRoot } from "vite";
+import type { PreviewExecutionMode, PreviewSelectionMode } from "@lattice-ui/preview-engine";
+import type { LoadPreviewConfigOptions, PreviewConfig, ResolvedPreviewConfig } from "../config";
+import { loadPreviewConfig, resolvePreviewConfigObject } from "../config";
 import { createAutoMockPropsPlugin } from "./autoMockPlugin";
 import { createPreviewVitePlugin } from "./plugin";
 import type { ReactPluginModule, ViteModule, ViteTopLevelAwaitPluginModule, ViteWasmPluginModule } from "./viteTypes";
@@ -8,13 +11,18 @@ import type { ReactPluginModule, ViteModule, ViteTopLevelAwaitPluginModule, Vite
 const DEFAULT_PORT = 4174;
 
 export type StartPreviewServerOptions = {
+  configFile?: string;
+  cwd?: string;
   packageName: string;
   packageRoot: string;
   port?: number;
+  runtimeModule?: string;
   selectionMode?: PreviewSelectionMode;
   sourceRoot: string;
   transformMode?: PreviewExecutionMode;
 };
+
+export type StartPreviewServerInput = LoadPreviewConfigOptions | PreviewConfig | ResolvedPreviewConfig | StartPreviewServerOptions;
 
 function resolvePreviewPackageEntry(candidates: string[], label: string) {
   const matchedPath = candidates.find((candidate) => fs.existsSync(candidate));
@@ -42,7 +50,64 @@ function resolvePreviewRuntimeRootEntry() {
   );
 }
 
-export async function startPreviewServer(options: StartPreviewServerOptions) {
+function isResolvedPreviewConfig(value: StartPreviewServerInput): value is ResolvedPreviewConfig {
+  return typeof value === "object" && value !== null && "targets" in value && Array.isArray(value.targets);
+}
+
+function isShorthandServerOptions(value: StartPreviewServerInput): value is StartPreviewServerOptions {
+  return typeof value === "object" && value !== null && "packageRoot" in value && "sourceRoot" in value;
+}
+
+function isPreviewConfig(value: StartPreviewServerInput): value is PreviewConfig {
+  return typeof value === "object" && value !== null && "targetDiscovery" in value;
+}
+
+export async function resolvePreviewServerConfig(options: StartPreviewServerInput = {}): Promise<ResolvedPreviewConfig> {
+  if (isResolvedPreviewConfig(options)) {
+    return options;
+  }
+
+  if (isPreviewConfig(options)) {
+    return resolvePreviewConfigObject(options);
+  }
+
+  if (isShorthandServerOptions(options)) {
+    const workspaceRoot = path.resolve(searchForWorkspaceRoot(options.packageRoot));
+    return {
+      configDir: path.resolve(options.packageRoot),
+      cwd: path.resolve(options.cwd ?? options.packageRoot),
+      mode: "package-root",
+      projectName: options.packageName,
+      runtimeModule: options.runtimeModule,
+      selectionMode: options.selectionMode ?? "compat",
+      server: {
+        fsAllow: [
+          path.resolve(options.packageRoot),
+          path.resolve(options.sourceRoot),
+          workspaceRoot,
+        ],
+        open: false,
+        port: options.port ?? DEFAULT_PORT,
+      },
+      targetDiscovery: [],
+      targets: [
+        {
+          name: options.packageName,
+          packageName: options.packageName,
+          packageRoot: path.resolve(options.packageRoot),
+          sourceRoot: path.resolve(options.sourceRoot),
+        },
+      ],
+      transformMode: options.transformMode ?? "compatibility",
+      workspaceRoot,
+    };
+  }
+
+  return loadPreviewConfig(options);
+}
+
+export async function startPreviewServer(options: StartPreviewServerInput = {}) {
+  const resolvedConfig = await resolvePreviewServerConfig(options);
   const vite = (await import("vite")) as unknown as ViteModule;
   const reactPlugin = ((await import("@vitejs/plugin-react")) as unknown as ReactPluginModule).default;
   const wasmPlugin = ((await import("vite-plugin-wasm")) as unknown as ViteWasmPluginModule).default;
@@ -51,21 +116,13 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
   ).default;
 
   const shellRoot = resolveShellRoot();
-  const previewRuntimeRootEntry = resolvePreviewRuntimeRootEntry();
-  const targets: PreviewSourceTarget[] = [
-    {
-      name: options.packageName,
-      packageName: options.packageName,
-      packageRoot: options.packageRoot,
-      sourceRoot: options.sourceRoot,
-    },
-  ];
-
+  const previewRuntimeRootEntry = resolvedConfig.runtimeModule ?? resolvePreviewRuntimeRootEntry();
   const previewPlugin = createPreviewVitePlugin({
-    projectName: options.packageName,
-    selectionMode: options.selectionMode,
-    targets,
-    transformMode: options.transformMode ?? "compatibility",
+    projectName: resolvedConfig.projectName,
+    runtimeModule: previewRuntimeRootEntry,
+    selectionMode: resolvedConfig.selectionMode,
+    targets: resolvedConfig.targets,
+    transformMode: resolvedConfig.transformMode,
   });
 
   const server = await vite.createServer({
@@ -76,7 +133,7 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
       exclude: ["@lattice-ui/layout-engine", "layout-engine"],
     },
     plugins: [
-      createAutoMockPropsPlugin({ targets }),
+      createAutoMockPropsPlugin({ targets: resolvedConfig.targets }),
       previewPlugin,
       reactPlugin(),
       wasmPlugin(),
@@ -93,19 +150,16 @@ export async function startPreviewServer(options: StartPreviewServerOptions) {
     root: shellRoot,
     server: {
       fs: {
-        allow: [
-          shellRoot,
-          ...targets.flatMap((target) => [target.packageRoot, target.sourceRoot]),
-          vite.searchForWorkspaceRoot(options.packageRoot),
-        ],
+        allow: [shellRoot, ...resolvedConfig.server.fsAllow],
       },
-      open: false,
-      port: options.port ?? DEFAULT_PORT,
+      host: resolvedConfig.server.host,
+      open: resolvedConfig.server.open,
+      port: resolvedConfig.server.port,
     },
   });
 
   await server.listen();
-  process.stdout.write(`Previewing ${options.packageName} from ${options.sourceRoot}\n`);
+  process.stdout.write(`Previewing ${resolvedConfig.projectName} from ${resolvedConfig.workspaceRoot}\n`);
   server.printUrls();
 
   return server;

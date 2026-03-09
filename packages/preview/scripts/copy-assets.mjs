@@ -34,7 +34,13 @@ await build({
   assetNames: "assets/[name]-[hash]",
   bundle: true,
   entryPoints: [path.join(sourceShellRoot, "main.tsx")],
-  external: ["react", "react-dom", "react-dom/client", "virtual:lattice-preview-registry"],
+  external: [
+    "react",
+    "react-dom",
+    "react-dom/client",
+    "virtual:lattice-preview-registry",
+    "virtual:lattice-preview-workspace-index",
+  ],
   format: "esm",
   jsx: "automatic",
   loader: {
@@ -54,14 +60,6 @@ fs.writeFileSync(
 );
 fs.writeFileSync(
   distPreviewEntry,
-  [
-    'import previewModule from "./index.js";',
-    "",
-    "export const startPreviewServer = previewModule.startPreviewServer;",
-    "export default {",
-    "  startPreviewServer,",
-    "};",
-    "",
-  ].join("\n"),
+  ['export * from "./index.js";', ""].join("\n"),
   "utf8",
 );
