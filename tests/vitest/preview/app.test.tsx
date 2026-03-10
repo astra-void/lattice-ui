@@ -524,7 +524,7 @@ describe("preview shell", () => {
     expect(await screen.findByRole("button", { name: "Recovered preview" })).toBeTruthy();
   });
 
-  it("renders the sole component export when a hot update leaves the registry export name stale", async () => {
+  it("does not recover from stale registry export names with module export inference", async () => {
     const staleEntry = createEntryDescriptor({
       candidateExportNames: ["LoadoutEditor"],
       id: "LoadoutEditor.tsx",
@@ -555,7 +555,8 @@ describe("preview shell", () => {
       />,
     );
 
-    expect(await screen.findByRole("button", { name: "Recovered stale export" })).toBeTruthy();
-    expect(screen.queryByText("Preview render failed.")).toBeNull();
+    expect(await screen.findByText("Preview render failed.")).toBeTruthy();
+    expect(screen.getAllByText(/Expected `LoadoutEditor` to be a component export/i)).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Recovered stale export" })).toBeNull();
   });
 });

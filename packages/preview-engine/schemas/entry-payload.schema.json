@@ -29,8 +29,7 @@
       "$ref": "#/$defs/propsMetadata"
     },
     "protocolVersion": {
-      "type": "integer",
-      "minimum": 1
+      "const": 4
     },
     "runtimeAdapter": {
       "type": "object",
@@ -353,6 +352,7 @@
         "selection",
         "sourceFilePath",
         "status",
+        "statusDetails",
         "targetName",
         "title"
       ],
@@ -403,6 +403,9 @@
             "blocked_by_layout"
           ]
         },
+        "statusDetails": {
+          "$ref": "#/$defs/statusDetails"
+        },
         "targetName": {
           "type": "string"
         },
@@ -410,6 +413,139 @@
           "type": "string"
         }
       }
+    },
+    "statusDetails": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "ready"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "reason"
+          ],
+          "properties": {
+            "candidates": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "kind": {
+              "const": "needs_harness"
+            },
+            "reason": {
+              "enum": [
+                "missing-explicit-contract",
+                "no-component-export"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "candidates",
+            "kind",
+            "reason"
+          ],
+          "properties": {
+            "candidates": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "kind": {
+              "const": "ambiguous"
+            },
+            "reason": {
+              "const": "ambiguous-exports"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "blockingCodes",
+            "kind",
+            "reason"
+          ],
+          "properties": {
+            "blockingCodes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "kind": {
+              "const": "blocked_by_transform"
+            },
+            "reason": {
+              "const": "transform-diagnostics"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "issueCodes",
+            "kind",
+            "reason"
+          ],
+          "properties": {
+            "issueCodes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "kind": {
+              "const": "blocked_by_runtime"
+            },
+            "reason": {
+              "const": "runtime-issues"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "issueCodes",
+            "kind",
+            "reason"
+          ],
+          "properties": {
+            "issueCodes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "kind": {
+              "const": "blocked_by_layout"
+            },
+            "reason": {
+              "const": "layout-issues"
+            }
+          }
+        }
+      ]
     },
     "graphStopReason": {
       "enum": [

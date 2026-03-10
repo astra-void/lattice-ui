@@ -5,26 +5,34 @@ import {
   type PreviewTransformDiagnostic,
   type PreviewTransformOutcome,
 } from "@lattice-ui/compiler";
+import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
 import { discoverWorkspaceState, type DiscoveredEntryState, type WorkspaceDiscoverySnapshot } from "./discover";
-import { resolveRealFilePath } from "./pathUtils";
+import { isFilePathUnderRoot, resolveFilePath, resolveRealFilePath } from "./pathUtils";
 import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
 import { isTransformableSourceFile } from "./workspaceGraph";
 import type {
   CreatePreviewEngineOptions,
   PreviewDiagnostic,
   PreviewEngine,
+  PreviewEngineSnapshot,
   PreviewEngineUpdate,
   PreviewEngineUpdateListener,
   PreviewExecutionMode,
   PreviewEntryPayload,
   PreviewEntryStatus,
+  PreviewEntryStatusDetails,
   PreviewSourceTarget,
   PreviewTransformState,
   PreviewWorkspaceIndex,
 } from "./types";
 
-type SnapshotState = WorkspaceDiscoverySnapshot & {
+type CombinedSnapshotState = WorkspaceDiscoverySnapshot & {
   targetsByFilePath: Map<string, PreviewSourceTarget>;
+};
+
+type TargetSnapshotState = WorkspaceDiscoverySnapshot & {
+  target: PreviewSourceTarget;
+  trackedFilePaths: Set<string>;
 };
 
 type CachedPayload = {
@@ -32,68 +40,131 @@ type CachedPayload = {
   payload: PreviewEntryPayload;
 };
 
+type CachedTransform = {
+  diagnostics: PreviewTransformDiagnostic[];
+  hash: string;
+  outcome: PreviewTransformOutcome;
+};
+
+const TRACEABLE_SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".d.ts", ".d.tsx"]);
+
 function hashText(value: string) {
   return createHash("sha1").update(value).digest("hex");
 }
 
-function buildSnapshot(options: CreatePreviewEngineOptions): SnapshotState {
-  const discovery = discoverWorkspaceState(options);
-  const targetsByFilePath = new Map<string, PreviewSourceTarget>();
+function getComparableFilePaths(filePath: string) {
+  return [...new Set([resolveFilePath(filePath), resolveRealFilePath(filePath)])];
+}
 
-  for (const state of discovery.entryStatesById.values()) {
-    for (const dependencyPath of state.dependencyPaths) {
-      if (!targetsByFilePath.has(dependencyPath)) {
-        targetsByFilePath.set(dependencyPath, {
-          name: state.target.targetName,
-          packageName: state.target.packageName,
-          packageRoot: state.target.packageRoot,
-          sourceRoot: state.target.sourceRoot,
-        });
+function normalizeTarget(target: PreviewSourceTarget): PreviewSourceTarget {
+  return {
+    ...target,
+    packageName: target.packageName ?? target.name,
+    packageRoot: resolveFilePath(target.packageRoot),
+    sourceRoot: resolveFilePath(target.sourceRoot),
+  };
+}
+
+function createTargetKey(target: PreviewSourceTarget) {
+  return `${target.name}:${target.packageRoot}:${target.sourceRoot}`;
+}
+
+function isTraceableSourceFile(filePath: string) {
+  const normalizedFilePath = resolveFilePath(filePath);
+  return [...TRACEABLE_SOURCE_EXTENSIONS].some((extension) => normalizedFilePath.endsWith(extension));
+}
+
+function buildTargetSnapshot(projectName: string, target: PreviewSourceTarget): TargetSnapshotState {
+  const snapshot = discoverWorkspaceState({
+    projectName,
+    targets: [target],
+  });
+  const trackedFilePaths = new Set<string>();
+
+  for (const dependencyPaths of snapshot.entryDependencyPathsById.values()) {
+    for (const dependencyPath of dependencyPaths) {
+      for (const comparablePath of getComparableFilePaths(dependencyPath)) {
+        trackedFilePaths.add(comparablePath);
       }
     }
   }
 
   return {
-    ...discovery,
-    targetsByFilePath,
+    ...snapshot,
+    target,
+    trackedFilePaths,
   };
 }
 
-function collectImpactedEntryIds(snapshot: SnapshotState | undefined, filePaths: string[]) {
+function combineSnapshots(
+  projectName: string,
+  targets: PreviewSourceTarget[],
+  snapshots: Map<string, TargetSnapshotState>,
+): CombinedSnapshotState {
+  const entryDependencyPathsById = new Map<string, string[]>();
+  const entryStatesById = new Map<string, DiscoveredEntryState>();
+  const targetsByFilePath = new Map<string, PreviewSourceTarget>();
+  const entries: PreviewWorkspaceIndex["entries"] = [];
+
+  for (const target of targets) {
+    const snapshot = snapshots.get(createTargetKey(target));
+    if (!snapshot) {
+      continue;
+    }
+
+    for (const [entryId, entryState] of snapshot.entryStatesById.entries()) {
+      entryStatesById.set(entryId, entryState);
+      entries.push(entryState.descriptor);
+    }
+
+    for (const [entryId, dependencyPaths] of snapshot.entryDependencyPathsById.entries()) {
+      entryDependencyPathsById.set(entryId, dependencyPaths);
+      for (const dependencyPath of dependencyPaths) {
+        for (const comparablePath of getComparableFilePaths(dependencyPath)) {
+          if (!targetsByFilePath.has(comparablePath)) {
+            targetsByFilePath.set(comparablePath, target);
+          }
+        }
+      }
+    }
+  }
+
+  entries.sort((left, right) => {
+    if (left.targetName !== right.targetName) {
+      return left.targetName.localeCompare(right.targetName);
+    }
+
+    return left.relativePath.localeCompare(right.relativePath);
+  });
+
+  return {
+    entryDependencyPathsById,
+    entryStatesById,
+    targetsByFilePath,
+    workspaceIndex: {
+      entries,
+      projectName,
+      protocolVersion: PREVIEW_ENGINE_PROTOCOL_VERSION,
+      targets,
+    },
+  };
+}
+
+function collectImpactedEntryIds(snapshot: CombinedSnapshotState | undefined, filePaths: string[]) {
   if (!snapshot) {
     return [];
   }
 
-  const normalizedPaths = new Set(filePaths.map((filePath) => resolveRealFilePath(filePath)));
+  const normalizedPaths = new Set(filePaths.flatMap((filePath) => getComparableFilePaths(filePath)));
   const impacted = new Set<string>();
 
   for (const [entryId, dependencyPaths] of snapshot.entryDependencyPathsById.entries()) {
-    if (dependencyPaths.some((dependencyPath) => normalizedPaths.has(resolveRealFilePath(dependencyPath)))) {
+    if (dependencyPaths.some((dependencyPath) => getComparableFilePaths(dependencyPath).some((path) => normalizedPaths.has(path)))) {
       impacted.add(entryId);
     }
   }
 
   return [...impacted].sort((left, right) => left.localeCompare(right));
-}
-
-function toTransformDiagnostic(
-  entryState: DiscoveredEntryState,
-  entryId: string,
-  diagnostic: PreviewTransformDiagnostic,
-): PreviewDiagnostic {
-  return {
-    code: diagnostic.code,
-    entryId,
-    file: diagnostic.file,
-    ...(diagnostic.blocking === undefined ? {} : { blocking: diagnostic.blocking }),
-    ...(diagnostic.details === undefined ? {} : { details: diagnostic.details }),
-    phase: "transform",
-    relativeFile: relativeToPackage(entryState.packageRoot, diagnostic.file),
-    severity: diagnostic.severity,
-    summary: diagnostic.summary,
-    ...(diagnostic.symbol === undefined ? {} : { symbol: diagnostic.symbol }),
-    target: diagnostic.target,
-  };
 }
 
 function relativeToPackage(packageRoot: string, filePath: string) {
@@ -106,7 +177,48 @@ function relativeToPackage(packageRoot: string, filePath: string) {
   return normalizedFilePath;
 }
 
-function createPayloadHash(entryState: DiscoveredEntryState) {
+function toTransformDiagnostic(
+  entryState: DiscoveredEntryState,
+  entryId: string,
+  diagnostic: PreviewTransformDiagnostic,
+): PreviewDiagnostic {
+  return {
+    ...(diagnostic.blocking === undefined ? {} : { blocking: diagnostic.blocking }),
+    code: diagnostic.code,
+    ...(diagnostic.details === undefined ? {} : { details: diagnostic.details }),
+    entryId,
+    file: diagnostic.file,
+    phase: "transform",
+    relativeFile: relativeToPackage(entryState.packageRoot, diagnostic.file),
+    severity: diagnostic.severity,
+    summary: diagnostic.summary,
+    ...(diagnostic.symbol === undefined ? {} : { symbol: diagnostic.symbol }),
+    target: diagnostic.target,
+  };
+}
+
+function toRuntimeDiagnostic(issue: PreviewRuntimeIssue): PreviewDiagnostic {
+  return {
+    blocking: true,
+    code: issue.code,
+    ...(issue.codeFrame || issue.details
+      ? {
+          details: [issue.details, issue.codeFrame].filter(Boolean).join("\n\n"),
+        }
+      : {}),
+    entryId: issue.entryId,
+    file: issue.file,
+    ...(issue.importChain ? { importChain: issue.importChain } : {}),
+    phase: issue.phase,
+    relativeFile: issue.relativeFile,
+    severity: "error",
+    summary: issue.summary,
+    ...(issue.symbol ? { symbol: issue.symbol } : {}),
+    target: issue.target,
+  };
+}
+
+function createPayloadHash(entryState: DiscoveredEntryState, runtimeIssues: PreviewRuntimeIssue[]) {
   const dependencyHashes = entryState.dependencyPaths
     .map((dependencyPath) => {
       const sourceText = fs.existsSync(dependencyPath) ? fs.readFileSync(dependencyPath, "utf8") : "";
@@ -121,6 +233,7 @@ function createPayloadHash(entryState: DiscoveredEntryState) {
       discoveryDiagnostics: entryState.discoveryDiagnostics,
       graphTrace: entryState.graphTrace,
       previewHasProps: entryState.previewHasProps,
+      runtimeIssues,
     }),
   );
 }
@@ -141,28 +254,29 @@ function createDefaultTransformOutcome(mode: PreviewExecutionMode): PreviewTrans
 
 function mergeTransformOutcome(
   current: PreviewTransformOutcome,
-  next: PreviewTransformOutcome,
+  next: PreviewTransformOutcome | undefined,
   mode: PreviewExecutionMode,
 ): PreviewTransformOutcome {
   if (mode === "design-time") {
     return createDefaultTransformOutcome(mode);
   }
 
-  if (current.kind === "blocked" || next.kind === "blocked") {
+  const normalizedNext = next ?? createDefaultTransformOutcome(mode);
+  if (current.kind === "blocked" || normalizedNext.kind === "blocked") {
     return {
       fidelity: "degraded",
       kind: "blocked",
     };
   }
 
-  if (next.kind === "mocked" || current.kind === "mocked") {
+  if (normalizedNext.kind === "mocked" || current.kind === "mocked") {
     return {
-      fidelity: next.fidelity === "degraded" || current.fidelity === "degraded" ? "degraded" : "preserved",
+      fidelity: normalizedNext.fidelity === "degraded" || current.fidelity === "degraded" ? "degraded" : "preserved",
       kind: "mocked",
     };
   }
 
-  if (next.kind === "compatibility" || current.kind === "compatibility") {
+  if (normalizedNext.kind === "compatibility" || current.kind === "compatibility") {
     return {
       fidelity: "degraded",
       kind: "compatibility",
@@ -170,7 +284,7 @@ function mergeTransformOutcome(
   }
 
   return {
-    fidelity: next.fidelity === "degraded" || current.fidelity === "degraded" ? "degraded" : "preserved",
+    fidelity: normalizedNext.fidelity === "degraded" || current.fidelity === "degraded" ? "degraded" : "preserved",
     kind: "ready",
   };
 }
@@ -180,6 +294,7 @@ function computeTransformState(
   entryId: string,
   runtimeModule: string,
   mode: PreviewExecutionMode,
+  transformCache: Map<string, CachedTransform>,
 ) {
   const diagnostics = new Map<string, PreviewDiagnostic>();
   let outcome = createDefaultTransformOutcome(mode);
@@ -190,12 +305,28 @@ function computeTransformState(
     }
 
     const sourceText = fs.readFileSync(dependencyPath, "utf8");
-    const transformed = transformPreviewSource(sourceText, {
-      filePath: dependencyPath,
-      mode,
-      runtimeModule,
-      target: entryState.target.targetName,
-    });
+    const sourceHash = hashText(sourceText);
+    const cacheKey = `${mode}:${runtimeModule}:${entryState.target.targetName}:${dependencyPath}`;
+    const cachedTransform = transformCache.get(cacheKey);
+    const transformed =
+      cachedTransform?.hash === sourceHash
+        ? cachedTransform
+        : (() => {
+            const result = transformPreviewSource(sourceText, {
+              filePath: dependencyPath,
+              mode,
+              runtimeModule,
+              target: entryState.target.targetName,
+            });
+            const nextCachedTransform = {
+              diagnostics: result.diagnostics,
+              hash: sourceHash,
+              outcome: result.outcome,
+            } satisfies CachedTransform;
+            transformCache.set(cacheKey, nextCachedTransform);
+            return nextCachedTransform;
+          })();
+
     outcome = mergeTransformOutcome(outcome, transformed.outcome, mode);
 
     for (const diagnostic of transformed.diagnostics) {
@@ -217,8 +348,12 @@ function computeTransformState(
   };
 }
 
-function mergeDiagnostics(entryState: DiscoveredEntryState, transformDiagnostics: PreviewDiagnostic[]) {
-  const diagnostics = [...entryState.discoveryDiagnostics, ...transformDiagnostics];
+function mergeDiagnostics(
+  entryState: DiscoveredEntryState,
+  transformDiagnostics: PreviewDiagnostic[],
+  runtimeDiagnostics: PreviewDiagnostic[],
+) {
+  const diagnostics = [...entryState.discoveryDiagnostics, ...transformDiagnostics, ...runtimeDiagnostics];
   const byPhase = {
     discovery: 0,
     layout: 0,
@@ -240,30 +375,138 @@ function mergeDiagnostics(entryState: DiscoveredEntryState, transformDiagnostics
   };
 }
 
-function resolvePayloadStatus(baseStatus: PreviewEntryStatus, transform: PreviewTransformState) {
-  if (transform.outcome.kind !== "blocked" && transform.outcome.kind !== "design-time") {
-    return baseStatus;
+function resolvePayloadStatus(
+  baseStatus: PreviewEntryStatus,
+  baseStatusDetails: PreviewEntryStatusDetails,
+  transform: PreviewTransformState,
+  transformDiagnostics: PreviewDiagnostic[],
+  runtimeDiagnostics: PreviewDiagnostic[],
+): Pick<PreviewEntryPayload["descriptor"], "status" | "statusDetails"> {
+  if (baseStatus === "needs_harness" || baseStatus === "ambiguous") {
+    return {
+      status: baseStatus,
+      statusDetails: baseStatusDetails,
+    };
   }
 
-  if (baseStatus === "ready") {
-    return "blocked_by_transform" as const;
+  if (transform.outcome.kind === "blocked" || transform.outcome.kind === "design-time") {
+    return {
+      status: "blocked_by_transform",
+      statusDetails: {
+        blockingCodes: transformDiagnostics.filter((diagnostic) => diagnostic.blocking).map((diagnostic) => diagnostic.code),
+        kind: "blocked_by_transform",
+        reason: "transform-diagnostics",
+      },
+    };
   }
 
-  return baseStatus;
+  const runtimeIssues = runtimeDiagnostics.filter((diagnostic) => diagnostic.phase === "runtime");
+  if (runtimeIssues.length > 0) {
+    return {
+      status: "blocked_by_runtime",
+      statusDetails: {
+        issueCodes: runtimeIssues.map((diagnostic) => diagnostic.code),
+        kind: "blocked_by_runtime",
+        reason: "runtime-issues",
+      },
+    };
+  }
+
+  const layoutIssues = runtimeDiagnostics.filter((diagnostic) => diagnostic.phase === "layout");
+  if (layoutIssues.length > 0) {
+    return {
+      status: "blocked_by_layout",
+      statusDetails: {
+        issueCodes: layoutIssues.map((diagnostic) => diagnostic.code),
+        kind: "blocked_by_layout",
+        reason: "layout-issues",
+      },
+    };
+  }
+
+  return {
+    status: "ready",
+    statusDetails: {
+      kind: "ready",
+    },
+  };
+}
+
+function groupRuntimeIssues(issues: PreviewRuntimeIssue[]) {
+  const issuesByEntryId = new Map<string, PreviewRuntimeIssue[]>();
+
+  for (const issue of issues) {
+    const entryId = issue.entryId;
+    if (!entryId) {
+      continue;
+    }
+
+    const existing = issuesByEntryId.get(entryId) ?? [];
+    existing.push(issue);
+    issuesByEntryId.set(entryId, existing);
+  }
+
+  for (const [entryId, entryIssues] of issuesByEntryId.entries()) {
+    issuesByEntryId.set(
+      entryId,
+      [...entryIssues].sort((left, right) => {
+        if (left.phase !== right.phase) {
+          return left.phase.localeCompare(right.phase);
+        }
+
+        if (left.code !== right.code) {
+          return left.code.localeCompare(right.code);
+        }
+
+        return left.summary.localeCompare(right.summary);
+      }),
+    );
+  }
+
+  return issuesByEntryId;
+}
+
+function collectChangedEntryIds(
+  previousWorkspaceIndex: PreviewWorkspaceIndex,
+  nextWorkspaceIndex: PreviewWorkspaceIndex,
+  initialChangedEntryIds: Iterable<string>,
+) {
+  const changedEntryIds = new Set<string>(initialChangedEntryIds);
+  const previousEntriesById = new Map(previousWorkspaceIndex.entries.map((entry) => [entry.id, entry]));
+
+  for (const entry of nextWorkspaceIndex.entries) {
+    const previousEntry = previousEntriesById.get(entry.id);
+    if (!previousEntry || JSON.stringify(previousEntry) !== JSON.stringify(entry)) {
+      changedEntryIds.add(entry.id);
+    }
+  }
+
+  return [...changedEntryIds].sort((left, right) => left.localeCompare(right));
 }
 
 class PreviewEngineImpl implements PreviewEngine {
   private readonly listeners = new Set<PreviewEngineUpdateListener>();
+  private readonly normalizedTargets: PreviewSourceTarget[];
   private readonly payloadCache = new Map<string, CachedPayload>();
-  private snapshot: SnapshotState;
+  private readonly runtimeIssuesByEntryId = new Map<string, PreviewRuntimeIssue[]>();
+  private readonly targetSnapshots = new Map<string, TargetSnapshotState>();
+  private readonly transformCache = new Map<string, CachedTransform>();
+  private snapshot: CombinedSnapshotState;
 
   public constructor(private readonly options: CreatePreviewEngineOptions) {
-    this.snapshot = buildSnapshot(options);
+    this.normalizedTargets = options.targets.map(normalizeTarget);
+    for (const target of this.normalizedTargets) {
+      this.targetSnapshots.set(createTargetKey(target), buildTargetSnapshot(options.projectName, target));
+    }
+    this.snapshot = combineSnapshots(options.projectName, this.normalizedTargets, this.targetSnapshots);
   }
 
   public dispose() {
     this.listeners.clear();
     this.payloadCache.clear();
+    this.runtimeIssuesByEntryId.clear();
+    this.targetSnapshots.clear();
+    this.transformCache.clear();
   }
 
   public getEntryPayload(entryId: string) {
@@ -272,7 +515,8 @@ class PreviewEngineImpl implements PreviewEngine {
       throw new Error(`Unknown preview entry: ${entryId}`);
     }
 
-    const payloadHash = createPayloadHash(entryState);
+    const runtimeIssues = this.runtimeIssuesByEntryId.get(entryId) ?? [];
+    const payloadHash = createPayloadHash(entryState, runtimeIssues);
     const cachedPayload = this.payloadCache.get(entryId);
     if (cachedPayload?.hash === payloadHash) {
       return cachedPayload.payload;
@@ -283,16 +527,26 @@ class PreviewEngineImpl implements PreviewEngine {
       entryId,
       this.options.runtimeModule ?? "virtual:lattice-preview-runtime",
       this.options.transformMode ?? "strict-fidelity",
+      this.transformCache,
     );
-    const merged = mergeDiagnostics(entryState, transform.diagnostics);
+    const runtimeDiagnostics = runtimeIssues.map(toRuntimeDiagnostic);
+    const merged = mergeDiagnostics(entryState, transform.diagnostics, runtimeDiagnostics);
+    const resolvedStatus = resolvePayloadStatus(
+      entryState.descriptor.status,
+      entryState.descriptor.statusDetails,
+      {
+        mode: this.options.transformMode ?? "strict-fidelity",
+        outcome: transform.outcome,
+      },
+      transform.diagnostics,
+      runtimeDiagnostics,
+    );
     const payload: PreviewEntryPayload = {
       descriptor: {
         ...entryState.descriptor,
         diagnosticsSummary: merged.diagnosticsSummary,
-        status: resolvePayloadStatus(entryState.descriptor.status, {
-          mode: this.options.transformMode ?? "strict-fidelity",
-          outcome: transform.outcome,
-        }),
+        status: resolvedStatus.status,
+        statusDetails: resolvedStatus.statusDetails,
       },
       diagnostics: merged.diagnostics,
       graphTrace: entryState.graphTrace,
@@ -315,8 +569,26 @@ class PreviewEngineImpl implements PreviewEngine {
     return payload;
   }
 
-  public getTargetForFilePath(filePath: string) {
-    return this.snapshot.targetsByFilePath.get(resolveRealFilePath(filePath));
+  public getSnapshot(): PreviewEngineSnapshot {
+    const workspaceIndex = this.getWorkspaceIndex();
+    return {
+      entries: Object.fromEntries(workspaceIndex.entries.map((entry) => [entry.id, this.getEntryPayload(entry.id)])),
+      protocolVersion: PREVIEW_ENGINE_PROTOCOL_VERSION,
+      workspaceIndex,
+    };
+  }
+
+  public isTrackedSourceFile(filePath: string) {
+    const comparablePaths = getComparableFilePaths(filePath);
+    if (comparablePaths.some((candidatePath) => this.snapshot.targetsByFilePath.has(candidatePath))) {
+      return true;
+    }
+
+    if (!isTraceableSourceFile(filePath)) {
+      return false;
+    }
+
+    return this.normalizedTargets.some((target) => comparablePaths.some((candidatePath) => isFilePathUnderRoot(target.sourceRoot, candidatePath)));
   }
 
   public getWorkspaceIndex() {
@@ -327,47 +599,68 @@ class PreviewEngineImpl implements PreviewEngine {
     } satisfies PreviewWorkspaceIndex;
   }
 
-  public invalidateFiles(filePaths: string[]) {
+  public invalidateSourceFiles(filePaths: string[]) {
+    const normalizedPaths = [...new Set(filePaths.flatMap((filePath) => getComparableFilePaths(filePath)))];
     const previousSnapshot = this.snapshot;
     const previousWorkspaceIndex = this.getWorkspaceIndex();
-    const previousWorkspaceJson = JSON.stringify(previousWorkspaceIndex.entries);
-    const previouslyImpactedIds = collectImpactedEntryIds(previousSnapshot, filePaths);
+    const previousImpactedIds = collectImpactedEntryIds(previousSnapshot, normalizedPaths);
+    const affectedTargets = this.normalizedTargets.filter((target) =>
+      normalizedPaths.some(
+        (filePath) =>
+          isFilePathUnderRoot(target.sourceRoot, filePath) ||
+          this.targetSnapshots.get(createTargetKey(target))?.trackedFilePaths.has(filePath),
+      ),
+    );
 
-    this.snapshot = buildSnapshot(this.options);
+    if (affectedTargets.length === 0) {
+      return {
+        changedEntryIds: [],
+        executionChangedEntryIds: [],
+        protocolVersion: PREVIEW_ENGINE_PROTOCOL_VERSION,
+        registryChangedEntryIds: [],
+        removedEntryIds: [],
+        requiresFullReload: false,
+        workspaceChanged: false,
+        workspaceIndex: previousWorkspaceIndex,
+      } satisfies PreviewEngineUpdate;
+    }
 
-    const nextWorkspaceIndex = this.getWorkspaceIndex();
-    const nextWorkspaceJson = JSON.stringify(nextWorkspaceIndex.entries);
-    const newlyImpactedIds = collectImpactedEntryIds(this.snapshot, filePaths);
+    for (const target of affectedTargets) {
+      this.targetSnapshots.set(createTargetKey(target), buildTargetSnapshot(this.options.projectName, target));
+    }
+
+    this.snapshot = combineSnapshots(this.options.projectName, this.normalizedTargets, this.targetSnapshots);
+
     const removedEntryIds = [...previousSnapshot.entryStatesById.keys()]
       .filter((entryId) => !this.snapshot.entryStatesById.has(entryId))
       .sort((left, right) => left.localeCompare(right));
-    const changedEntryIds = new Set<string>([...previouslyImpactedIds, ...newlyImpactedIds]);
-    const previousEntriesById = new Map(previousWorkspaceIndex.entries.map((entry) => [entry.id, entry]));
-
-    for (const entry of nextWorkspaceIndex.entries) {
-      const previousEntry = previousEntriesById.get(entry.id);
-      if (!previousEntry || JSON.stringify(previousEntry) !== JSON.stringify(entry)) {
-        changedEntryIds.add(entry.id);
-      }
+    for (const removedEntryId of removedEntryIds) {
+      this.runtimeIssuesByEntryId.delete(removedEntryId);
     }
 
-    for (const entryId of [...changedEntryIds, ...removedEntryIds]) {
+    const nextWorkspaceIndex = this.getWorkspaceIndex();
+    const nextImpactedIds = collectImpactedEntryIds(this.snapshot, normalizedPaths);
+    const registryChangedEntryIds = collectChangedEntryIds(previousWorkspaceIndex, nextWorkspaceIndex, [
+      ...previousImpactedIds,
+      ...nextImpactedIds,
+    ]);
+
+    for (const entryId of [...registryChangedEntryIds, ...removedEntryIds]) {
       this.payloadCache.delete(entryId);
     }
 
     const update: PreviewEngineUpdate = {
-      changedEntryIds: [...changedEntryIds].sort((left, right) => left.localeCompare(right)),
+      changedEntryIds: registryChangedEntryIds,
+      executionChangedEntryIds: [],
       protocolVersion: PREVIEW_ENGINE_PROTOCOL_VERSION,
+      registryChangedEntryIds,
       removedEntryIds,
       requiresFullReload: false,
-      workspaceChanged: previousWorkspaceJson !== nextWorkspaceJson || removedEntryIds.length > 0,
+      workspaceChanged: registryChangedEntryIds.length > 0 || removedEntryIds.length > 0,
       workspaceIndex: nextWorkspaceIndex,
     };
 
-    for (const listener of this.listeners) {
-      listener(update);
-    }
-
+    this.emitUpdate(update);
     return update;
   }
 
@@ -376,6 +669,46 @@ class PreviewEngineImpl implements PreviewEngine {
     return () => {
       this.listeners.delete(listener);
     };
+  }
+
+  public replaceRuntimeIssues(issues: PreviewRuntimeIssue[]) {
+    const previousWorkspaceIndex = this.getWorkspaceIndex();
+    const previousEntryIds = new Set(this.runtimeIssuesByEntryId.keys());
+    const nextRuntimeIssuesByEntryId = groupRuntimeIssues(
+      issues.filter((issue) => this.snapshot.entryStatesById.has(issue.entryId)),
+    );
+
+    this.runtimeIssuesByEntryId.clear();
+    for (const [entryId, entryIssues] of nextRuntimeIssuesByEntryId.entries()) {
+      this.runtimeIssuesByEntryId.set(entryId, entryIssues);
+    }
+
+    const changedEntryIds = new Set<string>([...previousEntryIds, ...nextRuntimeIssuesByEntryId.keys()]);
+    for (const entryId of changedEntryIds) {
+      this.payloadCache.delete(entryId);
+    }
+
+    const nextWorkspaceIndex = this.getWorkspaceIndex();
+    const executionChangedEntryIds = collectChangedEntryIds(previousWorkspaceIndex, nextWorkspaceIndex, changedEntryIds);
+    const update: PreviewEngineUpdate = {
+      changedEntryIds: executionChangedEntryIds,
+      executionChangedEntryIds,
+      protocolVersion: PREVIEW_ENGINE_PROTOCOL_VERSION,
+      registryChangedEntryIds: [],
+      removedEntryIds: [],
+      requiresFullReload: false,
+      workspaceChanged: false,
+      workspaceIndex: nextWorkspaceIndex,
+    };
+
+    this.emitUpdate(update);
+    return update;
+  }
+
+  private emitUpdate(update: PreviewEngineUpdate) {
+    for (const listener of this.listeners) {
+      listener(update);
+    }
   }
 }
 

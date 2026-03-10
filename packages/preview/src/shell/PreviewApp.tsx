@@ -44,6 +44,11 @@ type PreviewCanvasProps = {
   onRenderError: (error: unknown | null) => void;
 };
 
+type PreviewNodeRendererProps = {
+  entry: PreviewEntryDescriptor;
+  module: PreviewModule;
+};
+
 type PreviewErrorBoundaryProps = {
   children: React.ReactNode;
   onError: (error: unknown | null) => void;
@@ -108,11 +113,7 @@ function getInitialSelectedId(entries: PreviewEntryDescriptor[], explicitSelecte
 }
 
 function readPreviewDefinition(module: PreviewModule) {
-  const preview =
-    module.preview ??
-    (module.default && typeof module.default === "object" && "preview" in module.default
-      ? (module.default as PreviewModule).preview
-      : undefined);
+  const preview = module.preview;
 
   if (!preview || typeof preview !== "object") {
     return undefined;
@@ -131,21 +132,7 @@ function readNestedExport(container: unknown, exportName: string, visited = new 
   }
 
   visited.add(container);
-
-  if (exportName in container) {
-    return container[exportName];
-  }
-
-  if (!("default" in container)) {
-    return undefined;
-  }
-
-  const defaultExport = container.default;
-  if (typeof defaultExport === "function" && defaultExport.name === exportName) {
-    return defaultExport;
-  }
-
-  return readNestedExport(defaultExport, exportName, visited);
+  return exportName in container ? container[exportName] : undefined;
 }
 
 function readModuleExport(module: PreviewModule, exportName: "default" | string) {
@@ -158,56 +145,6 @@ function readModuleExport(module: PreviewModule, exportName: "default" | string)
 
 function isRenderableComponentExport(value: unknown): boolean {
   return typeof value === "function" || (isRecord(value) && "$$typeof" in value);
-}
-
-function collectRenderableModuleExports(
-  container: unknown,
-  exportPrefix = "",
-  visited = new Set<unknown>(),
-): Array<{ exportName: string; value: unknown }> {
-  if (!isRecord(container) || visited.has(container)) {
-    return [];
-  }
-
-  visited.add(container);
-
-  const renderableExports: Array<{ exportName: string; value: unknown }> = [];
-
-  for (const [name, value] of Object.entries(container)) {
-    if (name === "__esModule" || name === "__previewEntryMeta" || name === "preview") {
-      continue;
-    }
-
-    const exportName = exportPrefix ? `${exportPrefix}.${name}` : name;
-    if (name === "default") {
-      if (isRenderableComponentExport(value)) {
-        renderableExports.push({ exportName: exportPrefix ? exportName : "default", value });
-      }
-
-      renderableExports.push(...collectRenderableModuleExports(value, exportName, visited));
-      continue;
-    }
-
-    if (isRenderableComponentExport(value)) {
-      renderableExports.push({ exportName, value });
-    }
-  }
-
-  return renderableExports;
-}
-
-function readSingleRenderableModuleExport(module: PreviewModule) {
-  const seenValues = new Set<unknown>();
-  const renderableExports = collectRenderableModuleExports(module).filter(({ value }) => {
-    if (seenValues.has(value)) {
-      return false;
-    }
-
-    seenValues.add(value);
-    return true;
-  });
-
-  return renderableExports.length === 1 ? renderableExports[0] : undefined;
 }
 
 function describeValue(value: unknown) {
@@ -236,74 +173,8 @@ function describeValue(value: unknown) {
 }
 
 function describeModuleExports(module: PreviewModule) {
-  const segments: string[] = [];
-  const visited = new Set<unknown>();
-  let current: unknown = module;
-  let label = "module";
-
-  while (isRecord(current) && !visited.has(current)) {
-    visited.add(current);
-    const keys = Object.keys(current).sort();
-    segments.push(`${label}: [${keys.join(", ") || "(none)"}]`);
-
-    if (!("default" in current)) {
-      break;
-    }
-
-    current = current.default;
-    label = `${label}.default`;
-  }
-
-  return segments.join("; ");
-}
-
-function createDiscoveryDiagnostics(entry: PreviewEntryDescriptor): PreviewDiagnostic[] {
-  if (entry.renderTarget.kind !== "none") {
-    return [];
-  }
-
-  switch (entry.renderTarget.reason) {
-    case "ambiguous-exports":
-      return [
-        {
-          code: "AMBIGUOUS_COMPONENT_EXPORTS",
-          entryId: entry.id,
-          file: entry.sourceFilePath,
-          phase: "discovery",
-          relativeFile: entry.relativePath,
-          severity: "warning",
-          summary: `Multiple component exports need explicit disambiguation: ${entry.candidateExportNames.join(", ")}.`,
-          target: entry.targetName,
-        },
-      ];
-    case "missing-explicit-contract":
-      return [
-        {
-          code: "MISSING_EXPLICIT_PREVIEW_CONTRACT",
-          entryId: entry.id,
-          file: entry.sourceFilePath,
-          phase: "discovery",
-          relativeFile: entry.relativePath,
-          severity: "warning",
-          summary: "Add `preview.entry` or `preview.render` to make the preview target explicit.",
-          target: entry.targetName,
-        },
-      ];
-    case "no-component-export":
-    default:
-      return [
-        {
-          code: "NO_COMPONENT_EXPORTS",
-          entryId: entry.id,
-          file: entry.sourceFilePath,
-          phase: "discovery",
-          relativeFile: entry.relativePath,
-          severity: "warning",
-          summary: "No exported component candidates were found for preview entry selection.",
-          target: entry.targetName,
-        },
-      ];
-  }
+  const keys = Object.keys(module).sort();
+  return `module: [${keys.join(", ") || "(none)"}]`;
 }
 
 function getRenderModeLabel(entry: PreviewEntryDescriptor) {
@@ -460,11 +331,7 @@ function createPreviewNode(entry: PreviewEntryDescriptor, module: PreviewModule)
 
   if (entry.renderTarget.kind === "component") {
     const exportValue = readModuleExport(module, entry.renderTarget.exportName);
-    // Preview source edits can briefly update the module before the registry full-reload lands.
-    const fallbackExport = exportValue === undefined ? readSingleRenderableModuleExport(module) : undefined;
-    const resolvedExportValue = fallbackExport?.value ?? exportValue;
-
-    if (!isRenderableComponentExport(resolvedExportValue)) {
+    if (!isRenderableComponentExport(exportValue)) {
       throw new Error(
         `Expected \`${entry.renderTarget.exportName}\` to be a component export, received ${describeValue(exportValue)}. ` +
           `Available exports: ${describeModuleExports(module)}.`,
@@ -475,11 +342,15 @@ function createPreviewNode(entry: PreviewEntryDescriptor, module: PreviewModule)
       entry.renderTarget.usesPreviewProps && preview?.props && typeof preview.props === "object" ? preview.props : undefined;
 
     return (
-      <AutoMockProvider component={resolvedExportValue as React.ComponentType<Record<string, unknown>>} props={props} />
+      <AutoMockProvider component={exportValue as React.ComponentType<Record<string, unknown>>} props={props} />
     );
   }
 
   return null;
+}
+
+function PreviewNodeRenderer(props: PreviewNodeRendererProps) {
+  return createPreviewNode(props.entry, props.module);
 }
 
 function usePreviewViewport() {
@@ -577,7 +448,7 @@ function PreviewCanvas(props: PreviewCanvasProps) {
         >
           <LayoutProvider viewportHeight={viewport.height} viewportWidth={viewport.width}>
             <PreviewErrorBoundary key={props.entry.id} onError={props.onRenderError}>
-              {createPreviewNode(props.entry, props.module)}
+              <PreviewNodeRenderer entry={props.entry} module={props.module} />
             </PreviewErrorBoundary>
           </LayoutProvider>
         </div>
@@ -601,8 +472,7 @@ export function PreviewApp(props: PreviewAppProps) {
   const selectedEntryDiscoveryDiagnostics =
     selectedEntry == null
       ? []
-      : (selectedEntryPayload?.diagnostics.filter((diagnostic) => diagnostic.phase === "discovery") ??
-        createDiscoveryDiagnostics(selectedEntry));
+      : (selectedEntryPayload?.diagnostics.filter((diagnostic) => diagnostic.phase === "discovery") ?? []);
   const selectedEntryDiagnostics =
     selectedEntryPayload?.diagnostics.filter((diagnostic) => diagnostic.phase !== "discovery") ?? [];
   const selectedEntryBlockingDiagnostics = selectedEntryDiagnostics.filter(

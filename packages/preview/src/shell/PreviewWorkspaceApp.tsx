@@ -1,11 +1,16 @@
 import { previewEntryPayloads, previewImporters, previewWorkspaceIndex } from "virtual:lattice-preview-workspace-index";
 import type { PreviewEngineUpdate, PreviewEntryDescriptor, PreviewEntryPayload } from "@lattice-ui/preview-engine";
+import { subscribePreviewRuntimeIssues, type PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
 import React from "react";
 import { PreviewApp } from "./PreviewApp";
+
+const PREVIEW_UPDATE_EVENT = "lattice-preview:update";
+const RUNTIME_ISSUES_EVENT = "lattice-preview:runtime-issues";
 
 type HotContext = {
   off?: (event: string, callback: (update: PreviewEngineUpdate) => void) => void;
   on: (event: string, callback: (update: PreviewEngineUpdate) => void) => void;
+  send?: (event: string, data?: PreviewRuntimeIssue[]) => void;
 };
 
 function getHotContext(): HotContext | undefined {
@@ -58,9 +63,24 @@ export function PreviewWorkspaceApp() {
       }
     };
 
-    hot.on("lattice-preview:update", handleUpdate);
+    hot.on(PREVIEW_UPDATE_EVENT, handleUpdate);
     return () => {
-      hot.off?.("lattice-preview:update", handleUpdate);
+      hot.off?.(PREVIEW_UPDATE_EVENT, handleUpdate);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const hot = getHotContext();
+    if (!hot?.send) {
+      return;
+    }
+
+    const unsubscribe = subscribePreviewRuntimeIssues((issues) => {
+      hot.send?.(RUNTIME_ISSUES_EVENT, issues);
+    });
+
+    return () => {
+      unsubscribe();
     };
   }, []);
 

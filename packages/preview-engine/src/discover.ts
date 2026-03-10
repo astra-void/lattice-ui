@@ -15,6 +15,7 @@ import type {
   PreviewDiscoveryDiagnosticCode,
   PreviewEntryDescriptor,
   PreviewEntryStatus,
+  PreviewEntryStatusDetails,
   PreviewGraphImportEdge,
   PreviewGraphTrace,
   PreviewRenderTarget,
@@ -923,6 +924,52 @@ function createCapabilities(renderTarget: PreviewRenderTarget) {
   };
 }
 
+function createBaseStatusDetails(
+  status: PreviewEntryStatus,
+  renderTarget: PreviewRenderTarget,
+): PreviewEntryStatusDetails {
+  switch (status) {
+    case "ambiguous":
+      return {
+        candidates: renderTarget.kind === "none" ? renderTarget.candidates ?? [] : [],
+        kind: "ambiguous",
+        reason: "ambiguous-exports",
+      };
+    case "needs_harness":
+      return {
+        ...(renderTarget.kind === "none" && renderTarget.candidates ? { candidates: renderTarget.candidates } : {}),
+        kind: "needs_harness",
+        reason:
+          renderTarget.kind === "none" && renderTarget.reason === "no-component-export"
+            ? "no-component-export"
+            : "missing-explicit-contract",
+      };
+    case "blocked_by_layout":
+      return {
+        issueCodes: [],
+        kind: "blocked_by_layout",
+        reason: "layout-issues",
+      };
+    case "blocked_by_runtime":
+      return {
+        issueCodes: [],
+        kind: "blocked_by_runtime",
+        reason: "runtime-issues",
+      };
+    case "blocked_by_transform":
+      return {
+        blockingCodes: [],
+        kind: "blocked_by_transform",
+        reason: "transform-diagnostics",
+      };
+    case "ready":
+    default:
+      return {
+        kind: "ready",
+      };
+  }
+}
+
 function createExplicitSelection(record: RawSourceModuleRecord, recordsByPath: Map<string, RawSourceModuleRecord>) {
   if (record.preview.hasRender) {
     return {
@@ -1113,6 +1160,7 @@ function buildDescriptor(
     selection,
     sourceFilePath: record.filePath,
     status,
+    statusDetails: createBaseStatusDetails(status, renderTarget),
     targetName: record.target.targetName,
     title,
   };

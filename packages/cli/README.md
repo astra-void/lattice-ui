@@ -46,5 +46,5 @@ npx lattice preview
 
 - Run `lattice preview` from a package root. The CLI infers `<cwd>/src` and indexes real `src/**/*.tsx` files.
 - Explicit preview selection prefers `preview.render`, then `preview.entry`.
-- Default export / basename / sole-export inference is still available as a deprecated fallback and is surfaced in preview diagnostics until the file is migrated.
 - Files can opt into an explicit preview contract with `export const preview = { title?, entry?, props?, render? }`.
+- Files without `preview.entry` or `preview.render` stay indexed, but they are not rendered until the contract is made explicit.

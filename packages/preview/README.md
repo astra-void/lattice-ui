@@ -100,7 +100,7 @@ Supported explicit contracts:
 - `preview.entry`
 - `preview.render`
 
-Files without an explicit preview contract stay indexed, but they do not auto-render. They surface as `needs_harness`, `ambiguous`, or `unresolved` guidance until `preview.entry` or `preview.render` is added.
+Files without an explicit preview contract stay indexed, but they do not auto-render. They surface as `needs_harness` or `ambiguous` guidance until `preview.entry` or `preview.render` is added.
 
 Selection pipeline:
 

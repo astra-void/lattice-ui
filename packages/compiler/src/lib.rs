@@ -17,7 +17,7 @@ use swc_core::{
 };
 
 #[derive(Default)]
-struct LatticeUITransformer;
+struct LatticeUITransformer;        
 
 const RBX_STYLE_HELPER_NAME: &str = "__rbxStyle";
 

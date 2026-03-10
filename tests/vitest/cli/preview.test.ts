@@ -302,7 +302,6 @@ describe("preview command", () => {
     const previewModule = await import("../../../packages/preview/src/index");
 
     expect(Object.keys(previewModule).sort()).toEqual([
-      "buildPreviewModules",
       "createPackageTargetDiscovery",
       "createPreviewHeadlessSession",
       "createStaticTargetsDiscovery",

@@ -4,8 +4,9 @@ import type {
   PreviewTransformMode,
   PreviewTransformOutcome,
 } from "@lattice-ui/compiler";
+import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
 
-export const PREVIEW_ENGINE_PROTOCOL_VERSION = 3;
+export const PREVIEW_ENGINE_PROTOCOL_VERSION = 4;
 
 export type PreviewPropKind =
   | "array"
@@ -59,6 +60,36 @@ export type PreviewEntryStatus =
   | "blocked_by_transform"
   | "blocked_by_runtime"
   | "blocked_by_layout";
+
+export type PreviewEntryStatusDetails =
+  | {
+      kind: "ready";
+    }
+  | {
+      candidates?: string[];
+      kind: "needs_harness";
+      reason: "missing-explicit-contract" | "no-component-export";
+    }
+  | {
+      candidates: string[];
+      kind: "ambiguous";
+      reason: "ambiguous-exports";
+    }
+  | {
+      blockingCodes: string[];
+      kind: "blocked_by_transform";
+      reason: "transform-diagnostics";
+    }
+  | {
+      issueCodes: string[];
+      kind: "blocked_by_runtime";
+      reason: "runtime-issues";
+    }
+  | {
+      issueCodes: string[];
+      kind: "blocked_by_layout";
+      reason: "layout-issues";
+    };
 
 export type PreviewDiagnosticPhase = "discovery" | "layout" | "runtime" | "transform";
 export type PreviewDiagnosticSeverity = "error" | "info" | "warning";
@@ -188,6 +219,7 @@ export type PreviewEntryDescriptor = {
   selection: PreviewSelection;
   sourceFilePath: string;
   status: PreviewEntryStatus;
+  statusDetails: PreviewEntryStatusDetails;
   targetName: string;
   title: string;
 };
@@ -217,6 +249,12 @@ export type PreviewWorkspaceIndex = {
   projectName: string;
   protocolVersion: number;
   targets: PreviewSourceTarget[];
+};
+
+export type PreviewEngineSnapshot = {
+  entries: Record<string, PreviewEntryPayload>;
+  protocolVersion: number;
+  workspaceIndex: PreviewWorkspaceIndex;
 };
 
 export type PreviewBuildArtifactKind = "module" | "entry-metadata" | "layout-schema";
@@ -282,7 +320,9 @@ export type PreviewCachedArtifactMetadata = {
 
 export type PreviewEngineUpdate = {
   changedEntryIds: string[];
+  executionChangedEntryIds: string[];
   protocolVersion: number;
+  registryChangedEntryIds: string[];
   removedEntryIds: string[];
   requiresFullReload: boolean;
   workspaceChanged: boolean;
@@ -301,8 +341,10 @@ export type PreviewEngineUpdateListener = (update: PreviewEngineUpdate) => void;
 export interface PreviewEngine {
   dispose(): void;
   getEntryPayload(entryId: string): PreviewEntryPayload;
-  getTargetForFilePath(filePath: string): PreviewSourceTarget | undefined;
+  getSnapshot(): PreviewEngineSnapshot;
+  isTrackedSourceFile(filePath: string): boolean;
   getWorkspaceIndex(): PreviewWorkspaceIndex;
-  invalidateFiles(filePaths: string[]): PreviewEngineUpdate;
+  invalidateSourceFiles(filePaths: string[]): PreviewEngineUpdate;
   onUpdate(listener: PreviewEngineUpdateListener): () => void;
+  replaceRuntimeIssues(issues: PreviewRuntimeIssue[]): PreviewEngineUpdate;
 }

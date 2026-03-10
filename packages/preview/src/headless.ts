@@ -1,13 +1,9 @@
-import { createPreviewEngine, PREVIEW_ENGINE_PROTOCOL_VERSION, type PreviewEngine, type PreviewEntryPayload } from "@lattice-ui/preview-engine";
+import { createPreviewEngine, type PreviewEngine, type PreviewEngineSnapshot } from "@lattice-ui/preview-engine";
 import type { ResolvedPreviewConfig } from "./config";
 import type { StartPreviewServerInput } from "./source/server";
 import { resolvePreviewServerConfig } from "./source/server";
 
-export type PreviewHeadlessSnapshot = {
-  entries: Record<string, PreviewEntryPayload>;
-  protocolVersion: number;
-  workspaceIndex: ReturnType<PreviewEngine["getWorkspaceIndex"]>;
-};
+export type PreviewHeadlessSnapshot = PreviewEngineSnapshot;
 
 export type PreviewHeadlessSession = {
   dispose(): void;
@@ -18,11 +14,15 @@ export type PreviewHeadlessSession = {
 
 export type CreatePreviewHeadlessSessionOptions = StartPreviewServerInput;
 
-function createSnapshot(engine: PreviewEngine): PreviewHeadlessSnapshot {
+function getEngineSnapshot(engine: PreviewEngine): PreviewEngineSnapshot {
+  if (typeof (engine as PreviewEngine & { getSnapshot?: () => PreviewEngineSnapshot }).getSnapshot === "function") {
+    return engine.getSnapshot();
+  }
+
   const workspaceIndex = engine.getWorkspaceIndex();
   return {
     entries: Object.fromEntries(workspaceIndex.entries.map((entry) => [entry.id, engine.getEntryPayload(entry.id)])),
-    protocolVersion: PREVIEW_ENGINE_PROTOCOL_VERSION,
+    protocolVersion: workspaceIndex.protocolVersion,
     workspaceIndex,
   };
 }
@@ -44,7 +44,7 @@ export async function createPreviewHeadlessSession(
     },
     engine,
     getSnapshot() {
-      return createSnapshot(engine);
+      return getEngineSnapshot(engine);
     },
     resolvedConfig,
   };

@@ -207,6 +207,7 @@ declare module "@lattice-ui/preview-runtime" {
 
 declare module "@lattice-ui/preview-engine" {
   import type { ComponentType } from "react";
+  import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
 
   export type PreviewExecutionMode = "strict-fidelity" | "compatibility" | "mocked" | "design-time";
   export type PreviewEntryStatus =
@@ -216,6 +217,35 @@ declare module "@lattice-ui/preview-engine" {
     | "blocked_by_transform"
     | "blocked_by_runtime"
     | "blocked_by_layout";
+  export type PreviewEntryStatusDetails =
+    | {
+        kind: "ready";
+      }
+    | {
+        candidates?: string[];
+        kind: "needs_harness";
+        reason: "missing-explicit-contract" | "no-component-export";
+      }
+    | {
+        candidates: string[];
+        kind: "ambiguous";
+        reason: "ambiguous-exports";
+      }
+    | {
+        blockingCodes: string[];
+        kind: "blocked_by_transform";
+        reason: "transform-diagnostics";
+      }
+    | {
+        issueCodes: string[];
+        kind: "blocked_by_runtime";
+        reason: "runtime-issues";
+      }
+    | {
+        issueCodes: string[];
+        kind: "blocked_by_layout";
+        reason: "layout-issues";
+      };
 
   export type PreviewDiagnosticPhase = "discovery" | "layout" | "runtime" | "transform";
   export type PreviewDiagnosticSeverity = "error" | "info" | "warning";
@@ -233,6 +263,7 @@ declare module "@lattice-ui/preview-engine" {
     details?: string;
     entryId: string;
     file: string;
+    importChain?: string[];
     phase: PreviewDiagnosticPhase;
     relativeFile: string;
     severity: PreviewDiagnosticSeverity;
@@ -293,6 +324,7 @@ declare module "@lattice-ui/preview-engine" {
     selection: PreviewSelection;
     sourceFilePath: string;
     status: PreviewEntryStatus;
+    statusDetails: PreviewEntryStatusDetails;
     targetName: string;
     title: string;
   };
@@ -326,7 +358,13 @@ declare module "@lattice-ui/preview-engine" {
     entries: PreviewEntryDescriptor[];
     projectName: string;
     protocolVersion: number;
-    targets?: PreviewSourceTarget[];
+    targets: PreviewSourceTarget[];
+  };
+
+  export type PreviewEngineSnapshot = {
+    entries: Record<string, PreviewEntryPayload>;
+    protocolVersion: number;
+    workspaceIndex: PreviewWorkspaceIndex;
   };
 
   export type PreviewBuildArtifactKind = "module" | "entry-metadata" | "layout-schema";
@@ -369,7 +407,9 @@ declare module "@lattice-ui/preview-engine" {
 
   export type PreviewEngineUpdate = {
     changedEntryIds: string[];
+    executionChangedEntryIds: string[];
     protocolVersion: number;
+    registryChangedEntryIds: string[];
     removedEntryIds: string[];
     requiresFullReload: boolean;
     workspaceChanged: boolean;
@@ -388,10 +428,12 @@ declare module "@lattice-ui/preview-engine" {
   export interface PreviewEngine {
     dispose(): void;
     getEntryPayload(entryId: string): PreviewEntryPayload;
-    getTargetForFilePath(filePath: string): PreviewSourceTarget | undefined;
+    getSnapshot(): PreviewEngineSnapshot;
+    isTrackedSourceFile(filePath: string): boolean;
     getWorkspaceIndex(): PreviewWorkspaceIndex;
-    invalidateFiles(filePaths: string[]): PreviewEngineUpdate;
+    invalidateSourceFiles(filePaths: string[]): PreviewEngineUpdate;
     onUpdate(listener: (update: PreviewEngineUpdate) => void): () => void;
+    replaceRuntimeIssues(issues: PreviewRuntimeIssue[]): PreviewEngineUpdate;
   }
 
   export function createPreviewEngine(options: {

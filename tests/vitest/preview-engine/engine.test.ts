@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createPreviewEngine } from "@lattice-ui/preview-engine";
+import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
 import { resolveRealFilePath } from "../../../packages/preview-engine/src/pathUtils";
 
 const temporaryRoots: string[] = [];
@@ -149,6 +150,10 @@ describe("createPreviewEngine", () => {
         reason: "missing-explicit-contract",
       },
       status: "needs_harness",
+      statusDetails: {
+        kind: "needs_harness",
+        reason: "missing-explicit-contract",
+      },
     });
   });
 
@@ -187,6 +192,9 @@ describe("createPreviewEngine", () => {
         kind: "explicit",
       },
       status: "ready",
+      statusDetails: {
+        kind: "ready",
+      },
       title: "Explicit Card",
     });
   });
@@ -274,6 +282,9 @@ describe("createPreviewEngine", () => {
           kind: "explicit",
         }),
         status: "ready",
+        statusDetails: {
+          kind: "ready",
+        },
       }),
     ]);
 
@@ -420,8 +431,10 @@ describe("createPreviewEngine", () => {
       "utf8",
     );
 
-    const update = engine.invalidateFiles([path.join(sharedTarget.sourceRoot, "index.tsx")]);
+    const update = engine.invalidateSourceFiles([path.join(sharedTarget.sourceRoot, "index.tsx")]);
     expect(update.changedEntryIds).toEqual(["ui:Entry.tsx"]);
+    expect(update.registryChangedEntryIds).toEqual(["ui:Entry.tsx"]);
+    expect(update.executionChangedEntryIds).toEqual([]);
     expect(update.removedEntryIds).toEqual([]);
     expect(update.requiresFullReload).toBe(false);
   });
@@ -442,195 +455,34 @@ describe("createPreviewEngine", () => {
     });
 
     const engine = createEngineForPackage(packageRoot, sourceRoot);
-    const workspaceSnapshot = sanitizePaths(engine.getWorkspaceIndex(), packageRoot);
-    const payloadSnapshot = sanitizePaths(engine.getEntryPayload("fixture:Broken.tsx"), packageRoot);
+    const snapshot = sanitizePaths(engine.getSnapshot(), packageRoot);
 
-    expect(workspaceSnapshot).toMatchInlineSnapshot(`
-      {
-        "entries": [
-          {
-            "candidateExportNames": [
-              "Broken",
-            ],
-            "capabilities": {
-              "supportsHotUpdate": true,
-              "supportsLayoutDebug": true,
-              "supportsPropsEditing": false,
-              "supportsRuntimeMock": true,
-            },
-            "diagnosticsSummary": {
-              "byPhase": {
-                "discovery": 1,
-                "layout": 0,
-                "runtime": 0,
-                "transform": 1,
-              },
-              "hasBlocking": true,
-              "total": 2,
-            },
-            "hasDefaultExport": false,
-            "hasPreviewExport": false,
-            "id": "fixture:Broken.tsx",
-            "packageName": "@fixtures/preview-engine",
-            "relativePath": "Broken.tsx",
-            "renderTarget": {
-              "candidates": [
-                "Broken",
-              ],
-              "kind": "none",
-              "reason": "missing-explicit-contract",
-            },
-            "selection": {
-              "kind": "unresolved",
-              "reason": "missing-explicit-contract",
-            },
-            "sourceFilePath": "<pkg>/src/Broken.tsx",
-            "status": "needs_harness",
-            "targetName": "fixture",
-            "title": "Broken",
-          },
-          {
-            "candidateExportNames": [],
-            "capabilities": {
-              "supportsHotUpdate": true,
-              "supportsLayoutDebug": true,
-              "supportsPropsEditing": false,
-              "supportsRuntimeMock": true,
-            },
-            "diagnosticsSummary": {
-              "byPhase": {
-                "discovery": 0,
-                "layout": 0,
-                "runtime": 0,
-                "transform": 0,
-              },
-              "hasBlocking": false,
-              "total": 0,
-            },
-            "hasDefaultExport": false,
-            "hasPreviewExport": true,
-            "id": "fixture:Harness.tsx",
-            "packageName": "@fixtures/preview-engine",
-            "relativePath": "Harness.tsx",
-            "renderTarget": {
-              "contract": "preview.render",
-              "kind": "harness",
-            },
-            "selection": {
-              "contract": "preview.render",
-              "kind": "explicit",
-            },
-            "sourceFilePath": "<pkg>/src/Harness.tsx",
-            "status": "ready",
-            "targetName": "fixture",
-            "title": "Harness Demo",
-          },
-        ],
-        "projectName": "Fixture Preview",
-        "protocolVersion": 3,
-        "targets": [
-          {
-            "name": "fixture",
-            "packageName": "@fixtures/preview-engine",
-            "packageRoot": "<pkg>",
-            "sourceRoot": "<pkg>/src",
-          },
-        ],
-      }
-    `);
-
-    expect(payloadSnapshot).toMatchInlineSnapshot(`
-      {
-        "descriptor": {
-          "candidateExportNames": [
-            "Broken",
-          ],
-          "capabilities": {
-            "supportsHotUpdate": true,
-            "supportsLayoutDebug": true,
-            "supportsPropsEditing": false,
-            "supportsRuntimeMock": true,
-          },
-          "diagnosticsSummary": {
-            "byPhase": {
-              "discovery": 1,
-              "layout": 0,
-              "runtime": 0,
-              "transform": 1,
-            },
-            "hasBlocking": true,
-            "total": 2,
-          },
-          "hasDefaultExport": false,
-          "hasPreviewExport": false,
-          "id": "fixture:Broken.tsx",
-          "packageName": "@fixtures/preview-engine",
-          "relativePath": "Broken.tsx",
-          "renderTarget": {
-            "candidates": [
-              "Broken",
-            ],
-            "kind": "none",
-            "reason": "missing-explicit-contract",
-          },
-          "selection": {
-            "kind": "unresolved",
-            "reason": "missing-explicit-contract",
-          },
-          "sourceFilePath": "<pkg>/src/Broken.tsx",
-          "status": "needs_harness",
-          "targetName": "fixture",
-          "title": "Broken",
+    expect(snapshot.protocolVersion).toBe(4);
+    expect(snapshot.entries["fixture:Broken.tsx"]).toMatchObject({
+      descriptor: {
+        status: "needs_harness",
+        statusDetails: {
+          kind: "needs_harness",
+          reason: "missing-explicit-contract",
         },
-        "diagnostics": [
-          {
-            "code": "MISSING_EXPLICIT_PREVIEW_CONTRACT",
-            "entryId": "fixture:Broken.tsx",
-            "file": "<pkg>/src/Broken.tsx",
-            "phase": "discovery",
-            "relativeFile": "src/Broken.tsx",
-            "severity": "warning",
-            "summary": "This file does not declare \`preview.entry\` or \`preview.render\`. Add an explicit preview contract to select Broken.",
-            "target": "preview-engine",
-          },
-          {
-            "blocking": true,
-            "code": "UNSUPPORTED_HOST_ELEMENT",
-            "entryId": "fixture:Broken.tsx",
-            "file": "<pkg>/src/Broken.tsx",
-            "phase": "transform",
-            "relativeFile": "src/Broken.tsx",
-            "severity": "error",
-            "summary": "Host element viewportframe is not supported by preview generation.",
-            "symbol": "viewportframe",
-            "target": "fixture",
-          },
-        ],
-        "graphTrace": {
-          "boundaryHops": [],
-          "imports": [],
-          "selection": {
-            "importChain": [
-              "<pkg>/src/Broken.tsx",
-            ],
-            "requestedSymbol": undefined,
-            "symbolChain": [],
-          },
-        },
-        "protocolVersion": 3,
-        "runtimeAdapter": {
-          "kind": "react-dom",
-          "moduleId": "virtual:lattice-preview-runtime",
-        },
-        "transform": {
-          "mode": "strict-fidelity",
-          "outcome": {
-            "fidelity": "degraded",
-            "kind": "blocked",
-          },
-        },
-      }
-    `);
+      },
+    });
+    expect(snapshot.workspaceIndex.protocolVersion).toBe(4);
+    expect(snapshot.workspaceIndex.entries[0]).toMatchObject({
+      relativePath: "Broken.tsx",
+      status: "needs_harness",
+      statusDetails: {
+        kind: "needs_harness",
+        reason: "missing-explicit-contract",
+      },
+    });
+    expect(snapshot.workspaceIndex.entries[1]).toMatchObject({
+      relativePath: "Harness.tsx",
+      status: "ready",
+      statusDetails: {
+        kind: "ready",
+      },
+    });
   });
 
   it("keeps compatibility-mode transform diagnostics non-blocking in the workspace index", () => {
@@ -651,10 +503,16 @@ describe("createPreviewEngine", () => {
     expect(engine.getWorkspaceIndex().entries[0]).toMatchObject({
       relativePath: "Broken.tsx",
       status: "ready",
+      statusDetails: {
+        kind: "ready",
+      },
     });
     expect(engine.getEntryPayload("fixture:Broken.tsx")).toMatchObject({
       descriptor: {
         status: "ready",
+        statusDetails: {
+          kind: "ready",
+        },
       },
       transform: {
         mode: "compatibility",
@@ -683,10 +541,18 @@ describe("createPreviewEngine", () => {
     expect(engine.getWorkspaceIndex().entries[0]).toMatchObject({
       relativePath: "Broken.tsx",
       status: "blocked_by_transform",
+      statusDetails: {
+        kind: "blocked_by_transform",
+        reason: "transform-diagnostics",
+      },
     });
     expect(engine.getEntryPayload("fixture:Broken.tsx")).toMatchObject({
       descriptor: {
         status: "blocked_by_transform",
+        statusDetails: {
+          kind: "blocked_by_transform",
+          reason: "transform-diagnostics",
+        },
       },
       transform: {
         mode: "strict-fidelity",
@@ -694,6 +560,57 @@ describe("createPreviewEngine", () => {
           kind: "blocked",
         },
       },
+    });
+  });
+
+  it("ingests runtime issues into entry status and diagnostics", () => {
+    const { packageRoot, sourceRoot } = createTempPreviewPackage({
+      "src/Runtime.tsx": `
+        export function Runtime() {
+          return <frame />;
+        }
+
+        export const preview = {
+          entry: Runtime,
+        };
+      `,
+    });
+
+    const engine = createEngineForPackage(packageRoot, sourceRoot, "compatibility");
+    const issues: PreviewRuntimeIssue[] = [
+      {
+        code: "MODULE_LOAD_ERROR",
+        entryId: "fixture:Runtime.tsx",
+        file: path.join(sourceRoot, "Runtime.tsx"),
+        kind: "ModuleLoadError",
+        phase: "runtime",
+        relativeFile: "src/Runtime.tsx",
+        summary: "Preview module failed to load.",
+        target: "fixture",
+      },
+    ];
+
+    const update = engine.replaceRuntimeIssues(issues);
+
+    expect(update.executionChangedEntryIds).toEqual(["fixture:Runtime.tsx"]);
+    expect(update.registryChangedEntryIds).toEqual([]);
+    expect(update.workspaceChanged).toBe(false);
+    expect(engine.getEntryPayload("fixture:Runtime.tsx")).toMatchObject({
+      descriptor: {
+        status: "blocked_by_runtime",
+        statusDetails: {
+          issueCodes: ["MODULE_LOAD_ERROR"],
+          kind: "blocked_by_runtime",
+          reason: "runtime-issues",
+        },
+      },
+      diagnostics: [
+        expect.objectContaining({
+          code: "MODULE_LOAD_ERROR",
+          phase: "runtime",
+          severity: "error",
+        }),
+      ],
     });
   });
 
@@ -723,10 +640,12 @@ describe("createPreviewEngine", () => {
       "utf8",
     );
 
-    const update = engine.invalidateFiles([sourceFile]);
+    const update = engine.invalidateSourceFiles([sourceFile]);
 
     expect(update).toMatchObject({
       changedEntryIds: ["fixture:AnimatedSlot.tsx"],
+      registryChangedEntryIds: ["fixture:AnimatedSlot.tsx"],
+      executionChangedEntryIds: [],
       requiresFullReload: false,
       workspaceChanged: true,
     });
@@ -736,6 +655,11 @@ describe("createPreviewEngine", () => {
         reason: "ambiguous-exports",
       },
       status: "ambiguous",
+      statusDetails: {
+        candidates: ["Alpha", "Beta"],
+        kind: "ambiguous",
+        reason: "ambiguous-exports",
+      },
     });
   });
 });

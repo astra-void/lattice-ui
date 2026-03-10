@@ -8,6 +8,7 @@ import {
   type PreviewExecutionMode,
   type PreviewSourceTarget,
 } from "@lattice-ui/preview-engine";
+import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
 import { stripFileIdDecorations } from "./pathUtils";
 import {
   createUnresolvedPackageMockResolvePlugin,
@@ -21,6 +22,8 @@ const RUNTIME_MODULE_ID = "virtual:lattice-preview-runtime";
 const RESOLVED_RUNTIME_MODULE_ID = `\0${RUNTIME_MODULE_ID}`;
 const ENTRY_MODULE_ID_PREFIX = "virtual:lattice-preview-entry:";
 const RESOLVED_ENTRY_MODULE_ID_PREFIX = `\0${ENTRY_MODULE_ID_PREFIX}`;
+const PREVIEW_UPDATE_EVENT = "lattice-preview:update";
+const RUNTIME_ISSUES_EVENT = "lattice-preview:runtime-issues";
 const RBX_STYLE_HELPER_NAME = "__rbxStyle";
 const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/preview-runtime";\n`;
 
@@ -80,8 +83,9 @@ function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<t
 }
 
 function getWorkspaceModuleCode(previewEngine: ReturnType<typeof createPreviewEngine>) {
-  const workspaceIndex = previewEngine.getWorkspaceIndex();
-  const entryPayloads = Object.fromEntries(workspaceIndex.entries.map((entry) => [entry.id, previewEngine.getEntryPayload(entry.id)]));
+  const snapshot = previewEngine.getSnapshot();
+  const workspaceIndex = snapshot.workspaceIndex;
+  const entryPayloads = snapshot.entries;
   const importers = workspaceIndex.entries
     .map(
       (entry) =>
@@ -101,7 +105,7 @@ ${importers}
 }
 
 function renderEntryModule(previewEngine: ReturnType<typeof createPreviewEngine>, entryId: string) {
-  const entry = previewEngine.getWorkspaceIndex().entries.find((candidate) => candidate.id === entryId);
+  const entry = previewEngine.getSnapshot().workspaceIndex.entries.find((candidate) => candidate.id === entryId);
   if (!entry) {
     throw new Error(`No preview entry registered for \`${entryId}\`.`);
   }
@@ -124,18 +128,14 @@ export const __previewEntryPayload = ${JSON.stringify(payload, null, 2)};
 `;
 }
 
-function isWatchedCandidate(targets: PreviewSourceTarget[], previewEngine: ReturnType<typeof createPreviewEngine>, filePath: string) {
+function isWatchedCandidate(previewEngine: ReturnType<typeof createPreviewEngine>, filePath: string) {
   const normalizedFilePath = stripFileIdDecorations(filePath);
-  const extension = path.extname(normalizedFilePath).toLowerCase();
-  if (extension !== ".ts" && extension !== ".tsx") {
-    return false;
-  }
+  return previewEngine.isTrackedSourceFile(normalizedFilePath);
+}
 
-  if (previewEngine.getTargetForFilePath(normalizedFilePath)) {
-    return true;
-  }
-
-  return targets.some((target) => normalizedFilePath.startsWith(target.sourceRoot));
+function getTransformTarget(targets: PreviewSourceTarget[], filePath: string) {
+  const normalizedFilePath = stripFileIdDecorations(filePath);
+  return targets.find((target) => normalizedFilePath.startsWith(target.sourceRoot));
 }
 
 export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions): PreviewPluginOption {
@@ -170,7 +170,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
   };
 
   const refreshPreviewEngine = (filePath: string) => {
-    const update = previewEngine.invalidateFiles([filePath]);
+    const update = previewEngine.invalidateSourceFiles([filePath]);
     invalidateVirtualModules(update.changedEntryIds);
 
     if (server) {
@@ -179,7 +179,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
       } else {
         server.ws.send({
           data: update,
-          event: "lattice-preview:update",
+          event: PREVIEW_UPDATE_EVENT,
           type: "custom",
         });
       }
@@ -193,19 +193,30 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     enforce: "pre",
     configureServer(configuredServer: PreviewDevServer) {
       server = configuredServer;
+      (configuredServer.ws as PreviewDevServer["ws"] & {
+        on?: (event: string, listener: (payload: PreviewRuntimeIssue[]) => void) => void;
+      }).on?.(RUNTIME_ISSUES_EVENT, (issues: PreviewRuntimeIssue[]) => {
+        const update = previewEngine.replaceRuntimeIssues(Array.isArray(issues) ? issues : []);
+        invalidateVirtualModules(update.changedEntryIds);
+        configuredServer.ws.send({
+          data: update,
+          event: PREVIEW_UPDATE_EVENT,
+          type: "custom",
+        });
+      });
       configuredServer.watcher.on("add", (filePath: string) => {
-        if (isWatchedCandidate(options.targets, previewEngine, filePath)) {
+        if (isWatchedCandidate(previewEngine, filePath)) {
           refreshPreviewEngine(filePath);
         }
       });
       configuredServer.watcher.on("unlink", (filePath: string) => {
-        if (isWatchedCandidate(options.targets, previewEngine, filePath)) {
+        if (isWatchedCandidate(previewEngine, filePath)) {
           refreshPreviewEngine(filePath);
         }
       });
     },
     handleHotUpdate(context: { file: string }) {
-      if (!isWatchedCandidate(options.targets, previewEngine, context.file)) {
+      if (!isWatchedCandidate(previewEngine, context.file)) {
         return undefined;
       }
 
@@ -245,7 +256,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     },
     transform(code: string, id: string) {
       const filePath = stripFileIdDecorations(id);
-      const target = previewEngine.getTargetForFilePath(filePath);
+      const target = getTransformTarget(options.targets, filePath);
       if (!target) {
         return undefined;
       }
