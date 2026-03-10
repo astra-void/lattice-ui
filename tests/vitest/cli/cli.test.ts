@@ -48,6 +48,5 @@ describe("runCli", () => {
     expect(output).toContain("npx lattice upgrade --dry-run");
     expect(output).toContain("npx lattice doctor");
     expect(output).toContain("npx lattice create");
-    expect(output).toContain("npx lattice preview");
   });
 });

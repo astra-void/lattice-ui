@@ -16,21 +16,16 @@ These packages represent the long-term stable direction of Lattice UI and are th
 
 These packages are available, but should still be treated as experimental, evolving, or intentionally limited in scope:
 
-- `popper` — early positioning foundation
-- `select` — currently single-value only
-- `slider` — currently single-thumb only
-- `preview`
-- `preview-engine`
-- `preview-runtime`
-- `compiler`
-- `layout-engine`
+- `popper` - early positioning foundation
+- `select` - currently single-value only
+- `slider` - currently single-thumb only
 
-Some parts of the UI surface may reach `v1.x` earlier in practice, while preview and tooling packages may remain in `0.x` for longer.
+Some parts of the UI surface may reach `v1.x` earlier in practice, while feature-limited packages may remain in `0.x` for longer.
 A future `v1` milestone for the main UI layer does **not** automatically mean every experimental or tooling package is fully stabilized.
 
 ## Roadmap
 
-### v0.4.x — RC to stable 0.4
+### v0.4.x - RC to stable 0.4
 
 - tighten the public package surface
 - document package maturity more clearly
@@ -47,10 +42,9 @@ A future `v1` milestone for the main UI layer does **not** automatically mean ev
 
 ### v0.6.x+
 
-- expand preview and tooling workflows
-- improve preview reliability, debugging, and coverage
-- continue iterating on compiler and layout-engine integration
-- keep experimental tooling flexible until the API surface is ready
+- expand package maintenance workflows
+- improve reliability, debugging, and coverage
+- keep feature-limited packages flexible until the API surface is ready
 
 ### v1.0
 
@@ -60,6 +54,6 @@ A future `v1` milestone for the main UI layer does **not** automatically mean ev
 
 ### after v1.0
 
-- continue maturing preview/tooling independently
+- continue maturing feature-limited packages independently
 - allow experimental packages to remain in `0.x` if needed
-- only promote tooling packages to stable versioning when their APIs and workflows are ready
+- only promote feature-limited packages to stable versioning when their APIs are ready

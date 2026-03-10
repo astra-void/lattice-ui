@@ -23,19 +23,12 @@ export default defineConfig([
     "**/dist/**",
     "**/.astro/**",
     "**/include/**",
-    "apps/preview-harness/src/generated/**",
-    "packages/preview/generated/**",
-    "packages/layout-engine/pkg/**",
   ]),
   {
     files: ["{packages,apps}/**/*.{ts,tsx}"],
     ignores: [
       "packages/cli/**",
-      "packages/preview/**",
-      "packages/preview-engine/**",
-      "packages/preview-runtime/**",
       "apps/docs/**",
-      "apps/preview-harness/**",
     ],
     extends: compat.extends(
       "eslint:recommended",
@@ -115,107 +108,6 @@ export default defineConfig([
       parser: tsParser,
       parserOptions: {
         project: "./packages/cli/tsconfig.json",
-        tsconfigRootDir: __dirname,
-      },
-    },
-
-    rules: {
-      "prettier/prettier": "warn",
-      "@typescript-eslint/no-require-imports": "off",
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unsafe-assignment": "error",
-      "@typescript-eslint/no-unsafe-call": "error",
-      "@typescript-eslint/no-unsafe-member-access": "error",
-      "@typescript-eslint/no-unsafe-return": "error",
-      "@typescript-eslint/no-unsafe-argument": "error",
-    },
-  },
-  {
-    files: ["packages/preview-engine/**/*.{ts,tsx}"],
-    extends: compat.extends(
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:prettier/recommended",
-    ),
-
-    plugins: {
-      "@typescript-eslint": typescriptEslint,
-      prettier,
-    },
-
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: "./packages/preview-engine/tsconfig.json",
-        tsconfigRootDir: __dirname,
-      },
-    },
-
-    rules: {
-      "prettier/prettier": "warn",
-      "@typescript-eslint/no-require-imports": "off",
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unsafe-assignment": "error",
-      "@typescript-eslint/no-unsafe-call": "error",
-      "@typescript-eslint/no-unsafe-member-access": "error",
-      "@typescript-eslint/no-unsafe-return": "error",
-      "@typescript-eslint/no-unsafe-argument": "error",
-    },
-  },
-  {
-    files: ["packages/preview/**/*.{ts,tsx}", "apps/preview-harness/**/*.{ts,tsx}"],
-    extends: compat.extends(
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:prettier/recommended",
-    ),
-
-    plugins: {
-      "@typescript-eslint": typescriptEslint,
-      prettier,
-    },
-
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: [
-          "./packages/preview/tsconfig.json",
-          "./packages/preview-engine/tsconfig.json",
-          "./packages/preview-runtime/tsconfig.json",
-          "./apps/preview-harness/tsconfig.json",
-        ],
-        tsconfigRootDir: __dirname,
-      },
-    },
-
-    rules: {
-      "prettier/prettier": "warn",
-      "@typescript-eslint/no-require-imports": "off",
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unsafe-assignment": "error",
-      "@typescript-eslint/no-unsafe-call": "error",
-      "@typescript-eslint/no-unsafe-member-access": "error",
-      "@typescript-eslint/no-unsafe-return": "error",
-      "@typescript-eslint/no-unsafe-argument": "error",
-    },
-  },
-  {
-    files: ["packages/preview-runtime/**/*.{ts,tsx}"],
-    extends: compat.extends(
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:prettier/recommended",
-    ),
-
-    plugins: {
-      "@typescript-eslint": typescriptEslint,
-      prettier,
-    },
-
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: "./packages/preview-runtime/tsconfig.json",
         tsconfigRootDir: __dirname,
       },
     },

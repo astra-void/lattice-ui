@@ -17,9 +17,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc -p tsconfig.json -w"
   },
-  "dependencies": {
-    "@lattice-ui/preview": "workspace:*"
-  },
   "engines": {
     "node": ">=20"
   },

@@ -15,8 +15,6 @@
       "@lattice-ui/menu": ["packages/menu/src/index.ts"],
       "@lattice-ui/popover": ["packages/popover/src/index.ts"],
       "@lattice-ui/popper": ["packages/popper/src/index.ts"],
-      "@lattice-ui/preview": ["packages/preview/src/index.ts"],
-      "@lattice-ui/preview/runtime": ["packages/preview/src/runtime/index.ts"],
       "@lattice-ui/progress": ["packages/progress/src/index.ts"],
       "@lattice-ui/radio-group": ["packages/radio-group/src/index.ts"],
       "@lattice-ui/scroll-area": ["packages/scroll-area/src/index.ts"],
