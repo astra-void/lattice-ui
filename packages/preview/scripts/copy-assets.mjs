@@ -58,8 +58,4 @@ fs.writeFileSync(
   fs.readFileSync(sourceShellIndexHtml, "utf8").replace("./main.tsx", "./main.js"),
   "utf8",
 );
-fs.writeFileSync(
-  distPreviewEntry,
-  ['export * from "./index.js";', ""].join("\n"),
-  "utf8",
-);
+fs.writeFileSync(distPreviewEntry, ['export * from "./index.js";', ""].join("\n"), "utf8");

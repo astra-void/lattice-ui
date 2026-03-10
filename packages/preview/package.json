@@ -10,23 +10,17 @@
     "README.md"
   ],
   "scripts": {
-    "prebuild": "node ./scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.json",
     "postbuild": "node ./scripts/copy-assets.mjs",
+    "prebuild": "node ./scripts/clean-dist.mjs",
+    "prepack": "pnpm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc -p tsconfig.json -w"
   },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "default": "./dist/index.mjs"
-    }
-  },
   "dependencies": {
     "@lattice-ui/compiler": "workspace:*",
+    "@lattice-ui/layout-engine": "workspace:*",
     "@lattice-ui/preview-engine": "workspace:*",
-    "@lattice-ui/layout-engine": "file:../layout-engine/pkg",
     "@lattice-ui/preview-runtime": "workspace:*",
     "@vitejs/plugin-react": "^5.1.4",
     "react": "^19.2.4",
@@ -38,5 +32,12 @@
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
   }
 }

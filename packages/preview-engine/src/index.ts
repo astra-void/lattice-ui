@@ -1,6 +1,6 @@
 export { buildPreviewArtifacts } from "./build";
 export { createPreviewEngine } from "./engine";
-export { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
+export { normalizeTransformPreviewSourceResult } from "./transformResult";
 export type {
   CreatePreviewEngineOptions,
   PreviewBuildArtifactKind,
@@ -10,6 +10,7 @@ export type {
   PreviewBuildResult,
   PreviewBuiltArtifact,
   PreviewCachedArtifactMetadata,
+  PreviewComponentPropsMetadata,
   PreviewDefinition,
   PreviewDiagnostic,
   PreviewDiagnosticPhase,
@@ -19,22 +20,25 @@ export type {
   PreviewEngineSnapshot,
   PreviewEngineUpdate,
   PreviewEngineUpdateListener,
-  PreviewExecutionMode,
   PreviewEntryCapabilities,
   PreviewEntryDescriptor,
   PreviewEntryPayload,
   PreviewEntryStatus,
   PreviewEntryStatusDetails,
-  PreviewGraphStopReason,
+  PreviewExecutionMode,
   PreviewGraphImportEdge,
+  PreviewGraphStopReason,
   PreviewGraphTrace,
   PreviewPropMetadata,
   PreviewRenderTarget,
   PreviewRuntimeAdapter,
-  PreviewComponentPropsMetadata,
   PreviewSelection,
   PreviewSelectionTrace,
-  PreviewTransformState,
   PreviewSourceTarget,
+  PreviewTransformDiagnostic,
+  PreviewTransformMode,
+  PreviewTransformOutcome,
+  PreviewTransformState,
   PreviewWorkspaceIndex,
 } from "./types";
+export { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";

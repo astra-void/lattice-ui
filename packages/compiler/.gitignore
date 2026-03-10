@@ -1,4 +1,8 @@
 /target
+/.artifacts
+/.npm
+/artifacts
+/npm
 /*.node
 /index.js
 /index.d.ts

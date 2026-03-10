@@ -1,17 +1,11 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { transformPreviewSource } from "@lattice-ui/compiler";
 import ts from "typescript";
-import {
-  transformPreviewSource,
-  type PreviewTransformDiagnostic,
-  type PreviewTransformOutcome,
-} from "@lattice-ui/compiler";
 import { createPreviewEngine } from "./engine";
-import { isFilePathUnderRoot, resolveRealFilePath } from "./pathUtils";
-import { createWorkspaceGraphService } from "./workspaceGraph";
-import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
+import { resolveRealFilePath } from "./pathUtils";
 import type {
   PreviewBuildArtifactKind,
   PreviewBuildDiagnostic,
@@ -25,9 +19,13 @@ import type {
   PreviewEntryPayload,
   PreviewExecutionMode,
   PreviewSourceTarget,
+  PreviewTransformDiagnostic,
+  PreviewTransformOutcome,
 } from "./types";
+import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
+import { normalizeTransformPreviewSourceResult } from "./transformResult";
+import { createWorkspaceGraphService } from "./workspaceGraph";
 
-const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
 const BUILD_MANIFEST_FILE = ".lattice-preview-manifest.json";
 const BUILD_MANIFEST_VERSION = 2;
 const DEFAULT_RUNTIME_MODULE = "@lattice-ui/preview-runtime";
@@ -58,7 +56,7 @@ type CachedModuleArtifactRecord = PreviewCachedArtifactMetadata & {
   dependencyGraphHash: string;
   id: string;
   outcome: PreviewTransformOutcome;
-  outputCode: string | null;
+  outputCode: string | undefined;
   relativePath: string;
   sourceHash: string;
 };
@@ -87,17 +85,8 @@ type CachedLayoutSchemaArtifactRecord = PreviewCachedArtifactMetadata & {
   schema: PreviewLayoutSchemaSidecar;
 };
 
-type CachedArtifactRecord =
-  | CachedModuleArtifactRecord
-  | CachedEntryMetadataArtifactRecord
-  | CachedLayoutSchemaArtifactRecord;
-
 function hashText(value: string) {
   return createHash("sha1").update(value).digest("hex");
-}
-
-function isTransformableSourceFile(fileName: string) {
-  return SOURCE_EXTENSIONS.has(path.extname(fileName)) && !fileName.endsWith(".d.ts") && !fileName.endsWith(".d.tsx");
 }
 
 function normalizeRelativePath(filePath: string) {
@@ -122,7 +111,7 @@ function readJsonFile<T>(filePath: string): T | undefined {
 
 function writeJsonFile(filePath: string, value: unknown) {
   ensureDirectory(path.dirname(filePath));
-  fs.writeFileSync(filePath, JSON.stringify(value, null, 2), "utf8");
+  fs.writeFileSync(filePath, JSON.stringify(value, undefined, 2), "utf8");
 }
 
 function readPackageVersion(relativePathFromBuildFile: string) {
@@ -153,7 +142,7 @@ function createDiagnosticsSummary(diagnostics: PreviewBuildDiagnostic[]): Previe
   } satisfies Record<PreviewDiagnostic["phase"], number>;
 
   for (const diagnostic of diagnostics) {
-    if ("phase" in diagnostic) {
+    if (isPreviewDiagnostic(diagnostic)) {
       byPhase[diagnostic.phase] += 1;
       continue;
     }
@@ -211,23 +200,6 @@ function isPathEqualOrContained(rootPath: string, candidatePath: string) {
   );
 }
 
-function findNearestPackageRoot(startPath: string) {
-  let current = resolveRealFilePath(startPath);
-
-  while (true) {
-    if (fs.existsSync(path.join(current, "package.json"))) {
-      return current;
-    }
-
-    const parent = path.dirname(current);
-    if (parent === current) {
-      return resolveRealFilePath(path.dirname(startPath));
-    }
-
-    current = parent;
-  }
-}
-
 function findNearestTsconfig(startPath: string) {
   return ts.findConfigFile(resolveRealFilePath(startPath), ts.sys.fileExists, "tsconfig.json");
 }
@@ -260,43 +232,6 @@ function parseTsconfig(tsconfigPath: string) {
   }
 
   return parsed;
-}
-
-function listSourceFiles(dirPath: string): string[] {
-  if (!fs.existsSync(dirPath)) {
-    return [];
-  }
-
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  const files: string[] = [];
-
-  for (const entry of entries) {
-    const entryPath = path.join(dirPath, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...listSourceFiles(entryPath));
-      continue;
-    }
-
-    if (isTransformableSourceFile(entry.name)) {
-      files.push(resolveRealFilePath(entryPath));
-    }
-  }
-
-  return files.sort((left, right) => left.localeCompare(right));
-}
-
-function listTargetSourceFiles(target: PreviewSourceTarget, parsedConfig?: ts.ParsedCommandLine) {
-  const sourceRoot = resolveRealFilePath(target.sourceRoot);
-  const configuredFiles =
-    parsedConfig?.fileNames
-      .map((fileName) => resolveRealFilePath(fileName))
-      .filter((fileName) => isTransformableSourceFile(fileName) && isFilePathUnderRoot(sourceRoot, fileName)) ?? [];
-
-  if (configuredFiles.length > 0) {
-    return [...new Set(configuredFiles)].sort((left, right) => left.localeCompare(right));
-  }
-
-  return listSourceFiles(sourceRoot);
 }
 
 function findWorkspaceRoot(startPaths: string[]) {
@@ -417,87 +352,6 @@ function validateBuildOptions(options: {
   }
 }
 
-function collectModuleSpecifiers(filePath: string) {
-  const sourceText = fs.readFileSync(filePath, "utf8");
-  const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const specifiers = new Set<string>();
-
-  function visit(node: ts.Node): void {
-    if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
-      if (ts.isStringLiteralLike(node.moduleSpecifier)) {
-        specifiers.add(node.moduleSpecifier.text);
-      }
-    }
-
-    if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
-      const expression = node.moduleReference.expression;
-      if (expression && ts.isStringLiteralLike(expression)) {
-        specifiers.add(expression.text);
-      }
-    }
-
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return [...specifiers];
-}
-
-function resolveTransitiveDependencyPaths(
-  filePath: string,
-  parsedConfig: ts.ParsedCommandLine | undefined,
-  workspaceRoot: string,
-  memo: Map<string, string[]>,
-  visiting: Set<string>,
-) {
-  const normalizedFilePath = resolveRealFilePath(filePath);
-  if (memo.has(normalizedFilePath)) {
-    return memo.get(normalizedFilePath)!;
-  }
-
-  if (visiting.has(normalizedFilePath)) {
-    return [];
-  }
-
-  visiting.add(normalizedFilePath);
-  const dependencies = new Set<string>();
-  const compilerOptions = parsedConfig?.options ?? {
-    jsx: ts.JsxEmit.Preserve,
-    module: ts.ModuleKind.ESNext,
-    moduleResolution: ts.ModuleResolutionKind.NodeJs,
-    target: ts.ScriptTarget.ESNext,
-  };
-
-  for (const specifier of collectModuleSpecifiers(normalizedFilePath)) {
-    const resolution = ts.resolveModuleName(specifier, normalizedFilePath, compilerOptions, ts.sys);
-    const resolvedFileName = resolution.resolvedModule?.resolvedFileName;
-    if (!resolvedFileName) {
-      continue;
-    }
-
-    const resolvedPath = resolveRealFilePath(resolvedFileName);
-    if (!isTransformableSourceFile(resolvedPath) || !isFilePathUnderRoot(workspaceRoot, resolvedPath)) {
-      continue;
-    }
-
-    dependencies.add(resolvedPath);
-    for (const dependencyPath of resolveTransitiveDependencyPaths(
-      resolvedPath,
-      parsedConfig,
-      workspaceRoot,
-      memo,
-      visiting,
-    )) {
-      dependencies.add(dependencyPath);
-    }
-  }
-
-  visiting.delete(normalizedFilePath);
-  const sortedDependencies = [...dependencies].sort((left, right) => left.localeCompare(right));
-  memo.set(normalizedFilePath, sortedDependencies);
-  return sortedDependencies;
-}
-
 function createBuildTargetContexts(targets: PreviewSourceTarget[]) {
   return targets.map((target) => {
     const sourceRoot = resolveRealFilePath(target.sourceRoot);
@@ -524,7 +378,10 @@ function createBuildTargetContexts(targets: PreviewSourceTarget[]) {
   });
 }
 
-function createModuleRecords(targetContexts: BuildTargetContext[], graphService: ReturnType<typeof createWorkspaceGraphService>) {
+function createModuleRecords(
+  targetContexts: BuildTargetContext[],
+  graphService: ReturnType<typeof createWorkspaceGraphService>,
+) {
   const fileHashCache = new Map<string, string>();
   const records: SourceModuleRecord[] = [];
 
@@ -736,11 +593,7 @@ function removeEmptyParentDirectories(rootDir: string, filePath: string) {
   }
 }
 
-async function runWithConcurrency<T>(
-  limit: number,
-  values: T[],
-  worker: (value: T) => Promise<void>,
-) {
+async function runWithConcurrency<T>(limit: number, values: T[], worker: (value: T) => Promise<void>) {
   const concurrency = Math.max(1, limit);
   let cursor = 0;
 
@@ -755,9 +608,7 @@ async function runWithConcurrency<T>(
     await runNext();
   }
 
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, values.length) }, () => runNext()),
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, () => runNext()));
 }
 
 function sortBuiltArtifacts(artifacts: PreviewBuiltArtifact[]) {
@@ -838,15 +689,21 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
       const sourceText = fs.readFileSync(record.sourceFilePath, "utf8");
       let transformed;
       try {
-        transformed = transformPreviewSource(sourceText, {
-          filePath: record.sourceFilePath,
-          mode: transformMode,
-          runtimeModule,
-          target: record.target.name,
-        });
+        transformed = normalizeTransformPreviewSourceResult(
+          transformPreviewSource(sourceText, {
+            filePath: record.sourceFilePath,
+            runtimeModule,
+            target: record.target.name,
+          }),
+          transformMode,
+        );
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error);
-        throw new Error(`Failed to parse preview source ${record.sourceFilePath}: ${detail}`);
+        const wrappedError: Error & { cause?: unknown } = new Error(
+          `Failed to parse preview source ${record.sourceFilePath}: ${detail}`,
+        );
+        wrappedError.cause = error;
+        throw wrappedError;
       }
 
       cachedRecord = {
@@ -858,7 +715,7 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
         engineVersion: versions.protocolVersion,
         id: `${record.target.name}:${record.relativePath}`,
         outcome: transformed.outcome,
-        outputCode: transformed.code,
+        outputCode: transformed.code ?? undefined,
         relativePath: record.relativePath,
         sourceFilePath: record.sourceFilePath,
         sourceHash: record.sourceHash,
@@ -866,6 +723,10 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
       };
       writeJsonFile(cachePath, cachedRecord);
       reusedFromCache = false;
+    }
+
+    if (!cachedRecord) {
+      throw new Error(`Preview build cache did not materialize module metadata for ${record.sourceFilePath}.`);
     }
 
     const diagnosticsSummary = createDiagnosticsSummary(cachedRecord.diagnostics);
@@ -882,8 +743,10 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
 
     pushUniqueDiagnostics(diagnosticsMap, cachedRecord.diagnostics);
 
-    if (options.outDir && cachedRecord.outputCode !== null) {
-      const relativeOutputPath = normalizeRelativePath(path.posix.join(cachedRecord.targetName, cachedRecord.relativePath));
+    if (options.outDir && cachedRecord.outputCode !== undefined) {
+      const relativeOutputPath = normalizeRelativePath(
+        path.posix.join(cachedRecord.targetName, cachedRecord.relativePath),
+      );
       materializedFiles.set(relativeOutputPath, {
         cacheKey,
         content: cachedRecord.outputCode,
@@ -897,9 +760,7 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
     }
   });
 
-  let previewEngine:
-    | ReturnType<typeof createPreviewEngine>
-    | undefined;
+  let previewEngine: ReturnType<typeof createPreviewEngine> | undefined;
   if (artifactKinds.includes("entry-metadata") || artifactKinds.includes("layout-schema")) {
     previewEngine = createPreviewEngine({
       projectName: options.projectName,
@@ -961,7 +822,7 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
           );
           materializedFiles.set(relativeOutputPath, {
             cacheKey,
-            content: JSON.stringify(cachedRecord.payload, null, 2),
+            content: JSON.stringify(cachedRecord.payload, undefined, 2),
             sourceFilePath: payload.descriptor.sourceFilePath,
           });
         }
@@ -1022,7 +883,7 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
           );
           materializedFiles.set(relativeOutputPath, {
             cacheKey,
-            content: JSON.stringify(cachedRecord.schema, null, 2),
+            content: JSON.stringify(cachedRecord.schema, undefined, 2),
             sourceFilePath: payload.descriptor.sourceFilePath,
           });
         }
@@ -1114,7 +975,9 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
     writeJsonFile(path.join(options.outDir, BUILD_MANIFEST_FILE), nextManifest);
 
     for (const builtArtifact of builtArtifacts) {
-      const manifestEntry = Object.entries(nextManifest.files).find(([, value]) => value.cacheKey === builtArtifact.cacheKey);
+      const manifestEntry = Object.entries(nextManifest.files).find(
+        ([, value]) => value.cacheKey === builtArtifact.cacheKey,
+      );
       if (!manifestEntry) {
         continue;
       }

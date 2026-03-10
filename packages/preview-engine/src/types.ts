@@ -1,10 +1,8 @@
-import type { ComponentType } from "react";
-import type {
-  PreviewTransformDiagnostic,
-  PreviewTransformMode,
-  PreviewTransformOutcome,
-} from "@lattice-ui/compiler";
 import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
+import type { ComponentType } from "react";
+import type { PreviewTransformDiagnostic, PreviewTransformMode, PreviewTransformOutcome } from "./transformTypes";
+
+export type { PreviewTransformDiagnostic, PreviewTransformMode, PreviewTransformOutcome } from "./transformTypes";
 
 export const PREVIEW_ENGINE_PROTOCOL_VERSION = 4;
 
@@ -25,7 +23,7 @@ export type PreviewPropKind =
 export type PreviewPropMetadata = {
   elementType?: PreviewPropMetadata;
   kind: PreviewPropKind;
-  literal?: boolean | number | string | null;
+  literal?: boolean | number | string | undefined;
   properties?: Record<string, PreviewPropMetadata>;
   required: boolean;
   type: string;

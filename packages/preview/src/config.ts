@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { loadConfigFromFile, searchForWorkspaceRoot } from "vite";
 import type { PreviewExecutionMode, PreviewSourceTarget } from "@lattice-ui/preview-engine";
+import { loadConfigFromFile, searchForWorkspaceRoot } from "vite";
 
 const DEFAULT_CONFIG_FILE_NAME = "lattice.preview.config.ts";
 const DEFAULT_PREVIEW_PORT = 4174;
@@ -106,29 +106,8 @@ function resolveMaybeRelativePath(filePath: string, baseDir: string) {
   return path.resolve(baseDir, filePath);
 }
 
-function resolveRealDirPath(dirPath: string) {
-  return fs.realpathSync.native?.(dirPath) ?? fs.realpathSync(dirPath);
-}
-
 function normalizeSlashPath(filePath: string) {
   return filePath.split(path.sep).join("/");
-}
-
-function findNearestPackageRoot(startPath: string) {
-  let currentPath = path.resolve(startPath);
-
-  while (true) {
-    if (fs.existsSync(path.join(currentPath, PACKAGE_JSON_FILE_NAME))) {
-      return currentPath;
-    }
-
-    const parentPath = path.dirname(currentPath);
-    if (parentPath === currentPath) {
-      return path.resolve(startPath);
-    }
-
-    currentPath = parentPath;
-  }
 }
 
 function readPackageMetadata(packageRoot: string): PackageMetadata {
@@ -352,11 +331,20 @@ function resolveRuntimeModule(runtimeModule: string | undefined, baseDir: string
   return resolveMaybeRelativePath(runtimeModule, baseDir);
 }
 
-function resolveFsAllow(configFsAllow: string[] | undefined, baseDir: string, targets: PreviewSourceTarget[], workspaceRoot: string) {
+function resolveFsAllow(
+  configFsAllow: string[] | undefined,
+  baseDir: string,
+  targets: PreviewSourceTarget[],
+  workspaceRoot: string,
+) {
   const explicitAllow = (configFsAllow ?? []).map((entry) => path.resolve(resolveMaybeRelativePath(entry, baseDir)));
-  return [...new Set([workspaceRoot, ...explicitAllow, ...targets.flatMap((target) => [target.packageRoot, target.sourceRoot])])].sort(
-    (left, right) => left.localeCompare(right),
-  );
+  return [
+    ...new Set([
+      workspaceRoot,
+      ...explicitAllow,
+      ...targets.flatMap((target) => [target.packageRoot, target.sourceRoot]),
+    ]),
+  ].sort((left, right) => left.localeCompare(right));
 }
 
 function normalizePackageRootFallback(cwd: string): ResolvedPreviewConfig {
@@ -365,7 +353,9 @@ function normalizePackageRootFallback(cwd: string): ResolvedPreviewConfig {
   const sourceRoot = path.join(packageRoot, DEFAULT_SOURCE_DIR_NAME);
 
   if (!fs.existsSync(packageJsonPath)) {
-    throw new Error(`lattice preview must be run from a package root or a directory with ${DEFAULT_CONFIG_FILE_NAME}: ${packageRoot}`);
+    throw new Error(
+      `lattice preview must be run from a package root or a directory with ${DEFAULT_CONFIG_FILE_NAME}: ${packageRoot}`,
+    );
   }
 
   if (!fs.existsSync(sourceRoot) || !fs.statSync(sourceRoot).isDirectory()) {
@@ -417,7 +407,9 @@ export function definePreviewConfig(config: PreviewConfig) {
   return config;
 }
 
-export function createPackageTargetDiscovery(options: PreviewTargetDiscoveryFactoryOptions = {}): PreviewTargetDiscoveryAdapter {
+export function createPackageTargetDiscovery(
+  options: PreviewTargetDiscoveryFactoryOptions = {},
+): PreviewTargetDiscoveryAdapter {
   return {
     discoverTargets(context) {
       const packageRoot = path.resolve(

@@ -1,3 +1,10 @@
+import type {
+  PreviewDefinition,
+  PreviewDiagnostic,
+  PreviewEntryDescriptor,
+  PreviewEntryPayload,
+  PreviewEntryStatus,
+} from "@lattice-ui/preview-engine";
 import {
   AutoMockProvider,
   areViewportsEqual,
@@ -8,19 +15,12 @@ import {
   LayoutProvider,
   measureElementViewport,
   normalizePreviewRuntimeError,
+  type PreviewRuntimeIssue,
   pickViewport,
   setPreviewRuntimeIssueContext,
   subscribePreviewRuntimeIssues,
-  type PreviewRuntimeIssue,
   type ViewportSize,
 } from "@lattice-ui/preview-runtime";
-import type {
-  PreviewDefinition,
-  PreviewDiagnostic,
-  PreviewEntryDescriptor,
-  PreviewEntryPayload,
-  PreviewEntryStatus,
-} from "@lattice-ui/preview-engine";
 import React from "react";
 import { PreviewThemeControl } from "./theme";
 
@@ -229,7 +229,8 @@ function getPrimaryDiscoveryDiagnostic(discoveryDiagnostics: PreviewDiagnostic[]
   };
 
   return [...discoveryDiagnostics].sort((left, right) => {
-    const priorityDelta = (priority[left.code] ?? Number.MAX_SAFE_INTEGER) - (priority[right.code] ?? Number.MAX_SAFE_INTEGER);
+    const priorityDelta =
+      (priority[left.code] ?? Number.MAX_SAFE_INTEGER) - (priority[right.code] ?? Number.MAX_SAFE_INTEGER);
     if (priorityDelta !== 0) {
       return priorityDelta;
     }
@@ -274,7 +275,8 @@ function getEntryEmptyState(entry: PreviewEntryDescriptor, discoveryDiagnostics:
       return {
         body:
           `${previewRenderMissingDiagnostic.summary} ` +
-          (getNeedsHarnessReasonBody(entry) ?? "Add `preview.entry` or `preview.render` to make the preview target explicit."),
+          (getNeedsHarnessReasonBody(entry) ??
+            "Add `preview.entry` or `preview.render` to make the preview target explicit."),
         eyebrow: "Needs harness",
         title: "The preview export is incomplete.",
       };
@@ -339,11 +341,11 @@ function createPreviewNode(entry: PreviewEntryDescriptor, module: PreviewModule)
     }
 
     const props =
-      entry.renderTarget.usesPreviewProps && preview?.props && typeof preview.props === "object" ? preview.props : undefined;
+      entry.renderTarget.usesPreviewProps && preview?.props && typeof preview.props === "object"
+        ? preview.props
+        : undefined;
 
-    return (
-      <AutoMockProvider component={exportValue as React.ComponentType<Record<string, unknown>>} props={props} />
-    );
+    return <AutoMockProvider component={exportValue as React.ComponentType<Record<string, unknown>>} props={props} />;
   }
 
   return null;
@@ -667,11 +669,11 @@ export function PreviewApp(props: PreviewAppProps) {
                 )
               ) : selectedEntry.status === "blocked_by_transform" ? (
                 loadedEntry ? (
-                <div className="preview-empty">
-                  <p className="preview-empty-eyebrow">Transform blocked</p>
-                  <h2>This preview is blocked by transform mode.</h2>
-                  <p>Fix the blocking diagnostics below or opt into a non-default transform mode.</p>
-                </div>
+                  <div className="preview-empty">
+                    <p className="preview-empty-eyebrow">Transform blocked</p>
+                    <h2>This preview is blocked by transform mode.</h2>
+                    <p>Fix the blocking diagnostics below or opt into a non-default transform mode.</p>
+                  </div>
                 ) : loadIssue ? (
                   <div className="preview-empty">
                     <p className="preview-empty-eyebrow">Load error</p>
@@ -707,7 +709,13 @@ export function PreviewApp(props: PreviewAppProps) {
                   <h3>Source analysis</h3>
                 </div>
                 <div className="diagnostics-summary">
-                  <span>{selectedEntryBlockingDiagnostics.length + runtimeIssues.length + (renderIssue ? 1 : 0) + (loadIssue ? 1 : 0)} blocking issue(s)</span>
+                  <span>
+                    {selectedEntryBlockingDiagnostics.length +
+                      runtimeIssues.length +
+                      (renderIssue ? 1 : 0) +
+                      (loadIssue ? 1 : 0)}{" "}
+                    blocking issue(s)
+                  </span>
                   <span>{selectedEntryDiscoveryDiagnostics.length} discover note(s)</span>
                   {renderIssue ? <span>render error</span> : undefined}
                   {loadIssue ? <span>load error</span> : undefined}

@@ -4,7 +4,10 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createPreviewHeadlessSession } from "../../../packages/preview/src/headless";
 import { createPreviewEngine } from "../../../packages/preview-engine/src/engine";
-import { createEmptyLayoutDebugPayload, type PreviewLayoutDebugPayload } from "../../../packages/preview-runtime/src/layout/model";
+import {
+  createEmptyLayoutDebugPayload,
+  type PreviewLayoutDebugPayload,
+} from "../../../packages/preview-runtime/src/layout/model";
 import { ModuleLoadError } from "../../../packages/preview-runtime/src/runtime/runtimeError";
 
 type JsonSchema = {
@@ -104,7 +107,12 @@ function matchesJsonType(value: unknown, expectedType: string) {
   }
 }
 
-function validateAgainstSchema(value: unknown, schema: JsonSchema, schemaRoot: JsonSchema, currentPath = "$"): string[] {
+function validateAgainstSchema(
+  value: unknown,
+  schema: JsonSchema,
+  schemaRoot: JsonSchema,
+  currentPath = "$",
+): string[] {
   if (schema.$ref) {
     return validateAgainstSchema(value, resolveSchemaRef(schemaRoot, schema.$ref), schemaRoot, currentPath);
   }
@@ -118,7 +126,9 @@ function validateAgainstSchema(value: unknown, schema: JsonSchema, schemaRoot: J
   }
 
   if (schema.anyOf) {
-    const candidateErrors = schema.anyOf.map((candidate) => validateAgainstSchema(value, candidate, schemaRoot, currentPath));
+    const candidateErrors = schema.anyOf.map((candidate) =>
+      validateAgainstSchema(value, candidate, schemaRoot, currentPath),
+    );
     if (!candidateErrors.some((errors) => errors.length === 0)) {
       return [`${currentPath} must satisfy at least one schema variant`];
     }
@@ -126,7 +136,9 @@ function validateAgainstSchema(value: unknown, schema: JsonSchema, schemaRoot: J
   }
 
   if (schema.oneOf) {
-    const matches = schema.oneOf.filter((candidate) => validateAgainstSchema(value, candidate, schemaRoot, currentPath).length === 0);
+    const matches = schema.oneOf.filter(
+      (candidate) => validateAgainstSchema(value, candidate, schemaRoot, currentPath).length === 0,
+    );
     if (matches.length !== 1) {
       return [`${currentPath} must satisfy exactly one schema variant`];
     }
@@ -149,7 +161,9 @@ function validateAgainstSchema(value: unknown, schema: JsonSchema, schemaRoot: J
   }
 
   if (Array.isArray(value) && schema.items) {
-    return value.flatMap((item, index) => validateAgainstSchema(item, schema.items as JsonSchema, schemaRoot, `${currentPath}[${index}]`));
+    return value.flatMap((item, index) =>
+      validateAgainstSchema(item, schema.items as JsonSchema, schemaRoot, `${currentPath}[${index}]`),
+    );
   }
 
   if (!Array.isArray(value) && value && typeof value === "object") {
@@ -165,7 +179,14 @@ function validateAgainstSchema(value: unknown, schema: JsonSchema, schemaRoot: J
     if (schema.properties) {
       for (const [propertyName, propertySchema] of Object.entries(schema.properties)) {
         if (propertyName in record) {
-          errors.push(...validateAgainstSchema(record[propertyName], propertySchema, schemaRoot, `${currentPath}.${propertyName}`));
+          errors.push(
+            ...validateAgainstSchema(
+              record[propertyName],
+              propertySchema,
+              schemaRoot,
+              `${currentPath}.${propertyName}`,
+            ),
+          );
         }
       }
     }
@@ -183,7 +204,12 @@ function validateAgainstSchema(value: unknown, schema: JsonSchema, schemaRoot: J
 
       if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
         errors.push(
-          ...validateAgainstSchema(propertyValue, schema.additionalProperties as JsonSchema, schemaRoot, `${currentPath}.${propertyName}`),
+          ...validateAgainstSchema(
+            propertyValue,
+            schema.additionalProperties as JsonSchema,
+            schemaRoot,
+            `${currentPath}.${propertyName}`,
+          ),
         );
       }
     }
@@ -229,11 +255,21 @@ describe("public protocol schemas", () => {
       "./schemas/runtime-issue": "./schemas/runtime-issue.schema.json",
     });
 
-    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-engine/schemas/workspace-index.schema.json"))).toBe(true);
-    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-engine/schemas/entry-payload.schema.json"))).toBe(true);
-    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-engine/schemas/diagnostic.schema.json"))).toBe(true);
-    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-runtime/schemas/runtime-issue.schema.json"))).toBe(true);
-    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-runtime/schemas/layout-debug-payload.schema.json"))).toBe(true);
+    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-engine/schemas/workspace-index.schema.json"))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-engine/schemas/entry-payload.schema.json"))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-engine/schemas/diagnostic.schema.json"))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(workspaceRoot, "packages/preview-runtime/schemas/runtime-issue.schema.json"))).toBe(
+      true,
+    );
+    expect(
+      fs.existsSync(path.join(workspaceRoot, "packages/preview-runtime/schemas/layout-debug-payload.schema.json")),
+    ).toBe(true);
   });
 
   it("validates engine and headless payloads against the frozen preview schemas", async () => {
@@ -262,9 +298,15 @@ describe("public protocol schemas", () => {
       expect(snapshot.workspaceIndex).toEqual(workspaceIndex);
       expect(snapshot.entries[entryId]).toEqual(payload);
 
-      expectSchemaMatch(workspaceIndex, path.join(workspaceRoot, "packages/preview-engine/schemas/workspace-index.schema.json"));
+      expectSchemaMatch(
+        workspaceIndex,
+        path.join(workspaceRoot, "packages/preview-engine/schemas/workspace-index.schema.json"),
+      );
       expectSchemaMatch(payload, path.join(workspaceRoot, "packages/preview-engine/schemas/entry-payload.schema.json"));
-      expectSchemaMatch(snapshot.workspaceIndex, path.join(workspaceRoot, "packages/preview-engine/schemas/workspace-index.schema.json"));
+      expectSchemaMatch(
+        snapshot.workspaceIndex,
+        path.join(workspaceRoot, "packages/preview-engine/schemas/workspace-index.schema.json"),
+      );
       expectSchemaMatch(
         snapshot.entries[entryId],
         path.join(workspaceRoot, "packages/preview-engine/schemas/entry-payload.schema.json"),
@@ -359,7 +401,10 @@ describe("public protocol schemas", () => {
       ],
     };
 
-    expectSchemaMatch(runtimeIssue, path.join(workspaceRoot, "packages/preview-runtime/schemas/runtime-issue.schema.json"));
+    expectSchemaMatch(
+      runtimeIssue,
+      path.join(workspaceRoot, "packages/preview-runtime/schemas/runtime-issue.schema.json"),
+    );
     expectSchemaMatch(
       layoutDebugPayload,
       path.join(workspaceRoot, "packages/preview-runtime/schemas/layout-debug-payload.schema.json"),

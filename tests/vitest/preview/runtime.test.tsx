@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 
 import {
-  clearPreviewRuntimeIssues,
   Color3,
+  clearPreviewRuntimeIssues,
   Frame,
   getPreviewRuntimeIssues,
   LayoutProvider,
   normalizePreviewRuntimeError,
+  type PreviewRuntimeIssue,
   publishPreviewRuntimeIssue,
   ScreenGui,
   Slot,
@@ -18,7 +19,6 @@ import {
   UIPadding,
   UIScale,
   UIStroke,
-  type PreviewRuntimeIssue,
 } from "@lattice-ui/preview-runtime";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -344,8 +344,9 @@ describe("preview runtime host mapping", () => {
 
     globalThis.ResizeObserver = MockResizeObserver as typeof ResizeObserver;
 
-    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function getBoundingClientRect(this: HTMLElement) {
+    const getBoundingClientRectSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function getBoundingClientRect(this: HTMLElement) {
         const element = this;
         if (element.dataset.previewHost === "textlabel") {
           return {
@@ -372,8 +373,7 @@ describe("preview runtime host mapping", () => {
           x: 0,
           y: 0,
         } as DOMRect;
-      },
-    );
+      });
 
     const scrollWidthSpy = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function getWidth(
       this: HTMLElement,
@@ -383,22 +383,17 @@ describe("preview runtime host mapping", () => {
       const textLength = (element.textContent ?? " ").length;
       return Math.ceil(textLength * fontSize * 0.58);
     });
-    const scrollHeightSpy = vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(
-      function getHeight(this: HTMLElement) {
+    const scrollHeightSpy = vi
+      .spyOn(HTMLElement.prototype, "scrollHeight", "get")
+      .mockImplementation(function getHeight(this: HTMLElement) {
         const element = this;
         const fontSize = Number.parseFloat(element.style.fontSize || "16");
         return Math.ceil(fontSize * 1.2);
-      },
-    );
+      });
 
     try {
       render(
-        <TextLabel
-          Font={{ Name: "GothamBold" }}
-          Size={UDim2.fromOffset(90, 24)}
-          Text="Scaled"
-          TextScaled={true}
-        />,
+        <TextLabel Font={{ Name: "GothamBold" }} Size={UDim2.fromOffset(90, 24)} Text="Scaled" TextScaled={true} />,
       );
 
       const label = document.querySelector('[data-preview-host="textlabel"]') as HTMLElement;
@@ -476,8 +471,9 @@ describe("preview runtime host mapping", () => {
   it("uses measurable host bounds in provider fallback layout when size is omitted", async () => {
     layoutEngineMocks.init.mockRejectedValueOnce(new Error("init failed"));
 
-    const getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function getBoundingClientRect(this: HTMLElement) {
+    const getBoundingClientRectSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function getBoundingClientRect(this: HTMLElement) {
         if (this.dataset.previewHost === "textlabel") {
           return {
             bottom: 24,
@@ -503,8 +499,7 @@ describe("preview runtime host mapping", () => {
           x: 0,
           y: 0,
         } as DOMRect;
-      },
-    );
+      });
 
     try {
       render(

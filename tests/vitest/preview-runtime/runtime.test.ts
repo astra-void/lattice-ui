@@ -1,6 +1,12 @@
 ﻿// @vitest-environment jsdom
 
-import { Enum, RunService, type SetupRobloxEnvironmentTarget, setupRobloxEnvironment, task } from "@lattice-ui/preview-runtime";
+import {
+  Enum,
+  RunService,
+  type SetupRobloxEnvironmentTarget,
+  setupRobloxEnvironment,
+  task,
+} from "@lattice-ui/preview-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 class RafController {

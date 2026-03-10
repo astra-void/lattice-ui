@@ -192,14 +192,8 @@ function normalizeConstraints(value: unknown): PreviewLayoutConstraints | undefi
   }
 
   return {
-    height:
-      height && (height.max !== undefined || height.min !== undefined)
-        ? height
-        : undefined,
-    width:
-      width && (width.max !== undefined || width.min !== undefined)
-        ? width
-        : undefined,
+    height: height && (height.max !== undefined || height.min !== undefined) ? height : undefined,
+    width: width && (width.max !== undefined || width.min !== undefined) ? width : undefined,
   };
 }
 
@@ -286,10 +280,7 @@ export function normalizeRootScreenGuiNode(node: PreviewLayoutNode): PreviewLayo
   };
 }
 
-export function createEmptyLayoutDebugPayload(viewport: {
-  height: number;
-  width: number;
-}): PreviewLayoutDebugPayload {
+export function createEmptyLayoutDebugPayload(viewport: { height: number; width: number }): PreviewLayoutDebugPayload {
   return {
     dirtyNodeIds: [],
     roots: [],
@@ -297,10 +288,7 @@ export function createEmptyLayoutDebugPayload(viewport: {
   };
 }
 
-export function createEmptyLayoutResult(viewport: {
-  height: number;
-  width: number;
-}): PreviewLayoutResult {
+export function createEmptyLayoutResult(viewport: { height: number; width: number }): PreviewLayoutResult {
   return {
     debug: createEmptyLayoutDebugPayload(viewport),
     dirtyNodeIds: [],
@@ -308,11 +296,14 @@ export function createEmptyLayoutResult(viewport: {
   };
 }
 
-export function adaptRobloxNodeInput(input: RobloxLayoutRegistrationInput, parentId: string | undefined): PreviewLayoutNode {
+export function adaptRobloxNodeInput(
+  input: RobloxLayoutRegistrationInput,
+  parentId: string | undefined,
+): PreviewLayoutNode {
   const normalizedParentId = normalizePreviewNodeId(input.parentId ?? parentId);
   const normalizedId = normalizePreviewNodeId(input.id) ?? input.id;
   const measuredSize = normalizeIntrinsicSize(
-    input.intrinsicSize ?? (input.canMeasure ? input.measure?.() ?? null : null),
+    input.intrinsicSize ?? (input.canMeasure ? (input.measure?.() ?? null) : null),
   );
 
   const nextNode: PreviewLayoutNode = {
@@ -463,9 +454,7 @@ function normalizeDebugNode(raw: unknown): PreviewLayoutDebugNode | null {
       ? (record.intrinsicSize as Record<string, unknown>)
       : null;
   const provenance =
-    record.provenance && typeof record.provenance === "object"
-      ? (record.provenance as Record<string, unknown>)
-      : null;
+    record.provenance && typeof record.provenance === "object" ? (record.provenance as Record<string, unknown>) : null;
 
   return {
     children: Array.isArray(record.children)
@@ -481,10 +470,7 @@ function normalizeDebugNode(raw: unknown): PreviewLayoutDebugNode | null {
           width: toFiniteNumber(intrinsicSize.width, 0),
         }
       : null,
-    kind:
-      record.kind === "layout" || record.kind === "root" || record.kind === "host"
-        ? record.kind
-        : "host",
+    kind: record.kind === "layout" || record.kind === "root" || record.kind === "host" ? record.kind : "host",
     layoutSource:
       record.layoutSource === "explicit-size" ||
       record.layoutSource === "intrinsic-size" ||
@@ -500,7 +486,8 @@ function normalizeDebugNode(raw: unknown): PreviewLayoutDebugNode | null {
           y: toFiniteNumber(parentConstraints.y, 0),
         }
       : null,
-    parentId: typeof record.parentId === "string" ? (normalizePreviewNodeId(record.parentId) ?? record.parentId) : undefined,
+    parentId:
+      typeof record.parentId === "string" ? (normalizePreviewNodeId(record.parentId) ?? record.parentId) : undefined,
     provenance: {
       detail: typeof provenance?.detail === "string" ? provenance.detail : "layout engine result",
       source: provenance?.source === "fallback" ? "fallback" : "wasm",
@@ -534,7 +521,8 @@ export function normalizePreviewLayoutResult(
         .filter((value): value is string => typeof value === "string")
         .map((value) => normalizePreviewNodeId(value) ?? value)
     : [];
-  const debugRecord = record.debug && typeof record.debug === "object" ? (record.debug as Record<string, unknown>) : null;
+  const debugRecord =
+    record.debug && typeof record.debug === "object" ? (record.debug as Record<string, unknown>) : null;
 
   return {
     debug: {
@@ -545,8 +533,14 @@ export function normalizePreviewLayoutResult(
             .filter((node): node is PreviewLayoutDebugNode => node !== null)
         : [],
       viewport: {
-        height: toFiniteNumber(debugRecord?.viewport && (debugRecord.viewport as Record<string, unknown>).height, viewport.height),
-        width: toFiniteNumber(debugRecord?.viewport && (debugRecord.viewport as Record<string, unknown>).width, viewport.width),
+        height: toFiniteNumber(
+          debugRecord?.viewport && (debugRecord.viewport as Record<string, unknown>).height,
+          viewport.height,
+        ),
+        width: toFiniteNumber(
+          debugRecord?.viewport && (debugRecord.viewport as Record<string, unknown>).width,
+          viewport.width,
+        ),
       },
     },
     dirtyNodeIds,

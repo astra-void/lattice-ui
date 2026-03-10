@@ -14,10 +14,7 @@ type ParsedPreviewArgs =
     };
 
 type PreviewModule = {
-  createPreviewHeadlessSession: (options?: {
-    configFile?: string;
-    cwd?: string;
-  }) => Promise<{
+  createPreviewHeadlessSession: (options?: { configFile?: string; cwd?: string }) => Promise<{
     dispose(): void;
     getSnapshot(): unknown;
   }>;

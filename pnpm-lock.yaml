@@ -259,6 +259,9 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
     devDependencies:
+      '@lattice-ui/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
@@ -499,6 +502,8 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
+  packages/layout-engine: {}
+
   packages/menu:
     dependencies:
       '@lattice-ui/core':
@@ -559,8 +564,8 @@ importers:
         specifier: workspace:*
         version: link:../compiler
       '@lattice-ui/layout-engine':
-        specifier: file:../layout-engine/pkg
-        version: layout-engine@file:packages/layout-engine/pkg
+        specifier: workspace:*
+        version: link:../layout-engine
       '@lattice-ui/preview-engine':
         specifier: workspace:*
         version: link:../preview-engine
@@ -608,8 +613,8 @@ importers:
   packages/preview-runtime:
     dependencies:
       '@lattice-ui/layout-engine':
-        specifier: file:../layout-engine/pkg
-        version: layout-engine@file:packages/layout-engine/pkg
+        specifier: workspace:*
+        version: link:../layout-engine
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -3975,9 +3980,6 @@ packages:
   klona@2.0.6:
     resolution: {integrity: sha512-dhG34DXATL5hSxJbIexCft8FChFXtmskoZYnoPWjXQuebWYCNkVeV3KkGegCK9CP1oswI/vQibS2GY7Em/sJJA==}
     engines: {node: '>= 8'}
-
-  layout-engine@file:packages/layout-engine/pkg:
-    resolution: {directory: packages/layout-engine/pkg, type: directory}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -8636,8 +8638,6 @@ snapshots:
   kleur@4.1.5: {}
 
   klona@2.0.6: {}
-
-  layout-engine@file:packages/layout-engine/pkg: {}
 
   levn@0.4.1:
     dependencies:

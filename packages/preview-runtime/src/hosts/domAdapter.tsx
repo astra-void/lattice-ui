@@ -1,18 +1,9 @@
 import * as React from "react";
-import {
-  FULL_SIZE_UDIM2,
-  normalizePreviewNodeId,
-  serializeUDim2,
-  ZERO_UDIM2,
-} from "../internal/robloxValues";
+import { FULL_SIZE_UDIM2, normalizePreviewNodeId, serializeUDim2 } from "../internal/robloxValues";
 import { adaptRobloxNodeInput, type ComputedRect, type PreviewLayoutNode } from "../layout/model";
 import { applyHoistedModifierStyles, extractHoistedChildren } from "./modifiers";
-import {
-  applyComputedLayoutStyle,
-  resolvePreviewDomProps,
-  type ResolvedPreviewDomProps,
-} from "./resolveProps";
-import { layoutHostNodeType, type LayoutHostName, type PreviewDomProps } from "./types";
+import { applyComputedLayoutStyle, type ResolvedPreviewDomProps, resolvePreviewDomProps } from "./resolveProps";
+import { type LayoutHostName, layoutHostNodeType, type PreviewDomProps } from "./types";
 
 export type LayoutDebugState = {
   debugNode: {
@@ -170,8 +161,7 @@ function createHostNode(source: SourceHostDescriptor): PreviewHostNode {
 
   const layoutNode = adaptRobloxNodeInput(
     {
-      anchorPoint:
-        source.props.AnchorPoint ?? (rawProps.anchorPoint as PreviewDomProps["AnchorPoint"] | undefined),
+      anchorPoint: source.props.AnchorPoint ?? (rawProps.anchorPoint as PreviewDomProps["AnchorPoint"] | undefined),
       debugLabel: source.props.Name ? String(source.props.Name) : nodeId,
       id: nodeId,
       kind: source.host === "screengui" && parentId === undefined ? "root" : "host",
@@ -263,9 +253,13 @@ export const domPresentationAdapter: PresentationAdapter = {
           />
         );
       default: {
-        const Tag = node.host === "textlabel" || node.host === "frame" || node.host === "screengui" || node.host === "scrollingframe"
-          ? "div"
-          : "div";
+        const Tag =
+          node.host === "textlabel" ||
+          node.host === "frame" ||
+          node.host === "screengui" ||
+          node.host === "scrollingframe"
+            ? "div"
+            : "div";
 
         return (
           <Tag {...rendered.domProps} ref={ref as React.Ref<HTMLDivElement>}>

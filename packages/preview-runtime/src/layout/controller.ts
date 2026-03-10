@@ -187,9 +187,7 @@ export class LayoutController {
       parentId: node.parentId,
       provenance: {
         detail:
-          provenance === "wasm"
-            ? "computed by layout-engine session"
-            : "computed by preview-runtime fallback solver",
+          provenance === "wasm" ? "computed by layout-engine session" : "computed by preview-runtime fallback solver",
         source: provenance,
       },
       rect,

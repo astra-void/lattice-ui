@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import { createPreviewEngine } from "@lattice-ui/preview-engine";
 import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
+import { afterEach, describe, expect, it } from "vitest";
 import { resolveRealFilePath } from "../../../packages/preview-engine/src/pathUtils";
 
 const temporaryRoots: string[] = [];
@@ -25,7 +25,11 @@ function createTempPreviewPackage(files: Record<string, string>) {
   }
 
   if (!fs.existsSync(path.join(packageRoot, "package.json"))) {
-    fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ name: "@fixtures/preview-engine" }), "utf8");
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ name: "@fixtures/preview-engine" }),
+      "utf8",
+    );
   }
 
   return {

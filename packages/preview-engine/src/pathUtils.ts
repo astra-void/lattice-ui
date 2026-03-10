@@ -3,7 +3,7 @@ import path from "node:path";
 import ts from "typescript";
 
 function stripViteFsPrefix(filePath: string) {
-  return filePath.startsWith("/@fs/") ? filePath.slice("/@fs".length) : filePath;
+  return filePath.startsWith("/@fs/") ? filePath.slice("/@fs/".length) : filePath;
 }
 
 function normalizeComparablePath(filePath: string) {

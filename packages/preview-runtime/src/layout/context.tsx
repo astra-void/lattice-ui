@@ -4,15 +4,14 @@ import { normalizePreviewRuntimeError, publishPreviewRuntimeIssue } from "../run
 import { LayoutController } from "./controller";
 import {
   adaptRobloxNodeInput,
+  type ComputedRect,
   computeNodeRect,
   createEmptyLayoutResult,
   createViewportRect,
-  type ComputedRect,
   type PreviewLayoutDebugNode,
   type PreviewLayoutNode,
   type PreviewLayoutResult,
   type RobloxLayoutRegistrationInput,
-  type RobloxLayoutNodeInput,
 } from "./model";
 import {
   areViewportsEqual,
@@ -303,48 +302,49 @@ export function LayoutProvider(props: LayoutProviderProps) {
       return;
     }
 
-    const timeoutId = globalThis.setTimeout(() => {
-      try {
-        const nextResult = controller.compute(isReady);
-        setLayoutResult(nextResult);
-        setError(null);
-      } catch (nextError) {
-        publishPreviewRuntimeIssue(
-          normalizePreviewRuntimeError(
-            {
-              code: isValidationError(nextError) ? "LAYOUT_VALIDATION_ERROR" : "LAYOUT_WASM_COMPUTE_FAILED",
-              kind: isValidationError(nextError) ? "LayoutValidationError" : "LayoutExecutionError",
-              phase: "layout",
-              summary: `Wasm layout failed: ${toErrorMessage(nextError)}`,
-              target: "@lattice-ui/layout-engine",
-            },
-            nextError,
-          ),
-        );
+    const timeoutId = globalThis.setTimeout(
+      () => {
         try {
-          const fallbackResult = controller.compute(false);
-          setLayoutResult(fallbackResult);
-          setError(`Wasm layout failed: ${toErrorMessage(nextError)}`);
-        } catch (fallbackError) {
+          const nextResult = controller.compute(isReady);
+          setLayoutResult(nextResult);
+          setError(null);
+        } catch (nextError) {
           publishPreviewRuntimeIssue(
             normalizePreviewRuntimeError(
               {
-                code: isValidationError(fallbackError)
-                  ? "LAYOUT_VALIDATION_ERROR"
-                  : "LAYOUT_FALLBACK_COMPUTE_FAILED",
-                kind: isValidationError(fallbackError) ? "LayoutValidationError" : "LayoutExecutionError",
+                code: isValidationError(nextError) ? "LAYOUT_VALIDATION_ERROR" : "LAYOUT_WASM_COMPUTE_FAILED",
+                kind: isValidationError(nextError) ? "LayoutValidationError" : "LayoutExecutionError",
                 phase: "layout",
-                summary: `Fallback layout failed: ${toErrorMessage(fallbackError)}`,
+                summary: `Wasm layout failed: ${toErrorMessage(nextError)}`,
                 target: "@lattice-ui/layout-engine",
               },
-              fallbackError,
+              nextError,
             ),
           );
-          setLayoutResult(createEmptyLayoutResult({ height: viewportHeight, width: viewportWidth }));
-          setError(`Fallback layout failed: ${toErrorMessage(fallbackError)}`);
+          try {
+            const fallbackResult = controller.compute(false);
+            setLayoutResult(fallbackResult);
+            setError(`Wasm layout failed: ${toErrorMessage(nextError)}`);
+          } catch (fallbackError) {
+            publishPreviewRuntimeIssue(
+              normalizePreviewRuntimeError(
+                {
+                  code: isValidationError(fallbackError) ? "LAYOUT_VALIDATION_ERROR" : "LAYOUT_FALLBACK_COMPUTE_FAILED",
+                  kind: isValidationError(fallbackError) ? "LayoutValidationError" : "LayoutExecutionError",
+                  phase: "layout",
+                  summary: `Fallback layout failed: ${toErrorMessage(fallbackError)}`,
+                  target: "@lattice-ui/layout-engine",
+                },
+                fallbackError,
+              ),
+            );
+            setLayoutResult(createEmptyLayoutResult({ height: viewportHeight, width: viewportWidth }));
+            setError(`Fallback layout failed: ${toErrorMessage(fallbackError)}`);
+          }
         }
-      }
-    }, Math.max(0, debounceMs));
+      },
+      Math.max(0, debounceMs),
+    );
 
     return () => {
       globalThis.clearTimeout(timeoutId);
@@ -423,7 +423,7 @@ export function useLayoutEngineStatus() {
 export function useLayoutDebugState(nodeId?: string) {
   const context = React.useContext(LayoutContext);
   const inheritedParentRect = React.useContext(ParentRectContext);
-  const debugNode = nodeId ? context?.getDebugNode(nodeId) ?? null : null;
+  const debugNode = nodeId ? (context?.getDebugNode(nodeId) ?? null) : null;
 
   return React.useMemo(
     () => ({

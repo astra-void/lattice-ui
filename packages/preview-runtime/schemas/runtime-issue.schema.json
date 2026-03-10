@@ -4,16 +4,7 @@
   "title": "PreviewRuntimeIssue",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "code",
-    "entryId",
-    "file",
-    "kind",
-    "phase",
-    "relativeFile",
-    "summary",
-    "target"
-  ],
+  "required": ["code", "entryId", "file", "kind", "phase", "relativeFile", "summary", "target"],
   "properties": {
     "code": {
       "type": "string"
@@ -48,11 +39,7 @@
       ]
     },
     "phase": {
-      "enum": [
-        "transform",
-        "runtime",
-        "layout"
-      ]
+      "enum": ["transform", "runtime", "layout"]
     },
     "relativeFile": {
       "type": "string"

@@ -11,14 +11,14 @@
     "registry",
     "templates"
   ],
-  "dependencies": {
-    "@lattice-ui/preview": "workspace:*"
-  },
   "scripts": {
-    "prebuild": "node ./scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.json",
+    "prebuild": "node ./scripts/clean-dist.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc -p tsconfig.json -w"
+  },
+  "dependencies": {
+    "@lattice-ui/preview": "workspace:*"
   },
   "engines": {
     "node": ">=20"

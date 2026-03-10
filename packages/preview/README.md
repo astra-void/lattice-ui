@@ -31,10 +31,7 @@ This keeps the current package-root workflow:
 For workspace preview, add `lattice.preview.config.ts`:
 
 ```ts
-import {
-  createWorkspaceTargetsDiscovery,
-  definePreviewConfig,
-} from "@lattice-ui/preview";
+import { createWorkspaceTargetsDiscovery, definePreviewConfig } from "@lattice-ui/preview";
 
 export default definePreviewConfig({
   projectName: "Lattice Preview",
@@ -150,10 +147,7 @@ Built-in target discovery helpers:
 Example static target setup:
 
 ```ts
-import {
-  createStaticTargetsDiscovery,
-  definePreviewConfig,
-} from "@lattice-ui/preview";
+import { createStaticTargetsDiscovery, definePreviewConfig } from "@lattice-ui/preview";
 
 export default definePreviewConfig({
   projectName: "Lattice Preview",

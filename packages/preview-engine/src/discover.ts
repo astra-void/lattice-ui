@@ -2,13 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import { isFilePathUnderRoot, resolveRealFilePath } from "./pathUtils";
-import {
-  createWorkspaceGraphService,
-  isTransformableSourceFile,
-  type WorkspaceGraphService,
-  type WorkspaceProject,
-} from "./workspaceGraph";
-import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
 import type {
   CreatePreviewEngineOptions,
   PreviewDiagnostic,
@@ -23,6 +16,13 @@ import type {
   PreviewSourceTarget,
   PreviewWorkspaceIndex,
 } from "./types";
+import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
+import {
+  createWorkspaceGraphService,
+  isTransformableSourceFile,
+  type WorkspaceGraphService,
+  type WorkspaceProject,
+} from "./workspaceGraph";
 
 const PREVIEW_PACKAGE_ENTRY_EXCLUDES = ["runtime/", "shell/"];
 
@@ -322,7 +322,11 @@ function collectLocalRenderableNames(sourceFile: ts.SourceFile) {
   };
 }
 
-function parseModuleRecord(filePath: string, target: TargetContext, graphService: WorkspaceGraphService): RawSourceModuleRecord {
+function parseModuleRecord(
+  filePath: string,
+  target: TargetContext,
+  graphService: WorkspaceGraphService,
+): RawSourceModuleRecord {
   const sourceText = fs.readFileSync(filePath, "utf8");
   const scriptKind = filePath.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
   const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true, scriptKind);
@@ -349,7 +353,11 @@ function parseModuleRecord(filePath: string, target: TargetContext, graphService
   };
 
   for (const statement of sourceFile.statements) {
-    if (ts.isImportDeclaration(statement) && statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier)) {
+    if (
+      ts.isImportDeclaration(statement) &&
+      statement.moduleSpecifier &&
+      ts.isStringLiteral(statement.moduleSpecifier)
+    ) {
       const resolvedImport = graphService.resolveImport({
         importerFilePath: filePath,
         specifier: statement.moduleSpecifier.text,
@@ -445,7 +453,12 @@ function parseModuleRecord(filePath: string, target: TargetContext, graphService
     }
 
     if (!ts.isExportDeclaration(statement) || statement.isTypeOnly || !statement.moduleSpecifier) {
-      if (ts.isExportDeclaration(statement) && !statement.isTypeOnly && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+      if (
+        ts.isExportDeclaration(statement) &&
+        !statement.isTypeOnly &&
+        statement.exportClause &&
+        ts.isNamedExports(statement.exportClause)
+      ) {
         for (const element of statement.exportClause.elements) {
           const localName = element.propertyName?.text ?? element.name.text;
           const exportName = element.name.text;
@@ -525,10 +538,9 @@ function parseModuleRecord(filePath: string, target: TargetContext, graphService
     ownerPackageName: fileContext.packageName,
     ownerPackageRoot: fileContext.packageRoot,
     project: fileContext.project,
-    preview:
-      previewExported
-        ? (preview ?? { hasEntry: false, hasExport: true, hasProps: false, hasRender: false })
-        : { hasEntry: false, hasExport: false, hasProps: false, hasRender: false },
+    preview: previewExported
+      ? (preview ?? { hasEntry: false, hasExport: true, hasProps: false, hasRender: false })
+      : { hasEntry: false, hasExport: false, hasProps: false, hasRender: false },
     previewExported,
     rawDiagnostics: [...rawDiagnostics.values()],
     relativePath: toRelativePath(target.sourceRoot, filePath),
@@ -931,7 +943,7 @@ function createBaseStatusDetails(
   switch (status) {
     case "ambiguous":
       return {
-        candidates: renderTarget.kind === "none" ? renderTarget.candidates ?? [] : [],
+        candidates: renderTarget.kind === "none" ? (renderTarget.candidates ?? []) : [],
         kind: "ambiguous",
         reason: "ambiguous-exports",
       };
@@ -1037,9 +1049,7 @@ function buildDescriptor(
   const hasDefaultExport = hasRenderableDefaultExport(record, recordsByPath);
   const entryId = `${record.target.targetName}:${record.relativePath}`;
   const renderableCandidates = hasDefaultExport ? ["default", ...candidateExportNames] : [...candidateExportNames];
-  const baseDiagnostics = [
-    ...collectTransitiveDiagnostics(entryId, record.filePath, recordsByPath).values(),
-  ];
+  const baseDiagnostics = [...collectTransitiveDiagnostics(entryId, record.filePath, recordsByPath).values()];
 
   let selection: PreviewSelection;
   let renderTarget: PreviewRenderTarget;

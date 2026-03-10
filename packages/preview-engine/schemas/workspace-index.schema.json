@@ -4,12 +4,7 @@
   "title": "PreviewWorkspaceIndex",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "entries",
-    "projectName",
-    "protocolVersion",
-    "targets"
-  ],
+  "required": ["entries", "projectName", "protocolVersion", "targets"],
   "properties": {
     "entries": {
       "type": "array",
@@ -34,11 +29,7 @@
     "sourceTarget": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "name",
-        "packageRoot",
-        "sourceRoot"
-      ],
+      "required": ["name", "packageRoot", "sourceRoot"],
       "properties": {
         "name": {
           "type": "string"
@@ -57,12 +48,7 @@
     "capabilities": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "supportsHotUpdate",
-        "supportsLayoutDebug",
-        "supportsPropsEditing",
-        "supportsRuntimeMock"
-      ],
+      "required": ["supportsHotUpdate", "supportsLayoutDebug", "supportsPropsEditing", "supportsRuntimeMock"],
       "properties": {
         "supportsHotUpdate": {
           "type": "boolean"
@@ -81,21 +67,12 @@
     "diagnosticsSummary": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "byPhase",
-        "hasBlocking",
-        "total"
-      ],
+      "required": ["byPhase", "hasBlocking", "total"],
       "properties": {
         "byPhase": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "discovery",
-            "layout",
-            "runtime",
-            "transform"
-          ],
+          "required": ["discovery", "layout", "runtime", "transform"],
           "properties": {
             "discovery": {
               "type": "integer",
@@ -129,11 +106,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "exportName",
-            "kind",
-            "usesPreviewProps"
-          ],
+          "required": ["exportName", "kind", "usesPreviewProps"],
           "properties": {
             "exportName": {
               "type": "string"
@@ -149,10 +122,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "contract",
-            "kind"
-          ],
+          "required": ["contract", "kind"],
           "properties": {
             "contract": {
               "const": "preview.render"
@@ -165,10 +135,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind",
-            "reason"
-          ],
+          "required": ["kind", "reason"],
           "properties": {
             "candidates": {
               "type": "array",
@@ -180,11 +147,7 @@
               "const": "none"
             },
             "reason": {
-              "enum": [
-                "ambiguous-exports",
-                "missing-explicit-contract",
-                "no-component-export"
-              ]
+              "enum": ["ambiguous-exports", "missing-explicit-contract", "no-component-export"]
             }
           }
         }
@@ -195,16 +158,10 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "contract",
-            "kind"
-          ],
+          "required": ["contract", "kind"],
           "properties": {
             "contract": {
-              "enum": [
-                "preview.entry",
-                "preview.render"
-              ]
+              "enum": ["preview.entry", "preview.render"]
             },
             "kind": {
               "const": "explicit"
@@ -214,20 +171,13 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind",
-            "reason"
-          ],
+          "required": ["kind", "reason"],
           "properties": {
             "kind": {
               "const": "unresolved"
             },
             "reason": {
-              "enum": [
-                "ambiguous-exports",
-                "missing-explicit-contract",
-                "no-component-export"
-              ]
+              "enum": ["ambiguous-exports", "missing-explicit-contract", "no-component-export"]
             }
           }
         }
@@ -316,9 +266,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind"
-          ],
+          "required": ["kind"],
           "properties": {
             "kind": {
               "const": "ready"
@@ -328,10 +276,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind",
-            "reason"
-          ],
+          "required": ["kind", "reason"],
           "properties": {
             "candidates": {
               "type": "array",
@@ -343,21 +288,14 @@
               "const": "needs_harness"
             },
             "reason": {
-              "enum": [
-                "missing-explicit-contract",
-                "no-component-export"
-              ]
+              "enum": ["missing-explicit-contract", "no-component-export"]
             }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "candidates",
-            "kind",
-            "reason"
-          ],
+          "required": ["candidates", "kind", "reason"],
           "properties": {
             "candidates": {
               "type": "array",
@@ -376,11 +314,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "blockingCodes",
-            "kind",
-            "reason"
-          ],
+          "required": ["blockingCodes", "kind", "reason"],
           "properties": {
             "blockingCodes": {
               "type": "array",
@@ -399,11 +333,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "issueCodes",
-            "kind",
-            "reason"
-          ],
+          "required": ["issueCodes", "kind", "reason"],
           "properties": {
             "issueCodes": {
               "type": "array",
@@ -422,11 +352,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "issueCodes",
-            "kind",
-            "reason"
-          ],
+          "required": ["issueCodes", "kind", "reason"],
           "properties": {
             "issueCodes": {
               "type": "array",

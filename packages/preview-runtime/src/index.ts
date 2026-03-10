@@ -130,17 +130,17 @@ export {
   withAutoMockedProps,
 } from "./preview";
 export type {
-  PreviewExecutionMode,
   PreviewEnumCategory,
   PreviewEnumItem,
   PreviewEnumRoot,
+  PreviewExecutionMode,
   PreviewPolyfillTarget,
+  PreviewRunService,
   PreviewRuntimeIssue,
   PreviewRuntimeIssueContext,
   PreviewRuntimeIssueKind,
   PreviewRuntimeIssuePhase,
   PreviewRuntimeReporter,
-  PreviewRunService,
   RBXScriptConnection,
   RBXScriptSignal,
   TaskCallback,
@@ -199,21 +199,24 @@ export {
 } from "./layout";
 export { DismissableLayer, FocusScope, Portal, PortalProvider, Presence, usePortalContext } from "./react";
 export { __previewGlobal, Color3, UDim, UDim2, Vector2, typeIs, pairs, error, isPreviewElement };
-export type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "./preview";
 export type { PreviewLayoutDebugNode, PreviewLayoutDebugPayload } from "./layout";
+export type { PreviewComponentPropsMetadata, PreviewPropMetadata } from "./preview";
 export type { LayerInteractEvent } from "./react";
-export { createUniversalRobloxMock, createUniversalRobloxModuleMock, robloxMock, robloxModuleMock } from "./runtime";
-export { __rbxStyle, Box, Text } from "./style/index";
 export {
+  createUniversalRobloxMock,
+  createUniversalRobloxModuleMock,
   LayoutExecutionError,
   LayoutValidationError,
   ModuleLoadError,
   PreviewRuntimeError,
   RuntimeMockError,
+  robloxMock,
+  robloxModuleMock,
   TransformExecutionError,
   TransformValidationError,
   UnsupportedPatternError,
 } from "./runtime";
+export { __rbxStyle, Box, Text } from "./style/index";
 
 export type PreviewRuntime = {
   hosts: typeof previewRuntimeHosts;

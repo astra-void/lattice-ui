@@ -1,15 +1,10 @@
-import fs from "node:fs";
 import { createHash } from "node:crypto";
-import {
-  transformPreviewSource,
-  type PreviewTransformDiagnostic,
-  type PreviewTransformOutcome,
-} from "@lattice-ui/compiler";
+import fs from "node:fs";
+import { transformPreviewSource } from "@lattice-ui/compiler";
 import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
-import { discoverWorkspaceState, type DiscoveredEntryState, type WorkspaceDiscoverySnapshot } from "./discover";
+import { type DiscoveredEntryState, discoverWorkspaceState, type WorkspaceDiscoverySnapshot } from "./discover";
 import { isFilePathUnderRoot, resolveFilePath, resolveRealFilePath } from "./pathUtils";
-import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
-import { isTransformableSourceFile } from "./workspaceGraph";
+import { normalizeTransformPreviewSourceResult } from "./transformResult";
 import type {
   CreatePreviewEngineOptions,
   PreviewDiagnostic,
@@ -17,14 +12,18 @@ import type {
   PreviewEngineSnapshot,
   PreviewEngineUpdate,
   PreviewEngineUpdateListener,
-  PreviewExecutionMode,
   PreviewEntryPayload,
   PreviewEntryStatus,
   PreviewEntryStatusDetails,
+  PreviewExecutionMode,
   PreviewSourceTarget,
+  PreviewTransformDiagnostic,
+  PreviewTransformOutcome,
   PreviewTransformState,
   PreviewWorkspaceIndex,
 } from "./types";
+import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
+import { isTransformableSourceFile } from "./workspaceGraph";
 
 type CombinedSnapshotState = WorkspaceDiscoverySnapshot & {
   targetsByFilePath: Map<string, PreviewSourceTarget>;
@@ -159,7 +158,11 @@ function collectImpactedEntryIds(snapshot: CombinedSnapshotState | undefined, fi
   const impacted = new Set<string>();
 
   for (const [entryId, dependencyPaths] of snapshot.entryDependencyPathsById.entries()) {
-    if (dependencyPaths.some((dependencyPath) => getComparableFilePaths(dependencyPath).some((path) => normalizedPaths.has(path)))) {
+    if (
+      dependencyPaths.some((dependencyPath) =>
+        getComparableFilePaths(dependencyPath).some((path) => normalizedPaths.has(path)),
+      )
+    ) {
       impacted.add(entryId);
     }
   }
@@ -312,12 +315,14 @@ function computeTransformState(
       cachedTransform?.hash === sourceHash
         ? cachedTransform
         : (() => {
-            const result = transformPreviewSource(sourceText, {
-              filePath: dependencyPath,
+            const result = normalizeTransformPreviewSourceResult(
+              transformPreviewSource(sourceText, {
+                filePath: dependencyPath,
+                runtimeModule,
+                target: entryState.target.targetName,
+              }),
               mode,
-              runtimeModule,
-              target: entryState.target.targetName,
-            });
+            );
             const nextCachedTransform = {
               diagnostics: result.diagnostics,
               hash: sourceHash,
@@ -393,7 +398,9 @@ function resolvePayloadStatus(
     return {
       status: "blocked_by_transform",
       statusDetails: {
-        blockingCodes: transformDiagnostics.filter((diagnostic) => diagnostic.blocking).map((diagnostic) => diagnostic.code),
+        blockingCodes: transformDiagnostics
+          .filter((diagnostic) => diagnostic.blocking)
+          .map((diagnostic) => diagnostic.code),
         kind: "blocked_by_transform",
         reason: "transform-diagnostics",
       },
@@ -588,7 +595,9 @@ class PreviewEngineImpl implements PreviewEngine {
       return false;
     }
 
-    return this.normalizedTargets.some((target) => comparablePaths.some((candidatePath) => isFilePathUnderRoot(target.sourceRoot, candidatePath)));
+    return this.normalizedTargets.some((target) =>
+      comparablePaths.some((candidatePath) => isFilePathUnderRoot(target.sourceRoot, candidatePath)),
+    );
   }
 
   public getWorkspaceIndex() {
@@ -689,7 +698,11 @@ class PreviewEngineImpl implements PreviewEngine {
     }
 
     const nextWorkspaceIndex = this.getWorkspaceIndex();
-    const executionChangedEntryIds = collectChangedEntryIds(previousWorkspaceIndex, nextWorkspaceIndex, changedEntryIds);
+    const executionChangedEntryIds = collectChangedEntryIds(
+      previousWorkspaceIndex,
+      nextWorkspaceIndex,
+      changedEntryIds,
+    );
     const update: PreviewEngineUpdate = {
       changedEntryIds: executionChangedEntryIds,
       executionChangedEntryIds,

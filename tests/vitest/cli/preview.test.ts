@@ -279,12 +279,7 @@ describe("preview command", () => {
     const { nestedPackageRoot, workspaceRoot: tempWorkspaceRoot } = createTempWorkspaceConfig();
 
     const output = runSourceCli(
-      [
-        "preview",
-        "--config",
-        path.join(tempWorkspaceRoot, "lattice.preview.config.ts"),
-        "--headless",
-      ],
+      ["preview", "--config", path.join(tempWorkspaceRoot, "lattice.preview.config.ts"), "--headless"],
       nestedPackageRoot,
     );
     const snapshot = JSON.parse(output) as {
@@ -342,14 +337,7 @@ describe("preview command", () => {
 
   it("keeps the built cli dist on the removed-subcommand migration path", () => {
     const output = readCommandFailure(
-      [
-        "node",
-        "--import",
-        tsxLoaderPath,
-        path.join(workspaceRoot, "packages/cli/src/index.ts"),
-        "preview",
-        "generate",
-      ],
+      ["node", "--import", tsxLoaderPath, path.join(workspaceRoot, "packages/cli/src/index.ts"), "preview", "generate"],
       workspaceRoot,
     );
 

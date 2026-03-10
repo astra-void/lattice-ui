@@ -170,7 +170,11 @@ describe("buildPreviewModules", () => {
     const outDir = path.join(fixtureRoot, "generated");
 
     fs.mkdirSync(sourceRoot, { recursive: true });
-    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function Broken() { return <viewportframe />; }\n", "utf8");
+    fs.writeFileSync(
+      path.join(sourceRoot, "index.tsx"),
+      "export function Broken() { return <viewportframe />; }\n",
+      "utf8",
+    );
 
     await expect(
       buildPreviewModules({
@@ -193,7 +197,11 @@ describe("buildPreviewModules", () => {
     const outDir = path.join(fixtureRoot, "generated");
 
     fs.mkdirSync(sourceRoot, { recursive: true });
-    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function Broken() { return <viewportframe />; }\n", "utf8");
+    fs.writeFileSync(
+      path.join(sourceRoot, "index.tsx"),
+      "export function Broken() { return <viewportframe />; }\n",
+      "utf8",
+    );
 
     const result = await buildPreviewModules({
       failOnUnsupported: false,
@@ -206,7 +214,9 @@ describe("buildPreviewModules", () => {
       outDir,
     });
 
-    expect(result.writtenFiles.some((filePath) => filePath.endsWith(path.join("compat-build", "index.tsx")))).toBe(true);
+    expect(result.writtenFiles.some((filePath) => filePath.endsWith(path.join("compat-build", "index.tsx")))).toBe(
+      true,
+    );
   });
 
   it("continues to reject design-time module builds from the wrapper", async () => {
@@ -269,7 +279,11 @@ describe("buildPreviewModules", () => {
     const sourceRoot = path.join(fixtureRoot, "src");
 
     fs.mkdirSync(sourceRoot, { recursive: true });
-    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function UnsafeFixture() { return <frame />; }\n", "utf8");
+    fs.writeFileSync(
+      path.join(sourceRoot, "index.tsx"),
+      "export function UnsafeFixture() { return <frame />; }\n",
+      "utf8",
+    );
 
     await expect(
       buildPreviewModules({
@@ -302,8 +316,16 @@ describe("buildPreviewModules", () => {
     const outDir = path.join(fixtureRoot, "generated");
 
     fs.mkdirSync(sourceRoot, { recursive: true });
-    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function RootFixture() { return <frame />; }\n", "utf8");
-    fs.writeFileSync(path.join(sourceRoot, "Extra.tsx"), "export function ExtraFixture() { return <frame />; }\n", "utf8");
+    fs.writeFileSync(
+      path.join(sourceRoot, "index.tsx"),
+      "export function RootFixture() { return <frame />; }\n",
+      "utf8",
+    );
+    fs.writeFileSync(
+      path.join(sourceRoot, "Extra.tsx"),
+      "export function ExtraFixture() { return <frame />; }\n",
+      "utf8",
+    );
 
     const initialResult = await buildPreviewModules({
       targets: [
@@ -317,9 +339,7 @@ describe("buildPreviewModules", () => {
 
     const generatedExtra = path.join(outDir, "incremental/Extra.tsx");
     const generatedIndex = path.join(outDir, "incremental/index.tsx");
-    expect(initialResult.writtenFiles).toEqual(
-      expect.arrayContaining([generatedExtra, generatedIndex]),
-    );
+    expect(initialResult.writtenFiles).toEqual(expect.arrayContaining([generatedExtra, generatedIndex]));
     expect(fs.existsSync(path.join(outDir, ".lattice-preview-manifest.json"))).toBe(true);
 
     const secondResult = await buildPreviewModules({
@@ -333,7 +353,11 @@ describe("buildPreviewModules", () => {
     });
     expect(secondResult.writtenFiles).toEqual([]);
 
-    fs.writeFileSync(path.join(sourceRoot, "index.tsx"), "export function RootFixture() { return <textlabel Text=\"updated\" />; }\n", "utf8");
+    fs.writeFileSync(
+      path.join(sourceRoot, "index.tsx"),
+      'export function RootFixture() { return <textlabel Text="updated" />; }\n',
+      "utf8",
+    );
     const thirdResult = await buildPreviewModules({
       targets: [
         {

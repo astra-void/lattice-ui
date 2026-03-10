@@ -76,7 +76,8 @@ describe("createAutoMockPropsPlugin", () => {
     const realSourceRoot = path.join(fixtureRoot, "real-src");
     const linkedSourceRoot = path.join(fixtureRoot, "linked-src");
     const sourceFile = path.join(realSourceRoot, "Symlinked.tsx");
-    const source = 'export default function Symlinked(props: { label: string }) { return <textlabel Text={props.label} />; }\n';
+    const source =
+      "export default function Symlinked(props: { label: string }) { return <textlabel Text={props.label} />; }\n";
 
     fs.mkdirSync(realSourceRoot, { recursive: true });
     fs.writeFileSync(

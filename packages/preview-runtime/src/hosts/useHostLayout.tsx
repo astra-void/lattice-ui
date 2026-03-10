@@ -1,13 +1,13 @@
 import * as React from "react";
 import { normalizePreviewNodeId } from "../internal/robloxValues";
 import { LayoutNodeParentProvider, useLayoutDebugState, useRobloxLayout } from "../layout/context";
-import { type LayoutHostName, type PreviewDomProps } from "./types";
 import {
   domPresentationAdapter,
   type LayoutDebugState,
   type PreviewHostNode,
   patchPreviewHostNodeDomProps,
 } from "./domAdapter";
+import { type LayoutHostName, type PreviewDomProps } from "./types";
 
 let previewNodeIdCounter = 0;
 
@@ -91,10 +91,7 @@ export function useHostLayout(host: LayoutHostName, props: PreviewDomProps) {
   const elementRef = React.useRef<HTMLElement | null>(null);
   const generatedId = useGeneratedPreviewNodeId();
   const nodeId = React.useMemo(() => resolveNodeId(generatedId, props), [generatedId, props]);
-  const normalizedParentId = React.useMemo(
-    () => normalizePreviewNodeId(getLayoutParentId(props)),
-    [props],
-  );
+  const normalizedParentId = React.useMemo(() => normalizePreviewNodeId(getLayoutParentId(props)), [props]);
 
   const normalizedNode = React.useMemo(
     () =>

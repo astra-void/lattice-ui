@@ -2,7 +2,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "../../../packages/preview-engine/src/types";
 import {
   createPackageTargetDiscovery,
   createStaticTargetsDiscovery,
@@ -12,6 +11,7 @@ import {
 } from "../../../packages/preview/src/config";
 import { createPreviewHeadlessSession } from "../../../packages/preview/src/headless";
 import { resolvePreviewServerConfig } from "../../../packages/preview/src/source/server";
+import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "../../../packages/preview-engine/src/types";
 
 const temporaryRoots: string[] = [];
 
@@ -65,7 +65,9 @@ function writeInlinePreviewConfig(
   const configDir = path.dirname(configFilePath);
   const relativePackageRoot = path.relative(configDir, options.packageRoot).split(path.sep).join("/");
   const relativeSourceRoot = path.relative(configDir, options.sourceRoot).split(path.sep).join("/");
-  const configRelativePackageRoot = relativePackageRoot.startsWith(".") ? relativePackageRoot : `./${relativePackageRoot}`;
+  const configRelativePackageRoot = relativePackageRoot.startsWith(".")
+    ? relativePackageRoot
+    : `./${relativePackageRoot}`;
   const configRelativeSourceRoot = relativeSourceRoot.startsWith(".") ? relativeSourceRoot : `./${relativeSourceRoot}`;
 
   fs.writeFileSync(
@@ -120,8 +122,14 @@ describe("preview bootstrap config", () => {
   it("falls back to zero-config package-root mode when no config file exists", async () => {
     const packageRoot = createTempRoot("lattice-preview-package-root-");
     fs.mkdirSync(path.join(packageRoot, "src"), { recursive: true });
-    fs.writeFileSync(path.join(packageRoot, "package.json"), JSON.stringify({ name: "@fixtures/package-root" }, null, 2));
-    fs.writeFileSync(path.join(packageRoot, "src", "Button.tsx"), "export default function Button() { return <frame />; }\n");
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ name: "@fixtures/package-root" }, null, 2),
+    );
+    fs.writeFileSync(
+      path.join(packageRoot, "src", "Button.tsx"),
+      "export default function Button() { return <frame />; }\n",
+    );
 
     const resolvedConfig = await loadPreviewConfig({ cwd: packageRoot });
 

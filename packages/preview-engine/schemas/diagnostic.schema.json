@@ -4,16 +4,7 @@
   "title": "PreviewDiagnostic",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "code",
-    "entryId",
-    "file",
-    "phase",
-    "relativeFile",
-    "severity",
-    "summary",
-    "target"
-  ],
+  "required": ["code", "entryId", "file", "phase", "relativeFile", "severity", "summary", "target"],
   "properties": {
     "blocking": {
       "type": "boolean"
@@ -37,22 +28,13 @@
       }
     },
     "phase": {
-      "enum": [
-        "discovery",
-        "layout",
-        "runtime",
-        "transform"
-      ]
+      "enum": ["discovery", "layout", "runtime", "transform"]
     },
     "relativeFile": {
       "type": "string"
     },
     "severity": {
-      "enum": [
-        "error",
-        "info",
-        "warning"
-      ]
+      "enum": ["error", "info", "warning"]
     },
     "summary": {
       "type": "string"

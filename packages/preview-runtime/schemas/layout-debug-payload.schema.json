@@ -4,11 +4,7 @@
   "title": "PreviewLayoutDebugPayload",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "dirtyNodeIds",
-    "roots",
-    "viewport"
-  ],
+  "required": ["dirtyNodeIds", "roots", "viewport"],
   "properties": {
     "dirtyNodeIds": {
       "type": "array",
@@ -30,10 +26,7 @@
     "size": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "height",
-        "width"
-      ],
+      "required": ["height", "width"],
       "properties": {
         "height": {
           "type": "number"
@@ -46,12 +39,7 @@
     "rect": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "height",
-        "width",
-        "x",
-        "y"
-      ],
+      "required": ["height", "width", "x", "y"],
       "properties": {
         "height": {
           "type": "number"
@@ -70,10 +58,7 @@
     "measuredNodeSize": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "height",
-        "width"
-      ],
+      "required": ["height", "width"],
       "properties": {
         "height": {
           "type": "number"
@@ -133,18 +118,10 @@
           ]
         },
         "kind": {
-          "enum": [
-            "host",
-            "layout",
-            "root"
-          ]
+          "enum": ["host", "layout", "root"]
         },
         "layoutSource": {
-          "enum": [
-            "explicit-size",
-            "intrinsic-size",
-            "root-default"
-          ]
+          "enum": ["explicit-size", "intrinsic-size", "root-default"]
         },
         "nodeType": {
           "type": "string"
@@ -165,19 +142,13 @@
         "provenance": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "detail",
-            "source"
-          ],
+          "required": ["detail", "source"],
           "properties": {
             "detail": {
               "type": "string"
             },
             "source": {
-              "enum": [
-                "fallback",
-                "wasm"
-              ]
+              "enum": ["fallback", "wasm"]
             }
           }
         },

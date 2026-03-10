@@ -49,7 +49,10 @@ export const Frame = createSimpleHost("frame", "PreviewFrame");
 export const TextButton = React.forwardRef<HTMLElement, PreviewDomProps>((props, forwardedRef) => {
   const { computed, elementRef, hostNode, nodeId, patchDomProps } = useHostLayout("textbutton", props);
   const innerRef = elementRef as React.RefObject<HTMLButtonElement | null>;
-  const mergedRef = useMergedRefs(forwardedRef as React.Ref<HTMLButtonElement>, innerRef as React.Ref<HTMLButtonElement>);
+  const mergedRef = useMergedRefs(
+    forwardedRef as React.Ref<HTMLButtonElement>,
+    innerRef as React.Ref<HTMLButtonElement>,
+  );
   const textScaleStyle = useTextScaleStyle({
     elementRef: innerRef,
     enabled: props.TextScaled === true,

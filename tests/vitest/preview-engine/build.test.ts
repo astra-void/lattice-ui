@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import { buildPreviewArtifacts } from "@lattice-ui/preview-engine";
+import { afterEach, describe, expect, it } from "vitest";
 import { resolveRealFilePath } from "../../../packages/preview-engine/src/pathUtils";
 
 const temporaryRoots: string[] = [];

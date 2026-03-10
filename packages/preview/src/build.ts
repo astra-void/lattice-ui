@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { buildPreviewArtifacts, type PreviewBuildDiagnostic, type PreviewExecutionMode } from "@lattice-ui/preview-engine";
-import type { PreviewTransformDiagnostic } from "@lattice-ui/compiler";
+import {
+  buildPreviewArtifacts,
+  type PreviewBuildDiagnostic,
+  type PreviewExecutionMode,
+} from "@lattice-ui/preview-engine";
+import type { PreviewTransformDiagnostic } from "./transformTypes";
 
 export type PreviewBuildTarget = {
   name: string;
@@ -90,8 +94,7 @@ export async function buildPreviewModules(options: BuildPreviewModulesOptions): 
   });
 
   const blockingErrors = result.diagnostics.filter(
-    (diagnostic): diagnostic is PreviewTransformDiagnostic =>
-      isTransformDiagnostic(diagnostic) && diagnostic.blocking,
+    (diagnostic): diagnostic is PreviewTransformDiagnostic => isTransformDiagnostic(diagnostic) && diagnostic.blocking,
   );
   if (blockingErrors.length > 0) {
     throw new PreviewBuildError(blockingErrors);

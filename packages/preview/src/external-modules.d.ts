@@ -1,40 +1,23 @@
 declare module "@lattice-ui/compiler" {
-  export type PreviewTransformMode = "strict-fidelity" | "compatibility" | "mocked" | "design-time";
-  export type PreviewTransformSeverity = "error" | "info" | "warning";
-
-  export type PreviewTransformDiagnostic = {
-    blocking: boolean;
+  export type UnsupportedPatternError = {
     code: string;
-    details?: string;
+    message: string;
     file: string;
     line: number;
     column: number;
-    severity: PreviewTransformSeverity;
-    summary: string;
     symbol?: string;
     target: string;
   };
 
-  export type UnsupportedPatternCode = PreviewTransformDiagnostic["code"];
-  export type UnsupportedPatternError = PreviewTransformDiagnostic;
-
   export type TransformPreviewSourceOptions = {
     filePath: string;
-    mode?: PreviewTransformMode;
     runtimeModule: string;
     target: string;
   };
 
-  export type PreviewTransformOutcome = {
-    fidelity: "preserved" | "degraded" | "metadata-only";
-    kind: "ready" | "compatibility" | "mocked" | "blocked" | "design-time";
-  };
-
   export type TransformPreviewSourceResult = {
-    code: string | null;
-    diagnostics: PreviewTransformDiagnostic[];
-    outcome: PreviewTransformOutcome;
-    errors?: UnsupportedPatternError[];
+    code: string;
+    errors: UnsupportedPatternError[];
   };
 
   export function transformPreviewSource(
@@ -179,7 +162,10 @@ declare module "@lattice-ui/preview-runtime" {
   }
   export function clearPreviewRuntimeIssues(): void;
   export const AutoMockProvider: React.ComponentType<Record<string, unknown>>;
-  export function areViewportsEqual(left: ViewportSize | null | undefined, right: ViewportSize | null | undefined): boolean;
+  export function areViewportsEqual(
+    left: ViewportSize | null | undefined,
+    right: ViewportSize | null | undefined,
+  ): boolean;
   export function createViewportSize(width?: number | null, height?: number | null): ViewportSize;
   export function createWindowViewport(): ViewportSize;
   export function getPreviewRuntimeIssues(): PreviewRuntimeIssue[];
@@ -188,8 +174,14 @@ declare module "@lattice-ui/preview-runtime" {
   export function isViewportLargeEnough(viewport: ViewportSize | null | undefined): boolean;
   export const LayoutProvider: React.ComponentType<Record<string, unknown>>;
   export function measureElementViewport(element: Element): ViewportSize | null;
-  export function normalizePreviewRuntimeError(context: PreviewRuntimeIssueContext, error: unknown): PreviewRuntimeIssue;
-  export function pickViewport(candidates: Array<ViewportSize | null | undefined>, fallback: ViewportSize): ViewportSize;
+  export function normalizePreviewRuntimeError(
+    context: PreviewRuntimeIssueContext,
+    error: unknown,
+  ): PreviewRuntimeIssue;
+  export function pickViewport(
+    candidates: Array<ViewportSize | null | undefined>,
+    fallback: ViewportSize,
+  ): ViewportSize;
   export function publishPreviewRuntimeIssue(
     issueOrError: PreviewRuntimeIssue | unknown,
     context?: PreviewRuntimeIssueContext,
@@ -200,9 +192,7 @@ declare module "@lattice-ui/preview-runtime" {
   export function createUniversalRobloxModuleMock(): Record<PropertyKey, unknown>;
   export function setupRobloxEnvironment(target?: object): object;
   export function setPreviewRuntimeIssueContext(context: PreviewRuntimeIssueContext | null): void;
-  export function subscribePreviewRuntimeIssues(
-    listener: (issues: PreviewRuntimeIssue[]) => void,
-  ): () => void;
+  export function subscribePreviewRuntimeIssues(listener: (issues: PreviewRuntimeIssue[]) => void): () => void;
 }
 
 declare module "@lattice-ui/preview-engine" {

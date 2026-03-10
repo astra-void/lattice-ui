@@ -73,10 +73,7 @@ export type WorkspaceGraphService = {
   getFileContext(filePath: string): WorkspaceFileContext;
   getWorkspaceProjects(): WorkspaceProject[];
   listTargetSourceFiles(target: Pick<PreviewSourceTarget, "sourceRoot">): string[];
-  resolveImport(options: {
-    importerFilePath: string;
-    specifier: string;
-  }): WorkspaceImportResolution | undefined;
+  resolveImport(options: { importerFilePath: string; specifier: string }): WorkspaceImportResolution | undefined;
   workspaceRoot: string;
 };
 
@@ -310,7 +307,9 @@ function splitBarePackageSpecifier(specifier: string) {
 }
 
 function dedupeSorted(values: string[]) {
-  return [...new Set(values.map((value) => resolveRealFilePath(value)))].sort((left, right) => left.localeCompare(right));
+  return [...new Set(values.map((value) => resolveRealFilePath(value)))].sort((left, right) =>
+    left.localeCompare(right),
+  );
 }
 
 function createCandidateFilePaths(basePath: string) {
@@ -366,7 +365,9 @@ function createProjectFromParsedConfig(
   const rootDir = resolveRealFilePath(
     parsedConfig.options.rootDir ? path.resolve(configDir, parsedConfig.options.rootDir) : configDir,
   );
-  const outDir = parsedConfig.options.outDir ? resolveRealFilePath(path.resolve(configDir, parsedConfig.options.outDir)) : undefined;
+  const outDir = parsedConfig.options.outDir
+    ? resolveRealFilePath(path.resolve(configDir, parsedConfig.options.outDir))
+    : undefined;
 
   return {
     configDir,
@@ -379,7 +380,11 @@ function createProjectFromParsedConfig(
     referencedProjectConfigPaths:
       parsedConfig.projectReferences?.map((reference) =>
         resolveRealFilePath(
-          path.resolve(configDir, reference.path, ts.sys.fileExists(path.resolve(configDir, reference.path)) ? "" : "tsconfig.json"),
+          path.resolve(
+            configDir,
+            reference.path,
+            ts.sys.fileExists(path.resolve(configDir, reference.path)) ? "" : "tsconfig.json",
+          ),
         ),
       ) ?? [],
     rootDir,
@@ -423,7 +428,10 @@ function mapResolvedPathToSourceCandidates(
           continue;
         }
 
-        const relativeFromBuildDir = path.relative(path.join(workspacePackage.packageRoot, segment), normalizedResolvedPath);
+        const relativeFromBuildDir = path.relative(
+          path.join(workspacePackage.packageRoot, segment),
+          normalizedResolvedPath,
+        );
         candidates.push(...createCandidateFilePaths(path.join(sourceRoot, relativeFromBuildDir)));
       }
     }
@@ -440,7 +448,7 @@ function resolveWorkspacePackageSpecifier(
 ) {
   const candidates: string[] = [];
   const exportsValue =
-    typeof workspacePackage.packageJson.exports === "object" && workspacePackage.packageJson.exports !== null
+    typeof workspacePackage.packageJson.exports === "object" && workspacePackage.packageJson.exports !== undefined
       ? ((workspacePackage.packageJson.exports as Record<string, unknown>)[subpath ? `./${subpath}` : "."] ??
         (subpath ? undefined : workspacePackage.packageJson.exports))
       : workspacePackage.packageJson.exports;
@@ -548,7 +556,12 @@ function createWorkspaceGraphServiceContext(targets: PreviewSourceTarget[], work
     const parsedConfig = parseTsconfig(nextConfigPath);
     const packageRoot = findNearestPackageRoot(nextConfigPath);
     const workspacePackage = workspacePackages.get(packageRoot);
-    const project = createProjectFromParsedConfig(packageRoot, workspacePackage?.packageName, parsedConfig, nextConfigPath);
+    const project = createProjectFromParsedConfig(
+      packageRoot,
+      workspacePackage?.packageName,
+      parsedConfig,
+      nextConfigPath,
+    );
     projectMap.set(project.configPath, project);
 
     if (workspacePackage) {
@@ -578,7 +591,9 @@ function createWorkspaceGraphServiceContext(targets: PreviewSourceTarget[], work
     .map((workspacePackage) => ({
       ...workspacePackage,
       sourceRoots: dedupeSorted(
-        workspacePackage.sourceRoots.length > 0 ? workspacePackage.sourceRoots : [path.join(workspacePackage.packageRoot, "src")],
+        workspacePackage.sourceRoots.length > 0
+          ? workspacePackage.sourceRoots
+          : [path.join(workspacePackage.packageRoot, "src")],
       ),
       tsconfigPaths: dedupeSorted(workspacePackage.tsconfigPaths),
     }))
@@ -732,7 +747,9 @@ export function createWorkspaceGraphService(options: {
         resolutionKind:
           mappedSource === normalizedResolvedPath
             ? ("source-file" as const)
-            : resolvedProject && resolvedProject.outDir && isFilePathUnderRoot(resolvedProject.outDir, normalizedResolvedPath)
+            : resolvedProject &&
+                resolvedProject.outDir &&
+                isFilePathUnderRoot(resolvedProject.outDir, normalizedResolvedPath)
               ? ("project-reference-source" as const)
               : ("workspace-package" as const),
       };
@@ -857,8 +874,7 @@ export function createWorkspaceGraphService(options: {
           packageRoot: importerContext.packageRoot,
           phase: "discovery",
           severity: "warning",
-          summary:
-            `Preview graph could not resolve ${JSON.stringify(options.specifier)} from ${importerFilePath}.`,
+          summary: `Preview graph could not resolve ${JSON.stringify(options.specifier)} from ${importerFilePath}.`,
           target: "preview-engine",
         },
         edge: {
@@ -950,7 +966,11 @@ export function createWorkspaceGraphService(options: {
 
     const visit = (nextFilePath: string) => {
       const normalizedNextFilePath = resolveRealFilePath(nextFilePath);
-      if (visited.has(normalizedNextFilePath) || !fs.existsSync(normalizedNextFilePath) || !isTraceableSourceFile(normalizedNextFilePath)) {
+      if (
+        visited.has(normalizedNextFilePath) ||
+        !fs.existsSync(normalizedNextFilePath) ||
+        !isTraceableSourceFile(normalizedNextFilePath)
+      ) {
         return;
       }
 

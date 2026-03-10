@@ -152,7 +152,7 @@ describe("createPreviewVitePlugin", () => {
   it("allows normal hot updates when the registry shape is unchanged", async () => {
     const { fixtureRoot, sourceRoot } = createFixtureRoot();
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
-    fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
+    fs.writeFileSync(sourceFile, "export function AnimatedSlot() { return <frame />; }\n", "utf8");
 
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
     const handleHotUpdate = getHookHandler<TestHotUpdateHook>(
@@ -169,7 +169,7 @@ describe("createPreviewVitePlugin", () => {
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
     const addedFile = path.join(sourceRoot, "FreshSlot.tsx");
     const renamedFile = path.join(sourceRoot, "RenamedSlot.tsx");
-    fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
+    fs.writeFileSync(sourceFile, "export function AnimatedSlot() { return <frame />; }\n", "utf8");
 
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
     const configureServer = getHookHandler<TestConfigureServerHook>(
@@ -181,7 +181,7 @@ describe("createPreviewVitePlugin", () => {
 
     expect(readWorkspaceEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual(["AnimatedSlot.tsx"]);
 
-    fs.writeFileSync(addedFile, 'export function FreshSlot() { return <frame />; }\n', "utf8");
+    fs.writeFileSync(addedFile, "export function FreshSlot() { return <frame />; }\n", "utf8");
     mockServer.emit("add", addedFile);
     expect(readWorkspaceEntries(previewPlugin).map((entry) => entry.relativePath)).toEqual([
       "AnimatedSlot.tsx",

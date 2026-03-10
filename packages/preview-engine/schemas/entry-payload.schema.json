@@ -4,14 +4,7 @@
   "title": "PreviewEntryPayload",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "descriptor",
-    "diagnostics",
-    "graphTrace",
-    "protocolVersion",
-    "runtimeAdapter",
-    "transform"
-  ],
+  "required": ["descriptor", "diagnostics", "graphTrace", "protocolVersion", "runtimeAdapter", "transform"],
   "properties": {
     "descriptor": {
       "$ref": "#/$defs/entryDescriptor"
@@ -34,10 +27,7 @@
     "runtimeAdapter": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "kind",
-        "moduleId"
-      ],
+      "required": ["kind", "moduleId"],
       "properties": {
         "kind": {
           "const": "react-dom"
@@ -50,42 +40,21 @@
     "transform": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "mode",
-        "outcome"
-      ],
+      "required": ["mode", "outcome"],
       "properties": {
         "mode": {
-          "enum": [
-            "strict-fidelity",
-            "compatibility",
-            "mocked",
-            "design-time"
-          ]
+          "enum": ["strict-fidelity", "compatibility", "mocked", "design-time"]
         },
         "outcome": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "fidelity",
-            "kind"
-          ],
+          "required": ["fidelity", "kind"],
           "properties": {
             "fidelity": {
-              "enum": [
-                "preserved",
-                "degraded",
-                "metadata-only"
-              ]
+              "enum": ["preserved", "degraded", "metadata-only"]
             },
             "kind": {
-              "enum": [
-                "ready",
-                "compatibility",
-                "mocked",
-                "blocked",
-                "design-time"
-              ]
+              "enum": ["ready", "compatibility", "mocked", "blocked", "design-time"]
             }
           }
         }
@@ -96,16 +65,7 @@
     "diagnostic": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "code",
-        "entryId",
-        "file",
-        "phase",
-        "relativeFile",
-        "severity",
-        "summary",
-        "target"
-      ],
+      "required": ["code", "entryId", "file", "phase", "relativeFile", "severity", "summary", "target"],
       "properties": {
         "blocking": {
           "type": "boolean"
@@ -129,22 +89,13 @@
           }
         },
         "phase": {
-          "enum": [
-            "discovery",
-            "layout",
-            "runtime",
-            "transform"
-          ]
+          "enum": ["discovery", "layout", "runtime", "transform"]
         },
         "relativeFile": {
           "type": "string"
         },
         "severity": {
-          "enum": [
-            "error",
-            "info",
-            "warning"
-          ]
+          "enum": ["error", "info", "warning"]
         },
         "summary": {
           "type": "string"
@@ -160,12 +111,7 @@
     "capabilities": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "supportsHotUpdate",
-        "supportsLayoutDebug",
-        "supportsPropsEditing",
-        "supportsRuntimeMock"
-      ],
+      "required": ["supportsHotUpdate", "supportsLayoutDebug", "supportsPropsEditing", "supportsRuntimeMock"],
       "properties": {
         "supportsHotUpdate": {
           "type": "boolean"
@@ -184,21 +130,12 @@
     "diagnosticsSummary": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "byPhase",
-        "hasBlocking",
-        "total"
-      ],
+      "required": ["byPhase", "hasBlocking", "total"],
       "properties": {
         "byPhase": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "discovery",
-            "layout",
-            "runtime",
-            "transform"
-          ],
+          "required": ["discovery", "layout", "runtime", "transform"],
           "properties": {
             "discovery": {
               "type": "integer",
@@ -232,11 +169,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "exportName",
-            "kind",
-            "usesPreviewProps"
-          ],
+          "required": ["exportName", "kind", "usesPreviewProps"],
           "properties": {
             "exportName": {
               "type": "string"
@@ -252,10 +185,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "contract",
-            "kind"
-          ],
+          "required": ["contract", "kind"],
           "properties": {
             "contract": {
               "const": "preview.render"
@@ -268,10 +198,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind",
-            "reason"
-          ],
+          "required": ["kind", "reason"],
           "properties": {
             "candidates": {
               "type": "array",
@@ -283,11 +210,7 @@
               "const": "none"
             },
             "reason": {
-              "enum": [
-                "ambiguous-exports",
-                "missing-explicit-contract",
-                "no-component-export"
-              ]
+              "enum": ["ambiguous-exports", "missing-explicit-contract", "no-component-export"]
             }
           }
         }
@@ -298,16 +221,10 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "contract",
-            "kind"
-          ],
+          "required": ["contract", "kind"],
           "properties": {
             "contract": {
-              "enum": [
-                "preview.entry",
-                "preview.render"
-              ]
+              "enum": ["preview.entry", "preview.render"]
             },
             "kind": {
               "const": "explicit"
@@ -317,20 +234,13 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind",
-            "reason"
-          ],
+          "required": ["kind", "reason"],
           "properties": {
             "kind": {
               "const": "unresolved"
             },
             "reason": {
-              "enum": [
-                "ambiguous-exports",
-                "missing-explicit-contract",
-                "no-component-export"
-              ]
+              "enum": ["ambiguous-exports", "missing-explicit-contract", "no-component-export"]
             }
           }
         }
@@ -419,9 +329,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind"
-          ],
+          "required": ["kind"],
           "properties": {
             "kind": {
               "const": "ready"
@@ -431,10 +339,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "kind",
-            "reason"
-          ],
+          "required": ["kind", "reason"],
           "properties": {
             "candidates": {
               "type": "array",
@@ -446,21 +351,14 @@
               "const": "needs_harness"
             },
             "reason": {
-              "enum": [
-                "missing-explicit-contract",
-                "no-component-export"
-              ]
+              "enum": ["missing-explicit-contract", "no-component-export"]
             }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "candidates",
-            "kind",
-            "reason"
-          ],
+          "required": ["candidates", "kind", "reason"],
           "properties": {
             "candidates": {
               "type": "array",
@@ -479,11 +377,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "blockingCodes",
-            "kind",
-            "reason"
-          ],
+          "required": ["blockingCodes", "kind", "reason"],
           "properties": {
             "blockingCodes": {
               "type": "array",
@@ -502,11 +396,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "issueCodes",
-            "kind",
-            "reason"
-          ],
+          "required": ["issueCodes", "kind", "reason"],
           "properties": {
             "issueCodes": {
               "type": "array",
@@ -525,11 +415,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "issueCodes",
-            "kind",
-            "reason"
-          ],
+          "required": ["issueCodes", "kind", "reason"],
           "properties": {
             "issueCodes": {
               "type": "array",
@@ -548,22 +434,12 @@
       ]
     },
     "graphStopReason": {
-      "enum": [
-        "declaration-only-boundary",
-        "external-dependency",
-        "graph-cycle",
-        "unresolved-import"
-      ]
+      "enum": ["declaration-only-boundary", "external-dependency", "graph-cycle", "unresolved-import"]
     },
     "graphImportEdge": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "crossesPackageBoundary",
-        "importerFile",
-        "resolution",
-        "specifier"
-      ],
+      "required": ["crossesPackageBoundary", "importerFile", "resolution", "specifier"],
       "properties": {
         "crossesPackageBoundary": {
           "type": "boolean"
@@ -578,10 +454,7 @@
           "type": "string"
         },
         "resolution": {
-          "enum": [
-            "resolved",
-            "stopped"
-          ]
+          "enum": ["resolved", "stopped"]
         },
         "resolutionKind": {
           "enum": [
@@ -609,16 +482,10 @@
     "selectionTrace": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "importChain",
-        "symbolChain"
-      ],
+      "required": ["importChain", "symbolChain"],
       "properties": {
         "contract": {
-          "enum": [
-            "preview.entry",
-            "preview.render"
-          ]
+          "enum": ["preview.entry", "preview.render"]
         },
         "importChain": {
           "type": "array",
@@ -643,23 +510,14 @@
     "graphTrace": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "boundaryHops",
-        "imports",
-        "selection"
-      ],
+      "required": ["boundaryHops", "imports", "selection"],
       "properties": {
         "boundaryHops": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "fromFile",
-              "fromPackageRoot",
-              "toFile",
-              "toPackageRoot"
-            ],
+            "required": ["fromFile", "fromPackageRoot", "toFile", "toPackageRoot"],
             "properties": {
               "fromFile": {
                 "type": "string"
@@ -693,10 +551,7 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "configPath",
-              "packageRoot"
-            ],
+            "required": ["configPath", "packageRoot"],
             "properties": {
               "configPath": {
                 "type": "string"
@@ -715,11 +570,7 @@
     "propMetadata": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "kind",
-        "required",
-        "type"
-      ],
+      "required": ["kind", "required", "type"],
       "properties": {
         "elementType": {
           "$ref": "#/$defs/propMetadata"
@@ -779,10 +630,7 @@
     "propsMetadata": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "componentName",
-        "props"
-      ],
+      "required": ["componentName", "props"],
       "properties": {
         "componentName": {
           "type": "string"

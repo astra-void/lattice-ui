@@ -1,6 +1,6 @@
 import { previewEntryPayloads, previewImporters, previewWorkspaceIndex } from "virtual:lattice-preview-workspace-index";
 import type { PreviewEngineUpdate, PreviewEntryDescriptor, PreviewEntryPayload } from "@lattice-ui/preview-engine";
-import { subscribePreviewRuntimeIssues, type PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
+import { type PreviewRuntimeIssue, subscribePreviewRuntimeIssues } from "@lattice-ui/preview-runtime";
 import React from "react";
 import { PreviewApp } from "./PreviewApp";
 
@@ -15,7 +15,8 @@ type HotContext = {
 
 function getHotContext(): HotContext | undefined {
   try {
-    return Function("return import.meta.hot")() as HotContext | undefined;
+    const readHotContext = Function("return import.meta.hot") as unknown as () => HotContext | undefined;
+    return readHotContext();
   } catch {
     return undefined;
   }
@@ -23,7 +24,9 @@ function getHotContext(): HotContext | undefined {
 
 export function PreviewWorkspaceApp() {
   const [entries, setEntries] = React.useState<PreviewEntryDescriptor[]>(() => previewWorkspaceIndex.entries);
-  const [entryPayloads, setEntryPayloads] = React.useState<Record<string, PreviewEntryPayload>>(() => previewEntryPayloads);
+  const [entryPayloads, setEntryPayloads] = React.useState<Record<string, PreviewEntryPayload>>(
+    () => previewEntryPayloads,
+  );
 
   React.useEffect(() => {
     const hot = getHotContext();

@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 
+import type { PreviewDiagnostic, PreviewEntryDescriptor, PreviewEntryPayload } from "@lattice-ui/preview-engine";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PreviewDiagnostic, PreviewEntryDescriptor, PreviewEntryPayload } from "@lattice-ui/preview-engine";
-import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "../../../packages/preview-engine/src/types";
 import { PreviewApp } from "../../../packages/preview/src/shell/PreviewApp";
 import { PreviewThemeProvider } from "../../../packages/preview/src/shell/theme";
+import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "../../../packages/preview-engine/src/types";
 
 afterEach(() => {
   cleanup();
@@ -270,22 +270,18 @@ describe("preview shell", () => {
       title: "Blocked",
     });
     const loadEntry = vi.fn(() =>
-      createLoadedEntry(
-        blockedEntry,
-        {},
-        [
-          createDiagnostic({
-            blocking: true,
-            code: "UNSUPPORTED_HOST_ELEMENT",
-            entryId: blockedEntry.id,
-            file: "/virtual/Blocked.tsx",
-            phase: "transform",
-            relativeFile: "src/Blocked.tsx",
-            severity: "error",
-            summary: "Host element viewportframe is not supported by preview generation.",
-          }),
-        ],
-      ),
+      createLoadedEntry(blockedEntry, {}, [
+        createDiagnostic({
+          blocking: true,
+          code: "UNSUPPORTED_HOST_ELEMENT",
+          entryId: blockedEntry.id,
+          file: "/virtual/Blocked.tsx",
+          phase: "transform",
+          relativeFile: "src/Blocked.tsx",
+          severity: "error",
+          summary: "Host element viewportframe is not supported by preview generation.",
+        }),
+      ]),
     );
 
     renderPreviewApp(
@@ -439,7 +435,9 @@ describe("preview shell", () => {
 
     expect(screen.getByText("This file is not directly previewable yet.")).toBeTruthy();
     expect(
-      screen.getByText("No renderable exported component was found. Add `preview.entry` or `preview.render` for composed demos."),
+      screen.getByText(
+        "No renderable exported component was found. Add `preview.entry` or `preview.render` for composed demos.",
+      ),
     ).toBeTruthy();
     expect(loadEntry).not.toHaveBeenCalled();
   });
@@ -503,17 +501,14 @@ describe("preview shell", () => {
         entries={[crashingEntry, workingEntry]}
         initialSelectedId={crashingEntry.id}
         loadEntry={(id) =>
-          createLoadedEntry(
-            id === crashingEntry.id ? crashingEntry : workingEntry,
-            {
-              default:
-                id === crashingEntry.id
-                  ? () => {
-                      throw new Error("Intentional render failure.");
-                    }
-                  : () => <button type="button">Recovered preview</button>,
-            },
-          )
+          createLoadedEntry(id === crashingEntry.id ? crashingEntry : workingEntry, {
+            default:
+              id === crashingEntry.id
+                ? () => {
+                    throw new Error("Intentional render failure.");
+                  }
+                : () => <button type="button">Recovered preview</button>,
+          })
         }
         projectName="@lattice-ui/preview-smoke"
       />,

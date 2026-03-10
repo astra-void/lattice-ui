@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import ts from "typescript";
 import { compile_tsx, transformPreviewSource } from "@lattice-ui/compiler";
 import {
   createPreviewEngine,
@@ -9,6 +8,9 @@ import {
   type PreviewSourceTarget,
 } from "@lattice-ui/preview-engine";
 import type { PreviewRuntimeIssue } from "@lattice-ui/preview-runtime";
+import ts from "typescript";
+import { createErrorWithCause } from "../errorWithCause";
+import { normalizeTransformPreviewSourceResult } from "../transformResult";
 import { stripFileIdDecorations } from "./pathUtils";
 import {
   createUnresolvedPackageMockResolvePlugin,
@@ -26,6 +28,10 @@ const PREVIEW_UPDATE_EVENT = "lattice-preview:update";
 const RUNTIME_ISSUES_EVENT = "lattice-preview:runtime-issues";
 const RBX_STYLE_HELPER_NAME = "__rbxStyle";
 const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/preview-runtime";\n`;
+
+type TransformPreviewSourceInvocationOptions = Parameters<typeof transformPreviewSource>[1] & {
+  mode?: PreviewExecutionMode;
+};
 
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
@@ -73,12 +79,14 @@ function stripTypeSyntax(code: string, filePath: string) {
   }).outputText;
 }
 
-function transformPreviewSourceOrThrow(sourceText: string, options: Parameters<typeof transformPreviewSource>[1]) {
+function transformPreviewSourceOrThrow(sourceText: string, options: TransformPreviewSourceInvocationOptions) {
+  const { mode = "strict-fidelity", ...compilerOptions } = options;
+
   try {
-    return transformPreviewSource(sourceText, options);
+    return normalizeTransformPreviewSourceResult(transformPreviewSource(sourceText, compilerOptions), mode);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse preview source ${options.filePath}: ${detail}`);
+    throw createErrorWithCause(`Failed to parse preview source ${options.filePath}: ${detail}`, error);
   }
 }
 
@@ -193,9 +201,11 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
     enforce: "pre",
     configureServer(configuredServer: PreviewDevServer) {
       server = configuredServer;
-      (configuredServer.ws as PreviewDevServer["ws"] & {
-        on?: (event: string, listener: (payload: PreviewRuntimeIssue[]) => void) => void;
-      }).on?.(RUNTIME_ISSUES_EVENT, (issues: PreviewRuntimeIssue[]) => {
+      (
+        configuredServer.ws as PreviewDevServer["ws"] & {
+          on?: (event: string, listener: (payload: PreviewRuntimeIssue[]) => void) => void;
+        }
+      ).on?.(RUNTIME_ISSUES_EVENT, (issues: PreviewRuntimeIssue[]) => {
         const update = previewEngine.replaceRuntimeIssues(Array.isArray(issues) ? issues : []);
         invalidateVirtualModules(update.changedEntryIds);
         configuredServer.ws.send({
@@ -267,11 +277,13 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
         runtimeModule: runtimeEntryPath,
         target: target.name,
       });
-      if (transformed.code === null) {
+      if (transformed.code == null) {
         const diagnosticMessage =
           transformed.diagnostics.map((diagnostic) => `${diagnostic.code}: ${diagnostic.summary}`).join("\n") ||
           "Preview transform did not emit executable code.";
-        throw new Error(`Transform mode ${options.transformMode ?? "strict-fidelity"} blocked ${filePath}.\n${diagnosticMessage}`);
+        throw new Error(
+          `Transform mode ${options.transformMode ?? "strict-fidelity"} blocked ${filePath}.\n${diagnosticMessage}`,
+        );
       }
 
       let transformedCode = compile_tsx(transformed.code);

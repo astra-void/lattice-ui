@@ -32,6 +32,7 @@ export default defineConfig([
     ignores: [
       "packages/cli/**",
       "packages/preview/**",
+      "packages/preview-engine/**",
       "packages/preview-runtime/**",
       "apps/docs/**",
       "apps/preview-harness/**",
@@ -130,6 +131,38 @@ export default defineConfig([
     },
   },
   {
+    files: ["packages/preview-engine/**/*.{ts,tsx}"],
+    extends: compat.extends(
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended",
+    ),
+
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
+      prettier,
+    },
+
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: "./packages/preview-engine/tsconfig.json",
+        tsconfigRootDir: __dirname,
+      },
+    },
+
+    rules: {
+      "prettier/prettier": "warn",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+    },
+  },
+  {
     files: ["packages/preview/**/*.{ts,tsx}", "apps/preview-harness/**/*.{ts,tsx}"],
     extends: compat.extends(
       "eslint:recommended",
@@ -145,7 +178,12 @@ export default defineConfig([
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: ["./packages/preview/tsconfig.json", "./apps/preview-harness/tsconfig.json"],
+        project: [
+          "./packages/preview/tsconfig.json",
+          "./packages/preview-engine/tsconfig.json",
+          "./packages/preview-runtime/tsconfig.json",
+          "./apps/preview-harness/tsconfig.json",
+        ],
         tsconfigRootDir: __dirname,
       },
     },

@@ -4,7 +4,6 @@
   "private": false,
   "description": "Shared browser runtime for Lattice UI previews, including Roblox globals and DOM host rendering.",
   "main": "dist/index.js",
-  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
@@ -13,10 +12,20 @@
     "README.md"
   ],
   "scripts": {
-    "prebuild": "node ./scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.json",
+    "prebuild": "node ./scripts/clean-dist.mjs",
+    "prepack": "pnpm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc -p tsconfig.json -w"
+  },
+  "dependencies": {
+    "@lattice-ui/layout-engine": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
   },
   "exports": {
     ".": {
@@ -27,13 +36,5 @@
     "./schemas/layout-debug-payload": "./schemas/layout-debug-payload.schema.json",
     "./schemas/runtime-issue": "./schemas/runtime-issue.schema.json"
   },
-  "dependencies": {
-    "@lattice-ui/layout-engine": "file:../layout-engine/pkg",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  },
-  "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
-  }
+  "module": "dist/index.js"
 }

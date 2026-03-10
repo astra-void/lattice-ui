@@ -79,7 +79,15 @@ export function fileExists(filePath: string): boolean {
 }
 
 export function readJson<T = unknown>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  const rawContents = fs.readFileSync(filePath, "utf8");
+  const normalizedContents = rawContents.replace(/^\uFEFF/, "");
+
+  try {
+    return JSON.parse(normalizedContents) as T;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse JSON at ${filePath}: ${message}`, { cause: error });
+  }
 }
 
 export function writeJson(filePath: string, value: unknown): void {

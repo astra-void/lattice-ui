@@ -9,7 +9,12 @@ declare const UDim: {
 };
 
 declare const UDim2: {
-  new (xScale: number, xOffset: number, yScale: number, yOffset: number): {
+  new (
+    xScale: number,
+    xOffset: number,
+    yScale: number,
+    yOffset: number,
+  ): {
     X: unknown;
     Y: unknown;
     add(other: unknown): unknown;

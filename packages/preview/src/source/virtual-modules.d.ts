@@ -4,7 +4,10 @@ declare module "virtual:lattice-preview-workspace-index" {
   export const previewProtocolVersion: number;
   export const previewEntryPayloads: Record<string, PreviewEntryPayload>;
   export const previewWorkspaceIndex: PreviewWorkspaceIndex;
-  export const previewImporters: Record<string, () => Promise<Record<string, unknown> & { __previewEntryPayload: PreviewEntryPayload }>>;
+  export const previewImporters: Record<
+    string,
+    () => Promise<Record<string, unknown> & { __previewEntryPayload: PreviewEntryPayload }>
+  >;
 }
 
 declare module "virtual:lattice-preview-entry:*" {

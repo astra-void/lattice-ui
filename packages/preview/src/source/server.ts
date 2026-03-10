@@ -1,7 +1,7 @@
-import path from "node:path";
 import fs from "node:fs";
-import { searchForWorkspaceRoot } from "vite";
+import path from "node:path";
 import type { PreviewExecutionMode } from "@lattice-ui/preview-engine";
+import { searchForWorkspaceRoot } from "vite";
 import type { LoadPreviewConfigOptions, PreviewConfig, ResolvedPreviewConfig } from "../config";
 import { loadPreviewConfig, resolvePreviewConfigObject } from "../config";
 import { createAutoMockPropsPlugin } from "./autoMockPlugin";
@@ -21,7 +21,11 @@ export type StartPreviewServerOptions = {
   transformMode?: PreviewExecutionMode;
 };
 
-export type StartPreviewServerInput = LoadPreviewConfigOptions | PreviewConfig | ResolvedPreviewConfig | StartPreviewServerOptions;
+export type StartPreviewServerInput =
+  | LoadPreviewConfigOptions
+  | PreviewConfig
+  | ResolvedPreviewConfig
+  | StartPreviewServerOptions;
 
 function resolvePreviewPackageEntry(candidates: string[], label: string) {
   const matchedPath = candidates.find((candidate) => fs.existsSync(candidate));
@@ -61,7 +65,9 @@ function isPreviewConfig(value: StartPreviewServerInput): value is PreviewConfig
   return typeof value === "object" && value !== null && "targetDiscovery" in value;
 }
 
-export async function resolvePreviewServerConfig(options: StartPreviewServerInput = {}): Promise<ResolvedPreviewConfig> {
+export async function resolvePreviewServerConfig(
+  options: StartPreviewServerInput = {},
+): Promise<ResolvedPreviewConfig> {
   if (isResolvedPreviewConfig(options)) {
     return options;
   }
@@ -79,11 +85,7 @@ export async function resolvePreviewServerConfig(options: StartPreviewServerInpu
       projectName: options.packageName,
       runtimeModule: options.runtimeModule,
       server: {
-        fsAllow: [
-          path.resolve(options.packageRoot),
-          path.resolve(options.sourceRoot),
-          workspaceRoot,
-        ],
+        fsAllow: [path.resolve(options.packageRoot), path.resolve(options.sourceRoot), workspaceRoot],
         open: false,
         port: options.port ?? DEFAULT_PORT,
       },
