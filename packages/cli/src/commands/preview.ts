@@ -129,7 +129,7 @@ export function resolvePreviewDevContext(cwd: string) {
     packageName,
     packageRoot,
     sourceRoot,
-    transformMode: "compatibility" as const,
+    transformMode: "strict-fidelity" as const,
   };
 }
 

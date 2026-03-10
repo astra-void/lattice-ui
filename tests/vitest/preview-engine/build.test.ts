@@ -206,7 +206,7 @@ describe("buildPreviewArtifacts", () => {
     expect(artifactsById.get("fixture:Extra.tsx")?.reusedFromCache).toBe(true);
   });
 
-  it("treats cache keys as sensitive to selection mode, transform mode, and runtime module", async () => {
+  it("treats cache keys as sensitive to transform mode and runtime module", async () => {
     const { packageRoot, sourceRoot, workspaceRoot } = createTempWorkspacePackage({
       "src/index.tsx": `
         export function Example() {
@@ -218,7 +218,6 @@ describe("buildPreviewArtifacts", () => {
     const base = await buildPreviewArtifacts(
       createBuildOptions(packageRoot, sourceRoot, workspaceRoot, {
         artifactKinds: ["module"],
-        selectionMode: "compat",
         transformMode: "compatibility",
       }),
     );
@@ -227,25 +226,14 @@ describe("buildPreviewArtifacts", () => {
     const same = await buildPreviewArtifacts(
       createBuildOptions(packageRoot, sourceRoot, workspaceRoot, {
         artifactKinds: ["module"],
-        selectionMode: "compat",
         transformMode: "compatibility",
       }),
     );
     expect(same.builtArtifacts.every((artifact) => artifact.reusedFromCache)).toBe(true);
 
-    const changedSelection = await buildPreviewArtifacts(
-      createBuildOptions(packageRoot, sourceRoot, workspaceRoot, {
-        artifactKinds: ["module"],
-        selectionMode: "strict",
-        transformMode: "compatibility",
-      }),
-    );
-    expect(changedSelection.builtArtifacts.every((artifact) => !artifact.reusedFromCache)).toBe(true);
-
     const changedTransformMode = await buildPreviewArtifacts(
       createBuildOptions(packageRoot, sourceRoot, workspaceRoot, {
         artifactKinds: ["module"],
-        selectionMode: "strict",
         transformMode: "strict-fidelity",
       }),
     );
@@ -255,7 +243,6 @@ describe("buildPreviewArtifacts", () => {
       createBuildOptions(packageRoot, sourceRoot, workspaceRoot, {
         artifactKinds: ["module"],
         runtimeModule: "virtual:custom-preview-runtime",
-        selectionMode: "strict",
         transformMode: "strict-fidelity",
       }),
     );

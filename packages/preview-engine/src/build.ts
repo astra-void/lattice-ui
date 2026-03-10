@@ -24,7 +24,6 @@ import type {
   PreviewDiagnosticsSummary,
   PreviewEntryPayload,
   PreviewExecutionMode,
-  PreviewSelectionMode,
   PreviewSourceTarget,
 } from "./types";
 
@@ -584,7 +583,6 @@ function createModuleCacheKey(
   record: SourceModuleRecord,
   options: {
     runtimeModule: string;
-    selectionMode: PreviewSelectionMode;
     transformMode: PreviewExecutionMode;
     versions: ReturnType<typeof getBuildVersionFingerprint>;
   },
@@ -597,7 +595,6 @@ function createModuleCacheKey(
       protocolVersion: options.versions.protocolVersion,
       relativePath: record.relativePath,
       runtimeModule: options.runtimeModule,
-      selectionMode: options.selectionMode,
       sourceHash: record.sourceHash,
       targetName: record.target.name,
       transformMode: options.transformMode,
@@ -610,7 +607,6 @@ function createEntryPayloadCacheKey(
   payload: PreviewEntryPayload,
   options: {
     runtimeModule: string;
-    selectionMode: PreviewSelectionMode;
     transformMode: PreviewExecutionMode;
     versions: ReturnType<typeof getBuildVersionFingerprint>;
   },
@@ -621,7 +617,6 @@ function createEntryPayloadCacheKey(
       payload,
       protocolVersion: options.versions.protocolVersion,
       runtimeModule: options.runtimeModule,
-      selectionMode: options.selectionMode,
       targetName: payload.descriptor.targetName,
       transformMode: options.transformMode,
       versions: options.versions,
@@ -633,7 +628,6 @@ function createLayoutSchemaCacheKey(
   schema: PreviewLayoutSchemaSidecar,
   options: {
     runtimeModule: string;
-    selectionMode: PreviewSelectionMode;
     transformMode: PreviewExecutionMode;
     versions: ReturnType<typeof getBuildVersionFingerprint>;
   },
@@ -644,7 +638,6 @@ function createLayoutSchemaCacheKey(
       protocolVersion: options.versions.protocolVersion,
       runtimeModule: options.runtimeModule,
       schema,
-      selectionMode: options.selectionMode,
       targetName: schema.descriptor.targetName,
       transformMode: options.transformMode,
       versions: options.versions,
@@ -671,7 +664,6 @@ function isPreviewDiagnostic(value: PreviewBuildDiagnostic): value is PreviewDia
 function createBuildManifestKey(options: {
   artifactKinds: PreviewBuildArtifactKind[];
   projectName: string;
-  selectionMode: PreviewSelectionMode;
   targets: PreviewSourceTarget[];
   transformMode: PreviewExecutionMode;
 }) {
@@ -679,7 +671,6 @@ function createBuildManifestKey(options: {
     JSON.stringify({
       artifactKinds: options.artifactKinds,
       projectName: options.projectName,
-      selectionMode: options.selectionMode,
       targets: options.targets.map((target) => ({
         name: target.name,
         packageRoot: target.packageRoot,
@@ -794,7 +785,6 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
     packageRoot: resolveRealFilePath(target.packageRoot),
     sourceRoot: resolveRealFilePath(target.sourceRoot),
   }));
-  const selectionMode = options.selectionMode ?? "compat";
   const transformMode = options.transformMode ?? "strict-fidelity";
   const runtimeModule = options.runtimeModule ?? DEFAULT_RUNTIME_MODULE;
   const workspaceRoot = resolveRealFilePath(
@@ -837,7 +827,6 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
   await runWithConcurrency(concurrency, moduleRecords, async (record) => {
     const cacheKey = createModuleCacheKey(record, {
       runtimeModule,
-      selectionMode,
       transformMode,
       versions,
     });
@@ -915,7 +904,6 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
     previewEngine = createPreviewEngine({
       projectName: options.projectName,
       runtimeModule,
-      selectionMode,
       targets,
       transformMode,
     });
@@ -927,7 +915,6 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
       if (artifactKinds.includes("entry-metadata")) {
         const cacheKey = createEntryPayloadCacheKey(payload, {
           runtimeModule,
-          selectionMode,
           transformMode,
           versions,
         });
@@ -989,7 +976,6 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
         const schema = createPreviewLayoutSchema(payload);
         const cacheKey = createLayoutSchemaCacheKey(schema, {
           runtimeModule,
-          selectionMode,
           transformMode,
           versions,
         });
@@ -1051,7 +1037,6 @@ export async function buildPreviewArtifacts(options: PreviewBuildOptions): Promi
     const manifestKey = createBuildManifestKey({
       artifactKinds,
       projectName: options.projectName,
-      selectionMode,
       targets,
       transformMode,
     });

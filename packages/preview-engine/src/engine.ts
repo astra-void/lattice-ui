@@ -282,7 +282,7 @@ class PreviewEngineImpl implements PreviewEngine {
       entryState,
       entryId,
       this.options.runtimeModule ?? "virtual:lattice-preview-runtime",
-      this.options.transformMode ?? "compatibility",
+      this.options.transformMode ?? "strict-fidelity",
     );
     const merged = mergeDiagnostics(entryState, transform.diagnostics);
     const payload: PreviewEntryPayload = {
@@ -290,7 +290,7 @@ class PreviewEngineImpl implements PreviewEngine {
         ...entryState.descriptor,
         diagnosticsSummary: merged.diagnosticsSummary,
         status: resolvePayloadStatus(entryState.descriptor.status, {
-          mode: this.options.transformMode ?? "compatibility",
+          mode: this.options.transformMode ?? "strict-fidelity",
           outcome: transform.outcome,
         }),
       },
@@ -302,7 +302,7 @@ class PreviewEngineImpl implements PreviewEngine {
         moduleId: this.options.runtimeModule ?? "virtual:lattice-preview-runtime",
       },
       transform: {
-        mode: this.options.transformMode ?? "compatibility",
+        mode: this.options.transformMode ?? "strict-fidelity",
         outcome: transform.outcome,
       },
     };
@@ -382,7 +382,6 @@ class PreviewEngineImpl implements PreviewEngine {
 export function createPreviewEngine(options: CreatePreviewEngineOptions): PreviewEngine {
   return new PreviewEngineImpl({
     ...options,
-    selectionMode: options.selectionMode ?? "compat",
-    transformMode: options.transformMode ?? "compatibility",
+    transformMode: options.transformMode ?? "strict-fidelity",
   });
 }

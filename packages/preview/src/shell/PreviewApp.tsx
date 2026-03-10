@@ -258,23 +258,6 @@ function describeModuleExports(module: PreviewModule) {
 }
 
 function createDiscoveryDiagnostics(entry: PreviewEntryDescriptor): PreviewDiagnostic[] {
-  if (entry.selection.kind === "compat") {
-    return [
-      {
-        code: "LEGACY_AUTO_RENDER_FALLBACK",
-        entryId: entry.id,
-        file: entry.sourceFilePath,
-        phase: "discovery",
-        relativeFile: entry.relativePath,
-        severity: "warning",
-        summary:
-          `This entry still relies on legacy export inference (${entry.selection.reason}). ` +
-          "Add `preview.entry` or `preview.render` to make preview selection explicit.",
-        target: entry.targetName,
-      },
-    ];
-  }
-
   if (entry.renderTarget.kind !== "none") {
     return [];
   }
@@ -370,8 +353,8 @@ function getPrimaryDiscoveryDiagnostic(discoveryDiagnostics: PreviewDiagnostic[]
     PREVIEW_RENDER_MISSING: 1,
     MISSING_EXPLICIT_PREVIEW_CONTRACT: 2,
     NO_COMPONENT_EXPORTS: 3,
-    TRANSITIVE_ANALYSIS_LIMITED: 4,
-    LEGACY_AUTO_RENDER_FALLBACK: 5,
+    DECLARATION_ONLY_BOUNDARY: 4,
+    UNRESOLVED_IMPORT: 5,
   };
 
   return [...discoveryDiagnostics].sort((left, right) => {
@@ -562,9 +545,7 @@ function PreviewCanvas(props: PreviewCanvasProps) {
       ? "Custom harness"
       : props.entry.renderTarget.kind === "component" && props.entry.renderTarget.usesPreviewProps
         ? "Component render with preview.props"
-        : props.entry.selection.kind === "compat"
-          ? "Legacy compatibility render"
-          : "Component render";
+        : "Component render";
 
   return (
     <div className="preview-canvas">
@@ -761,9 +742,7 @@ export function PreviewApp(props: PreviewAppProps) {
                   <span>
                     {selectedEntry.selection.kind === "explicit"
                       ? "Explicit preview contract"
-                      : selectedEntry.selection.kind === "compat"
-                        ? "Legacy export inference"
-                        : "Unresolved preview contract"}
+                      : "Unresolved preview contract"}
                   </span>
                 </div>
               </div>
@@ -818,11 +797,11 @@ export function PreviewApp(props: PreviewAppProps) {
                 )
               ) : selectedEntry.status === "blocked_by_transform" ? (
                 loadedEntry ? (
-                  <div className="preview-empty">
-                    <p className="preview-empty-eyebrow">Transform blocked</p>
-                    <h2>This preview is blocked by transform mode.</h2>
-                    <p>Switch to compatibility mode or fix the blocking diagnostics below.</p>
-                  </div>
+                <div className="preview-empty">
+                  <p className="preview-empty-eyebrow">Transform blocked</p>
+                  <h2>This preview is blocked by transform mode.</h2>
+                  <p>Fix the blocking diagnostics below or opt into a non-default transform mode.</p>
+                </div>
                 ) : loadIssue ? (
                   <div className="preview-empty">
                     <p className="preview-empty-eyebrow">Load error</p>

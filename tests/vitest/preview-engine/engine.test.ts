@@ -79,12 +79,10 @@ function createTempPreviewWorkspace(packages: Record<string, Record<string, stri
 function createEngineForPackage(
   packageRoot: string,
   sourceRoot: string,
-  selectionMode: "compat" | "strict" = "compat",
-  transformMode: "strict-fidelity" | "compatibility" | "mocked" | "design-time" = "compatibility",
+  transformMode: "strict-fidelity" | "compatibility" | "mocked" | "design-time" = "strict-fidelity",
 ) {
   return createPreviewEngine({
     projectName: "Fixture Preview",
-    selectionMode,
     targets: [
       {
         name: "fixture",
@@ -129,7 +127,7 @@ function sanitizePaths<T>(value: T, packageRoot: string): T {
 }
 
 describe("createPreviewEngine", () => {
-  it("keeps legacy-only entries in needs_harness for strict mode and promotes them in compat mode", () => {
+  it("keeps legacy-only entries in needs_harness without auto-render selection", () => {
     const { packageRoot, sourceRoot } = createTempPreviewPackage({
       "src/Legacy.tsx": `
         export function Legacy() {
@@ -138,10 +136,9 @@ describe("createPreviewEngine", () => {
       `,
     });
 
-    const strictEngine = createEngineForPackage(packageRoot, sourceRoot, "strict");
-    const compatEngine = createEngineForPackage(packageRoot, sourceRoot, "compat");
+    const engine = createEngineForPackage(packageRoot, sourceRoot);
 
-    expect(strictEngine.getWorkspaceIndex().entries[0]).toMatchObject({
+    expect(engine.getWorkspaceIndex().entries[0]).toMatchObject({
       relativePath: "Legacy.tsx",
       renderTarget: {
         kind: "none",
@@ -152,19 +149,6 @@ describe("createPreviewEngine", () => {
         reason: "missing-explicit-contract",
       },
       status: "needs_harness",
-    });
-
-    expect(compatEngine.getWorkspaceIndex().entries[0]).toMatchObject({
-      relativePath: "Legacy.tsx",
-      renderTarget: {
-        exportName: "Legacy",
-        kind: "component",
-      },
-      selection: {
-        kind: "compat",
-        reason: "basename-match",
-      },
-      status: "ready",
     });
   });
 
@@ -190,7 +174,7 @@ describe("createPreviewEngine", () => {
       `,
     });
 
-    const engine = createEngineForPackage(packageRoot, sourceRoot, "strict");
+    const engine = createEngineForPackage(packageRoot, sourceRoot);
 
     expect(engine.getWorkspaceIndex().entries.find((entry) => entry.relativePath === "ReExport.tsx")).toMatchObject({
       renderTarget: {
@@ -267,7 +251,6 @@ describe("createPreviewEngine", () => {
     const uiTarget = workspace.getPackage("@fixtures/ui");
     const engine = createPreviewEngine({
       projectName: "Workspace Preview",
-      selectionMode: "strict",
       targets: [
         {
           name: "ui",
@@ -295,7 +278,7 @@ describe("createPreviewEngine", () => {
     ]);
 
     const payload = sanitizePaths(engine.getEntryPayload("ui:Entry.tsx"), workspace.workspaceRoot);
-    expect(payload.diagnostics.some((diagnostic) => diagnostic.code === "TRANSITIVE_ANALYSIS_LIMITED")).toBe(false);
+    expect(payload.diagnostics.some((diagnostic) => diagnostic.code === "DECLARATION_ONLY_BOUNDARY")).toBe(false);
     expect(payload.graphTrace).toMatchObject({
       boundaryHops: [
         {
@@ -396,7 +379,6 @@ describe("createPreviewEngine", () => {
     const uiTarget = workspace.getPackage("@fixtures/ui");
     const engine = createPreviewEngine({
       projectName: "Workspace Preview",
-      selectionMode: "strict",
       targets: [
         {
           name: "ui",
@@ -459,7 +441,7 @@ describe("createPreviewEngine", () => {
       `,
     });
 
-    const engine = createEngineForPackage(packageRoot, sourceRoot, "compat");
+    const engine = createEngineForPackage(packageRoot, sourceRoot);
     const workspaceSnapshot = sanitizePaths(engine.getWorkspaceIndex(), packageRoot);
     const payloadSnapshot = sanitizePaths(engine.getEntryPayload("fixture:Broken.tsx"), packageRoot);
 
@@ -473,7 +455,7 @@ describe("createPreviewEngine", () => {
             "capabilities": {
               "supportsHotUpdate": true,
               "supportsLayoutDebug": true,
-              "supportsPropsEditing": true,
+              "supportsPropsEditing": false,
               "supportsRuntimeMock": true,
             },
             "diagnosticsSummary": {
@@ -483,7 +465,7 @@ describe("createPreviewEngine", () => {
                 "runtime": 0,
                 "transform": 1,
               },
-              "hasBlocking": false,
+              "hasBlocking": true,
               "total": 2,
             },
             "hasDefaultExport": false,
@@ -492,16 +474,18 @@ describe("createPreviewEngine", () => {
             "packageName": "@fixtures/preview-engine",
             "relativePath": "Broken.tsx",
             "renderTarget": {
-              "exportName": "Broken",
-              "kind": "component",
-              "usesPreviewProps": false,
+              "candidates": [
+                "Broken",
+              ],
+              "kind": "none",
+              "reason": "missing-explicit-contract",
             },
             "selection": {
-              "kind": "compat",
-              "reason": "basename-match",
+              "kind": "unresolved",
+              "reason": "missing-explicit-contract",
             },
             "sourceFilePath": "<pkg>/src/Broken.tsx",
-            "status": "ready",
+            "status": "needs_harness",
             "targetName": "fixture",
             "title": "Broken",
           },
@@ -543,7 +527,7 @@ describe("createPreviewEngine", () => {
           },
         ],
         "projectName": "Fixture Preview",
-        "protocolVersion": 2,
+        "protocolVersion": 3,
         "targets": [
           {
             "name": "fixture",
@@ -564,7 +548,7 @@ describe("createPreviewEngine", () => {
           "capabilities": {
             "supportsHotUpdate": true,
             "supportsLayoutDebug": true,
-            "supportsPropsEditing": true,
+            "supportsPropsEditing": false,
             "supportsRuntimeMock": true,
           },
           "diagnosticsSummary": {
@@ -574,7 +558,7 @@ describe("createPreviewEngine", () => {
               "runtime": 0,
               "transform": 1,
             },
-            "hasBlocking": false,
+            "hasBlocking": true,
             "total": 2,
           },
           "hasDefaultExport": false,
@@ -583,38 +567,40 @@ describe("createPreviewEngine", () => {
           "packageName": "@fixtures/preview-engine",
           "relativePath": "Broken.tsx",
           "renderTarget": {
-            "exportName": "Broken",
-            "kind": "component",
-            "usesPreviewProps": false,
+            "candidates": [
+              "Broken",
+            ],
+            "kind": "none",
+            "reason": "missing-explicit-contract",
           },
           "selection": {
-            "kind": "compat",
-            "reason": "basename-match",
+            "kind": "unresolved",
+            "reason": "missing-explicit-contract",
           },
           "sourceFilePath": "<pkg>/src/Broken.tsx",
-          "status": "ready",
+          "status": "needs_harness",
           "targetName": "fixture",
           "title": "Broken",
         },
         "diagnostics": [
           {
-            "code": "LEGACY_AUTO_RENDER_FALLBACK",
+            "code": "MISSING_EXPLICIT_PREVIEW_CONTRACT",
             "entryId": "fixture:Broken.tsx",
             "file": "<pkg>/src/Broken.tsx",
             "phase": "discovery",
             "relativeFile": "src/Broken.tsx",
             "severity": "warning",
-            "summary": "This entry still relies on legacy export inference (basename-match). Add \`preview.entry\` or \`preview.render\` to make preview selection explicit.",
+            "summary": "This file does not declare \`preview.entry\` or \`preview.render\`. Add an explicit preview contract to select Broken.",
             "target": "preview-engine",
           },
           {
-            "blocking": false,
+            "blocking": true,
             "code": "UNSUPPORTED_HOST_ELEMENT",
             "entryId": "fixture:Broken.tsx",
             "file": "<pkg>/src/Broken.tsx",
             "phase": "transform",
             "relativeFile": "src/Broken.tsx",
-            "severity": "warning",
+            "severity": "error",
             "summary": "Host element viewportframe is not supported by preview generation.",
             "symbol": "viewportframe",
             "target": "fixture",
@@ -627,22 +613,20 @@ describe("createPreviewEngine", () => {
             "importChain": [
               "<pkg>/src/Broken.tsx",
             ],
-            "resolvedExportName": "Broken",
-            "symbolChain": [
-              "<pkg>/src/Broken.tsx#Broken",
-            ],
+            "requestedSymbol": undefined,
+            "symbolChain": [],
           },
         },
-        "protocolVersion": 2,
+        "protocolVersion": 3,
         "runtimeAdapter": {
           "kind": "react-dom",
           "moduleId": "virtual:lattice-preview-runtime",
         },
         "transform": {
-          "mode": "compatibility",
+          "mode": "strict-fidelity",
           "outcome": {
             "fidelity": "degraded",
-            "kind": "compatibility",
+            "kind": "blocked",
           },
         },
       }
@@ -655,10 +639,14 @@ describe("createPreviewEngine", () => {
         export function Broken() {
           return <viewportframe />;
         }
+
+        export const preview = {
+          entry: Broken,
+        };
       `,
     });
 
-    const engine = createEngineForPackage(packageRoot, sourceRoot, "compat", "compatibility");
+    const engine = createEngineForPackage(packageRoot, sourceRoot, "compatibility");
 
     expect(engine.getWorkspaceIndex().entries[0]).toMatchObject({
       relativePath: "Broken.tsx",
@@ -683,10 +671,14 @@ describe("createPreviewEngine", () => {
         export function Broken() {
           return <viewportframe />;
         }
+
+        export const preview = {
+          entry: Broken,
+        };
       `,
     });
 
-    const engine = createEngineForPackage(packageRoot, sourceRoot, "compat", "strict-fidelity");
+    const engine = createEngineForPackage(packageRoot, sourceRoot, "strict-fidelity");
 
     expect(engine.getWorkspaceIndex().entries[0]).toMatchObject({
       relativePath: "Broken.tsx",
@@ -714,7 +706,7 @@ describe("createPreviewEngine", () => {
       `,
     });
 
-    const engine = createEngineForPackage(packageRoot, sourceRoot, "compat");
+    const engine = createEngineForPackage(packageRoot, sourceRoot);
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
 
     fs.writeFileSync(

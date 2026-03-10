@@ -123,7 +123,7 @@ function readEntryPayload(previewPlugin: PreviewPlugin, entryId: string) {
     throw new Error("Expected the preview entry module to load as a string.");
   }
 
-  const payloadMatch = entryModuleCode.match(/export const __previewEntryPayload = (\{[\s\S]*\});\n$/);
+  const payloadMatch = entryModuleCode.match(/export const __previewEntryPayload = (\{[\s\S]*?\});\n/);
   if (!payloadMatch) {
     throw new Error(`Unable to parse preview entry module:\n${entryModuleCode}`);
   }
@@ -219,7 +219,19 @@ describe("createPreviewVitePlugin", () => {
   it("recomputes entry status and render targets before sending entry-scoped updates", () => {
     const { fixtureRoot, sourceRoot } = createFixtureRoot();
     const sourceFile = path.join(sourceRoot, "AnimatedSlot.tsx");
-    fs.writeFileSync(sourceFile, 'export function AnimatedSlot() { return <frame />; }\n', "utf8");
+    fs.writeFileSync(
+      sourceFile,
+      `
+        export function AnimatedSlot() {
+          return <frame />;
+        }
+
+        export const preview = {
+          entry: AnimatedSlot,
+        };
+      `,
+      "utf8",
+    );
 
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
     const configureServer = getHookHandler<TestConfigureServerHook>(
@@ -279,7 +291,19 @@ describe("createPreviewVitePlugin", () => {
       ]),
     );
 
-    fs.writeFileSync(sourceFile, "export default function AnimatedSlot() { return <frame />; }\n", "utf8");
+    fs.writeFileSync(
+      sourceFile,
+      `
+        export default function AnimatedSlot() {
+          return <frame />;
+        }
+
+        export const preview = {
+          render: AnimatedSlot,
+        };
+      `,
+      "utf8",
+    );
     expect(handleHotUpdate?.({ file: sourceFile })).toEqual([]);
     expect(readWorkspaceEntries(previewPlugin)).toEqual(
       expect.arrayContaining([expect.objectContaining({ relativePath: "AnimatedSlot.tsx", status: "ready" })]),
@@ -298,6 +322,10 @@ describe("createPreviewVitePlugin", () => {
         export function Broken() {
           return <viewportframe />;
         }
+
+        export const preview = {
+          entry: Broken,
+        };
       `,
       "utf8",
     );
@@ -305,22 +333,22 @@ describe("createPreviewVitePlugin", () => {
     const previewPlugin = createPreviewPlugin(fixtureRoot, sourceRoot);
     const entryPayload = readEntryPayload(previewPlugin, "fixture:Broken.tsx");
 
-    expect(entryPayload.descriptor.status).toBe("ready");
+    expect(entryPayload.descriptor.status).toBe("blocked_by_transform");
     expect(entryPayload.transform).toEqual({
-      mode: "compatibility",
+      mode: "strict-fidelity",
       outcome: {
         fidelity: "degraded",
-        kind: "compatibility",
+        kind: "blocked",
       },
     });
     expect(entryPayload.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          blocking: false,
+          blocking: true,
           code: "UNSUPPORTED_HOST_ELEMENT",
           phase: "transform",
           relativeFile: "src/Broken.tsx",
-          severity: "warning",
+          severity: "error",
         }),
       ]),
     );

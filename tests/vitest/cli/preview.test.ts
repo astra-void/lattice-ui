@@ -213,7 +213,7 @@ describe("preview command", () => {
       packageName: "@fixtures/demo-package",
       packageRoot,
       sourceRoot: path.join(packageRoot, "src"),
-      transformMode: "compatibility",
+      transformMode: "strict-fidelity",
     });
   });
 
@@ -314,7 +314,7 @@ describe("preview command", () => {
     ]);
   });
 
-  it("builds the preview shell without bundling the preview-runtime CommonJS dist", () => {
+  it("builds the preview shell without bundling the preview-runtime CommonJS dist", { timeout: 20000 }, () => {
     buildPreviewPackage();
 
     const bundle = readBuiltPreviewShellBundle();

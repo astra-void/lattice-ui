@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
-import { applyLegacyInferenceAdapter } from "./compat";
 import { isFilePathUnderRoot, resolveRealFilePath } from "./pathUtils";
 import {
   createWorkspaceGraphService,
@@ -12,7 +11,6 @@ import {
 import { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
 import type {
   CreatePreviewEngineOptions,
-  PreviewAutoRenderSelectionReason,
   PreviewDiagnostic,
   PreviewDiscoveryDiagnosticCode,
   PreviewEntryDescriptor,
@@ -21,7 +19,6 @@ import type {
   PreviewGraphTrace,
   PreviewRenderTarget,
   PreviewSelection,
-  PreviewSelectionMode,
   PreviewSourceTarget,
   PreviewWorkspaceIndex,
 } from "./types";
@@ -122,29 +119,6 @@ export type WorkspaceDiscoverySnapshot = {
   entryStatesById: Map<string, DiscoveredEntryState>;
   workspaceIndex: PreviewWorkspaceIndex;
 };
-
-function listSourceFiles(dirPath: string): string[] {
-  if (!fs.existsSync(dirPath)) {
-    return [];
-  }
-
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  const files: string[] = [];
-
-  for (const entry of entries) {
-    const entryPath = path.join(dirPath, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...listSourceFiles(entryPath));
-      continue;
-    }
-
-    if (isTransformableSourceFile(entry.name)) {
-      files.push(resolveRealFilePath(entryPath));
-    }
-  }
-
-  return files.sort((left, right) => left.localeCompare(right));
-}
 
 function toRelativePath(rootPath: string, filePath: string) {
   return path.relative(resolveRealFilePath(rootPath), resolveRealFilePath(filePath)).split(path.sep).join("/");
@@ -834,7 +808,7 @@ function collectTransitiveGraphTrace(
   const imports = new Map<string, PreviewGraphImportEdge>();
   const boundaryHops = new Map<string, PreviewGraphTrace["boundaryHops"][number]>();
   const traversedProjects = new Map<string, NonNullable<PreviewGraphTrace["traversedProjects"]>[number]>();
-  let stopReason: string | undefined;
+  let stopReason: PreviewGraphTrace["stopReason"] | undefined;
 
   const visit = (filePath: string) => {
     if (visited.has(filePath)) {
@@ -1005,7 +979,6 @@ function isPreviewPackageInternalEntry(packageRoot: string, relativePath: string
 function buildDescriptor(
   record: RawSourceModuleRecord,
   recordsByPath: Map<string, RawSourceModuleRecord>,
-  selectionMode: PreviewSelectionMode,
 ): {
   dependencyPaths: string[];
   descriptor: PreviewEntryDescriptor;
@@ -1016,25 +989,10 @@ function buildDescriptor(
   const candidateExportNames = getRenderableNamedExports(record, recordsByPath);
   const hasDefaultExport = hasRenderableDefaultExport(record, recordsByPath);
   const entryId = `${record.target.targetName}:${record.relativePath}`;
+  const renderableCandidates = hasDefaultExport ? ["default", ...candidateExportNames] : [...candidateExportNames];
   const baseDiagnostics = [
     ...collectTransitiveDiagnostics(entryId, record.filePath, recordsByPath).values(),
   ];
-  const compatClassification = applyLegacyInferenceAdapter({
-    candidateExportNames,
-    entryId,
-    filePath: record.filePath,
-    graphTrace: {
-      boundaryHops: [],
-      imports: [],
-      selection: {
-        importChain: [record.filePath],
-        symbolChain: [],
-      },
-    },
-    hasDefaultExport,
-    packageRoot: record.target.packageRoot,
-    previewHasProps: record.preview.hasProps,
-  });
 
   let selection: PreviewSelection;
   let renderTarget: PreviewRenderTarget;
@@ -1047,23 +1005,37 @@ function buildDescriptor(
     renderTarget = explicitSelection.renderTarget;
     selectionTrace = explicitSelection.trace;
     status = "ready";
-  } else if (selectionMode === "compat" && compatClassification) {
-    selection = compatClassification.selection;
-    renderTarget = compatClassification.renderTarget;
+  } else if (renderableCandidates.length > 1) {
+    selection = {
+      kind: "unresolved",
+      reason: "ambiguous-exports",
+    };
+    renderTarget = {
+      candidates: renderableCandidates,
+      kind: "none",
+      reason: "ambiguous-exports",
+    };
     selectionTrace = {
       importChain: [record.filePath],
-      resolvedExportName: compatClassification.autoRenderCandidate,
-      symbolChain: [`${record.filePath}#${compatClassification.autoRenderCandidate ?? "compat"}`],
+      symbolChain: [],
     };
-    status = "ready";
-    entryDiagnostics.push(...compatClassification.diagnostics);
-  } else if (compatClassification) {
+    status = "ambiguous";
+    entryDiagnostics.push(
+      createEntryDiagnostic(
+        "AMBIGUOUS_COMPONENT_EXPORTS",
+        entryId,
+        record.filePath,
+        record.target.packageRoot,
+        `Multiple component exports need explicit disambiguation: ${candidateExportNames.join(", ")}.`,
+      ),
+    );
+  } else if (renderableCandidates.length === 1) {
     selection = {
       kind: "unresolved",
       reason: "missing-explicit-contract",
     };
     renderTarget = {
-      candidates: hasDefaultExport ? ["default", ...candidateExportNames] : [...candidateExportNames],
+      candidates: renderableCandidates,
       kind: "none",
       reason: "missing-explicit-contract",
     };
@@ -1080,31 +1052,7 @@ function buildDescriptor(
         record.filePath,
         record.target.packageRoot,
         `This file does not declare \`preview.entry\` or \`preview.render\`. ` +
-          `Compat mode would render it via ${compatClassification.autoRenderReason}.`,
-      ),
-    );
-  } else if (candidateExportNames.length > 1) {
-    selection = {
-      kind: "unresolved",
-      reason: "ambiguous-exports",
-    };
-    renderTarget = {
-      candidates: [...candidateExportNames],
-      kind: "none",
-      reason: "ambiguous-exports",
-    };
-    selectionTrace = {
-      importChain: [record.filePath],
-      symbolChain: [],
-    };
-    status = "ambiguous";
-    entryDiagnostics.push(
-      createEntryDiagnostic(
-        "AMBIGUOUS_COMPONENT_EXPORTS",
-        entryId,
-        record.filePath,
-        record.target.packageRoot,
-        `Multiple component exports need explicit disambiguation: ${candidateExportNames.join(", ")}.`,
+          `Add an explicit preview contract to select ${renderableCandidates[0]}.`,
       ),
     );
   } else {
@@ -1217,8 +1165,7 @@ function discoverTargetRecords(target: TargetContext, graphService: WorkspaceGra
   return recordsByPath;
 }
 
-export function discoverWorkspaceState(options: Pick<CreatePreviewEngineOptions, "projectName" | "selectionMode" | "targets">) {
-  const selectionMode = options.selectionMode ?? "compat";
+export function discoverWorkspaceState(options: Pick<CreatePreviewEngineOptions, "projectName" | "targets">) {
   const targetContexts = options.targets.map(createTargetContext);
   const graphService = createWorkspaceGraphService({
     targets: targetContexts.map((target) => ({
@@ -1241,7 +1188,7 @@ export function discoverWorkspaceState(options: Pick<CreatePreviewEngineOptions,
       .filter((record) => !isPreviewPackageInternalEntry(target.packageRoot, record.relativePath));
 
     for (const record of entryRecords) {
-      const builtEntry = buildDescriptor(record, recordsByPath, selectionMode);
+      const builtEntry = buildDescriptor(record, recordsByPath);
       entries.push(builtEntry.descriptor);
       entryStatesById.set(builtEntry.descriptor.id, {
         dependencyPaths: builtEntry.dependencyPaths,

@@ -1,6 +1,6 @@
-﻿{
+{
   "name": "@lattice-ui/preview-runtime",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "private": false,
   "description": "Shared browser runtime for Lattice UI previews, including Roblox globals and DOM host rendering.",
   "main": "dist/index.js",
@@ -8,6 +8,7 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
+    "schemas",
     "src",
     "README.md"
   ],
@@ -22,7 +23,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    }
+    },
+    "./schemas/layout-debug-payload": "./schemas/layout-debug-payload.schema.json",
+    "./schemas/runtime-issue": "./schemas/runtime-issue.schema.json"
   },
   "dependencies": {
     "@lattice-ui/layout-engine": "file:../layout-engine/pkg",

@@ -302,7 +302,6 @@ describe("preview bootstrap normalization", () => {
     });
 
     expect(configObject.projectName).toBe(shorthandConfig.projectName);
-    expect(configObject.selectionMode).toBe(shorthandConfig.selectionMode);
     expect(configObject.transformMode).toBe(shorthandConfig.transformMode);
     expect(configObject.targets).toEqual(shorthandConfig.targets);
     expect(configObject.workspaceRoot).toBe(shorthandConfig.workspaceRoot);

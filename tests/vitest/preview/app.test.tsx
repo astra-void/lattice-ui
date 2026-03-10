@@ -49,8 +49,8 @@ function createEntryDescriptor(
     selection:
       overrides.selection ??
       ({
-        kind: "compat",
-        reason: "default",
+        contract: "preview.entry",
+        kind: "explicit",
       } as const),
     sourceFilePath: overrides.sourceFilePath ?? `/virtual/${overrides.id}`,
     status: overrides.status ?? "ready",
@@ -131,8 +131,8 @@ const checkboxEntry = createEntryDescriptor({
     usesPreviewProps: false,
   },
   selection: {
-    kind: "compat",
-    reason: "basename-match",
+    contract: "preview.entry",
+    kind: "explicit",
   },
   targetName: "checkbox",
   title: "Checkbox Root",
@@ -212,8 +212,8 @@ describe("preview shell", () => {
         usesPreviewProps: false,
       },
       selection: {
-        kind: "compat",
-        reason: "sole-export",
+        contract: "preview.entry",
+        kind: "explicit",
       },
       targetName: "broken",
       title: "Broken",
@@ -263,8 +263,8 @@ describe("preview shell", () => {
         usesPreviewProps: false,
       },
       selection: {
-        kind: "compat",
-        reason: "sole-export",
+        contract: "preview.entry",
+        kind: "explicit",
       },
       status: "blocked_by_transform",
       title: "Blocked",
@@ -536,8 +536,8 @@ describe("preview shell", () => {
         usesPreviewProps: false,
       },
       selection: {
-        kind: "compat",
-        reason: "sole-export",
+        contract: "preview.entry",
+        kind: "explicit",
       },
       title: "Loadout Editor",
     });

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { loadConfigFromFile, searchForWorkspaceRoot } from "vite";
-import type { PreviewExecutionMode, PreviewSelectionMode, PreviewSourceTarget } from "@lattice-ui/preview-engine";
+import type { PreviewExecutionMode, PreviewSourceTarget } from "@lattice-ui/preview-engine";
 
 const DEFAULT_CONFIG_FILE_NAME = "lattice.preview.config.ts";
 const DEFAULT_PREVIEW_PORT = 4174;
@@ -41,7 +41,6 @@ export type PreviewConfigServer = {
 export type PreviewConfig = {
   projectName?: string;
   runtimeModule?: string;
-  selectionMode?: PreviewSelectionMode;
   server?: PreviewConfigServer;
   targetDiscovery: PreviewTargetDiscoveryAdapter | PreviewTargetDiscoveryAdapter[];
   transformMode?: PreviewExecutionMode;
@@ -75,7 +74,6 @@ export type ResolvedPreviewConfig = {
   mode: "config-file" | "package-root";
   projectName: string;
   runtimeModule?: string;
-  selectionMode: PreviewSelectionMode;
   server: {
     fsAllow: string[];
     host?: string;
@@ -325,7 +323,6 @@ async function resolvePreviewConfigValue(
     mode: options.configFilePath ? "config-file" : "config-file",
     projectName: config.projectName ?? createDefaultProjectName(targets),
     runtimeModule: resolveRuntimeModule(config.runtimeModule, options.configDir),
-    selectionMode: config.selectionMode ?? "compat",
     server: {
       fsAllow: resolveFsAllow(config.server?.fsAllow, options.configDir, targets, workspaceRoot),
       host: config.server?.host,
@@ -334,7 +331,7 @@ async function resolvePreviewConfigValue(
     },
     targetDiscovery,
     targets,
-    transformMode: config.transformMode ?? "compatibility",
+    transformMode: config.transformMode ?? "strict-fidelity",
     workspaceRoot,
   };
 }
@@ -392,7 +389,6 @@ function normalizePackageRootFallback(cwd: string): ResolvedPreviewConfig {
     cwd,
     mode: "package-root",
     projectName: packageName,
-    selectionMode: "compat",
     server: {
       fsAllow: resolveFsAllow(undefined, packageRoot, targets, workspaceRoot),
       open: false,
@@ -400,7 +396,7 @@ function normalizePackageRootFallback(cwd: string): ResolvedPreviewConfig {
     },
     targetDiscovery: [createPackageTargetDiscovery({ packageName, packageRoot, sourceRoot, name: packageName })],
     targets,
-    transformMode: "compatibility",
+    transformMode: "strict-fidelity",
     workspaceRoot,
   };
 }

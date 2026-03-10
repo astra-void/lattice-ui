@@ -28,7 +28,6 @@ export type {
   PreviewEntryDescriptor,
   PreviewEntryPayload,
   PreviewExecutionMode,
-  PreviewSelectionMode,
   PreviewSourceTarget,
   PreviewWorkspaceIndex,
 } from "@lattice-ui/preview-engine";

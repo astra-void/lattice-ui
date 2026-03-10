@@ -24,7 +24,7 @@ This keeps the current package-root workflow:
 
 - package root must contain `package.json`
 - preview source root defaults to `src`
-- dev preview defaults to `selectionMode: "compat"` and `transformMode: "compatibility"`
+- dev preview defaults to `transformMode: "strict-fidelity"`
 
 ## Config File
 
@@ -100,7 +100,7 @@ Supported explicit contracts:
 - `preview.entry`
 - `preview.render`
 
-Legacy default-export / basename / sole-export inference still exists only as compat behavior. It is surfaced as diagnostics and should not be treated as the core engine contract.
+Files without an explicit preview contract stay indexed, but they do not auto-render. They surface as `needs_harness`, `ambiguous`, or `unresolved` guidance until `preview.entry` or `preview.render` is added.
 
 Selection pipeline:
 
@@ -121,6 +121,23 @@ The public protocol is not the shell UI. It is the exported engine/runtime schem
 - `PreviewLayoutDebugPayload`
 
 Use `@lattice-ui/preview-engine` and `@lattice-ui/preview-runtime` as the source of truth for those contracts.
+
+Machine-readable schema artifacts are published from those packages:
+
+- `@lattice-ui/preview-engine/schemas/workspace-index`
+- `@lattice-ui/preview-engine/schemas/entry-payload`
+- `@lattice-ui/preview-engine/schemas/diagnostic`
+- `@lattice-ui/preview-runtime/schemas/runtime-issue`
+- `@lattice-ui/preview-runtime/schemas/layout-debug-payload`
+
+## Transform Modes
+
+Strict fidelity is the default:
+
+- `strict-fidelity` blocks previews when transform fidelity would degrade
+- `compatibility` allows fallback rendering as an explicit opt-in
+- `mocked` allows explicit mock-backed execution as an explicit opt-in
+- `design-time` is metadata-only and does not emit executable preview modules
 
 ## Target Discovery Adapters
 
@@ -153,6 +170,6 @@ export default definePreviewConfig({
 
 ## Notes
 
-- discovery graph limitations such as `TRANSITIVE_ANALYSIS_LIMITED` are still reported as diagnostics in this phase
 - browser preview remains internal UI over public protocol data
-- docs generation, watch-streaming headless mode, and broader workspace bootstrap generalization land in later phases
+- discovery stops only at real external or unresolved boundaries
+- add explicit preview contracts during migration; legacy export inference is no longer part of the engine contract

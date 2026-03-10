@@ -30,7 +30,6 @@ export default defineConfig({
     createPreviewVitePlugin({
       projectName: previewConfig.projectName,
       runtimeModule: previewConfig.runtimeModule ?? previewRuntimeEntry,
-      selectionMode: previewConfig.selectionMode,
       targets: previewConfig.targets,
       transformMode: previewConfig.transformMode,
     }),

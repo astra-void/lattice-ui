@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import { searchForWorkspaceRoot } from "vite";
-import type { PreviewExecutionMode, PreviewSelectionMode } from "@lattice-ui/preview-engine";
+import type { PreviewExecutionMode } from "@lattice-ui/preview-engine";
 import type { LoadPreviewConfigOptions, PreviewConfig, ResolvedPreviewConfig } from "../config";
 import { loadPreviewConfig, resolvePreviewConfigObject } from "../config";
 import { createAutoMockPropsPlugin } from "./autoMockPlugin";
@@ -17,7 +17,6 @@ export type StartPreviewServerOptions = {
   packageRoot: string;
   port?: number;
   runtimeModule?: string;
-  selectionMode?: PreviewSelectionMode;
   sourceRoot: string;
   transformMode?: PreviewExecutionMode;
 };
@@ -79,7 +78,6 @@ export async function resolvePreviewServerConfig(options: StartPreviewServerInpu
       mode: "package-root",
       projectName: options.packageName,
       runtimeModule: options.runtimeModule,
-      selectionMode: options.selectionMode ?? "compat",
       server: {
         fsAllow: [
           path.resolve(options.packageRoot),
@@ -98,7 +96,7 @@ export async function resolvePreviewServerConfig(options: StartPreviewServerInpu
           sourceRoot: path.resolve(options.sourceRoot),
         },
       ],
-      transformMode: options.transformMode ?? "compatibility",
+      transformMode: options.transformMode ?? "strict-fidelity",
       workspaceRoot,
     };
   }
@@ -120,7 +118,6 @@ export async function startPreviewServer(options: StartPreviewServerInput = {}) 
   const previewPlugin = createPreviewVitePlugin({
     projectName: resolvedConfig.projectName,
     runtimeModule: previewRuntimeRootEntry,
-    selectionMode: resolvedConfig.selectionMode,
     targets: resolvedConfig.targets,
     transformMode: resolvedConfig.transformMode,
   });

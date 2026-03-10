@@ -6,7 +6,6 @@ import {
   createPreviewEngine,
   PREVIEW_ENGINE_PROTOCOL_VERSION,
   type PreviewExecutionMode,
-  type PreviewSelectionMode,
   type PreviewSourceTarget,
 } from "@lattice-ui/preview-engine";
 import { stripFileIdDecorations } from "./pathUtils";
@@ -28,7 +27,6 @@ const RBX_STYLE_IMPORT = `import { ${RBX_STYLE_HELPER_NAME} } from "@lattice-ui/
 export type CreatePreviewVitePluginOptions = {
   projectName: string;
   runtimeModule?: string;
-  selectionMode?: PreviewSelectionMode;
   targets: PreviewSourceTarget[];
   transformMode?: PreviewExecutionMode;
 };
@@ -146,9 +144,8 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
   const previewEngine = createPreviewEngine({
     projectName: options.projectName,
     runtimeModule: runtimeEntryPath,
-    selectionMode: options.selectionMode ?? "compat",
     targets: options.targets,
-    transformMode: options.transformMode ?? "compatibility",
+    transformMode: options.transformMode ?? "strict-fidelity",
   });
   let server: PreviewDevServer | undefined;
 
@@ -255,7 +252,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
 
       const transformed = transformPreviewSourceOrThrow(code, {
         filePath,
-        mode: options.transformMode ?? "compatibility",
+        mode: options.transformMode ?? "strict-fidelity",
         runtimeModule: runtimeEntryPath,
         target: target.name,
       });
@@ -263,7 +260,7 @@ export function createPreviewVitePlugin(options: CreatePreviewVitePluginOptions)
         const diagnosticMessage =
           transformed.diagnostics.map((diagnostic) => `${diagnostic.code}: ${diagnostic.summary}`).join("\n") ||
           "Preview transform did not emit executable code.";
-        throw new Error(`Transform mode ${options.transformMode ?? "compatibility"} blocked ${filePath}.\n${diagnosticMessage}`);
+        throw new Error(`Transform mode ${options.transformMode ?? "strict-fidelity"} blocked ${filePath}.\n${diagnosticMessage}`);
       }
 
       let transformedCode = compile_tsx(transformed.code);

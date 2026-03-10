@@ -34,7 +34,6 @@ export async function createPreviewHeadlessSession(
   const engine = createPreviewEngine({
     projectName: resolvedConfig.projectName,
     runtimeModule: resolvedConfig.runtimeModule,
-    selectionMode: resolvedConfig.selectionMode,
     targets: resolvedConfig.targets,
     transformMode: resolvedConfig.transformMode,
   });

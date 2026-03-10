@@ -26,7 +26,7 @@ type WorkspacePackageJson = {
 };
 
 export type WorkspaceResolutionDiagnostic = {
-  code: "TRANSITIVE_ANALYSIS_LIMITED";
+  code: "DECLARATION_ONLY_BOUNDARY" | "UNRESOLVED_IMPORT";
   file: string;
   importChain?: string[];
   packageRoot: string;
@@ -818,15 +818,15 @@ export function createWorkspaceGraphService(options: {
 
           return {
             diagnostic: {
-              code: "TRANSITIVE_ANALYSIS_LIMITED",
+              code: "DECLARATION_ONLY_BOUNDARY",
               file: importerFilePath,
               importChain: [importerFilePath],
               packageRoot: importerContext.packageRoot,
               phase: "discovery",
               severity: "warning",
               summary:
-                `Transitive analysis stopped at ${JSON.stringify(options.specifier)}: ` +
-                `the workspace package could not be mapped to a traceable source file.`,
+                `Preview graph reached ${JSON.stringify(options.specifier)}, but the workspace package could not be mapped ` +
+                "back to a traceable source file.",
               target: "preview-engine",
             },
             edge: {
@@ -835,7 +835,7 @@ export function createWorkspaceGraphService(options: {
               importerProjectConfigPath: importerContext.project?.configPath,
               resolution: "stopped",
               specifier: options.specifier,
-              stopReason: "unresolved-import",
+              stopReason: "declaration-only-boundary",
             },
           };
         }
@@ -851,15 +851,14 @@ export function createWorkspaceGraphService(options: {
 
       return {
         diagnostic: {
-          code: "TRANSITIVE_ANALYSIS_LIMITED",
+          code: "UNRESOLVED_IMPORT",
           file: importerFilePath,
           importChain: [importerFilePath],
           packageRoot: importerContext.packageRoot,
           phase: "discovery",
           severity: "warning",
           summary:
-            `Transitive analysis stopped at ${JSON.stringify(options.specifier)}: ` +
-            `it could not be resolved from ${importerFilePath}.`,
+            `Preview graph could not resolve ${JSON.stringify(options.specifier)} from ${importerFilePath}.`,
           target: "preview-engine",
         },
         edge: {
@@ -892,15 +891,15 @@ export function createWorkspaceGraphService(options: {
     if (!normalizedResolution?.followedFilePath) {
       return {
         diagnostic: {
-          code: "TRANSITIVE_ANALYSIS_LIMITED",
+          code: "DECLARATION_ONLY_BOUNDARY",
           file: importerFilePath,
           importChain: [importerFilePath],
           packageRoot: importerContext.packageRoot,
           phase: "discovery",
           severity: "warning",
           summary:
-            `Transitive analysis stopped at ${JSON.stringify(options.specifier)}: ` +
-            `it resolves inside the workspace (${rawResolvedFilePath}) but could not be mapped to a traceable source file.`,
+            `Preview graph resolved ${JSON.stringify(options.specifier)} inside the workspace (${rawResolvedFilePath}) ` +
+            "but could not map it back to a traceable source file.",
           target: "preview-engine",
         },
         edge: {
@@ -910,7 +909,7 @@ export function createWorkspaceGraphService(options: {
           originalResolvedFile: rawResolvedFilePath,
           resolution: "stopped",
           specifier: options.specifier,
-          stopReason: "unresolved-import",
+          stopReason: "declaration-only-boundary",
         },
       };
     }

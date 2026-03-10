@@ -5,7 +5,7 @@ import type {
   PreviewTransformOutcome,
 } from "@lattice-ui/compiler";
 
-export const PREVIEW_ENGINE_PROTOCOL_VERSION = 2;
+export const PREVIEW_ENGINE_PROTOCOL_VERSION = 3;
 
 export type PreviewPropKind =
   | "array"
@@ -50,10 +50,7 @@ export type PreviewSourceTarget = {
   sourceRoot: string;
 };
 
-export type PreviewSelectionMode = "compat" | "strict";
 export type PreviewExecutionMode = PreviewTransformMode;
-
-export type PreviewAutoRenderSelectionReason = "default" | "basename-match" | "sole-export";
 
 export type PreviewEntryStatus =
   | "ready"
@@ -68,11 +65,12 @@ export type PreviewDiagnosticSeverity = "error" | "info" | "warning";
 
 export type PreviewDiscoveryDiagnosticCode =
   | "AMBIGUOUS_COMPONENT_EXPORTS"
-  | "LEGACY_AUTO_RENDER_FALLBACK"
+  | "DECLARATION_ONLY_BOUNDARY"
+  | "GRAPH_CYCLE_DETECTED"
   | "MISSING_EXPLICIT_PREVIEW_CONTRACT"
   | "NO_COMPONENT_EXPORTS"
   | "PREVIEW_RENDER_MISSING"
-  | "TRANSITIVE_ANALYSIS_LIMITED";
+  | "UNRESOLVED_IMPORT";
 
 export type PreviewRenderTarget =
   | {
@@ -96,13 +94,15 @@ export type PreviewSelection =
       kind: "explicit";
     }
   | {
-      kind: "compat";
-      reason: PreviewAutoRenderSelectionReason;
-    }
-  | {
       kind: "unresolved";
       reason: "ambiguous-exports" | "missing-explicit-contract" | "no-component-export";
     };
+
+export type PreviewGraphStopReason =
+  | "declaration-only-boundary"
+  | "external-dependency"
+  | "graph-cycle"
+  | "unresolved-import";
 
 export type PreviewEntryCapabilities = {
   supportsHotUpdate: boolean;
@@ -147,7 +147,7 @@ export type PreviewGraphImportEdge = {
   resolvedFile?: string;
   resolvedProjectConfigPath?: string;
   specifier: string;
-  stopReason?: string;
+  stopReason?: PreviewGraphStopReason;
 };
 
 export type PreviewSelectionTrace = {
@@ -167,7 +167,7 @@ export type PreviewGraphTrace = {
   }>;
   imports: PreviewGraphImportEdge[];
   selection: PreviewSelectionTrace;
-  stopReason?: string;
+  stopReason?: PreviewGraphStopReason;
   traversedProjects?: Array<{
     configPath: string;
     packageName?: string;
@@ -242,7 +242,6 @@ export type PreviewBuildOptions = {
   outDir?: string;
   projectName: string;
   runtimeModule?: string;
-  selectionMode?: PreviewSelectionMode;
   targets: PreviewSourceTarget[];
   transformMode?: PreviewExecutionMode;
   workspaceRoot?: string;
@@ -293,7 +292,6 @@ export type PreviewEngineUpdate = {
 export type CreatePreviewEngineOptions = {
   projectName: string;
   runtimeModule?: string;
-  selectionMode?: PreviewSelectionMode;
   targets: PreviewSourceTarget[];
   transformMode?: PreviewExecutionMode;
 };

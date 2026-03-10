@@ -208,9 +208,7 @@ declare module "@lattice-ui/preview-runtime" {
 declare module "@lattice-ui/preview-engine" {
   import type { ComponentType } from "react";
 
-  export type PreviewAutoRenderSelectionReason = "default" | "basename-match" | "sole-export";
   export type PreviewExecutionMode = "strict-fidelity" | "compatibility" | "mocked" | "design-time";
-  export type PreviewSelectionMode = "compat" | "strict";
   export type PreviewEntryStatus =
     | "ready"
     | "needs_harness"
@@ -276,10 +274,6 @@ declare module "@lattice-ui/preview-engine" {
     | {
         contract: "preview.entry" | "preview.render";
         kind: "explicit";
-      }
-    | {
-        kind: "compat";
-        reason: PreviewAutoRenderSelectionReason;
       }
     | {
         kind: "unresolved";
@@ -359,7 +353,6 @@ declare module "@lattice-ui/preview-engine" {
     outDir?: string;
     projectName: string;
     runtimeModule?: string;
-    selectionMode?: PreviewSelectionMode;
     targets: PreviewSourceTarget[];
     transformMode?: PreviewExecutionMode;
     workspaceRoot?: string;
@@ -404,7 +397,6 @@ declare module "@lattice-ui/preview-engine" {
   export function createPreviewEngine(options: {
     projectName: string;
     runtimeModule?: string;
-    selectionMode?: PreviewSelectionMode;
     targets: PreviewSourceTarget[];
     transformMode?: PreviewExecutionMode;
   }): PreviewEngine;

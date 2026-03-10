@@ -1,4 +1,3 @@
-export { applyLegacyInferenceAdapter, compatSelectionDiagnostic } from "./compat";
 export { buildPreviewArtifacts } from "./build";
 export { createPreviewEngine } from "./engine";
 export { PREVIEW_ENGINE_PROTOCOL_VERSION } from "./types";
@@ -11,7 +10,6 @@ export type {
   PreviewBuildResult,
   PreviewBuiltArtifact,
   PreviewCachedArtifactMetadata,
-  PreviewAutoRenderSelectionReason,
   PreviewDefinition,
   PreviewDiagnostic,
   PreviewDiagnosticPhase,
@@ -25,6 +23,7 @@ export type {
   PreviewEntryDescriptor,
   PreviewEntryPayload,
   PreviewEntryStatus,
+  PreviewGraphStopReason,
   PreviewGraphImportEdge,
   PreviewGraphTrace,
   PreviewPropMetadata,
@@ -32,7 +31,6 @@ export type {
   PreviewRuntimeAdapter,
   PreviewComponentPropsMetadata,
   PreviewSelection,
-  PreviewSelectionMode,
   PreviewSelectionTrace,
   PreviewTransformState,
   PreviewSourceTarget,
