@@ -5,7 +5,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@lattice-ui/docs", "@lattice-ui/playground", "@lattice-ui/preview-app", "@lattice-ui/test-harness"],
+  "ignore": ["@lattice-ui/docs", "@lattice-ui/playground", "@lattice-ui/preview-harness", "@lattice-ui/test-harness"],
   "fixed": [
     [
       "@lattice-ui/accordion",
@@ -18,10 +18,12 @@
       "@lattice-ui/dialog",
       "@lattice-ui/focus",
       "@lattice-ui/layer",
+      "@lattice-ui/layout-engine",
       "@lattice-ui/menu",
       "@lattice-ui/popover",
       "@lattice-ui/popper",
       "@lattice-ui/preview",
+      "@lattice-ui/preview-engine",
       "@lattice-ui/preview-runtime",
       "@lattice-ui/progress",
       "@lattice-ui/radio-group",
