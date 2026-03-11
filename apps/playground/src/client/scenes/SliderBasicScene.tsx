@@ -14,7 +14,7 @@ export function SliderBasicScene() {
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(920, 28)}
-        Text="Slider: pointer drag + keyboard(Home/End/Page/Arrows), clamped single-thumb values"
+        Text="Slider: pointer drag, stepped values, and commit feedback"
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}

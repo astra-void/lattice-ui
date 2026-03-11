@@ -14,7 +14,6 @@ import { DialogNestedScene } from "./scenes/DialogNestedScene";
 import { GridShowcaseScene } from "./scenes/GridShowcaseScene";
 import { InsetHitTestScene } from "./scenes/InsetHitTestScene";
 import { LayerDismissScene } from "./scenes/LayerDismissScene";
-import { MenuRovingScene } from "./scenes/MenuRovingScene";
 import { ModalBlockScene } from "./scenes/ModalBlockScene";
 import { NestedStackScene } from "./scenes/NestedStackScene";
 import { PopoverBasicScene } from "./scenes/PopoverBasicScene";
@@ -23,7 +22,6 @@ import { PopoverNestedScene } from "./scenes/PopoverNestedScene";
 import { PresenceScene } from "./scenes/PresenceScene";
 import { ProgressBasicScene } from "./scenes/ProgressBasicScene";
 import { RadioGroupDisabledScene } from "./scenes/RadioGroupDisabledScene";
-import { RadioGroupRovingScene } from "./scenes/RadioGroupRovingScene";
 import { ScrollAreaBasicScene } from "./scenes/ScrollAreaBasicScene";
 import { SelectBasicScene } from "./scenes/SelectBasicScene";
 import { SliderBasicScene } from "./scenes/SliderBasicScene";
@@ -35,7 +33,6 @@ import { TextareaBasicScene } from "./scenes/TextareaBasicScene";
 import { TextFieldBasicScene } from "./scenes/TextFieldBasicScene";
 import { ToastBasicScene } from "./scenes/ToastBasicScene";
 import { ToggleGroupBasicScene } from "./scenes/ToggleGroupBasicScene";
-import { ToggleGroupRovingScene } from "./scenes/ToggleGroupRovingScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
 import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
 import { buttonRecipe, panelRecipe, sceneTabRecipe } from "./theme/recipes";
@@ -48,7 +45,6 @@ type SceneKey =
   | "inset"
   | "checkbox-basic"
   | "switch-basic"
-  | "radio-roving"
   | "radio-disabled"
   | "text-field-basic"
   | "textarea-basic"
@@ -58,7 +54,6 @@ type SceneKey =
   | "progress-basic"
   | "avatar-basic"
   | "toggle-basic"
-  | "toggle-roving"
   | "dialog-basic"
   | "dialog-nested"
   | "dialog-modal"
@@ -68,7 +63,6 @@ type SceneKey =
   | "tabs-basic"
   | "tooltip-delay"
   | "tooltip-follow"
-  | "menu-roving"
   | "toast-basic"
   | "density-scope"
   | "scroll-area-basic"
@@ -166,12 +160,6 @@ const sceneOptions = [
     category: "Layering",
   },
   {
-    key: "menu-roving",
-    label: "Menu Roving",
-    description: "Keyboard navigation via roving focus.",
-    category: "Layering",
-  },
-  {
     key: "toast-basic",
     label: "Toast Basic",
     description: "Declarative toast composition examples.",
@@ -232,12 +220,6 @@ const sceneOptions = [
     category: "Forms",
   },
   {
-    key: "radio-roving",
-    label: "Radio Roving",
-    description: "Roving radio group keyboard model.",
-    category: "Selection",
-  },
-  {
     key: "radio-disabled",
     label: "Radio Disabled",
     description: "Disabled radio behavior and focus rules.",
@@ -247,12 +229,6 @@ const sceneOptions = [
     key: "toggle-basic",
     label: "Toggle Basic",
     description: "Single toggle pressed state behavior.",
-    category: "Selection",
-  },
-  {
-    key: "toggle-roving",
-    label: "Toggle Roving",
-    description: "Toggle group arrow-key navigation.",
     category: "Selection",
   },
   {
@@ -320,7 +296,6 @@ const sceneComponents = {
   inset: InsetHitTestScene,
   "checkbox-basic": CheckboxBasicScene,
   "switch-basic": SwitchBasicScene,
-  "radio-roving": RadioGroupRovingScene,
   "radio-disabled": RadioGroupDisabledScene,
   "text-field-basic": TextFieldBasicScene,
   "textarea-basic": TextareaBasicScene,
@@ -330,7 +305,6 @@ const sceneComponents = {
   "progress-basic": ProgressBasicScene,
   "avatar-basic": AvatarBasicScene,
   "toggle-basic": ToggleGroupBasicScene,
-  "toggle-roving": ToggleGroupRovingScene,
   "dialog-basic": DialogBasicScene,
   "dialog-nested": DialogNestedScene,
   "dialog-modal": DialogModalBlockScene,
@@ -340,7 +314,6 @@ const sceneComponents = {
   "tabs-basic": TabsBasicScene,
   "tooltip-delay": TooltipDelayScene,
   "tooltip-follow": TooltipFollowScene,
-  "menu-roving": MenuRovingScene,
   "toast-basic": ToastBasicScene,
   "density-scope": DensityScopeScene,
   "scroll-area-basic": ScrollAreaBasicScene,

@@ -13,7 +13,7 @@ export function SelectBasicScene() {
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(920, 28)}
-        Text="Select: single choice, roving focus + typeahead, outside/ESC dismiss"
+        Text="Select: single choice with controlled state and outside/ESC dismiss"
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -110,7 +110,7 @@ export function SelectBasicScene() {
                     <Text
                       BackgroundTransparency={1}
                       Size={UDim2.fromOffset(300, 18)}
-                      Text="Keyboard: Up/Down/Home/End + typeahead"
+                      Text="Available Modes"
                       TextColor3={theme.colors.textSecondary}
                       TextSize={theme.typography.labelSm.textSize}
                       TextXAlignment={Enum.TextXAlignment.Left}

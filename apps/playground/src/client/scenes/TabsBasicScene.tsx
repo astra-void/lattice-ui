@@ -16,7 +16,7 @@ export function TabsBasicScene() {
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(900, 28)}
-        Text="Tabs MVP: automatic/manual activation, orientation keymap, disabled skip, forceMount."
+        Text="Tabs MVP: automatic/manual activation, horizontal/vertical layouts, disabled states, forceMount."
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -35,7 +35,7 @@ export function TabsBasicScene() {
         <Text
           BackgroundTransparency={1}
           Size={UDim2.fromOffset(820, 20)}
-          Text="Automatic / Horizontal (Left/Right focus move + activation)"
+          Text="Automatic / Horizontal"
           TextColor3={theme.colors.textSecondary}
           TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
@@ -137,7 +137,7 @@ export function TabsBasicScene() {
                 BackgroundTransparency={1}
                 Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
                 Size={UDim2.fromOffset(600, 26)}
-                Text="Disabled tab content should not be selected by navigation."
+                Text="Disabled tabs remain unavailable until enabled."
                 TextColor3={theme.colors.textSecondary}
                 TextSize={theme.typography.bodyMd.textSize}
                 TextXAlignment={Enum.TextXAlignment.Left}
@@ -151,7 +151,7 @@ export function TabsBasicScene() {
         <Text
           BackgroundTransparency={1}
           Size={UDim2.fromOffset(860, 20)}
-          Text="Manual / Vertical (Up/Down focus move, Enter/Space/Activated to activate)"
+          Text="Manual / Vertical"
           TextColor3={theme.colors.textSecondary}
           TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
