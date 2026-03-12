@@ -3,6 +3,7 @@ import type { LayerInteractEvent } from "./types";
 
 type OutsidePointerOptions = {
   layerIgnoresGuiInset: boolean;
+  insideRoots?: Array<GuiObject | undefined>;
 };
 
 export function isPointerInput(inputObject: InputObject) {
@@ -21,6 +22,20 @@ export function toLayerInteractEvent(originalEvent: InputObject): LayerInteractE
     },
   };
   return event;
+}
+
+function isWithinInsideRoots(hitObject: GuiObject, insideRoots: Array<GuiObject | undefined>) {
+  for (const insideRoot of insideRoots) {
+    if (!insideRoot) {
+      continue;
+    }
+
+    if (hitObject === insideRoot || hitObject.IsDescendantOf(insideRoot)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function addUniqueSample(samples: Array<Vector2>, sampleKeys: Record<string, true>, x: number, y: number) {
@@ -64,11 +79,12 @@ export function isOutsidePointerEvent(
   const rawPointerPosition = inputObject.Position;
   const pointerPosition = new Vector2(rawPointerPosition.X, rawPointerPosition.Y);
   const pointerSamples = getPointerSamples(pointerPosition, options);
+  const insideRoots = [contentRoot, ...(options.insideRoots ?? [])];
 
   for (const sample of pointerSamples) {
     const hitGuiObjects = container.GetGuiObjectsAtPosition(sample.X, sample.Y);
     for (const hitObject of hitGuiObjects) {
-      if (hitObject.IsDescendantOf(contentRoot)) {
+      if (isWithinInsideRoots(hitObject, insideRoots)) {
         return false;
       }
     }

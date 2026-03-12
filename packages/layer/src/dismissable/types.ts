@@ -9,6 +9,7 @@ export type LayerInteractEvent = {
 export type DismissableLayerProps = {
   children?: React.ReactNode;
   enabled?: boolean;
+  insideRefs?: Array<React.MutableRefObject<GuiObject | undefined> | React.MutableRefObject<TextBox | undefined>>;
   modal?: boolean;
   disableOutsidePointerEvents?: boolean;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;

@@ -28,7 +28,7 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
   const keyboardNavigation = comboboxContext.keyboardNavigation;
 
   const popper = usePopper({
-    anchorRef: comboboxContext.triggerRef,
+    anchorRef: comboboxContext.anchorRef,
     contentRef: comboboxContext.contentRef,
     placement: props.placement,
     offset: props.offset,
@@ -73,6 +73,7 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
   return (
     <DismissableLayer
       enabled={props.enabled}
+      insideRefs={[comboboxContext.triggerRef, comboboxContext.inputRef]}
       modal={false}
       onDismiss={props.onDismiss}
       onEscapeKeyDown={props.onEscapeKeyDown}

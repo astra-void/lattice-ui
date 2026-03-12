@@ -31,6 +31,7 @@ export type ComboboxContextValue = {
   loop: boolean;
   keyboardNavigation: boolean;
   filterFn: ComboboxFilterFn;
+  anchorRef: React.MutableRefObject<GuiObject | undefined>;
   triggerRef: React.MutableRefObject<GuiObject | undefined>;
   inputRef: React.MutableRefObject<TextBox | undefined>;
   contentRef: React.MutableRefObject<GuiObject | undefined>;

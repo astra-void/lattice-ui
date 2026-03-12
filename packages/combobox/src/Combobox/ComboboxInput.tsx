@@ -18,9 +18,21 @@ export function ComboboxInput(props: ComboboxInputProps) {
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
-      comboboxContext.inputRef.current = toTextBox(instance);
+      const previousInput = comboboxContext.inputRef.current;
+      const nextInput = toTextBox(instance);
+
+      comboboxContext.inputRef.current = nextInput;
+
+      if (nextInput) {
+        comboboxContext.anchorRef.current = nextInput;
+        return;
+      }
+
+      if (comboboxContext.anchorRef.current === previousInput) {
+        comboboxContext.anchorRef.current = comboboxContext.triggerRef.current;
+      }
     },
-    [comboboxContext.inputRef],
+    [comboboxContext.anchorRef, comboboxContext.inputRef, comboboxContext.triggerRef],
   );
 
   const handleTextChanged = React.useCallback(

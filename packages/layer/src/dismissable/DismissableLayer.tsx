@@ -24,6 +24,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
   const [stackOrder, setStackOrder] = React.useState(0);
 
   const enabledRef = useLatest(enabled);
+  const insideRefsRef = useLatest(props.insideRefs ?? []);
   const onDismissRef = useLatest(props.onDismiss);
   const onPointerDownOutsideRef = useLatest(props.onPointerDownOutside);
   const onInteractOutsideRef = useLatest(props.onInteractOutside);
@@ -53,7 +54,10 @@ export function DismissableLayer(props: DismissableLayerProps) {
         if (!contentRoot) {
           return false;
         }
+
+        const insideRoots = insideRefsRef.current.map((ref) => ref.current);
         return isOutsidePointerEvent(inputObject, portalContext.container, contentRoot, {
+          insideRoots,
           layerIgnoresGuiInset,
         });
       },
@@ -74,6 +78,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
     callInteractOutside,
     callPointerDownOutside,
     enabledRef,
+    insideRefsRef,
     layerIgnoresGuiInset,
     portalContext.container,
   ]);

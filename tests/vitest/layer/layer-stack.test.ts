@@ -10,6 +10,7 @@ type LayerStackHarness = {
   bindActionAtPriority: ReturnType<typeof vi.fn>;
   unbindAction: ReturnType<typeof vi.fn>;
   getDismissHandler: () => DismissActionHandler | undefined;
+  emitInputBegan: (inputObject: unknown, gameProcessedEvent?: boolean) => void;
 };
 
 function ensureArrayRemoveShim() {
@@ -88,6 +89,11 @@ async function createLayerStackHarness(): Promise<LayerStackHarness> {
     bindActionAtPriority,
     unbindAction,
     getDismissHandler: () => dismissHandler,
+    emitInputBegan: (inputObject, gameProcessedEvent = false) => {
+      for (const callback of inputConnections) {
+        callback(inputObject, gameProcessedEvent);
+      }
+    },
   };
 }
 
@@ -201,6 +207,61 @@ describe("layerStack dismiss key handling", () => {
     });
 
     expect(result).toBe(Enum.ContextActionResult.Pass);
+    expect(dismissCalls).toBe(0);
+
+    harness.layerStack.unregisterLayer(registration.id);
+  });
+
+  it("only dismisses on pointer input when the hit is outside", async () => {
+    const harness = await createLayerStackHarness();
+
+    let dismissCalls = 0;
+
+    const registration = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: (inputObject) => (inputObject as { outside?: boolean }).outside === true,
+      onDismiss: () => {
+        dismissCalls += 1;
+      },
+    });
+
+    harness.emitInputBegan({
+      UserInputType: Enum.UserInputType.MouseButton1,
+      outside: false,
+    });
+
+    expect(dismissCalls).toBe(0);
+
+    harness.emitInputBegan({
+      UserInputType: Enum.UserInputType.MouseButton1,
+      outside: true,
+    });
+
+    expect(dismissCalls).toBe(1);
+
+    harness.layerStack.unregisterLayer(registration.id);
+  });
+
+  it("ignores processed pointer input for outside dismiss", async () => {
+    const harness = await createLayerStackHarness();
+
+    let dismissCalls = 0;
+
+    const registration = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => true,
+      onDismiss: () => {
+        dismissCalls += 1;
+      },
+    });
+
+    harness.emitInputBegan(
+      {
+        UserInputType: Enum.UserInputType.MouseButton1,
+      },
+      true,
+    );
+
     expect(dismissCalls).toBe(0);
 
     harness.layerStack.unregisterLayer(registration.id);

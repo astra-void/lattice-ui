@@ -17,9 +17,25 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
-      comboboxContext.triggerRef.current = toGuiObject(instance);
+      const previousTrigger = comboboxContext.triggerRef.current;
+      const nextTrigger = toGuiObject(instance);
+
+      comboboxContext.triggerRef.current = nextTrigger;
+
+      if (comboboxContext.inputRef.current) {
+        return;
+      }
+
+      if (nextTrigger) {
+        comboboxContext.anchorRef.current = nextTrigger;
+        return;
+      }
+
+      if (comboboxContext.anchorRef.current === previousTrigger) {
+        comboboxContext.anchorRef.current = undefined;
+      }
     },
-    [comboboxContext.triggerRef],
+    [comboboxContext.anchorRef, comboboxContext.inputRef, comboboxContext.triggerRef],
   );
 
   const handleActivated = React.useCallback(() => {

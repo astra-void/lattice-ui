@@ -47,6 +47,7 @@ export function ComboboxRoot(props: ComboboxProps) {
   const keyboardNavigation = props.keyboardNavigation === true;
   const filterFn = props.filterFn ?? defaultComboboxFilter;
 
+  const anchorRef = React.useRef<GuiObject>();
   const triggerRef = React.useRef<GuiObject>();
   const inputRef = React.useRef<TextBox>();
   const contentRef = React.useRef<GuiObject>();
@@ -177,6 +178,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       loop,
       keyboardNavigation,
       filterFn,
+      anchorRef,
       triggerRef,
       inputRef,
       contentRef,

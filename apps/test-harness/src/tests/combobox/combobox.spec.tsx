@@ -93,5 +93,55 @@ export = () => {
         assert(betaButton.Visible === false, "Non-matching item should be hidden.");
       });
     });
+
+    it("anchors content to the input when trigger and input are split", () => {
+      withReactHarness("ComboboxInputAnchor", (harness) => {
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <Combobox.Root defaultValue="alpha" open>
+              <frame BackgroundTransparency={1} Size={UDim2.fromOffset(420, 260)}>
+                <Combobox.Trigger asChild>
+                  <textbutton Position={UDim2.fromOffset(40, 24)} Size={UDim2.fromOffset(220, 32)} Text="combobox-trigger-anchor" />
+                </Combobox.Trigger>
+
+                <Combobox.Input asChild>
+                  <textbox Position={UDim2.fromOffset(40, 132)} Size={UDim2.fromOffset(220, 36)} />
+                </Combobox.Input>
+
+                <Combobox.Portal>
+                  <Combobox.Content asChild forceMount offset={new Vector2(0, 6)} placement="bottom">
+                    <frame Size={UDim2.fromOffset(180, 72)}>
+                      <Combobox.Item asChild textValue="alpha" value="alpha">
+                        <textbutton Text="combobox-item-alpha-anchor" />
+                      </Combobox.Item>
+                    </frame>
+                  </Combobox.Content>
+                </Combobox.Portal>
+              </frame>
+            </Combobox.Root>
+          </PortalProvider>,
+        );
+
+        waitForEffects(6);
+
+        const trigger = findTextButtonByText(harness.container, "combobox-trigger-anchor");
+        const input = findTextBox(harness.container);
+        const contentButton = findTextButtonByText(harness.playerGui, "combobox-item-alpha-anchor");
+        const contentParent = contentButton?.Parent;
+        const content = contentParent && contentParent.IsA("Frame") ? contentParent : undefined;
+
+        assert(trigger !== undefined, "Trigger should mount for anchor regression coverage.");
+        assert(input !== undefined, "Input should mount for anchor regression coverage.");
+        assert(content !== undefined, "Combobox content should mount into the portal.");
+        assert(
+          content.AbsolutePosition.Y === input.AbsolutePosition.Y + input.AbsoluteSize.Y + 6,
+          "Combobox content should anchor below the input when an input is mounted.",
+        );
+        assert(
+          content.AbsolutePosition.Y !== trigger.AbsolutePosition.Y + trigger.AbsoluteSize.Y + 6,
+          "Combobox content should no longer anchor from the trigger when an input is present.",
+        );
+      });
+    });
   });
 };
