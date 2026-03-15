@@ -1,5 +1,4 @@
 import { React, Slot } from "@lattice-ui/core";
-import { RovingFocusItem } from "@lattice-ui/focus";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
 
@@ -32,21 +31,12 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     [disabled, props.value, radioGroupContext],
   );
 
-  const handleSelectionGained = React.useCallback(() => {
-    if (!radioGroupContext.keyboardNavigation) {
-      return;
-    }
-
-    handleSelect();
-  }, [handleSelect, radioGroupContext.keyboardNavigation]);
-
   const eventHandlers = React.useMemo(
     () => ({
       Activated: handleSelect,
-      SelectionGained: handleSelectionGained,
       InputBegan: handleInputBegan,
     }),
-    [handleInputBegan, handleSelect, handleSelectionGained],
+    [handleInputBegan, handleSelect],
   );
 
   const itemContextValue = React.useMemo(
@@ -67,30 +57,26 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
           }
 
           return (
-            <RovingFocusItem asChild disabled={disabled}>
-              <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled}>
-                {child}
-              </Slot>
-            </RovingFocusItem>
+            <Slot Active={!disabled} Event={eventHandlers} Selectable={false}>
+              {child}
+            </Slot>
           );
         })()
       ) : (
-        <RovingFocusItem asChild disabled={disabled}>
-          <textbutton
-            Active={!disabled}
-            AutoButtonColor={false}
-            BackgroundColor3={checked ? Color3.fromRGB(88, 142, 255) : Color3.fromRGB(47, 53, 68)}
-            BorderSizePixel={0}
-            Event={eventHandlers}
-            Selectable={!disabled}
-            Size={UDim2.fromOffset(170, 34)}
-            Text={props.value}
-            TextColor3={disabled ? Color3.fromRGB(139, 146, 160) : Color3.fromRGB(236, 241, 249)}
-            TextSize={15}
-          >
-            {props.children}
-          </textbutton>
-        </RovingFocusItem>
+        <textbutton
+          Active={!disabled}
+          AutoButtonColor={false}
+          BackgroundColor3={checked ? Color3.fromRGB(88, 142, 255) : Color3.fromRGB(47, 53, 68)}
+          BorderSizePixel={0}
+          Event={eventHandlers}
+          Selectable={false}
+          Size={UDim2.fromOffset(170, 34)}
+          Text={props.value}
+          TextColor3={disabled ? Color3.fromRGB(139, 146, 160) : Color3.fromRGB(236, 241, 249)}
+          TextSize={15}
+        >
+          {props.children}
+        </textbutton>
       )}
     </RadioGroupItemContextProvider>
   );

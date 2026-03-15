@@ -14,7 +14,6 @@ export function ComboboxInput(props: ComboboxInputProps) {
   const comboboxContext = useComboboxContext();
   const disabled = comboboxContext.disabled || props.disabled === true;
   const readOnly = comboboxContext.readOnly || props.readOnly === true;
-  const keyboardNavigation = comboboxContext.keyboardNavigation;
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -37,6 +36,10 @@ export function ComboboxInput(props: ComboboxInputProps) {
 
   const handleTextChanged = React.useCallback(
     (textBox: TextBox) => {
+      if (textBox.Text === comboboxContext.inputValue) {
+        return;
+      }
+
       if (disabled || readOnly) {
         if (textBox.Text !== comboboxContext.inputValue) {
           textBox.Text = comboboxContext.inputValue;
@@ -50,32 +53,15 @@ export function ComboboxInput(props: ComboboxInputProps) {
     [comboboxContext, disabled, readOnly],
   );
 
-  const handleInputBegan = React.useCallback(
-    (_rbx: GuiObject, inputObject: InputObject) => {
-      if (disabled) {
-        return;
-      }
-
-      const keyCode = inputObject.KeyCode;
-      if (keyboardNavigation && (keyCode === Enum.KeyCode.Down || keyCode === Enum.KeyCode.Up)) {
-        comboboxContext.setOpen(true);
-      }
-    },
-    [comboboxContext, disabled, keyboardNavigation],
-  );
-
   const sharedProps = {
     Active: !disabled,
     ClearTextOnFocus: false,
     PlaceholderText: props.placeholder ?? "Type to filter",
-    Selectable: !disabled && keyboardNavigation,
+    Selectable: !disabled,
     Text: comboboxContext.inputValue,
     TextEditable: !disabled && !readOnly,
     Change: {
       Text: handleTextChanged,
-    },
-    Event: {
-      InputBegan: handleInputBegan,
     },
     ref: setInputRef,
   };

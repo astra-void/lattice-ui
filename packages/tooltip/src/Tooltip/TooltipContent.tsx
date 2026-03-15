@@ -12,7 +12,7 @@ type TooltipContentImplProps = {
   placement?: TooltipContentProps["placement"];
   offset?: TooltipContentProps["offset"];
   padding?: TooltipContentProps["padding"];
-} & Pick<TooltipContentProps, "children" | "onEscapeKeyDown" | "onInteractOutside" | "onPointerDownOutside">;
+} & Pick<TooltipContentProps, "children" | "onInteractOutside" | "onPointerDownOutside">;
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -52,7 +52,6 @@ function TooltipContentImpl(props: TooltipContentImplProps) {
         enabled={props.enabled}
         modal={false}
         onDismiss={props.onDismiss}
-        onEscapeKeyDown={props.onEscapeKeyDown}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
       >
@@ -68,7 +67,6 @@ function TooltipContentImpl(props: TooltipContentImplProps) {
       enabled={props.enabled}
       modal={false}
       onDismiss={props.onDismiss}
-      onEscapeKeyDown={props.onEscapeKeyDown}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
@@ -107,7 +105,6 @@ export function TooltipContent(props: TooltipContentProps) {
         enabled={open}
         offset={props.offset}
         onDismiss={handleDismiss}
-        onEscapeKeyDown={props.onEscapeKeyDown}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
@@ -129,7 +126,6 @@ export function TooltipContent(props: TooltipContentProps) {
           enabled={state.isPresent}
           offset={props.offset}
           onDismiss={handleDismiss}
-          onEscapeKeyDown={props.onEscapeKeyDown}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}

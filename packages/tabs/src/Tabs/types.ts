@@ -1,8 +1,5 @@
 import type React from "@rbxts/react";
 
-export type TabsOrientation = "horizontal" | "vertical";
-export type TabsActivationMode = "automatic" | "manual";
-
 export type TabsSetValue = (value: string) => void;
 
 export type TabsTriggerRegistration = {
@@ -16,9 +13,6 @@ export type TabsTriggerRegistration = {
 export type TabsContextValue = {
   value?: string;
   setValue: TabsSetValue;
-  orientation: TabsOrientation;
-  activationMode: TabsActivationMode;
-  keyboardNavigation: boolean;
   registerTrigger: (trigger: TabsTriggerRegistration) => () => void;
 };
 
@@ -26,9 +20,6 @@ export type TabsProps = {
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string) => void;
-  orientation?: TabsOrientation;
-  activationMode?: TabsActivationMode;
-  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

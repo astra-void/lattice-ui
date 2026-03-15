@@ -11,7 +11,7 @@ export function PopoverNestedScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(780, 28)}
-        Text="Nested popover stacking: ESC closes inner first, then outer."
+        Text="Nested popover stacking: outside click closes the inner layer before the outer one."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -92,7 +92,7 @@ export function PopoverNestedScene() {
                         BackgroundTransparency={1}
                         Position={UDim2.fromOffset(0, 26)}
                         Size={UDim2.fromOffset(190, 46)}
-                        Text="ESC/outside closes this first."
+                        Text="Outside click closes this first."
                         TextColor3={Color3.fromRGB(208, 193, 225)}
                         TextSize={14}
                         TextWrapped={true}

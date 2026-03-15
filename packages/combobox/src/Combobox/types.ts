@@ -12,7 +12,6 @@ export type ComboboxItemRegistration = {
   id: number;
   value: string;
   order: number;
-  getNode: () => GuiObject | undefined;
   getDisabled: () => boolean;
   getTextValue: () => string;
 };
@@ -28,16 +27,12 @@ export type ComboboxContextValue = {
   disabled: boolean;
   readOnly: boolean;
   required: boolean;
-  loop: boolean;
-  keyboardNavigation: boolean;
   filterFn: ComboboxFilterFn;
   anchorRef: React.MutableRefObject<GuiObject | undefined>;
   triggerRef: React.MutableRefObject<GuiObject | undefined>;
   inputRef: React.MutableRefObject<TextBox | undefined>;
   contentRef: React.MutableRefObject<GuiObject | undefined>;
   registerItem: (item: ComboboxItemRegistration) => () => void;
-  getOrderedItems: () => Array<ComboboxItemRegistration>;
-  getFilteredItems: () => Array<ComboboxItemRegistration>;
   getItemText: (value: string) => string | undefined;
 };
 
@@ -54,8 +49,6 @@ export type ComboboxProps = {
   disabled?: boolean;
   readOnly?: boolean;
   required?: boolean;
-  loop?: boolean;
-  keyboardNavigation?: boolean;
   filterFn?: ComboboxFilterFn;
   children?: React.ReactNode;
 };
@@ -92,7 +85,6 @@ export type ComboboxContentProps = {
   placement?: PopperPlacement;
   offset?: Vector2;
   padding?: number;
-  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;

@@ -2,13 +2,9 @@ import type React from "@rbxts/react";
 
 export type ToggleGroupType = "single" | "multiple";
 export type ToggleGroupValue = string | string[];
-export type ToggleGroupOrientation = "horizontal" | "vertical" | "both";
 
 export type ToggleGroupCommonProps = {
   disabled?: boolean;
-  loop?: boolean;
-  orientation?: ToggleGroupOrientation;
-  keyboardNavigation?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
 };
@@ -32,8 +28,6 @@ export type ToggleGroupProps = ToggleGroupCommonProps & (ToggleGroupSingleProps 
 export type ToggleGroupContextValue = {
   type: ToggleGroupType;
   disabled: boolean;
-  orientation: ToggleGroupOrientation;
-  loop: boolean;
   isPressed: (itemValue: string) => boolean;
   toggleValue: (itemValue: string) => void;
 };

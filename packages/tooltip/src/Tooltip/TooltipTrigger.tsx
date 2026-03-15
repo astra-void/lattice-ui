@@ -36,8 +36,6 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     () => ({
       MouseEnter: handleOpen,
       MouseLeave: handleClose,
-      SelectionGained: handleOpen,
-      SelectionLost: handleClose,
     }),
     [handleClose, handleOpen],
   );
@@ -49,7 +47,7 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     }
 
     return (
-      <Slot Event={eventHandlers} ref={setTriggerRef}>
+      <Slot Active={props.disabled !== true} Event={eventHandlers} Selectable={false} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -62,7 +60,7 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={props.disabled !== true}
+      Selectable={false}
       Size={UDim2.fromOffset(140, 36)}
       Text="Tooltip Trigger"
       TextColor3={Color3.fromRGB(240, 244, 250)}

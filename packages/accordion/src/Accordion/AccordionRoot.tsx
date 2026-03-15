@@ -1,13 +1,10 @@
 import { React, useControllableState } from "@lattice-ui/core";
-import { RovingFocusGroup } from "@lattice-ui/focus";
 import { AccordionContextProvider } from "./context";
 import { nextAccordionValues, normalizeAccordionValue } from "./state";
 import type { AccordionProps } from "./types";
 
 export function AccordionRoot(props: AccordionProps) {
   const accordionType = props.type ?? "single";
-  const loop = props.loop ?? true;
-  const keyboardNavigation = props.keyboardNavigation === true;
   const collapsible = props.collapsible ?? false;
 
   const defaultValue = props.defaultValue ?? (accordionType === "single" ? "" : []);
@@ -37,19 +34,12 @@ export function AccordionRoot(props: AccordionProps) {
     () => ({
       type: accordionType,
       openValues,
-      loop,
       toggleItem,
     }),
-    [accordionType, loop, openValues, toggleItem],
+    [accordionType, openValues, toggleItem],
   );
 
-  return (
-    <AccordionContextProvider value={contextValue}>
-      <RovingFocusGroup active={keyboardNavigation} autoFocus="none" loop={loop} orientation="vertical">
-        {props.children}
-      </RovingFocusGroup>
-    </AccordionContextProvider>
-  );
+  return <AccordionContextProvider value={contextValue}>{props.children}</AccordionContextProvider>;
 }
 
 export { AccordionRoot as Accordion };

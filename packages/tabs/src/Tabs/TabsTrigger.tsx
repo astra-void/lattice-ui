@@ -1,5 +1,4 @@
 import { React, Slot } from "@lattice-ui/core";
-import { RovingFocusItem } from "@lattice-ui/focus";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
@@ -55,17 +54,9 @@ export function TabsTrigger(props: TabsTriggerProps) {
     tabsContext.setValue(props.value);
   }, [disabled, props.value, tabsContext]);
 
-  const handleSelectionGained = React.useCallback(() => {
-    if (disabled || tabsContext.activationMode !== "automatic") {
-      return;
-    }
-
-    tabsContext.setValue(props.value);
-  }, [disabled, props.value, tabsContext]);
-
   const handleInputBegan = React.useCallback(
     (_rbx: TextButton, inputObject: InputObject) => {
-      if (disabled || tabsContext.activationMode !== "manual") {
+      if (disabled) {
         return;
       }
 
@@ -82,10 +73,9 @@ export function TabsTrigger(props: TabsTriggerProps) {
   const eventHandlers = React.useMemo(
     () => ({
       Activated: handleActivated,
-      SelectionGained: handleSelectionGained,
       InputBegan: handleInputBegan,
     }),
-    [handleActivated, handleInputBegan, handleSelectionGained],
+    [handleActivated, handleInputBegan],
   );
 
   const triggerName = React.useMemo(() => createTabsTriggerName(props.value), [props.value]);
@@ -97,31 +87,27 @@ export function TabsTrigger(props: TabsTriggerProps) {
     }
 
     return (
-      <RovingFocusItem asChild disabled={disabled}>
-        <Slot Event={eventHandlers} Name={triggerName} ref={setTriggerRef}>
-          {child}
-        </Slot>
-      </RovingFocusItem>
+      <Slot Active={!disabled} Event={eventHandlers} Name={triggerName} Selectable={false} ref={setTriggerRef}>
+        {child}
+      </Slot>
     );
   }
 
   return (
-    <RovingFocusItem asChild disabled={disabled}>
-      <textbutton
-        Active={!disabled}
-        AutoButtonColor={false}
-        BackgroundColor3={selected ? Color3.fromRGB(86, 137, 245) : Color3.fromRGB(47, 53, 68)}
-        BorderSizePixel={0}
-        Event={eventHandlers}
-        Selectable={!disabled}
-        Size={UDim2.fromOffset(132, 34)}
-        Text={props.value}
-        TextColor3={disabled ? Color3.fromRGB(136, 144, 159) : Color3.fromRGB(235, 240, 248)}
-        TextSize={15}
-        ref={setTriggerRef}
-      >
-        {props.children}
-      </textbutton>
-    </RovingFocusItem>
+    <textbutton
+      Active={!disabled}
+      AutoButtonColor={false}
+      BackgroundColor3={selected ? Color3.fromRGB(86, 137, 245) : Color3.fromRGB(47, 53, 68)}
+      BorderSizePixel={0}
+      Event={eventHandlers}
+      Selectable={false}
+      Size={UDim2.fromOffset(132, 34)}
+      Text={props.value}
+      TextColor3={disabled ? Color3.fromRGB(136, 144, 159) : Color3.fromRGB(235, 240, 248)}
+      TextSize={15}
+      ref={setTriggerRef}
+    >
+      {props.children}
+    </textbutton>
   );
 }

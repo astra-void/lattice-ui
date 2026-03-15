@@ -11,7 +11,7 @@ export function LayerDismissScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(580, 28)}
-        Text="Outside click or ESC closes the layer."
+        Text="Outside click closes the layer."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -72,7 +72,7 @@ export function LayerDismissScene() {
               BackgroundTransparency={1}
               Position={UDim2.fromOffset(0, 38)}
               Size={UDim2.fromOffset(360, 60)}
-              Text="Click outside this panel or press ESC."
+              Text="Click outside this panel to dismiss it."
               TextColor3={Color3.fromRGB(184, 195, 209)}
               TextSize={17}
               TextWrapped={true}

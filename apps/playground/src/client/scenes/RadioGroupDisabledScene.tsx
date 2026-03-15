@@ -50,7 +50,7 @@ export function RadioGroupDisabledScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <RadioGroup.Root onValueChange={setValue} orientation="vertical" value={value}>
+        <RadioGroup.Root onValueChange={setValue} value={value}>
           <frame BackgroundTransparency={1} Size={UDim2.fromOffset(580, 124)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[6])} />
 

@@ -9,7 +9,6 @@ export type SelectItemRegistration = {
   id: number;
   value: string;
   order: number;
-  getNode: () => GuiObject | undefined;
   getDisabled: () => boolean;
   getTextValue: () => string;
 };
@@ -21,12 +20,9 @@ export type SelectContextValue = {
   setValue: SelectSetValue;
   disabled: boolean;
   required: boolean;
-  loop: boolean;
-  keyboardNavigation: boolean;
   triggerRef: React.MutableRefObject<GuiObject | undefined>;
   contentRef: React.MutableRefObject<GuiObject | undefined>;
   registerItem: (item: SelectItemRegistration) => () => void;
-  getOrderedItems: () => Array<SelectItemRegistration>;
   getItemText: (value: string) => string | undefined;
 };
 
@@ -39,8 +35,6 @@ export type SelectProps = {
   onOpenChange?: (open: boolean) => void;
   disabled?: boolean;
   required?: boolean;
-  loop?: boolean;
-  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 
@@ -68,7 +62,6 @@ export type SelectContentProps = {
   placement?: PopperPlacement;
   offset?: Vector2;
   padding?: number;
-  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;

@@ -13,7 +13,6 @@ function toGuiObject(instance: Instance | undefined) {
 export function ComboboxTrigger(props: ComboboxTriggerProps) {
   const comboboxContext = useComboboxContext();
   const disabled = comboboxContext.disabled || props.disabled === true;
-  const keyboardNavigation = comboboxContext.keyboardNavigation;
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -55,14 +54,9 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
       const keyCode = inputObject.KeyCode;
       if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
         comboboxContext.setOpen(!comboboxContext.open);
-        return;
-      }
-
-      if (keyboardNavigation && (keyCode === Enum.KeyCode.Down || keyCode === Enum.KeyCode.Up)) {
-        comboboxContext.setOpen(true);
       }
     },
-    [comboboxContext, disabled, keyboardNavigation],
+    [comboboxContext, disabled],
   );
 
   const eventHandlers = React.useMemo(
@@ -80,7 +74,7 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled && keyboardNavigation} ref={setTriggerRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -93,7 +87,7 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
       BackgroundColor3={Color3.fromRGB(41, 48, 63)}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={!disabled && keyboardNavigation}
+      Selectable={false}
       Size={UDim2.fromOffset(220, 36)}
       Text="Combobox"
       TextColor3={disabled ? Color3.fromRGB(140, 148, 164) : Color3.fromRGB(235, 241, 248)}

@@ -38,6 +38,10 @@ function isWithinInsideRoots(hitObject: GuiObject, insideRoots: Array<GuiObject 
   return false;
 }
 
+function isWithinContentBoundary(hitObject: GuiObject, contentWrapper: GuiObject) {
+  return hitObject.IsDescendantOf(contentWrapper);
+}
+
 function addUniqueSample(samples: Array<Vector2>, sampleKeys: Record<string, true>, x: number, y: number) {
   const roundedX = math.round(x);
   const roundedY = math.round(y);
@@ -73,18 +77,18 @@ function getPointerSamples(pointerPosition: Vector2, options: OutsidePointerOpti
 export function isOutsidePointerEvent(
   inputObject: InputObject,
   container: BasePlayerGui,
-  contentRoot: GuiObject,
+  contentWrapper: GuiObject,
   options: OutsidePointerOptions,
 ) {
   const rawPointerPosition = inputObject.Position;
   const pointerPosition = new Vector2(rawPointerPosition.X, rawPointerPosition.Y);
   const pointerSamples = getPointerSamples(pointerPosition, options);
-  const insideRoots = [contentRoot, ...(options.insideRoots ?? [])];
+  const insideRoots = options.insideRoots ?? [];
 
   for (const sample of pointerSamples) {
     const hitGuiObjects = container.GetGuiObjectsAtPosition(sample.X, sample.Y);
     for (const hitObject of hitGuiObjects) {
-      if (isWithinInsideRoots(hitObject, insideRoots)) {
+      if (isWithinContentBoundary(hitObject, contentWrapper) || isWithinInsideRoots(hitObject, insideRoots)) {
         return false;
       }
     }

@@ -35,7 +35,7 @@ export function DialogTrigger(props: DialogTriggerProps) {
     }
 
     return (
-      <Slot Event={{ Activated: handleActivated }} ref={setTriggerRef}>
+      <Slot Active={props.disabled !== true} Event={{ Activated: handleActivated }} Selectable={false} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -48,6 +48,7 @@ export function DialogTrigger(props: DialogTriggerProps) {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Event={{ Activated: handleActivated }}
+      Selectable={false}
       Size={UDim2.fromOffset(140, 38)}
       Text="Open Dialog"
       TextColor3={Color3.fromRGB(240, 244, 250)}

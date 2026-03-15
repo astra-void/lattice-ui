@@ -15,15 +15,17 @@ export function PopoverClose(props: PopoverCloseProps) {
       error("[PopoverClose] `asChild` requires a child element.");
     }
 
-    return <Slot Event={{ Activated: handleActivated }}>{child}</Slot>;
+    return <Slot Active={true} Event={{ Activated: handleActivated }} Selectable={false}>{child}</Slot>;
   }
 
   return (
     <textbutton
+      Active={true}
       AutoButtonColor={false}
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Event={{ Activated: handleActivated }}
+      Selectable={false}
       Size={UDim2.fromOffset(110, 34)}
       Text="Close"
       TextColor3={Color3.fromRGB(240, 244, 250)}

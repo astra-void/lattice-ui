@@ -27,8 +27,6 @@ export function SelectRoot(props: SelectProps) {
 
   const disabled = props.disabled === true;
   const required = props.required === true;
-  const loop = props.loop ?? true;
-  const keyboardNavigation = props.keyboardNavigation === true;
 
   const triggerRef = React.useRef<GuiObject>();
   const contentRef = React.useRef<GuiObject>();
@@ -111,27 +109,12 @@ export function SelectRoot(props: SelectProps) {
       setValue,
       disabled,
       required,
-      loop,
-      keyboardNavigation,
       triggerRef,
       contentRef,
       registerItem,
-      getOrderedItems: resolveOrderedItems,
       getItemText,
     }),
-    [
-      disabled,
-      getItemText,
-      keyboardNavigation,
-      loop,
-      open,
-      registerItem,
-      required,
-      resolveOrderedItems,
-      setOpen,
-      setValue,
-      value,
-    ],
+    [disabled, getItemText, open, registerItem, required, setOpen, setValue, value],
   );
 
   return <SelectContextProvider value={contextValue}>{props.children}</SelectContextProvider>;

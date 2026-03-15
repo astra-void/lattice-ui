@@ -1,5 +1,4 @@
 import { React, useControllableState } from "@lattice-ui/core";
-import { RovingFocusGroup } from "@lattice-ui/focus";
 import { RadioGroupContextProvider } from "./context";
 import type { RadioGroupProps } from "./types";
 
@@ -16,9 +15,6 @@ export function RadioGroupRoot(props: RadioGroupProps) {
 
   const disabled = props.disabled === true;
   const required = props.required === true;
-  const loop = props.loop ?? true;
-  const orientation = props.orientation ?? "vertical";
-  const keyboardNavigation = props.keyboardNavigation === true;
 
   const setValue = React.useCallback(
     (nextValue: string) => {
@@ -37,16 +33,9 @@ export function RadioGroupRoot(props: RadioGroupProps) {
       setValue,
       disabled,
       required,
-      keyboardNavigation,
     }),
-    [disabled, keyboardNavigation, required, setValue, value],
+    [disabled, required, setValue, value],
   );
 
-  return (
-    <RadioGroupContextProvider value={contextValue}>
-      <RovingFocusGroup active={!disabled && keyboardNavigation} autoFocus="none" loop={loop} orientation={orientation}>
-        {props.children}
-      </RovingFocusGroup>
-    </RadioGroupContextProvider>
-  );
+  return <RadioGroupContextProvider value={contextValue}>{props.children}</RadioGroupContextProvider>;
 }

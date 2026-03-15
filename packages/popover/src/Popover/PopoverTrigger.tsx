@@ -35,7 +35,7 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
     }
 
     return (
-      <Slot Event={{ Activated: handleActivated }} ref={setTriggerRef}>
+      <Slot Active={props.disabled !== true} Event={{ Activated: handleActivated }} Selectable={false} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -48,7 +48,7 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Event={{ Activated: handleActivated }}
-      Selectable={props.disabled !== true}
+      Selectable={false}
       Size={UDim2.fromOffset(150, 38)}
       Text="Toggle Popover"
       TextColor3={Color3.fromRGB(240, 244, 250)}

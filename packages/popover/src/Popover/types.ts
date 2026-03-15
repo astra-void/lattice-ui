@@ -39,7 +39,6 @@ export type PopoverContentProps = {
   placement?: PopperPlacement;
   offset?: Vector2;
   padding?: number;
-  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;

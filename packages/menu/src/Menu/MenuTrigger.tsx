@@ -12,7 +12,6 @@ function toGuiObject(instance: Instance | undefined) {
 
 export function MenuTrigger(props: MenuTriggerProps) {
   const menuContext = useMenuContext();
-  const keyboardNavigation = menuContext.keyboardNavigation;
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -36,11 +35,7 @@ export function MenuTrigger(props: MenuTriggerProps) {
     }
 
     return (
-      <Slot
-        Event={{ Activated: handleActivated }}
-        Selectable={props.disabled !== true && keyboardNavigation}
-        ref={setTriggerRef}
-      >
+      <Slot Active={props.disabled !== true} Event={{ Activated: handleActivated }} Selectable={false} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -53,7 +48,7 @@ export function MenuTrigger(props: MenuTriggerProps) {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Event={{ Activated: handleActivated }}
-      Selectable={props.disabled !== true && keyboardNavigation}
+      Selectable={false}
       Size={UDim2.fromOffset(140, 38)}
       Text="Toggle Menu"
       TextColor3={Color3.fromRGB(240, 244, 250)}

@@ -1,5 +1,4 @@
 import { React, Slot, useControllableState } from "@lattice-ui/core";
-import { RovingFocusGroup } from "@lattice-ui/focus";
 import { ToggleGroupContextProvider } from "./context";
 import type { ToggleGroupProps } from "./types";
 
@@ -29,9 +28,6 @@ function normalizeMultiple(value: unknown): Array<string> {
 
 export function ToggleGroupRoot(props: ToggleGroupProps) {
   const disabled = props.disabled === true;
-  const loop = props.loop ?? true;
-  const orientation = props.orientation ?? "horizontal";
-  const keyboardNavigation = props.keyboardNavigation === true;
 
   const [singleValue, setSingleValueState] = useControllableState<string | undefined>({
     value: props.type === "single" ? props.value : undefined,
@@ -89,12 +85,10 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
     () => ({
       type: props.type,
       disabled,
-      orientation,
-      loop,
       isPressed,
       toggleValue,
     }),
-    [disabled, isPressed, loop, orientation, props.type, toggleValue],
+    [disabled, isPressed, props.type, toggleValue],
   );
 
   const groupNode = props.asChild ? (
@@ -112,11 +106,5 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
     </frame>
   );
 
-  return (
-    <ToggleGroupContextProvider value={contextValue}>
-      <RovingFocusGroup active={!disabled && keyboardNavigation} autoFocus="none" loop={loop} orientation={orientation}>
-        {groupNode}
-      </RovingFocusGroup>
-    </ToggleGroupContextProvider>
-  );
+  return <ToggleGroupContextProvider value={contextValue}>{groupNode}</ToggleGroupContextProvider>;
 }

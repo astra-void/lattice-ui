@@ -1,7 +1,5 @@
 import type React from "@rbxts/react";
 
-export type RadioGroupOrientation = "horizontal" | "vertical" | "both";
-
 export type RadioGroupSetValue = (value: string) => void;
 
 export type RadioGroupContextValue = {
@@ -9,7 +7,6 @@ export type RadioGroupContextValue = {
   setValue: RadioGroupSetValue;
   disabled: boolean;
   required: boolean;
-  keyboardNavigation: boolean;
 };
 
 export type RadioGroupItemContextValue = {
@@ -23,9 +20,6 @@ export type RadioGroupProps = {
   onValueChange?: (value: string) => void;
   disabled?: boolean;
   required?: boolean;
-  loop?: boolean;
-  orientation?: RadioGroupOrientation;
-  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

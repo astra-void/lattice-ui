@@ -13,7 +13,7 @@ export function PopoverBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(760, 28)}
-        Text="Trigger click opens popover. ESC and outside click dismiss it."
+        Text="Trigger click opens popover. Outside click dismisses it."
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -64,7 +64,7 @@ export function PopoverBasicScene() {
                 BackgroundTransparency={1}
                 Position={UDim2.fromOffset(0, 34)}
                 Size={UDim2.fromOffset(270, 56)}
-                Text="Outside click / ESC closes this panel."
+                Text="Outside click closes this panel."
                 TextColor3={theme.colors.textSecondary}
                 TextSize={theme.typography.bodyMd.textSize}
                 TextWrapped={true}

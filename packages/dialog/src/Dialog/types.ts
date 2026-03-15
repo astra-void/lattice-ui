@@ -40,7 +40,6 @@ export type DialogContentProps = {
   forceMount?: boolean;
   trapFocus?: boolean;
   restoreFocus?: boolean;
-  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;

@@ -8,15 +8,15 @@ type ManualTabKey = "alpha" | "beta" | "gamma";
 
 export function TabsBasicScene() {
   const { theme } = useTheme();
-  const [autoValue, setAutoValue] = React.useState<DemoTabKey>("overview");
-  const [manualValue, setManualValue] = React.useState<ManualTabKey>("alpha");
+  const [primaryValue, setPrimaryValue] = React.useState<DemoTabKey>("overview");
+  const [secondaryValue, setSecondaryValue] = React.useState<ManualTabKey>("alpha");
 
   return (
     <frame BackgroundTransparency={1} Size={UDim2.fromOffset(920, 560)}>
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(900, 28)}
-        Text="Tabs MVP: automatic/manual activation, horizontal/vertical layouts, disabled states, forceMount."
+        Text="Tabs basics: selected triggers, disabled states, custom layouts, and forceMount content."
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -25,7 +25,7 @@ export function TabsBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 34)}
         Size={UDim2.fromOffset(900, 22)}
-        Text={`Automatic: ${autoValue} | Manual: ${manualValue}`}
+        Text={`Primary: ${primaryValue} | Secondary: ${secondaryValue}`}
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.bodyMd.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -35,17 +35,13 @@ export function TabsBasicScene() {
         <Text
           BackgroundTransparency={1}
           Size={UDim2.fromOffset(820, 20)}
-          Text="Automatic / Horizontal"
+          Text="Primary Layout"
           TextColor3={theme.colors.textSecondary}
           TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Tabs.Root
-          onValueChange={(nextValue) => setAutoValue(nextValue as DemoTabKey)}
-          orientation="horizontal"
-          value={autoValue}
-        >
+        <Tabs.Root onValueChange={(nextValue) => setPrimaryValue(nextValue as DemoTabKey)} value={primaryValue}>
           <Tabs.List asChild>
             <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 26)} Size={UDim2.fromOffset(640, 40)}>
               <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[8])} />
@@ -53,7 +49,7 @@ export function TabsBasicScene() {
               <Tabs.Trigger asChild value="overview">
                 <textbutton
                   {...(mergeGuiProps(
-                    buttonRecipe({ intent: autoValue === "overview" ? "primary" : "surface", size: "sm" }, theme),
+                    buttonRecipe({ intent: primaryValue === "overview" ? "primary" : "surface", size: "sm" }, theme),
                     {
                       Text: "Overview",
                     },
@@ -64,7 +60,7 @@ export function TabsBasicScene() {
               <Tabs.Trigger asChild value="activity">
                 <textbutton
                   {...(mergeGuiProps(
-                    buttonRecipe({ intent: autoValue === "activity" ? "primary" : "surface", size: "sm" }, theme),
+                    buttonRecipe({ intent: primaryValue === "activity" ? "primary" : "surface", size: "sm" }, theme),
                     {
                       Text: "Activity",
                     },
@@ -151,18 +147,13 @@ export function TabsBasicScene() {
         <Text
           BackgroundTransparency={1}
           Size={UDim2.fromOffset(860, 20)}
-          Text="Manual / Vertical"
+          Text="Secondary Layout"
           TextColor3={theme.colors.textSecondary}
           TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Tabs.Root
-          activationMode="manual"
-          defaultValue="alpha"
-          onValueChange={(nextValue) => setManualValue(nextValue as ManualTabKey)}
-          orientation="vertical"
-        >
+        <Tabs.Root defaultValue="alpha" onValueChange={(nextValue) => setSecondaryValue(nextValue as ManualTabKey)}>
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 26)} Size={UDim2.fromOffset(880, 188)}>
             <Tabs.List asChild>
               <frame BackgroundTransparency={1} Size={UDim2.fromOffset(180, 168)}>
@@ -171,7 +162,7 @@ export function TabsBasicScene() {
                 <Tabs.Trigger asChild value="alpha">
                   <textbutton
                     {...(mergeGuiProps(
-                      buttonRecipe({ intent: manualValue === "alpha" ? "primary" : "surface", size: "sm" }, theme),
+                      buttonRecipe({ intent: secondaryValue === "alpha" ? "primary" : "surface", size: "sm" }, theme),
                       {
                         Text: "Alpha",
                         Size: UDim2.fromOffset(170, 34),
@@ -183,7 +174,7 @@ export function TabsBasicScene() {
                 <Tabs.Trigger asChild value="beta">
                   <textbutton
                     {...(mergeGuiProps(
-                      buttonRecipe({ intent: manualValue === "beta" ? "primary" : "surface", size: "sm" }, theme),
+                      buttonRecipe({ intent: secondaryValue === "beta" ? "primary" : "surface", size: "sm" }, theme),
                       {
                         Text: "Beta",
                         Size: UDim2.fromOffset(170, 34),
@@ -195,7 +186,7 @@ export function TabsBasicScene() {
                 <Tabs.Trigger asChild value="gamma">
                   <textbutton
                     {...(mergeGuiProps(
-                      buttonRecipe({ intent: manualValue === "gamma" ? "primary" : "surface", size: "sm" }, theme),
+                      buttonRecipe({ intent: secondaryValue === "gamma" ? "primary" : "surface", size: "sm" }, theme),
                       {
                         Text: "Gamma",
                         Size: UDim2.fromOffset(170, 34),

@@ -1,5 +1,4 @@
 import { React, Slot } from "@lattice-ui/core";
-import { RovingFocusGroup } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { usePopper } from "@lattice-ui/popper";
 import { useComboboxContext } from "./context";
@@ -13,7 +12,7 @@ type ComboboxContentImplProps = {
   placement?: ComboboxContentProps["placement"];
   offset?: ComboboxContentProps["offset"];
   padding?: ComboboxContentProps["padding"];
-} & Pick<ComboboxContentProps, "children" | "onEscapeKeyDown" | "onInteractOutside" | "onPointerDownOutside">;
+} & Pick<ComboboxContentProps, "children" | "onInteractOutside" | "onPointerDownOutside">;
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -25,7 +24,6 @@ function toGuiObject(instance: Instance | undefined) {
 
 function ComboboxContentImpl(props: ComboboxContentImplProps) {
   const comboboxContext = useComboboxContext();
-  const keyboardNavigation = comboboxContext.keyboardNavigation;
 
   const popper = usePopper({
     anchorRef: comboboxContext.anchorRef,
@@ -76,18 +74,10 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       insideRefs={[comboboxContext.triggerRef, comboboxContext.inputRef]}
       modal={false}
       onDismiss={props.onDismiss}
-      onEscapeKeyDown={props.onEscapeKeyDown}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <RovingFocusGroup
-        active={props.enabled && keyboardNavigation}
-        autoFocus="first"
-        loop={comboboxContext.loop}
-        orientation="vertical"
-      >
-        {contentNode}
-      </RovingFocusGroup>
+      {contentNode}
     </DismissableLayer>
   );
 }
@@ -112,7 +102,6 @@ export function ComboboxContent(props: ComboboxContentProps) {
         enabled={open}
         offset={props.offset}
         onDismiss={handleDismiss}
-        onEscapeKeyDown={props.onEscapeKeyDown}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
@@ -134,7 +123,6 @@ export function ComboboxContent(props: ComboboxContentProps) {
           enabled={state.isPresent}
           offset={props.offset}
           onDismiss={handleDismiss}
-          onEscapeKeyDown={props.onEscapeKeyDown}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}

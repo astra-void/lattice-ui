@@ -12,7 +12,7 @@ type PopoverContentImplProps = {
   placement?: PopoverContentProps["placement"];
   offset?: PopoverContentProps["offset"];
   padding?: PopoverContentProps["padding"];
-} & Pick<PopoverContentProps, "children" | "onEscapeKeyDown" | "onInteractOutside" | "onPointerDownOutside">;
+} & Pick<PopoverContentProps, "children" | "onInteractOutside" | "onPointerDownOutside">;
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -53,7 +53,6 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
         enabled={props.enabled}
         modal={popoverContext.modal}
         onDismiss={props.onDismiss}
-        onEscapeKeyDown={props.onEscapeKeyDown}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
       >
@@ -69,7 +68,6 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       enabled={props.enabled}
       modal={popoverContext.modal}
       onDismiss={props.onDismiss}
-      onEscapeKeyDown={props.onEscapeKeyDown}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
@@ -108,7 +106,6 @@ export function PopoverContent(props: PopoverContentProps) {
         enabled={open}
         offset={props.offset}
         onDismiss={handleDismiss}
-        onEscapeKeyDown={props.onEscapeKeyDown}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
@@ -130,7 +127,6 @@ export function PopoverContent(props: PopoverContentProps) {
           enabled={state.isPresent}
           offset={props.offset}
           onDismiss={handleDismiss}
-          onEscapeKeyDown={props.onEscapeKeyDown}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}

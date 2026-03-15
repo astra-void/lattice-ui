@@ -4,7 +4,6 @@ import type { AccordionType } from "./state";
 export type AccordionContextValue = {
   type: AccordionType;
   openValues: Array<string>;
-  loop: boolean;
   toggleItem: (value: string) => void;
 };
 
@@ -20,8 +19,6 @@ export type AccordionProps = {
   defaultValue?: string | Array<string>;
   onValueChange?: (value: string | Array<string>) => void;
   collapsible?: boolean;
-  loop?: boolean;
-  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

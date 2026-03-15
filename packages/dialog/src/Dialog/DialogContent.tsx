@@ -10,7 +10,7 @@ type DialogContentImplProps = {
   trapFocus: boolean;
   restoreFocus: boolean;
   onDismiss: () => void;
-} & Pick<DialogContentProps, "children" | "onEscapeKeyDown" | "onInteractOutside" | "onPointerDownOutside">;
+} & Pick<DialogContentProps, "children" | "onInteractOutside" | "onPointerDownOutside">;
 
 function DialogContentImpl(props: DialogContentImplProps) {
   return (
@@ -18,7 +18,6 @@ function DialogContentImpl(props: DialogContentImplProps) {
       enabled={props.enabled}
       modal={props.modal}
       onDismiss={props.onDismiss}
-      onEscapeKeyDown={props.onEscapeKeyDown}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
@@ -50,7 +49,6 @@ export function DialogContent(props: DialogContentProps) {
         enabled={open}
         modal={dialogContext.modal}
         onDismiss={handleDismiss}
-        onEscapeKeyDown={props.onEscapeKeyDown}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         restoreFocus={restoreFocus}
@@ -70,7 +68,6 @@ export function DialogContent(props: DialogContentProps) {
           enabled={state.isPresent}
           modal={dialogContext.modal}
           onDismiss={handleDismiss}
-          onEscapeKeyDown={props.onEscapeKeyDown}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           restoreFocus={restoreFocus}

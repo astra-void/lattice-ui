@@ -15,4 +15,3 @@ Headless accordion primitives for Roblox UI with single and multiple disclosure 
 
 - Supports `type="single" | "multiple"`.
 - Supports controlled/uncontrolled `value`.
-- Keyboard navigation is integrated with roving focus.

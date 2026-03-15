@@ -20,7 +20,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
   const layerIgnoresGuiInset = DEFAULT_LAYER_IGNORE_GUI_INSET;
 
   const portalContext = usePortalContext();
-  const contentRootRef = React.useRef<Frame>();
+  const contentWrapperRef = React.useRef<Frame>();
   const [stackOrder, setStackOrder] = React.useState(0);
 
   const enabledRef = useLatest(enabled);
@@ -28,7 +28,6 @@ export function DismissableLayer(props: DismissableLayerProps) {
   const onDismissRef = useLatest(props.onDismiss);
   const onPointerDownOutsideRef = useLatest(props.onPointerDownOutside);
   const onInteractOutsideRef = useLatest(props.onInteractOutside);
-  const onEscapeKeyDownRef = useLatest(props.onEscapeKeyDown);
 
   const callPointerDownOutside = React.useCallback((event: LayerInteractEvent) => {
     onPointerDownOutsideRef.current?.(event);
@@ -36,10 +35,6 @@ export function DismissableLayer(props: DismissableLayerProps) {
 
   const callInteractOutside = React.useCallback((event: LayerInteractEvent) => {
     onInteractOutsideRef.current?.(event);
-  }, []);
-
-  const callEscape = React.useCallback((event: LayerInteractEvent) => {
-    onEscapeKeyDownRef.current?.(event);
   }, []);
 
   const callDismiss = React.useCallback(() => {
@@ -50,20 +45,19 @@ export function DismissableLayer(props: DismissableLayerProps) {
     const registration = registerLayer({
       getEnabled: () => enabledRef.current,
       isPointerOutside: (inputObject) => {
-        const contentRoot = contentRootRef.current;
-        if (!contentRoot) {
+        const contentWrapper = contentWrapperRef.current;
+        if (!contentWrapper) {
           return false;
         }
 
         const insideRoots = insideRefsRef.current.map((ref) => ref.current);
-        return isOutsidePointerEvent(inputObject, portalContext.container, contentRoot, {
+        return isOutsidePointerEvent(inputObject, portalContext.container, contentWrapper, {
           insideRoots,
           layerIgnoresGuiInset,
         });
       },
       onPointerDownOutside: callPointerDownOutside,
       onInteractOutside: callInteractOutside,
-      onEscapeKeyDown: callEscape,
       onDismiss: callDismiss,
     });
 
@@ -74,7 +68,6 @@ export function DismissableLayer(props: DismissableLayerProps) {
     };
   }, [
     callDismiss,
-    callEscape,
     callInteractOutside,
     callPointerDownOutside,
     enabledRef,
@@ -112,7 +105,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
           BorderSizePixel={0}
           Position={UDim2.fromScale(0, 0)}
           Size={UDim2.fromScale(1, 1)}
-          ref={contentRootRef}
+          ref={contentWrapperRef}
           ZIndex={1}
         >
           {props.children}

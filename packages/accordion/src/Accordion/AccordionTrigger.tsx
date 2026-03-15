@@ -1,5 +1,4 @@
 import { React, Slot } from "@lattice-ui/core";
-import { RovingFocusItem } from "@lattice-ui/focus";
 import { useAccordionContext, useAccordionItemContext } from "./context";
 import type { AccordionTriggerProps } from "./types";
 
@@ -45,32 +44,28 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
     }
 
     return (
-      <RovingFocusItem asChild disabled={disabled}>
-        <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled}>
-          {child}
-        </Slot>
-      </RovingFocusItem>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false}>
+        {child}
+      </Slot>
     );
   }
 
   return (
-    <RovingFocusItem asChild disabled={disabled}>
-      <textbutton
-        Active={!disabled}
-        AutoButtonColor={false}
-        BackgroundColor3={Color3.fromRGB(41, 48, 63)}
-        BorderSizePixel={0}
-        Event={eventHandlers}
-        Selectable={!disabled}
-        Size={UDim2.fromOffset(260, 34)}
-        Text={itemContext.open ? "Collapse" : "Expand"}
-        TextColor3={disabled ? Color3.fromRGB(143, 150, 165) : Color3.fromRGB(236, 241, 249)}
-        TextSize={14}
-        TextXAlignment={Enum.TextXAlignment.Left}
-      >
-        <uipadding PaddingLeft={new UDim(0, 10)} />
-        {props.children}
-      </textbutton>
-    </RovingFocusItem>
+    <textbutton
+      Active={!disabled}
+      AutoButtonColor={false}
+      BackgroundColor3={Color3.fromRGB(41, 48, 63)}
+      BorderSizePixel={0}
+      Event={eventHandlers}
+      Selectable={false}
+      Size={UDim2.fromOffset(260, 34)}
+      Text={itemContext.open ? "Collapse" : "Expand"}
+      TextColor3={disabled ? Color3.fromRGB(143, 150, 165) : Color3.fromRGB(236, 241, 249)}
+      TextSize={14}
+      TextXAlignment={Enum.TextXAlignment.Left}
+    >
+      <uipadding PaddingLeft={new UDim(0, 10)} />
+      {props.children}
+    </textbutton>
   );
 }

@@ -11,7 +11,7 @@ export function DialogNestedScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(760, 28)}
-        Text="Open outer then inner. Press ESC twice to close inner first, then outer."
+        Text="Open outer then inner. Click outside the inner dialog first, then outside the outer dialog."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -108,7 +108,7 @@ export function DialogNestedScene() {
                         BackgroundTransparency={1}
                         Position={UDim2.fromOffset(0, 32)}
                         Size={UDim2.fromOffset(280, 50)}
-                        Text="ESC should close this dialog before the outer one."
+                        Text="Outside click should dismiss this dialog before the outer one."
                         TextColor3={Color3.fromRGB(204, 189, 223)}
                         TextSize={15}
                         TextWrapped={true}

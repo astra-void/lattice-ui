@@ -84,7 +84,7 @@ const sceneOptions = [
   {
     key: "dismiss",
     label: "Layer Dismiss",
-    description: "Outside click and escape dismissal orchestration.",
+    description: "Outside click dismissal orchestration.",
     category: "Layering",
   },
   {

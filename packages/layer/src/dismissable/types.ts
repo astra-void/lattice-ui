@@ -14,6 +14,5 @@ export type DismissableLayerProps = {
   disableOutsidePointerEvents?: boolean;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
-  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onDismiss?: () => void;
 };

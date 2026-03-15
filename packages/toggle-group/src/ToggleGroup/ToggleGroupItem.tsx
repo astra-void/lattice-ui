@@ -1,5 +1,4 @@
 import { React, Slot } from "@lattice-ui/core";
-import { RovingFocusItem } from "@lattice-ui/focus";
 import { useToggleGroupContext } from "./context";
 import type { ToggleGroupItemProps } from "./types";
 
@@ -47,30 +46,26 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
     }
 
     return (
-      <RovingFocusItem asChild disabled={disabled}>
-        <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled}>
-          {child}
-        </Slot>
-      </RovingFocusItem>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false}>
+        {child}
+      </Slot>
     );
   }
 
   return (
-    <RovingFocusItem asChild disabled={disabled}>
-      <textbutton
-        Active={!disabled}
-        AutoButtonColor={false}
-        BackgroundColor3={pressed ? Color3.fromRGB(88, 142, 255) : Color3.fromRGB(47, 53, 68)}
-        BorderSizePixel={0}
-        Event={eventHandlers}
-        Selectable={!disabled}
-        Size={UDim2.fromOffset(170, 34)}
-        Text={props.value}
-        TextColor3={disabled ? Color3.fromRGB(139, 146, 160) : Color3.fromRGB(236, 241, 249)}
-        TextSize={15}
-      >
-        {props.children}
-      </textbutton>
-    </RovingFocusItem>
+    <textbutton
+      Active={!disabled}
+      AutoButtonColor={false}
+      BackgroundColor3={pressed ? Color3.fromRGB(88, 142, 255) : Color3.fromRGB(47, 53, 68)}
+      BorderSizePixel={0}
+      Event={eventHandlers}
+      Selectable={false}
+      Size={UDim2.fromOffset(170, 34)}
+      Text={props.value}
+      TextColor3={disabled ? Color3.fromRGB(139, 146, 160) : Color3.fromRGB(236, 241, 249)}
+      TextSize={15}
+    >
+      {props.children}
+    </textbutton>
   );
 }

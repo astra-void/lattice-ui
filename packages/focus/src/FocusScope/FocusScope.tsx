@@ -1,5 +1,4 @@
 import { React, Slot } from "@lattice-ui/core";
-import { getSelectedGuiObject, setSelectedGuiObject } from "../internals/guiSelection";
 import { captureFocus, GuiService, restoreFocus } from "./focusManager";
 import { isTopTrappedScope, registerTrappedScope, unregisterTrappedScope } from "./scopeStack";
 import type { FocusScopeProps } from "./types";
@@ -16,6 +15,14 @@ function toGuiObject(instance: Instance | undefined) {
 
 function isLiveGuiObject(guiObject: GuiObject | undefined): guiObject is GuiObject {
   return guiObject !== undefined && guiObject.Parent !== undefined;
+}
+
+function getSelectedGuiObject() {
+  return GuiService.SelectedObject;
+}
+
+function setSelectedGuiObject(guiObject: GuiObject | undefined) {
+  GuiService.SelectedObject = guiObject;
 }
 
 function isFocusable(guiObject: GuiObject | undefined) {

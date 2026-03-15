@@ -1,5 +1,4 @@
 import { React, Slot } from "@lattice-ui/core";
-import { RovingFocusGroup } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { usePopper } from "@lattice-ui/popper";
 import { useMenuContext } from "./context";
@@ -9,13 +8,11 @@ type MenuContentImplProps = {
   enabled: boolean;
   visible: boolean;
   onDismiss: () => void;
-  loop: boolean;
-  keyboardNavigation: boolean;
   asChild?: boolean;
   placement?: MenuContentProps["placement"];
   offset?: MenuContentProps["offset"];
   padding?: MenuContentProps["padding"];
-} & Pick<MenuContentProps, "children" | "onEscapeKeyDown" | "onInteractOutside" | "onPointerDownOutside">;
+} & Pick<MenuContentProps, "children" | "onInteractOutside" | "onPointerDownOutside">;
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -76,18 +73,10 @@ function MenuContentImpl(props: MenuContentImplProps) {
       enabled={props.enabled}
       modal={menuContext.modal}
       onDismiss={props.onDismiss}
-      onEscapeKeyDown={props.onEscapeKeyDown}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <RovingFocusGroup
-        active={props.enabled && props.keyboardNavigation}
-        autoFocus="first"
-        loop={props.loop}
-        orientation="vertical"
-      >
-        {contentNode}
-      </RovingFocusGroup>
+      {contentNode}
     </DismissableLayer>
   );
 }
@@ -96,7 +85,6 @@ export function MenuContent(props: MenuContentProps) {
   const menuContext = useMenuContext();
   const open = menuContext.open;
   const forceMount = props.forceMount === true;
-  const loop = props.loop ?? true;
 
   const handleDismiss = React.useCallback(() => {
     menuContext.setOpen(false);
@@ -111,11 +99,8 @@ export function MenuContent(props: MenuContentProps) {
       <MenuContentImpl
         asChild={props.asChild}
         enabled={open}
-        loop={loop}
-        keyboardNavigation={menuContext.keyboardNavigation}
         offset={props.offset}
         onDismiss={handleDismiss}
-        onEscapeKeyDown={props.onEscapeKeyDown}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
@@ -135,11 +120,8 @@ export function MenuContent(props: MenuContentProps) {
         <MenuContentImpl
           asChild={props.asChild}
           enabled={state.isPresent}
-          loop={loop}
-          keyboardNavigation={menuContext.keyboardNavigation}
           offset={props.offset}
           onDismiss={handleDismiss}
-          onEscapeKeyDown={props.onEscapeKeyDown}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}

@@ -11,7 +11,7 @@ export function NestedStackScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(720, 28)}
-        Text="Open Outer -> Open Inner. Press ESC twice: Inner first, then Outer."
+        Text="Open Outer -> Open Inner. Outside click should dismiss the inner layer before the outer one."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -124,7 +124,7 @@ export function NestedStackScene() {
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(0, 32)}
                   Size={UDim2.fromOffset(260, 46)}
-                  Text="ESC/outside should close this one first."
+                  Text="Outside click should close this one first."
                   TextColor3={Color3.fromRGB(204, 189, 223)}
                   TextSize={15}
                   TextWrapped={true}

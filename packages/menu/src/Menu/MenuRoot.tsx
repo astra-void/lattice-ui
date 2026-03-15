@@ -9,7 +9,6 @@ export function Menu(props: MenuProps) {
     onChange: props.onOpenChange,
   });
   const modal = props.modal ?? true;
-  const keyboardNavigation = props.keyboardNavigation === true;
 
   const triggerRef = React.useRef<GuiObject>();
   const contentRef = React.useRef<GuiObject>();
@@ -26,11 +25,10 @@ export function Menu(props: MenuProps) {
       open,
       setOpen,
       modal,
-      keyboardNavigation,
       triggerRef,
       contentRef,
     }),
-    [keyboardNavigation, modal, open, setOpen],
+    [modal, open, setOpen],
   );
 
   return <MenuContextProvider value={contextValue}>{props.children}</MenuContextProvider>;

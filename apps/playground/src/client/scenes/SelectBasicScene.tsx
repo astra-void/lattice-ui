@@ -13,7 +13,7 @@ export function SelectBasicScene() {
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(920, 28)}
-        Text="Select: single choice with controlled state and outside/ESC dismiss"
+        Text="Select: single choice with controlled state and outside dismiss"
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}

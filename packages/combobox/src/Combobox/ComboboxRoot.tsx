@@ -43,8 +43,6 @@ export function ComboboxRoot(props: ComboboxProps) {
   const disabled = props.disabled === true;
   const readOnly = props.readOnly === true;
   const required = props.required === true;
-  const loop = props.loop ?? true;
-  const keyboardNavigation = props.keyboardNavigation === true;
   const filterFn = props.filterFn ?? defaultComboboxFilter;
 
   const anchorRef = React.useRef<GuiObject>();
@@ -128,16 +126,15 @@ export function ComboboxRoot(props: ComboboxProps) {
         return;
       }
 
+      if (nextInputValue === inputValue) {
+        return;
+      }
+
       setInputValueState(nextInputValue);
       setOpenState(true);
     },
-    [disabled, readOnly, setInputValueState, setOpenState],
+    [disabled, inputValue, readOnly, setInputValueState, setOpenState],
   );
-
-  const getFilteredItems = React.useCallback(() => {
-    const query = inputValue;
-    return resolveOrderedItems().filter((item) => filterFn(item.getTextValue(), query));
-  }, [filterFn, inputValue, resolveOrderedItems]);
 
   React.useEffect(() => {
     if (!open) {
@@ -175,26 +172,19 @@ export function ComboboxRoot(props: ComboboxProps) {
       disabled,
       readOnly,
       required,
-      loop,
-      keyboardNavigation,
       filterFn,
       anchorRef,
       triggerRef,
       inputRef,
       contentRef,
       registerItem,
-      getOrderedItems: resolveOrderedItems,
-      getFilteredItems,
       getItemText,
     }),
     [
       disabled,
       filterFn,
-      getFilteredItems,
       getItemText,
       inputValue,
-      loop,
-      keyboardNavigation,
       open,
       readOnly,
       registerItem,

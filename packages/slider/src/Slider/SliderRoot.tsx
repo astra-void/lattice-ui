@@ -27,7 +27,6 @@ export function SliderRoot(props: SliderProps) {
   const step = normalizeStep(props.step ?? 1);
   const orientation = props.orientation ?? "horizontal";
   const disabled = props.disabled === true;
-  const keyboardNavigation = props.keyboardNavigation === true;
 
   const defaultValue = snapValueToStep(props.defaultValue ?? min, min, max, step);
 
@@ -218,7 +217,6 @@ export function SliderRoot(props: SliderProps) {
       step,
       orientation,
       disabled,
-      keyboardNavigation,
       setTrackNode,
       setThumbNode,
       startDrag,
@@ -226,7 +224,6 @@ export function SliderRoot(props: SliderProps) {
     [
       commitValue,
       disabled,
-      keyboardNavigation,
       max,
       min,
       orientation,

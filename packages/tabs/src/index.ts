@@ -11,11 +11,9 @@ export const Tabs = {
 } as const;
 
 export type {
-  TabsActivationMode,
   TabsContentProps,
   TabsContextValue,
   TabsListProps,
-  TabsOrientation,
   TabsProps,
   TabsTriggerProps,
 } from "./Tabs/types";

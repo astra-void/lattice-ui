@@ -10,7 +10,7 @@ export function DialogBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(760, 28)}
-        Text="Trigger opens a dialog. ESC, overlay click, and Close button all dismiss."
+        Text="Trigger opens a dialog. Outside click, overlay click, and Close button dismiss."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -66,7 +66,7 @@ export function DialogBasicScene() {
                 BackgroundTransparency={1}
                 Position={UDim2.fromOffset(0, 38)}
                 Size={UDim2.fromOffset(360, 72)}
-                Text="Use ESC or click outside content. Overlay click also closes the dialog."
+                Text="Click outside the content or use the Close button. Overlay click also closes the dialog."
                 TextColor3={Color3.fromRGB(184, 195, 209)}
                 TextSize={17}
                 TextWrapped={true}

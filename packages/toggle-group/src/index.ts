@@ -11,7 +11,6 @@ export type {
   ToggleGroupContextValue,
   ToggleGroupItemProps,
   ToggleGroupMultipleProps,
-  ToggleGroupOrientation,
   ToggleGroupProps,
   ToggleGroupSingleProps,
   ToggleGroupType,

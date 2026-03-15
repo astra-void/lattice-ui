@@ -14,7 +14,6 @@ export type SliderContextValue = {
   step: number;
   orientation: SliderOrientation;
   disabled: boolean;
-  keyboardNavigation: boolean;
   setTrackNode: (instance: Instance | undefined) => void;
   setThumbNode: (instance: Instance | undefined) => void;
   startDrag: (inputObject: InputObject) => void;
@@ -30,7 +29,6 @@ export type SliderProps = {
   step?: number;
   orientation?: SliderOrientation;
   disabled?: boolean;
-  keyboardNavigation?: boolean;
   children?: React.ReactNode;
 };
 

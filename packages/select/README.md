@@ -19,5 +19,4 @@ Headless single-select primitives built for Roblox UI.
 
 - Single value only in this release.
 - Supports controlled/uncontrolled `value` and `open`.
-- Content uses dismissable-layer semantics (outside pointer / escape dismiss).
-- Item navigation uses roving focus and includes typeahead matching.
+- Content uses dismissable-layer semantics (outside pointer dismiss).

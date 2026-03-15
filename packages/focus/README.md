@@ -1,10 +1,9 @@
 # @lattice-ui/focus
 
-Focus and directional navigation primitives for Roblox UI.
+Focus management primitives for Roblox UI.
 
 ## Current status
 
-- `RovingFocusGroup` and `RovingFocusItem` provide arrow/Home/End navigation across registered selectable items.
 - `FocusScope` can trap `GuiService.SelectedObject` and restore captured focus on scope teardown.
 
 ## FocusScope behavior

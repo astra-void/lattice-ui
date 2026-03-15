@@ -24,7 +24,7 @@ export function SliderThumb(props: SliderThumbProps) {
         return;
       }
 
-      if (sliderContext.disabled || !sliderContext.keyboardNavigation) {
+      if (sliderContext.disabled) {
         return;
       }
 
@@ -66,7 +66,7 @@ export function SliderThumb(props: SliderThumbProps) {
     AnchorPoint: new Vector2(0.5, 0.5),
     Name: "SliderThumb",
     Position: position,
-    Selectable: !sliderContext.disabled && sliderContext.keyboardNavigation,
+    Selectable: !sliderContext.disabled,
     Event: {
       InputBegan: handleInputBegan,
     },
