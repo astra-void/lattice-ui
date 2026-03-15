@@ -28,6 +28,20 @@ export function MenuTrigger(props: MenuTriggerProps) {
     menuContext.setOpen(!menuContext.open);
   }, [menuContext.open, menuContext.setOpen, props.disabled]);
 
+  const handleInputBegan = React.useCallback(
+    (_rbx: GuiObject, inputObject: InputObject) => {
+      if (props.disabled) {
+        return;
+      }
+
+      const keyCode = inputObject.KeyCode;
+      if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
+        menuContext.setOpen(!menuContext.open);
+      }
+    },
+    [menuContext.open, menuContext.setOpen, props.disabled],
+  );
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
@@ -35,7 +49,12 @@ export function MenuTrigger(props: MenuTriggerProps) {
     }
 
     return (
-      <Slot Active={props.disabled !== true} Event={{ Activated: handleActivated }} Selectable={false} ref={setTriggerRef}>
+      <Slot
+        Active={props.disabled !== true}
+        Event={{ Activated: handleActivated, InputBegan: handleInputBegan }}
+        Selectable={props.disabled !== true}
+        ref={setTriggerRef}
+      >
         {child}
       </Slot>
     );
@@ -47,8 +66,8 @@ export function MenuTrigger(props: MenuTriggerProps) {
       AutoButtonColor={false}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Event={{ Activated: handleActivated }}
-      Selectable={false}
+      Event={{ Activated: handleActivated, InputBegan: handleInputBegan }}
+      Selectable={props.disabled !== true}
       Size={UDim2.fromOffset(140, 38)}
       Text="Toggle Menu"
       TextColor3={Color3.fromRGB(240, 244, 250)}

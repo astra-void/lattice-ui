@@ -15,7 +15,11 @@ export function DialogClose(props: DialogCloseProps) {
       error("[DialogClose] `asChild` requires a child element.");
     }
 
-    return <Slot Active={true} Event={{ Activated: handleActivated }} Selectable={false}>{child}</Slot>;
+    return (
+      <Slot Active={true} Event={{ Activated: handleActivated }} Selectable={false}>
+        {child}
+      </Slot>
+    );
   }
 
   return (

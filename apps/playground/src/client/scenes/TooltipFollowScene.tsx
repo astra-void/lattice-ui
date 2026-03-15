@@ -40,7 +40,7 @@ export function TooltipFollowScene() {
             BorderSizePixel={0}
             Position={UDim2.fromOffset(anchorX, 200)}
             Size={UDim2.fromOffset(170, 42)}
-            Text="Hover me"
+            Text="Hover / Focus me"
             TextColor3={Color3.fromRGB(240, 244, 250)}
             TextSize={16}
           />

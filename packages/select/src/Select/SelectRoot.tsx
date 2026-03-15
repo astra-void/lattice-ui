@@ -1,12 +1,16 @@
-import { React, useControllableState } from "@lattice-ui/core";
+import {
+  findOrderedSelectionEntry,
+  focusGuiObject,
+  focusOrderedSelectionEntry,
+  getCurrentOrderedSelectionEntry,
+  getFirstOrderedSelectionEntry,
+  getOrderedSelectionEntries,
+  getRelativeOrderedSelectionEntry,
+  React,
+  useControllableState,
+} from "@lattice-ui/core";
 import { SelectContextProvider } from "./context";
 import type { SelectItemRegistration, SelectProps } from "./types";
-
-function getOrderedItems(items: Array<SelectItemRegistration>) {
-  const ordered = [...items];
-  ordered.sort((left, right) => left.order < right.order);
-  return ordered;
-}
 
 export function SelectRoot(props: SelectProps) {
   const [open, setOpenState] = useControllableState<boolean>({
@@ -48,7 +52,7 @@ export function SelectRoot(props: SelectProps) {
   }, []);
 
   const resolveOrderedItems = React.useCallback(() => {
-    return getOrderedItems(itemEntriesRef.current);
+    return getOrderedSelectionEntries(itemEntriesRef.current);
   }, [registryRevision]);
 
   const getItemText = React.useCallback(
@@ -86,6 +90,25 @@ export function SelectRoot(props: SelectProps) {
     [disabled, resolveOrderedItems, setValueState],
   );
 
+  const focusSelectedItem = React.useCallback(() => {
+    const target =
+      (value !== undefined
+        ? findOrderedSelectionEntry(itemEntriesRef.current, (item) => item.value === value)
+        : undefined) ?? getFirstOrderedSelectionEntry(itemEntriesRef.current);
+
+    focusOrderedSelectionEntry(target);
+  }, [value]);
+
+  const moveSelection = React.useCallback((direction: -1 | 1) => {
+    const currentItem = getCurrentOrderedSelectionEntry(itemEntriesRef.current);
+    const nextItem = getRelativeOrderedSelectionEntry(itemEntriesRef.current, currentItem?.id, direction);
+    focusOrderedSelectionEntry(nextItem);
+  }, []);
+
+  const restoreTriggerFocus = React.useCallback(() => {
+    focusGuiObject(triggerRef.current);
+  }, []);
+
   React.useEffect(() => {
     if (value === undefined) {
       return;
@@ -101,6 +124,24 @@ export function SelectRoot(props: SelectProps) {
     setValueState(fallback?.value);
   }, [registryRevision, resolveOrderedItems, setValueState, value]);
 
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    focusSelectedItem();
+  }, [focusSelectedItem, open, registryRevision]);
+
+  const previousOpenRef = React.useRef(open);
+  React.useEffect(() => {
+    const wasOpen = previousOpenRef.current;
+    previousOpenRef.current = open;
+
+    if (!open && wasOpen) {
+      restoreTriggerFocus();
+    }
+  }, [open, restoreTriggerFocus]);
+
   const contextValue = React.useMemo(
     () => ({
       open,
@@ -113,8 +154,23 @@ export function SelectRoot(props: SelectProps) {
       contentRef,
       registerItem,
       getItemText,
+      focusSelectedItem,
+      moveSelection,
+      restoreTriggerFocus,
     }),
-    [disabled, getItemText, open, registerItem, required, setOpen, setValue, value],
+    [
+      disabled,
+      focusSelectedItem,
+      getItemText,
+      moveSelection,
+      open,
+      registerItem,
+      required,
+      restoreTriggerFocus,
+      setOpen,
+      setValue,
+      value,
+    ],
   );
 
   return <SelectContextProvider value={contextValue}>{props.children}</SelectContextProvider>;

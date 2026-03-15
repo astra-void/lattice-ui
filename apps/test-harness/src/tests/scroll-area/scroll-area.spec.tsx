@@ -78,5 +78,30 @@ export = () => {
         assert(corner !== undefined, "Scroll corner should mount.");
       });
     });
+
+    it("keeps scrollbars hidden when content does not overflow", () => {
+      withReactHarness("ScrollAreaNoOverflow", (harness) => {
+        harness.render(
+          <ScrollArea.Root>
+            <ScrollArea.Viewport asChild>
+              <scrollingframe Size={UDim2.fromOffset(120, 80)}>
+                <frame Size={UDim2.fromOffset(90, 60)} />
+              </scrollingframe>
+            </ScrollArea.Viewport>
+
+            <ScrollArea.Scrollbar asChild orientation="vertical">
+              <frame Size={UDim2.fromOffset(8, 80)}>
+                <textlabel BackgroundTransparency={1} Text="scroll-area-scrollbar-no-overflow" TextTransparency={1} />
+              </frame>
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>,
+        );
+
+        waitForEffects(3);
+        const verticalBar = findFrameByName(harness.container, "scroll-area-scrollbar-no-overflow");
+        assert(verticalBar !== undefined, "Scrollbar should still mount for visibility assertions.");
+        assert(verticalBar.Visible === false, "Scrollbar should remain hidden when content fits the viewport.");
+      });
+    });
   });
 };

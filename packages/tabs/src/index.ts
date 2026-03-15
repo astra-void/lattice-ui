@@ -14,6 +14,7 @@ export type {
   TabsContentProps,
   TabsContextValue,
   TabsListProps,
+  TabsOrientation,
   TabsProps,
   TabsTriggerProps,
 } from "./Tabs/types";

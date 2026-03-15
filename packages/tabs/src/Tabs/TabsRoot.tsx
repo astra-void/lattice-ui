@@ -1,19 +1,20 @@
-import { React, useControllableState } from "@lattice-ui/core";
+import {
+  findOrderedSelectionEntry,
+  focusOrderedSelectionEntry,
+  getOrderedSelectionEntries,
+  getRelativeOrderedSelectionEntry,
+  React,
+  useControllableState,
+} from "@lattice-ui/core";
 import { TabsContextProvider } from "./context";
 import type { TabsProps, TabsTriggerRegistration } from "./types";
-
-function getOrderedTriggers(triggers: Array<TabsTriggerRegistration>) {
-  const ordered = [...triggers];
-  ordered.sort((a, b) => a.order < b.order);
-  return ordered;
-}
 
 function resolveNextValue(
   currentValue: string | undefined,
   orderedTriggers: Array<TabsTriggerRegistration>,
   fallbackOrder: number | undefined,
 ) {
-  const enabled = orderedTriggers.filter((trigger) => !trigger.disabled);
+  const enabled = orderedTriggers.filter((trigger) => !trigger.getDisabled());
   if (enabled.size() === 0) {
     return undefined;
   }
@@ -40,6 +41,7 @@ function resolveNextValue(
 }
 
 export function TabsRoot(props: TabsProps) {
+  const orientation = props.orientation ?? "horizontal";
   const [value, setValueState] = useControllableState<string | undefined>({
     value: props.value,
     defaultValue: props.defaultValue,
@@ -69,8 +71,8 @@ export function TabsRoot(props: TabsProps) {
 
   const setValue = React.useCallback(
     (nextValue: string) => {
-      const orderedTriggers = getOrderedTriggers(triggerRegistryRef.current);
-      const selected = orderedTriggers.find((trigger) => trigger.value === nextValue && !trigger.disabled);
+      const orderedTriggers = getOrderedSelectionEntries(triggerRegistryRef.current);
+      const selected = orderedTriggers.find((trigger) => trigger.value === nextValue && !trigger.getDisabled());
       if (selected) {
         lastSelectedOrderRef.current = selected.order;
       }
@@ -80,9 +82,24 @@ export function TabsRoot(props: TabsProps) {
     [setValueState],
   );
 
+  const moveSelection = React.useCallback(
+    (fromValue: string, direction: -1 | 1) => {
+      const currentTrigger =
+        findOrderedSelectionEntry(triggerRegistryRef.current, (trigger) => trigger.value === fromValue) ?? undefined;
+      const nextTrigger = getRelativeOrderedSelectionEntry(triggerRegistryRef.current, currentTrigger?.id, direction);
+      if (!nextTrigger) {
+        return;
+      }
+
+      focusOrderedSelectionEntry(nextTrigger);
+      setValue(nextTrigger.value);
+    },
+    [setValue],
+  );
+
   React.useEffect(() => {
-    const orderedTriggers = getOrderedTriggers(triggerRegistryRef.current);
-    const selected = orderedTriggers.find((trigger) => trigger.value === value && !trigger.disabled);
+    const orderedTriggers = getOrderedSelectionEntries(triggerRegistryRef.current);
+    const selected = orderedTriggers.find((trigger) => trigger.value === value && !trigger.getDisabled());
     if (selected) {
       lastSelectedOrderRef.current = selected.order;
     }
@@ -96,10 +113,12 @@ export function TabsRoot(props: TabsProps) {
   const contextValue = React.useMemo(
     () => ({
       value,
+      orientation,
       setValue,
       registerTrigger,
+      moveSelection,
     }),
-    [registerTrigger, setValue, value],
+    [moveSelection, orientation, registerTrigger, setValue, value],
   );
 
   return <TabsContextProvider value={contextValue}>{props.children}</TabsContextProvider>;

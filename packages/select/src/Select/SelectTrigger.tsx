@@ -58,7 +58,7 @@ export function SelectTrigger(props: SelectTriggerProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={setTriggerRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -71,7 +71,7 @@ export function SelectTrigger(props: SelectTriggerProps) {
       BackgroundColor3={Color3.fromRGB(41, 48, 63)}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={false}
+      Selectable={!disabled}
       Size={UDim2.fromOffset(220, 36)}
       Text="Select"
       TextColor3={disabled ? Color3.fromRGB(140, 148, 164) : Color3.fromRGB(235, 241, 248)}

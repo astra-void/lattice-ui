@@ -3,6 +3,8 @@ import { Tabs } from "@lattice-ui/tabs";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
+const GuiService = game.GetService("GuiService");
+
 export = () => {
   describe("tabs", () => {
     it("selects the first enabled trigger when defaultValue is not provided", () => {
@@ -116,6 +118,86 @@ export = () => {
           findTextLabelByText(harness.container, "tabs-content-right-controlled") !== undefined,
           "Right content should mount when value switches to right.",
         );
+      });
+    });
+
+    it("activates the focused trigger when selection moves", () => {
+      withReactHarness("TabsSelectionActivation", (harness) => {
+        harness.render(
+          <Tabs.Root defaultValue="left">
+            <Tabs.List>
+              <Tabs.Trigger asChild value="left">
+                <textbutton Text="tabs-trigger-left-selection" />
+              </Tabs.Trigger>
+              <Tabs.Trigger asChild value="right">
+                <textbutton Text="tabs-trigger-right-selection" />
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content asChild value="left">
+              <textlabel Text="tabs-content-left-selection" />
+            </Tabs.Content>
+            <Tabs.Content asChild value="right">
+              <textlabel Text="tabs-content-right-selection" />
+            </Tabs.Content>
+          </Tabs.Root>,
+        );
+
+        waitForEffects(3);
+        const rightTrigger = findTextButtonByText(harness.container, "tabs-trigger-right-selection");
+        assert(rightTrigger !== undefined, "Right trigger should mount for selection activation coverage.");
+
+        GuiService.SelectedObject = rightTrigger;
+        waitForEffects(3);
+
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-right-selection") !== undefined,
+          "Focused trigger should immediately activate its tab content.",
+        );
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-left-selection") === undefined,
+          "Previous tab content should unmount after focused trigger activation.",
+        );
+
+        GuiService.SelectedObject = undefined;
+      });
+    });
+
+    it("supports vertical orientation with the same focus activation behavior", () => {
+      withReactHarness("TabsVerticalOrientation", (harness) => {
+        harness.render(
+          <Tabs.Root defaultValue="alpha" orientation="vertical">
+            <Tabs.List asChild>
+              <frame>
+                <Tabs.Trigger asChild value="alpha">
+                  <textbutton Text="tabs-trigger-alpha-vertical" />
+                </Tabs.Trigger>
+                <Tabs.Trigger asChild value="beta">
+                  <textbutton Text="tabs-trigger-beta-vertical" />
+                </Tabs.Trigger>
+              </frame>
+            </Tabs.List>
+            <Tabs.Content asChild value="alpha">
+              <textlabel Text="tabs-content-alpha-vertical" />
+            </Tabs.Content>
+            <Tabs.Content asChild value="beta">
+              <textlabel Text="tabs-content-beta-vertical" />
+            </Tabs.Content>
+          </Tabs.Root>,
+        );
+
+        waitForEffects(3);
+        const betaTrigger = findTextButtonByText(harness.container, "tabs-trigger-beta-vertical");
+        assert(betaTrigger !== undefined, "Vertical beta trigger should mount.");
+
+        GuiService.SelectedObject = betaTrigger;
+        waitForEffects(3);
+
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-beta-vertical") !== undefined,
+          "Vertical tabs should activate content when focus moves to a trigger.",
+        );
+
+        GuiService.SelectedObject = undefined;
       });
     });
   });

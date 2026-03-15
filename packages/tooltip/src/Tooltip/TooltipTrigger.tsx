@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import { DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE, updateTooltipTriggerActivity } from "./activity";
 import { useTooltipContext } from "./context";
 import type { TooltipTriggerProps } from "./types";
 
@@ -12,6 +13,7 @@ function toGuiObject(instance: Instance | undefined) {
 
 export function TooltipTrigger(props: TooltipTriggerProps) {
   const tooltipContext = useTooltipContext();
+  const activityStateRef = React.useRef(DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE);
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -20,24 +22,47 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     [tooltipContext.triggerRef],
   );
 
-  const handleOpen = React.useCallback(() => {
-    if (props.disabled) {
+  const applyActivity = React.useCallback(
+    (kind: "hover" | "focus", active: boolean) => {
+      const result = updateTooltipTriggerActivity(activityStateRef.current, kind, active);
+      activityStateRef.current = result.state;
+
+      if (props.disabled) {
+        if (!active) {
+          tooltipContext.close();
+        }
+        return;
+      }
+
+      if (result.action === "open") {
+        tooltipContext.openWithDelay();
+        return;
+      }
+
+      if (result.action === "close") {
+        tooltipContext.close();
+      }
+    },
+    [props.disabled, tooltipContext],
+  );
+
+  React.useEffect(() => {
+    if (!props.disabled) {
       return;
     }
 
-    tooltipContext.openWithDelay();
-  }, [props.disabled, tooltipContext]);
-
-  const handleClose = React.useCallback(() => {
+    activityStateRef.current = DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE;
     tooltipContext.close();
-  }, [tooltipContext]);
+  }, [props.disabled, tooltipContext]);
 
   const eventHandlers = React.useMemo(
     () => ({
-      MouseEnter: handleOpen,
-      MouseLeave: handleClose,
+      MouseEnter: () => applyActivity("hover", true),
+      MouseLeave: () => applyActivity("hover", false),
+      SelectionGained: () => applyActivity("focus", true),
+      SelectionLost: () => applyActivity("focus", false),
     }),
-    [handleClose, handleOpen],
+    [applyActivity],
   );
 
   if (props.asChild) {
@@ -47,7 +72,12 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     }
 
     return (
-      <Slot Active={props.disabled !== true} Event={eventHandlers} Selectable={false} ref={setTriggerRef}>
+      <Slot
+        Active={props.disabled !== true}
+        Event={eventHandlers}
+        Selectable={props.disabled !== true}
+        ref={setTriggerRef}
+      >
         {child}
       </Slot>
     );
@@ -60,7 +90,7 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={false}
+      Selectable={props.disabled !== true}
       Size={UDim2.fromOffset(140, 36)}
       Text="Tooltip Trigger"
       TextColor3={Color3.fromRGB(240, 244, 250)}

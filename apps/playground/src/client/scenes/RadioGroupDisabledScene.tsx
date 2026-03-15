@@ -101,7 +101,7 @@ export function RadioGroupDisabledScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <RadioGroup.Root defaultValue="fixed" disabled>
+        <RadioGroup.Root defaultValue="fixed" disabled orientation="horizontal">
           <frame BackgroundTransparency={1} Size={UDim2.fromOffset(580, 34)}>
             <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[6])} />
 

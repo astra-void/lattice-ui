@@ -12,7 +12,14 @@ export const ScrollArea = {
   Corner: ScrollAreaCorner,
 } as const;
 
-export { resolveCanvasPositionFromThumbOffset, resolveThumbOffset, resolveThumbSize } from "./ScrollArea/scrollMath";
+export {
+  resolveCanvasPositionFromThumbOffset,
+  resolveCanvasPositionFromTrackPosition,
+  resolveThumbOffset,
+  resolveThumbOffsetFromPointerDelta,
+  resolveThumbOffsetFromTrackPosition,
+  resolveThumbSize,
+} from "./ScrollArea/scrollMath";
 export type {
   ScrollAreaContextValue,
   ScrollAreaCornerProps,

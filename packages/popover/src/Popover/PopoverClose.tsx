@@ -15,7 +15,11 @@ export function PopoverClose(props: PopoverCloseProps) {
       error("[PopoverClose] `asChild` requires a child element.");
     }
 
-    return <Slot Active={true} Event={{ Activated: handleActivated }} Selectable={false}>{child}</Slot>;
+    return (
+      <Slot Active={true} Event={{ Activated: handleActivated }} Selectable={false}>
+        {child}
+      </Slot>
+    );
   }
 
   return (

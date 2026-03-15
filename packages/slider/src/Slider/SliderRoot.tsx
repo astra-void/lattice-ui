@@ -221,19 +221,7 @@ export function SliderRoot(props: SliderProps) {
       setThumbNode,
       startDrag,
     }),
-    [
-      commitValue,
-      disabled,
-      max,
-      min,
-      orientation,
-      setThumbNode,
-      setTrackNode,
-      setValue,
-      startDrag,
-      step,
-      value,
-    ],
+    [commitValue, disabled, max, min, orientation, setThumbNode, setTrackNode, setValue, startDrag, step, value],
   );
 
   return <SliderContextProvider value={contextValue}>{props.children}</SliderContextProvider>;

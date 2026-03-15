@@ -153,7 +153,11 @@ export function TabsBasicScene() {
           TextXAlignment={Enum.TextXAlignment.Left}
         />
 
-        <Tabs.Root defaultValue="alpha" onValueChange={(nextValue) => setSecondaryValue(nextValue as ManualTabKey)}>
+        <Tabs.Root
+          defaultValue="alpha"
+          onValueChange={(nextValue) => setSecondaryValue(nextValue as ManualTabKey)}
+          orientation="vertical"
+        >
           <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 26)} Size={UDim2.fromOffset(880, 188)}>
             <Tabs.List asChild>
               <frame BackgroundTransparency={1} Size={UDim2.fromOffset(180, 168)}>
@@ -209,7 +213,7 @@ export function TabsBasicScene() {
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
                   Size={UDim2.fromOffset(620, 30)}
-                  Text="Alpha Content (forceMount=true)"
+                  Text="Alpha Content (forceMount=true, vertical navigation)"
                   TextColor3={theme.colors.textPrimary}
                   TextSize={theme.typography.bodyMd.textSize}
                   TextXAlignment={Enum.TextXAlignment.Left}

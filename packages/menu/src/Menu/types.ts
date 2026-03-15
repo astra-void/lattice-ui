@@ -4,12 +4,23 @@ import type React from "@rbxts/react";
 
 export type MenuSetOpen = (open: boolean) => void;
 
+export type MenuItemRegistration = {
+  id: number;
+  order: number;
+  ref: React.MutableRefObject<GuiObject | undefined>;
+  getDisabled: () => boolean;
+};
+
 export type MenuContextValue = {
   open: boolean;
   setOpen: MenuSetOpen;
   modal: boolean;
   triggerRef: React.MutableRefObject<GuiObject | undefined>;
   contentRef: React.MutableRefObject<GuiObject | undefined>;
+  registerItem: (item: MenuItemRegistration) => () => void;
+  focusFirstItem: () => void;
+  moveSelection: (direction: -1 | 1) => void;
+  restoreTriggerFocus: () => void;
 };
 
 export type MenuProps = {

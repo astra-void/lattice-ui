@@ -19,6 +19,11 @@ export function TabsTrigger(props: TabsTriggerProps) {
   const triggerRef = React.useRef<GuiObject>();
   const selected = tabsContext.value === props.value;
   const disabled = props.disabled === true;
+  const disabledRef = React.useRef(disabled);
+
+  React.useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
 
   const triggerIdRef = React.useRef(0);
   if (triggerIdRef.current === 0) {
@@ -36,17 +41,25 @@ export function TabsTrigger(props: TabsTriggerProps) {
     return tabsContext.registerTrigger({
       id: triggerIdRef.current,
       value: props.value,
-      disabled,
       ref: triggerRef,
       order: triggerOrderRef.current,
+      getDisabled: () => disabledRef.current,
     });
-  }, [disabled, props.value, tabsContext]);
+  }, [props.value, tabsContext]);
 
   const setTriggerRef = React.useCallback((instance: Instance | undefined) => {
     triggerRef.current = toGuiObject(instance);
   }, []);
 
   const handleActivated = React.useCallback(() => {
+    if (disabled) {
+      return;
+    }
+
+    tabsContext.setValue(props.value);
+  }, [disabled, props.value, tabsContext]);
+
+  const handleSelectionGained = React.useCallback(() => {
     if (disabled) {
       return;
     }
@@ -61,6 +74,24 @@ export function TabsTrigger(props: TabsTriggerProps) {
       }
 
       const keyCode = inputObject.KeyCode;
+      const direction =
+        tabsContext.orientation === "horizontal"
+          ? keyCode === Enum.KeyCode.Left
+            ? -1
+            : keyCode === Enum.KeyCode.Right
+              ? 1
+              : undefined
+          : keyCode === Enum.KeyCode.Up
+            ? -1
+            : keyCode === Enum.KeyCode.Down
+              ? 1
+              : undefined;
+
+      if (direction !== undefined) {
+        tabsContext.moveSelection(props.value, direction);
+        return;
+      }
+
       if (keyCode !== Enum.KeyCode.Return && keyCode !== Enum.KeyCode.Space) {
         return;
       }
@@ -74,8 +105,9 @@ export function TabsTrigger(props: TabsTriggerProps) {
     () => ({
       Activated: handleActivated,
       InputBegan: handleInputBegan,
+      SelectionGained: handleSelectionGained,
     }),
-    [handleActivated, handleInputBegan],
+    [handleActivated, handleInputBegan, handleSelectionGained],
   );
 
   const triggerName = React.useMemo(() => createTabsTriggerName(props.value), [props.value]);
@@ -87,7 +119,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Name={triggerName} Selectable={false} ref={setTriggerRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Name={triggerName} Selectable={!disabled} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -100,7 +132,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
       BackgroundColor3={selected ? Color3.fromRGB(86, 137, 245) : Color3.fromRGB(47, 53, 68)}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={false}
+      Selectable={!disabled}
       Size={UDim2.fromOffset(132, 34)}
       Text={props.value}
       TextColor3={disabled ? Color3.fromRGB(136, 144, 159) : Color3.fromRGB(235, 240, 248)}

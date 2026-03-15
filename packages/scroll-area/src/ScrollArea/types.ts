@@ -17,6 +17,7 @@ export type ScrollAreaContextValue = {
   vertical: ScrollAxisMetrics;
   horizontal: ScrollAxisMetrics;
   setMetrics: (metrics: { vertical: ScrollAxisMetrics; horizontal: ScrollAxisMetrics }) => void;
+  setScrollPosition: (orientation: ScrollAreaOrientation, position: number) => void;
   notifyScrollActivity: () => void;
   showVerticalScrollbar: boolean;
   showHorizontalScrollbar: boolean;

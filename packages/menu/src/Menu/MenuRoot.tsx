@@ -1,6 +1,14 @@
-import { React, useControllableState } from "@lattice-ui/core";
+import {
+  focusGuiObject,
+  focusOrderedSelectionEntry,
+  getCurrentOrderedSelectionEntry,
+  getFirstOrderedSelectionEntry,
+  getRelativeOrderedSelectionEntry,
+  React,
+  useControllableState,
+} from "@lattice-ui/core";
 import { MenuContextProvider } from "./context";
-import type { MenuProps } from "./types";
+import type { MenuItemRegistration, MenuProps } from "./types";
 
 export function Menu(props: MenuProps) {
   const [open, setOpenState] = useControllableState<boolean>({
@@ -12,6 +20,8 @@ export function Menu(props: MenuProps) {
 
   const triggerRef = React.useRef<GuiObject>();
   const contentRef = React.useRef<GuiObject>();
+  const itemEntriesRef = React.useRef<Array<MenuItemRegistration>>([]);
+  const [registryRevision, setRegistryRevision] = React.useState(0);
 
   const setOpen = React.useCallback(
     (nextOpen: boolean) => {
@@ -20,6 +30,51 @@ export function Menu(props: MenuProps) {
     [setOpenState],
   );
 
+  const registerItem = React.useCallback((item: MenuItemRegistration) => {
+    itemEntriesRef.current.push(item);
+    setRegistryRevision((revision) => revision + 1);
+
+    return () => {
+      const index = itemEntriesRef.current.findIndex((entry) => entry.id === item.id);
+      if (index >= 0) {
+        itemEntriesRef.current.remove(index);
+        setRegistryRevision((revision) => revision + 1);
+      }
+    };
+  }, []);
+
+  const focusFirstItem = React.useCallback(() => {
+    focusOrderedSelectionEntry(getFirstOrderedSelectionEntry(itemEntriesRef.current));
+  }, []);
+
+  const moveSelection = React.useCallback((direction: -1 | 1) => {
+    const currentItem = getCurrentOrderedSelectionEntry(itemEntriesRef.current);
+    const nextItem = getRelativeOrderedSelectionEntry(itemEntriesRef.current, currentItem?.id, direction);
+    focusOrderedSelectionEntry(nextItem);
+  }, []);
+
+  const restoreTriggerFocus = React.useCallback(() => {
+    focusGuiObject(triggerRef.current);
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    focusFirstItem();
+  }, [focusFirstItem, open, registryRevision]);
+
+  const previousOpenRef = React.useRef(open);
+  React.useEffect(() => {
+    const wasOpen = previousOpenRef.current;
+    previousOpenRef.current = open;
+
+    if (!open && wasOpen) {
+      restoreTriggerFocus();
+    }
+  }, [open, restoreTriggerFocus]);
+
   const contextValue = React.useMemo(
     () => ({
       open,
@@ -27,8 +82,12 @@ export function Menu(props: MenuProps) {
       modal,
       triggerRef,
       contentRef,
+      registerItem,
+      focusFirstItem,
+      moveSelection,
+      restoreTriggerFocus,
     }),
-    [modal, open, setOpen],
+    [focusFirstItem, modal, moveSelection, open, registerItem, restoreTriggerFocus, setOpen],
   );
 
   return <MenuContextProvider value={contextValue}>{props.children}</MenuContextProvider>;

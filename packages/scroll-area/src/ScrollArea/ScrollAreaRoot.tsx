@@ -51,6 +51,27 @@ export function ScrollAreaRoot(props: ScrollAreaProps) {
     });
   }, [scrollHideDelayMs, scrollType]);
 
+  const setScrollPosition = React.useCallback(
+    (orientation: "vertical" | "horizontal", position: number) => {
+      const viewport = viewportRef.current;
+      if (!viewport) {
+        return;
+      }
+
+      const axisMetrics = orientation === "vertical" ? metrics.vertical : metrics.horizontal;
+      const maxScroll = math.max(0, axisMetrics.contentSize - axisMetrics.viewportSize);
+      const nextPosition = math.clamp(position, 0, maxScroll);
+
+      viewport.CanvasPosition =
+        orientation === "vertical"
+          ? new Vector2(viewport.CanvasPosition.X, nextPosition)
+          : new Vector2(nextPosition, viewport.CanvasPosition.Y);
+
+      notifyScrollActivity();
+    },
+    [metrics.horizontal, metrics.vertical, notifyScrollActivity],
+  );
+
   const hasVerticalOverflow = metrics.vertical.contentSize > metrics.vertical.viewportSize + 1;
   const hasHorizontalOverflow = metrics.horizontal.contentSize > metrics.horizontal.viewportSize + 1;
 
@@ -77,6 +98,7 @@ export function ScrollAreaRoot(props: ScrollAreaProps) {
       vertical: metrics.vertical,
       horizontal: metrics.horizontal,
       setMetrics,
+      setScrollPosition,
       notifyScrollActivity,
       showVerticalScrollbar,
       showHorizontalScrollbar,
@@ -86,6 +108,7 @@ export function ScrollAreaRoot(props: ScrollAreaProps) {
       metrics.vertical,
       notifyScrollActivity,
       scrollHideDelayMs,
+      setScrollPosition,
       setViewport,
       showHorizontalScrollbar,
       showVerticalScrollbar,

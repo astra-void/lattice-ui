@@ -15,4 +15,5 @@ Headless scroll area primitives for Roblox UI with custom scrollbars and thumbs.
 
 - Supports vertical and horizontal scrollbar primitives.
 - `type` supports `auto`, `always`, and `scroll` visibility policies.
+- Clicking a scrollbar track and dragging a thumb both update the viewport canvas position.
 - Thumb/canvas math helpers are exported for unit testing.

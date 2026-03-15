@@ -18,7 +18,9 @@ export type {
   RadioGroupContextValue,
   RadioGroupIndicatorProps,
   RadioGroupItemContextValue,
+  RadioGroupItemRegistration,
   RadioGroupItemProps,
+  RadioGroupOrientation,
   RadioGroupProps,
   RadioGroupSetValue,
 } from "./RadioGroup/types";

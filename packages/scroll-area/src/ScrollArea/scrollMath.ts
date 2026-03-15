@@ -43,3 +43,29 @@ export function resolveCanvasPositionFromThumbOffset(
   const ratio = math.clamp(thumbOffset / maxThumbOffset, 0, 1);
   return ratio * maxScroll;
 }
+
+export function resolveThumbOffsetFromTrackPosition(trackPosition: number, trackSize: number, thumbSize: number) {
+  const maxThumbOffset = math.max(0, trackSize - thumbSize);
+  return math.clamp(trackPosition - thumbSize / 2, 0, maxThumbOffset);
+}
+
+export function resolveThumbOffsetFromPointerDelta(
+  initialThumbOffset: number,
+  pointerDelta: number,
+  trackSize: number,
+  thumbSize: number,
+) {
+  const maxThumbOffset = math.max(0, trackSize - thumbSize);
+  return math.clamp(initialThumbOffset + pointerDelta, 0, maxThumbOffset);
+}
+
+export function resolveCanvasPositionFromTrackPosition(
+  trackPosition: number,
+  viewportSize: number,
+  contentSize: number,
+  trackSize: number,
+  thumbSize: number,
+) {
+  const thumbOffset = resolveThumbOffsetFromTrackPosition(trackPosition, trackSize, thumbSize);
+  return resolveCanvasPositionFromThumbOffset(thumbOffset, viewportSize, contentSize, trackSize, thumbSize);
+}

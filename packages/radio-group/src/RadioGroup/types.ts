@@ -1,12 +1,24 @@
 import type React from "@rbxts/react";
 
 export type RadioGroupSetValue = (value: string) => void;
+export type RadioGroupOrientation = "horizontal" | "vertical";
+
+export type RadioGroupItemRegistration = {
+  id: number;
+  value: string;
+  order: number;
+  ref: React.MutableRefObject<GuiObject | undefined>;
+  getDisabled: () => boolean;
+};
 
 export type RadioGroupContextValue = {
   value?: string;
   setValue: RadioGroupSetValue;
   disabled: boolean;
   required: boolean;
+  orientation: RadioGroupOrientation;
+  registerItem: (item: RadioGroupItemRegistration) => () => void;
+  moveSelection: (fromValue: string, direction: -1 | 1) => void;
 };
 
 export type RadioGroupItemContextValue = {
@@ -20,6 +32,7 @@ export type RadioGroupProps = {
   onValueChange?: (value: string) => void;
   disabled?: boolean;
   required?: boolean;
+  orientation?: RadioGroupOrientation;
   children?: React.ReactNode;
 };
 

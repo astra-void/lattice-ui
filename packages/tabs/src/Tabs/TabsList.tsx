@@ -11,5 +11,9 @@ export function TabsList(props: TabsListProps) {
     return <Slot>{child}</Slot>;
   }
 
-  return <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromOffset(0, 0)}>{props.children}</frame>;
+  return (
+    <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromOffset(0, 0)}>
+      {props.children}
+    </frame>
+  );
 }

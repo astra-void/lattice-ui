@@ -35,7 +35,12 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
     }
 
     return (
-      <Slot Active={props.disabled !== true} Event={{ Activated: handleActivated }} Selectable={false} ref={setTriggerRef}>
+      <Slot
+        Active={props.disabled !== true}
+        Event={{ Activated: handleActivated }}
+        Selectable={false}
+        ref={setTriggerRef}
+      >
         {child}
       </Slot>
     );

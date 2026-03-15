@@ -17,6 +17,43 @@ function findThumbFrame(root: Instance, width: number) {
 
 export = () => {
   describe("switch", () => {
+    it("positions the default thumb from switch checked state", () => {
+      withReactHarness("SwitchDefaultThumbPosition", (harness) => {
+        const renderTree = (checked: boolean) => (
+          <Switch.Root asChild checked={checked}>
+            <textbutton Text="">
+              <frame Size={UDim2.fromOffset(46, 24)}>
+                <Switch.Thumb />
+              </frame>
+            </textbutton>
+          </Switch.Root>
+        );
+
+        harness.render(renderTree(false));
+        waitForEffects(3);
+        const uncheckedThumb = findFirstDescendant(
+          harness.container,
+          (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === 16 && instance.AbsoluteSize.Y === 16,
+        );
+        assert(uncheckedThumb !== undefined && uncheckedThumb.IsA("Frame"), "Default SwitchThumb should mount.");
+        assert(uncheckedThumb.Position.X.Offset === 2, "Unchecked default thumb should align to the leading edge.");
+        assert(uncheckedThumb.Position.X.Scale === 0, "Unchecked default thumb should use offset positioning.");
+
+        harness.render(renderTree(true));
+        waitForEffects(3);
+        const checkedThumb = findFirstDescendant(
+          harness.container,
+          (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === 16 && instance.AbsoluteSize.Y === 16,
+        );
+        assert(
+          checkedThumb !== undefined && checkedThumb.IsA("Frame"),
+          "Checked default SwitchThumb should remain mounted.",
+        );
+        assert(checkedThumb.Position.X.Scale === 1, "Checked default thumb should anchor from the trailing edge.");
+        assert(checkedThumb.Position.X.Offset === -18, "Checked default thumb should shift to the trailing offset.");
+      });
+    });
+
     it("keeps thumb mounted while unchecked without forceMount", () => {
       withReactHarness("SwitchThumbUnchecked", (harness) => {
         harness.render(
@@ -42,7 +79,10 @@ export = () => {
           <Switch.Root asChild checked={checked}>
             <textbutton Text="">
               <Switch.Thumb asChild>
-                <frame Position={checked ? UDim2.fromOffset(24, 2) : UDim2.fromOffset(2, 2)} Size={UDim2.fromOffset(20, 20)} />
+                <frame
+                  Position={checked ? UDim2.fromOffset(24, 2) : UDim2.fromOffset(2, 2)}
+                  Size={UDim2.fromOffset(20, 20)}
+                />
               </Switch.Thumb>
             </textbutton>
           </Switch.Root>
