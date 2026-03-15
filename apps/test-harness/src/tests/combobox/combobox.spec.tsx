@@ -101,7 +101,11 @@ export = () => {
             <Combobox.Root defaultValue="alpha" open>
               <frame BackgroundTransparency={1} Size={UDim2.fromOffset(420, 260)}>
                 <Combobox.Trigger asChild>
-                  <textbutton Position={UDim2.fromOffset(40, 24)} Size={UDim2.fromOffset(220, 32)} Text="combobox-trigger-anchor" />
+                  <textbutton
+                    Position={UDim2.fromOffset(40, 24)}
+                    Size={UDim2.fromOffset(220, 32)}
+                    Text="combobox-trigger-anchor"
+                  />
                 </Combobox.Trigger>
 
                 <Combobox.Input asChild>

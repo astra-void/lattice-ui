@@ -85,10 +85,7 @@ describe("dismissable layer outside pointer detection", () => {
     const outsideRoot = createGuiNode("OutsideRoot");
 
     const container = {
-      GetGuiObjectsAtPosition: vi
-        .fn()
-        .mockReturnValueOnce([triggerChild])
-        .mockReturnValueOnce([outsideRoot]),
+      GetGuiObjectsAtPosition: vi.fn().mockReturnValueOnce([triggerChild]).mockReturnValueOnce([outsideRoot]),
     } as unknown as BasePlayerGui;
 
     const insideHit = layerEvents.isOutsidePointerEvent(

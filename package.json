@@ -4,7 +4,6 @@
   "private": true,
   "description": "",
   "scripts": {
-    "dev": "pnpm run docs:dev",
     "lattice": "node --import tsx ./packages/cli/src/index.ts",
     "package:new": "node --import tsx ./scripts/create-package.ts",
     "workspace:sync": "node --import tsx ./scripts/workspace-sync.ts",
@@ -13,10 +12,6 @@
     "build:single": "pnpm -r --workspace-concurrency=1 build",
     "watch": "pnpm -r watch",
     "typecheck": "pnpm -r typecheck",
-    "docs:dev": "pnpm --filter @lattice-ui/docs dev",
-    "docs:build": "pnpm --filter @lattice-ui/docs build",
-    "docs:preview": "pnpm --filter @lattice-ui/docs preview",
-    "docs:typecheck": "pnpm --filter @lattice-ui/docs typecheck",
     "test": "pnpm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest --watch",
