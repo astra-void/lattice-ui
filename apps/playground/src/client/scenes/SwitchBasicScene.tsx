@@ -60,7 +60,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <Switch.Thumb asChild forceMount>
+              <Switch.Thumb asChild>
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
@@ -97,7 +97,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <Switch.Thumb asChild forceMount>
+              <Switch.Thumb asChild>
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
