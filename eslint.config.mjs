@@ -17,7 +17,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules/**", "**/out/**", "**/dist/**", "**/.astro/**", "**/include/**"]),
+  globalIgnores(["**/node_modules/**", "**/out/**", "**/dist/**", "**/include/**"]),
   {
     files: ["{packages,apps}/**/*.{ts,tsx}"],
     ignores: ["packages/cli/**"],
