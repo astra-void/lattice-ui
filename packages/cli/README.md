@@ -32,10 +32,10 @@ lattice <command> [options]
 ### Examples
 
 ```bash
-npx lattice create
-npx lattice create my-game --pm npm --git --no-lint
-npx lattice add dialog,toast --preset overlay
-npx lattice remove dialog --dry-run
-npx lattice upgrade --dry-run
-npx lattice doctor
+npx @lattice-ui/cli create
+npx @lattice-ui/cli create my-game --pm npm --git --no-lint
+npx @lattice-ui/cli add dialog,toast --preset overlay
+npx @lattice-ui/cli remove dialog --dry-run
+npx @lattice-ui/cli upgrade --dry-run
+npx @lattice-ui/cli doctor
 ```

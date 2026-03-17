@@ -104,13 +104,13 @@ describe("command behavior", () => {
         git: false,
       },
       {
-        detectPackageManagerFn: vi.fn(async () => ({
-          name: "npm",
+        detectPackageManagerFn: vi.fn(async (cwd: string) => ({
+          name: "npm" as const,
           manager: createPackageManager({ install }),
           lockfiles: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
-          Object.fromEntries(packages.map((packageName) => [packageName, "9.9.9"])),
+          Object.fromEntries(packages.map((packageName: string) => [packageName, "9.9.9"])),
         ),
       },
     );
@@ -157,13 +157,13 @@ describe("command behavior", () => {
       },
       {
         promptInputFn: vi.fn(async () => "my-interactive-game"),
-        detectPackageManagerFn: vi.fn(async () => ({
-          name: "npm",
+        detectPackageManagerFn: vi.fn(async (cwd: string) => ({
+          name: "npm" as const,
           manager: createPackageManager({ install }),
           lockfiles: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
-          Object.fromEntries(packages.map((packageName) => [packageName, "1.0.0"])),
+          Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
         ),
       },
     );
@@ -220,8 +220,8 @@ describe("command behavior", () => {
           git: false,
         },
         {
-          detectPackageManagerFn: vi.fn(async () => ({
-            name: "npm",
+          detectPackageManagerFn: vi.fn(async (cwd: string) => ({
+            name: "npm" as const,
             manager: createPackageManager(),
             lockfiles: [],
           })),
@@ -248,13 +248,13 @@ describe("command behavior", () => {
         lint: false,
       },
       {
-        detectPackageManagerFn: vi.fn(async () => ({
-          name: "npm",
+        detectPackageManagerFn: vi.fn(async (cwd: string) => ({
+          name: "npm" as const,
           manager: createPackageManager(),
           lockfiles: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
-          Object.fromEntries(packages.map((packageName) => [packageName, "1.0.0"])),
+          Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
         ),
       },
     );
@@ -288,12 +288,12 @@ describe("command behavior", () => {
       },
       {
         detectPackageManagerFn: vi.fn(async () => ({
-          name: "npm",
+          name: "npm" as const,
           manager: createPackageManager(),
           lockfiles: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
-          Object.fromEntries(packages.map((packageName) => [packageName, "1.0.0"])),
+          Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
         ),
         runProcessFn: runProcess,
       },
@@ -320,13 +320,13 @@ describe("command behavior", () => {
       },
       {
         createLoggerFn: () => logger,
-        detectPackageManagerFn: vi.fn(async () => ({
-          name: "npm",
+        detectPackageManagerFn: vi.fn(async (cwd: string) => ({
+          name: "npm" as const,
           manager: createPackageManager(),
           lockfiles: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
-          Object.fromEntries(packages.map((packageName) => [packageName, "1.0.0"])),
+          Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
         ),
       },
     );

@@ -38,14 +38,12 @@ async function loadLayerEvents() {
 }
 
 beforeEach(() => {
-  Object.assign(globalThis as Record<string, unknown>, {
-    Enum: {
-      UserInputType: {
-        MouseButton1: "MouseButton1",
-        Touch: "Touch",
-      },
+  (globalThis as Record<string, unknown>).Enum = {
+    UserInputType: {
+      MouseButton1: "MouseButton1",
+      Touch: "Touch",
     },
-  });
+  };
 });
 
 describe("dismissable layer outside pointer detection", () => {

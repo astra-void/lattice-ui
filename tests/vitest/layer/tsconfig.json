@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "declaration": true,
+    "typeRoots": [
+      "../../../node_modules/@rbxts",
+      "../../../node_modules/@lattice-ui"
+    ],
+    "types": ["types", "compiler-types"]
+  },
+  "include": ["src/**/*.ts", "./**/*.test.ts"]
+}
