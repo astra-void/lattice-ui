@@ -23,7 +23,7 @@ export function RadioGroupRoot(props: RadioGroupProps) {
   const disabled = props.disabled === true;
   const required = props.required === true;
   const itemEntriesRef = React.useRef<Array<RadioGroupItemRegistration>>([]);
-  const [registryRevision, setRegistryRevision] = React.useState(0);
+  const [, setRegistryRevision] = React.useState(0);
 
   const setValue = React.useCallback(
     (nextValue: string) => {
