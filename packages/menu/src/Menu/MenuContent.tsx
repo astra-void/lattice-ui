@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { usePopper } from "@lattice-ui/popper";
 import { useMenuContext } from "./context";
@@ -76,7 +77,9 @@ function MenuContentImpl(props: MenuContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      {contentNode}
+      <FocusScope active={props.enabled} restoreFocus={true} trapped={menuContext.modal}>
+        {contentNode}
+      </FocusScope>
     </DismissableLayer>
   );
 }

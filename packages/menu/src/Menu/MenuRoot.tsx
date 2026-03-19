@@ -65,16 +65,6 @@ export function Menu(props: MenuProps) {
     focusFirstItem();
   }, [focusFirstItem, open, registryRevision]);
 
-  const previousOpenRef = React.useRef(open);
-  React.useEffect(() => {
-    const wasOpen = previousOpenRef.current;
-    previousOpenRef.current = open;
-
-    if (!open && wasOpen) {
-      restoreTriggerFocus();
-    }
-  }, [open, restoreTriggerFocus]);
-
   const contextValue = React.useMemo(
     () => ({
       open,

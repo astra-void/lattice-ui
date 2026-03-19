@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { focusGuiObject, React, Slot, useFocusNode } from "@lattice-ui/core";
 import { useMenuContext } from "./context";
 import type { MenuTriggerProps } from "./types";
 
@@ -12,21 +12,31 @@ function toGuiObject(instance: Instance | undefined) {
 
 export function MenuTrigger(props: MenuTriggerProps) {
   const menuContext = useMenuContext();
+  const triggerRef = menuContext.triggerRef;
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
-      menuContext.triggerRef.current = toGuiObject(instance);
+      triggerRef.current = toGuiObject(instance);
     },
-    [menuContext.triggerRef],
+    [triggerRef],
   );
+
+  useFocusNode({
+    ref: triggerRef,
+    disabled: props.disabled === true,
+  });
 
   const handleActivated = React.useCallback(() => {
     if (props.disabled) {
       return;
     }
 
+    if (!menuContext.open) {
+      focusGuiObject(triggerRef.current);
+    }
+
     menuContext.setOpen(!menuContext.open);
-  }, [menuContext.open, menuContext.setOpen, props.disabled]);
+  }, [menuContext.open, menuContext.setOpen, props.disabled, triggerRef]);
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {
@@ -36,10 +46,14 @@ export function MenuTrigger(props: MenuTriggerProps) {
 
       const keyCode = inputObject.KeyCode;
       if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
+        if (!menuContext.open) {
+          focusGuiObject(triggerRef.current);
+        }
+
         menuContext.setOpen(!menuContext.open);
       }
     },
-    [menuContext.open, menuContext.setOpen, props.disabled],
+    [menuContext.open, menuContext.setOpen, props.disabled, triggerRef],
   );
 
   if (props.asChild) {

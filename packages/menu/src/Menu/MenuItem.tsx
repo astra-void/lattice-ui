@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { React, Slot, useFocusNode } from "@lattice-ui/core";
 import { useMenuContext } from "./context";
 import type { MenuItemProps, MenuSelectEvent } from "./types";
 
@@ -45,6 +45,11 @@ export function MenuItem(props: MenuItemProps) {
       getDisabled: () => disabledRef.current,
     });
   }, [menuContext]);
+
+  useFocusNode({
+    ref: itemRef,
+    getDisabled: () => disabledRef.current,
+  });
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
     if (!instance || !instance.IsA("GuiObject")) {
