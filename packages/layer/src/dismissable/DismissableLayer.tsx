@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { FocusLayerProvider, React } from "@lattice-ui/core";
 import { DEFAULT_LAYER_IGNORE_GUI_INSET } from "../internals/constants";
 import { Portal } from "../portal/Portal";
 import { usePortalContext } from "../portal/PortalProvider";
@@ -108,7 +108,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
           ref={contentWrapperRef}
           ZIndex={1}
         >
-          {props.children}
+          <FocusLayerProvider layerOrder={stackOrder}>{props.children}</FocusLayerProvider>
         </frame>
       </screengui>
     </Portal>
