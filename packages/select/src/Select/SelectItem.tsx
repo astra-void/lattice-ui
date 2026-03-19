@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { React, Slot, useFocusNode } from "@lattice-ui/core";
 import { useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
 
@@ -44,6 +44,11 @@ export function SelectItem(props: SelectItemProps) {
       getTextValue: () => textValueRef.current,
     });
   }, [props.value, selectContext]);
+
+  useFocusNode({
+    ref: itemRef,
+    getDisabled: () => disabledRef.current,
+  });
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
     if (!instance || !instance.IsA("GuiObject")) {

@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { focusGuiObject, React, Slot, useFocusNode } from "@lattice-ui/core";
 import { useSelectContext } from "./context";
 import type { SelectTriggerProps } from "./types";
 
@@ -13,21 +13,31 @@ function toGuiObject(instance: Instance | undefined) {
 export function SelectTrigger(props: SelectTriggerProps) {
   const selectContext = useSelectContext();
   const disabled = selectContext.disabled || props.disabled === true;
+  const triggerRef = selectContext.triggerRef;
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
-      selectContext.triggerRef.current = toGuiObject(instance);
+      triggerRef.current = toGuiObject(instance);
     },
-    [selectContext.triggerRef],
+    [triggerRef],
   );
+
+  useFocusNode({
+    ref: triggerRef,
+    disabled,
+  });
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {
       return;
     }
 
+    if (!selectContext.open) {
+      focusGuiObject(triggerRef.current);
+    }
+
     selectContext.setOpen(!selectContext.open);
-  }, [disabled, selectContext]);
+  }, [disabled, selectContext, triggerRef]);
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {
@@ -37,10 +47,14 @@ export function SelectTrigger(props: SelectTriggerProps) {
 
       const keyCode = inputObject.KeyCode;
       if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
+        if (!selectContext.open) {
+          focusGuiObject(triggerRef.current);
+        }
+
         selectContext.setOpen(!selectContext.open);
       }
     },
-    [disabled, selectContext],
+    [disabled, selectContext, triggerRef],
   );
 
   const eventHandlers = React.useMemo(
