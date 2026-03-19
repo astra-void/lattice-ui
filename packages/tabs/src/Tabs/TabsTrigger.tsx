@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { React, Slot, useFocusNode } from "@lattice-ui/core";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
@@ -46,6 +46,11 @@ export function TabsTrigger(props: TabsTriggerProps) {
       getDisabled: () => disabledRef.current,
     });
   }, [props.value, tabsContext]);
+
+  useFocusNode({
+    ref: triggerRef,
+    getDisabled: () => disabledRef.current,
+  });
 
   const setTriggerRef = React.useCallback((instance: Instance | undefined) => {
     triggerRef.current = toGuiObject(instance);
