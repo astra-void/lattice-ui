@@ -107,6 +107,17 @@ if (arrayProto.size === undefined) {
   });
 }
 
+const removableArrayProto = Array.prototype as unknown as { remove?: (index: number) => unknown };
+if (removableArrayProto.remove === undefined) {
+  Object.defineProperty(removableArrayProto, "remove", {
+    value(index: number) {
+      return (this as Array<unknown>).splice(index, 1)[0];
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
 const stringProto = String.prototype as unknown as { size?: () => number };
 if (stringProto.size === undefined) {
   Object.defineProperty(stringProto, "size", {
