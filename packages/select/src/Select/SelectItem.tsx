@@ -1,4 +1,4 @@
-import { React, Slot, useFocusNode } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
 import { useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
 
@@ -9,7 +9,6 @@ export function SelectItem(props: SelectItemProps) {
   const selectContext = useSelectContext();
   const disabled = selectContext.disabled || props.disabled === true;
   const textValue = props.textValue ?? props.value;
-  const itemRef = React.useRef<GuiObject>();
 
   const disabledRef = React.useRef(disabled);
   const textValueRef = React.useRef(textValue);
@@ -39,25 +38,10 @@ export function SelectItem(props: SelectItemProps) {
       id: itemIdRef.current,
       value: props.value,
       order: itemOrderRef.current,
-      ref: itemRef,
       getDisabled: () => disabledRef.current,
       getTextValue: () => textValueRef.current,
     });
   }, [props.value, selectContext]);
-
-  useFocusNode({
-    ref: itemRef,
-    getDisabled: () => disabledRef.current,
-  });
-
-  const setItemRef = React.useCallback((instance: Instance | undefined) => {
-    if (!instance || !instance.IsA("GuiObject")) {
-      itemRef.current = undefined;
-      return;
-    }
-
-    itemRef.current = instance;
-  }, []);
 
   const handleSelect = React.useCallback(() => {
     if (disabled) {
@@ -75,11 +59,6 @@ export function SelectItem(props: SelectItemProps) {
       }
 
       const keyCode = inputObject.KeyCode;
-      if (keyCode === Enum.KeyCode.Up || keyCode === Enum.KeyCode.Down) {
-        selectContext.moveSelection(keyCode === Enum.KeyCode.Up ? -1 : 1);
-        return;
-      }
-
       if (keyCode !== Enum.KeyCode.Return && keyCode !== Enum.KeyCode.Space) {
         return;
       }
@@ -105,7 +84,7 @@ export function SelectItem(props: SelectItemProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setItemRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false}>
         {child}
       </Slot>
     );
@@ -118,13 +97,12 @@ export function SelectItem(props: SelectItemProps) {
       BackgroundColor3={Color3.fromRGB(47, 53, 68)}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={!disabled}
+      Selectable={false}
       Size={UDim2.fromOffset(220, 32)}
       Text={textValue}
       TextColor3={disabled ? Color3.fromRGB(134, 141, 156) : Color3.fromRGB(234, 239, 247)}
       TextSize={15}
       TextXAlignment={Enum.TextXAlignment.Left}
-      ref={setItemRef}
     >
       <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
       {props.children}

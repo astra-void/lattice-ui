@@ -1,4 +1,4 @@
-import { focusGuiObject, React, Slot, useFocusNode } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
 import { useSelectContext } from "./context";
 import type { SelectTriggerProps } from "./types";
 
@@ -22,22 +22,13 @@ export function SelectTrigger(props: SelectTriggerProps) {
     [triggerRef],
   );
 
-  useFocusNode({
-    ref: triggerRef,
-    disabled,
-  });
-
   const handleActivated = React.useCallback(() => {
     if (disabled) {
       return;
     }
 
-    if (!selectContext.open) {
-      focusGuiObject(triggerRef.current);
-    }
-
     selectContext.setOpen(!selectContext.open);
-  }, [disabled, selectContext, triggerRef]);
+  }, [disabled, selectContext]);
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {
@@ -47,14 +38,10 @@ export function SelectTrigger(props: SelectTriggerProps) {
 
       const keyCode = inputObject.KeyCode;
       if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
-        if (!selectContext.open) {
-          focusGuiObject(triggerRef.current);
-        }
-
         selectContext.setOpen(!selectContext.open);
       }
     },
-    [disabled, selectContext, triggerRef],
+    [disabled, selectContext],
   );
 
   const eventHandlers = React.useMemo(
@@ -72,7 +59,7 @@ export function SelectTrigger(props: SelectTriggerProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setTriggerRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={setTriggerRef}>
         {child}
       </Slot>
     );
@@ -85,7 +72,7 @@ export function SelectTrigger(props: SelectTriggerProps) {
       BackgroundColor3={Color3.fromRGB(41, 48, 63)}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={!disabled}
+      Selectable={false}
       Size={UDim2.fromOffset(220, 36)}
       Text="Select"
       TextColor3={disabled ? Color3.fromRGB(140, 148, 164) : Color3.fromRGB(235, 241, 248)}

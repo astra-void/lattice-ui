@@ -9,7 +9,6 @@ export type SelectItemRegistration = {
   id: number;
   value: string;
   order: number;
-  ref: React.MutableRefObject<GuiObject | undefined>;
   getDisabled: () => boolean;
   getTextValue: () => string;
 };
@@ -25,9 +24,6 @@ export type SelectContextValue = {
   contentRef: React.MutableRefObject<GuiObject | undefined>;
   registerItem: (item: SelectItemRegistration) => () => void;
   getItemText: (value: string) => string | undefined;
-  focusSelectedItem: () => void;
-  moveSelection: (direction: -1 | 1) => void;
-  restoreTriggerFocus: () => void;
 };
 
 export type SelectProps = {

@@ -4,8 +4,6 @@ import { Select } from "@lattice-ui/select";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
-const GuiService = game.GetService("GuiService");
-
 type SelectRenderOptions = {
   open?: boolean;
   defaultOpen?: boolean;
@@ -42,54 +40,6 @@ function renderSelectTree(options: SelectRenderOptions, playerGui: PlayerGui) {
                 <textbutton Text="select-item-beta" />
               </Select.Item>
               <textlabel Text={options.markerText} />
-            </frame>
-          </Select.Content>
-        </Select.Portal>
-      </Select.Root>
-    </PortalProvider>
-  );
-}
-
-type ControlledSelectSelectionHarnessProps = {
-  commitSelection: boolean;
-  playerGui: PlayerGui;
-};
-
-function ControlledSelectSelectionHarness(props: ControlledSelectSelectionHarnessProps) {
-  const [open, setOpen] = React.useState(true);
-  const [value, setValue] = React.useState("alpha");
-  const committedRef = React.useRef(false);
-
-  React.useEffect(() => {
-    if (!props.commitSelection || committedRef.current) {
-      return;
-    }
-
-    committedRef.current = true;
-    setValue("beta");
-    setOpen(false);
-  }, [props.commitSelection]);
-
-  return (
-    <PortalProvider container={props.playerGui}>
-      <Select.Root onOpenChange={setOpen} onValueChange={setValue} open={open} value={value}>
-        <Select.Trigger asChild>
-          <textbutton Text="select-trigger-controlled" />
-        </Select.Trigger>
-        <Select.Value asChild placeholder="Pick one">
-          <textlabel />
-        </Select.Value>
-
-        <Select.Portal>
-          <Select.Content asChild forceMount>
-            <frame>
-              <Select.Item asChild textValue="Alpha Option" value="alpha">
-                <textbutton Text="select-item-alpha-controlled" />
-              </Select.Item>
-              <Select.Item asChild textValue="Beta Option" value="beta">
-                <textbutton Text="select-item-beta-controlled" />
-              </Select.Item>
-              <textlabel Text="select-marker-controlled" />
             </frame>
           </Select.Content>
         </Select.Portal>
@@ -190,8 +140,8 @@ export = () => {
       });
     });
 
-    it("moves selection into the selected item when content opens", () => {
-      withReactHarness("SelectOpenFocusHandoff", (harness) => {
+    it("keeps trigger and items out of native Roblox selection", () => {
+      withReactHarness("SelectNoNativeSelection", (harness) => {
         harness.render(
           renderSelectTree(
             {
@@ -205,48 +155,17 @@ export = () => {
         );
 
         waitForEffects(4);
+        const trigger = findTextButtonByText(harness.container, "select-trigger");
+        assert(trigger !== undefined, "Select trigger should mount for selection coverage.");
+        assert(trigger.Selectable === false, "Select trigger should not participate in native selection navigation.");
+
+        const alphaItem = findTextButtonByText(harness.playerGui, "select-item-alpha");
+        assert(alphaItem !== undefined, "Select item should mount while content is open.");
+        assert(alphaItem.Selectable === false, "Select items should not participate in native selection navigation.");
+
         const betaItem = findTextButtonByText(harness.playerGui, "select-item-beta");
         assert(betaItem !== undefined, "Selected SelectItem should mount when content is open.");
-        assert(
-          GuiService.SelectedObject === betaItem,
-          "Opening SelectContent should move selection to the selected item.",
-        );
-
-        GuiService.SelectedObject = undefined;
-      });
-    });
-
-    it("restores trigger focus after an item selection closes the content", () => {
-      withReactHarness("SelectRestoreTriggerFocus", (harness) => {
-        const renderTree = (commitSelection: boolean) => (
-          <ControlledSelectSelectionHarness commitSelection={commitSelection} playerGui={harness.playerGui} />
-        );
-
-        harness.render(renderTree(false));
-
-        waitForEffects(4);
-        const trigger = findTextButtonByText(harness.container, "select-trigger-controlled");
-        assert(trigger !== undefined, "Select trigger should mount for focus restore coverage.");
-
-        harness.render(renderTree(true));
-        waitForEffects(4);
-
-        const selectedValueLabel = findTextLabelByText(harness.container, "Beta Option");
-        const markerAfterClose = findTextLabelByText(harness.playerGui, "select-marker-controlled");
-        const markerParentAfterClose = markerAfterClose?.Parent;
-        assert(selectedValueLabel !== undefined, "Selection commit should update SelectValue.");
-        assert(
-          markerParentAfterClose !== undefined &&
-            markerParentAfterClose.IsA("GuiObject") &&
-            markerParentAfterClose.Visible === false,
-          "Forced SelectContent should be hidden after selection closes it.",
-        );
-        assert(
-          GuiService.SelectedObject === trigger,
-          "Closing SelectContent after selection should restore trigger focus.",
-        );
-
-        GuiService.SelectedObject = undefined;
+        assert(betaItem.Selectable === false, "Selected items should also stay out of native selection.");
       });
     });
   });
