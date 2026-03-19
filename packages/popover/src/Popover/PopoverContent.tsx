@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
@@ -42,26 +43,32 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
     [popoverContext.contentRef],
   );
 
-  if (props.asChild) {
-    const child = props.children;
-    if (!React.isValidElement(child)) {
-      error("[PopoverContent] `asChild` requires a child element.");
-    }
+  const contentNode = props.asChild ? (
+    (() => {
+      const child = props.children;
+      if (!React.isValidElement(child)) {
+        error("[PopoverContent] `asChild` requires a child element.");
+      }
 
-    return (
-      <DismissableLayer
-        enabled={props.enabled}
-        modal={popoverContext.modal}
-        onDismiss={props.onDismiss}
-        onInteractOutside={props.onInteractOutside}
-        onPointerDownOutside={props.onPointerDownOutside}
-      >
+      return (
         <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
           {child}
         </Slot>
-      </DismissableLayer>
-    );
-  }
+      );
+    })()
+  ) : (
+    <frame
+      AnchorPoint={popper.anchorPoint}
+      BackgroundTransparency={1}
+      BorderSizePixel={0}
+      Position={popper.position}
+      Size={UDim2.fromOffset(0, 0)}
+      Visible={props.visible}
+      ref={setContentRef}
+    >
+      {props.children}
+    </frame>
+  );
 
   return (
     <DismissableLayer
@@ -71,17 +78,9 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <frame
-        AnchorPoint={popper.anchorPoint}
-        BackgroundTransparency={1}
-        BorderSizePixel={0}
-        Position={popper.position}
-        Size={UDim2.fromOffset(0, 0)}
-        Visible={props.visible}
-        ref={setContentRef}
-      >
-        {props.children}
-      </frame>
+      <FocusScope active={props.enabled} restoreFocus={true} trapped={popoverContext.modal}>
+        {contentNode}
+      </FocusScope>
     </DismissableLayer>
   );
 }

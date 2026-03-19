@@ -1,8 +1,10 @@
 import { React } from "@lattice-ui/core";
 import { PortalProvider } from "@lattice-ui/layer";
 import { Popover } from "@lattice-ui/popover";
-import { findTextLabelByText } from "../../test-utils/guiFind";
+import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
+
+const GuiService = game.GetService("GuiService");
 
 function renderPopoverTestTree(open: boolean, forceMount: boolean, markerText: string, playerGui: PlayerGui) {
   return (
@@ -59,6 +61,83 @@ export = () => {
         const content = findTextLabelByText(harness.playerGui, "PopoverPortalContent");
         assert(content !== undefined, "Open PopoverContent should mount.");
         assert(content.IsDescendantOf(harness.playerGui), "PopoverContent should render inside PlayerGui via portal.");
+      });
+    });
+
+    it("traps focus inside modal popovers", () => {
+      withReactHarness("PopoverModalFocusTrap", (harness) => {
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <frame>
+              <textbutton Text="popover-outside-button" />
+              <Popover.Root defaultOpen={true} modal={true}>
+                <Popover.Anchor asChild>
+                  <frame />
+                </Popover.Anchor>
+                <Popover.Portal>
+                  <Popover.Content asChild>
+                    <frame>
+                      <textbutton Text="popover-inside-button" />
+                    </frame>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+            </frame>
+          </PortalProvider>,
+        );
+
+        waitForEffects(4);
+        const outside = findTextButtonByText(harness.container, "popover-outside-button");
+        const inside = findTextButtonByText(harness.playerGui, "popover-inside-button");
+        assert(outside !== undefined && inside !== undefined, "Popover focus targets should mount.");
+
+        GuiService.SelectedObject = outside;
+        waitForEffects(4);
+
+        assert(
+          GuiService.SelectedObject === inside,
+          "Modal popover content should redirect external selection back inside its scope.",
+        );
+
+        GuiService.SelectedObject = undefined;
+      });
+    });
+
+    it("does not trap focus when the popover is non-modal", () => {
+      withReactHarness("PopoverNonModalFocus", (harness) => {
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <frame>
+              <textbutton Text="popover-outside-button-non-modal" />
+              <Popover.Root defaultOpen={true} modal={false}>
+                <Popover.Anchor asChild>
+                  <frame />
+                </Popover.Anchor>
+                <Popover.Portal>
+                  <Popover.Content asChild>
+                    <frame>
+                      <textbutton Text="popover-inside-button-non-modal" />
+                    </frame>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+            </frame>
+          </PortalProvider>,
+        );
+
+        waitForEffects(4);
+        const outside = findTextButtonByText(harness.container, "popover-outside-button-non-modal");
+        assert(outside !== undefined, "Outside focus target should mount.");
+
+        GuiService.SelectedObject = outside;
+        waitForEffects(4);
+
+        assert(
+          GuiService.SelectedObject === outside,
+          "Non-modal popovers should allow selection to move outside the content scope.",
+        );
+
+        GuiService.SelectedObject = undefined;
       });
     });
   });

@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { focusGuiObject, React, Slot, useFocusNode } from "@lattice-ui/core";
 import { usePopoverContext } from "./context";
 import type { PopoverTriggerProps } from "./types";
 
@@ -12,21 +12,32 @@ function toGuiObject(instance: Instance | undefined) {
 
 export function PopoverTrigger(props: PopoverTriggerProps) {
   const popoverContext = usePopoverContext();
+  const triggerRef = popoverContext.triggerRef;
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
-      popoverContext.triggerRef.current = toGuiObject(instance);
+      triggerRef.current = toGuiObject(instance);
     },
-    [popoverContext.triggerRef],
+    [triggerRef],
   );
+
+  useFocusNode({
+    ref: triggerRef,
+    disabled: props.disabled === true,
+    syncToRoblox: false,
+  });
 
   const handleActivated = React.useCallback(() => {
     if (props.disabled) {
       return;
     }
 
+    if (!popoverContext.open) {
+      focusGuiObject(triggerRef.current);
+    }
+
     popoverContext.setOpen(!popoverContext.open);
-  }, [popoverContext.open, popoverContext.setOpen, props.disabled]);
+  }, [popoverContext.open, popoverContext.setOpen, props.disabled, triggerRef]);
 
   if (props.asChild) {
     const child = props.children;
