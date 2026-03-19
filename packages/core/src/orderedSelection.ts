@@ -1,6 +1,5 @@
 import type React from "@rbxts/react";
-
-const GuiService = game.GetService("GuiService");
+import { focusGuiObject as focusManagedGuiObject, getFocusedGuiObject } from "./focus/focusManager";
 
 export type OrderedSelectionDirection = -1 | 1;
 
@@ -58,7 +57,7 @@ export function findOrderedSelectionEntry<T extends OrderedSelectionEntry>(
 }
 
 export function getCurrentOrderedSelectionEntry<T extends OrderedSelectionEntry>(entries: Array<T>) {
-  const current = GuiService.SelectedObject;
+  const current = getFocusedGuiObject();
   if (!current) {
     return undefined;
   }
@@ -91,15 +90,6 @@ export function getRelativeOrderedSelectionEntry<T extends OrderedSelectionEntry
   return selectableEntries[nextIndex];
 }
 
-export function focusGuiObject(guiObject: GuiObject | undefined) {
-  if (!guiObject || !guiObject.Selectable || !guiObject.Visible) {
-    return undefined;
-  }
-
-  GuiService.SelectedObject = guiObject;
-  return guiObject;
-}
-
 export function focusOrderedSelectionEntry(entry: OrderedSelectionEntry | undefined) {
-  return focusGuiObject(entry?.ref.current);
+  return focusManagedGuiObject(entry?.ref.current);
 }
