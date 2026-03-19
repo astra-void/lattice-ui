@@ -1,8 +1,10 @@
 import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
-import { findTextLabelByText } from "../../test-utils/guiFind";
+import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
+
+const GuiService = game.GetService("GuiService");
 
 export = () => {
   describe("dialog", () => {
@@ -63,6 +65,34 @@ export = () => {
         waitForEffects();
         const content = findTextLabelByText(harness.playerGui, "dialog-force-mount-marker");
         assert(content !== undefined, "DialogContent should remain mounted when forceMount is true.");
+      });
+    });
+
+    it("moves focus into the first selectable descendant while modal content is open", () => {
+      withReactHarness("DialogFocusTrap", (harness) => {
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <Dialog.Root defaultOpen={true}>
+              <Dialog.Portal>
+                <Dialog.Content>
+                  <frame>
+                    <textbutton Text="dialog-focus-target" />
+                  </frame>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+          </PortalProvider>,
+        );
+
+        waitForEffects(4);
+        const focusTarget = findTextButtonByText(harness.playerGui, "dialog-focus-target");
+        assert(focusTarget !== undefined, "Dialog focus target should mount.");
+        assert(
+          GuiService.SelectedObject === focusTarget,
+          "Open dialog content should redirect focus to the first selectable descendant.",
+        );
+
+        GuiService.SelectedObject = undefined;
       });
     });
   });

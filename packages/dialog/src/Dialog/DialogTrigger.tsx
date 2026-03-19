@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { focusGuiObject, React, Slot, useFocusNode } from "@lattice-ui/core";
 import { useDialogContext } from "./context";
 import type { DialogTriggerProps } from "./types";
 
@@ -12,21 +12,29 @@ function toGuiObject(instance: Instance | undefined) {
 
 export function DialogTrigger(props: DialogTriggerProps) {
   const dialogContext = useDialogContext();
+  const triggerRef = dialogContext.triggerRef;
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
-      dialogContext.triggerRef.current = toGuiObject(instance);
+      triggerRef.current = toGuiObject(instance);
     },
-    [dialogContext.triggerRef],
+    [triggerRef],
   );
+
+  useFocusNode({
+    ref: triggerRef,
+    disabled: props.disabled === true,
+    syncToRoblox: false,
+  });
 
   const handleActivated = React.useCallback(() => {
     if (props.disabled) {
       return;
     }
 
+    focusGuiObject(triggerRef.current);
     dialogContext.setOpen(true);
-  }, [dialogContext.setOpen, props.disabled]);
+  }, [dialogContext.setOpen, props.disabled, triggerRef]);
 
   if (props.asChild) {
     const child = props.children;
