@@ -1,11 +1,37 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalDependencies": ["tsconfig.base.json", "rokit.toml"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!README.md",
+        "!out/**",
+        "!dist/**",
+        "!include/**",
+        "!.turbo/**",
+        "!*.rbxl",
+        "!*.rbxlx",
+        "!*.rbxm",
+        "!*.rbxmx"
+      ],
       "outputs": ["out/**", "dist/**", "include/**"]
     },
     "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!README.md",
+        "!out/**",
+        "!dist/**",
+        "!include/**",
+        "!.turbo/**",
+        "!*.rbxl",
+        "!*.rbxlx",
+        "!*.rbxm",
+        "!*.rbxmx"
+      ],
       "outputs": []
     },
     "watch": {
