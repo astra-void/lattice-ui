@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { React, Slot, useFocusNode } from "@lattice-ui/core";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
 
@@ -37,6 +37,11 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
       getDisabled: () => disabledRef.current,
     });
   }, [props.value, radioGroupContext]);
+
+  useFocusNode({
+    ref: itemRef,
+    getDisabled: () => disabledRef.current,
+  });
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
     if (!instance || !instance.IsA("GuiObject")) {
