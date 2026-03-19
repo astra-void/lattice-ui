@@ -15,3 +15,5 @@ test-harness.rbxlx.lock
 
 pnpm-publish-summary.json
 run-in-roblox.log
+
+.turbo
