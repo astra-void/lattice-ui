@@ -9,6 +9,6 @@ export const Checkbox = {
   Indicator: typeof CheckboxIndicator;
 };
 
-export { CheckboxIndicator, CheckboxRoot };
 
 export type { CheckboxContextValue, CheckboxIndicatorProps, CheckboxProps, CheckedState } from "./Checkbox/types";
+export { CheckboxIndicator, CheckboxRoot };
