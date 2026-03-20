@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { runAddCommand } from "../../../packages/cli/src/commands/add";
 import { runCreateCommand } from "../../../packages/cli/src/commands/create";
 import { runDoctorCommand } from "../../../packages/cli/src/commands/doctor";
+import { runInitCommand } from "../../../packages/cli/src/commands/init";
 import { runRemoveCommand } from "../../../packages/cli/src/commands/remove";
 import { runUpgradeCommand } from "../../../packages/cli/src/commands/upgrade";
 import type { Logger } from "../../../packages/cli/src/core/logger";
@@ -56,6 +57,10 @@ function createPackageManager(overrides?: Partial<PackageManager>): PackageManag
     exec: vi.fn(async () => undefined),
     ...overrides,
   };
+}
+
+function createResolvedVersions(version = "1.0.0") {
+  return vi.fn(async (packages: string[]) => Object.fromEntries(packages.map((packageName) => [packageName, version])));
 }
 
 function createContext(params: {
@@ -338,6 +343,345 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenCalledWith("Installing");
     expect(logger.section).toHaveBeenCalledWith("Next Steps");
     expect(logger.step).toHaveBeenCalledWith("npx lattice add --preset form");
+  });
+
+  it("init fails when package.json cannot be found", async () => {
+    const dir = await createTempDir();
+
+    await expect(
+      runInitCommand({
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+      }),
+    ).rejects.toThrow(/could not find package\.json/i);
+  });
+
+  it("init uses defaults in --yes mode without prompts", async () => {
+    const dir = await createTempDir();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp" }, null, 2), "utf8");
+
+    const install = vi.fn(async () => undefined);
+    const promptSelectFn = vi.fn();
+    const promptConfirmFn = vi.fn();
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+      },
+      {
+        promptSelectFn,
+        promptConfirmFn,
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager({
+            name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+            install,
+          }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    expect(promptSelectFn).not.toHaveBeenCalled();
+    expect(promptConfirmFn).not.toHaveBeenCalled();
+    expect(install).toHaveBeenCalledWith(dir);
+  });
+
+  it("init prompts for omitted package manager and lint choices", async () => {
+    const dir = await createTempDir();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp" }, null, 2), "utf8");
+
+    const install = vi.fn(async () => undefined);
+    const promptSelectFn = vi.fn(async () => "pnpm");
+    const promptConfirmFn = vi.fn(async () => false);
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: false,
+        dryRun: false,
+      },
+      {
+        promptSelectFn,
+        promptConfirmFn,
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager({
+            name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+            install,
+          }),
+          lockfiles: override ? ["npm"] : ["npm"],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions(),
+        createLoggerFn: () => createLogger(),
+      },
+    );
+
+    expect(promptSelectFn).toHaveBeenCalledWith(
+      { yes: false },
+      "Select a package manager",
+      expect.any(Array),
+      { defaultIndex: 0 },
+    );
+    expect(promptConfirmFn).toHaveBeenCalledWith({ yes: false }, "Set up ESLint + Prettier?", { defaultValue: false });
+    expect(install).toHaveBeenCalledWith(dir);
+  });
+
+  it("init dry-run reports changes without mutating files", async () => {
+    const dir = await createTempDir();
+    const install = vi.fn(async () => undefined);
+    const logger = createLogger();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp" }, null, 2), "utf8");
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: true,
+      },
+      {
+        createLoggerFn: () => logger,
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager({ install }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    await expect(readFile(path.join(dir, "tsconfig.json"), "utf8")).rejects.toThrow();
+    await expect(readFile(path.join(dir, ".gitignore"), "utf8")).rejects.toThrow();
+    expect(install).not.toHaveBeenCalled();
+    expect(logger.section).toHaveBeenCalledWith("Dry Run");
+    expect(logger.step).toHaveBeenCalledWith("[dry-run] npm install");
+  });
+
+  it("init safely bootstraps an existing project and appends gitignore entries", async () => {
+    const dir = await createTempDir();
+    const install = vi.fn(async () => undefined);
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "existing-game",
+          scripts: {
+            build: "custom-build",
+          },
+          dependencies: {
+            "@lattice-ui/style": "workspace:*",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+    await writeFile(path.join(dir, ".gitignore"), "dist\n", "utf8");
+    await writeFile(
+      path.join(dir, "tsconfig.json"),
+      `{
+  "compilerOptions": {
+    // existing config
+    "jsx": "react",
+    "typeRoots": ["node_modules/@rbxts"],
+  }
+}
+`,
+      "utf8",
+    );
+    await mkdir(path.join(dir, "src", "client"), { recursive: true });
+    await writeFile(path.join(dir, "src", "client", "App.tsx"), "export const App = 'existing';\n", "utf8");
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager({ install }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions("9.9.9"),
+      },
+    );
+
+    const manifest = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+      dependencies: Record<string, string>;
+      devDependencies: Record<string, string>;
+    };
+    expect(manifest.scripts.build).toBe("custom-build");
+    expect(manifest.scripts.watch).toBe("rbxtsc -p tsconfig.json -w");
+    expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
+    expect(manifest.dependencies["@rbxts/react"]).toBe("9.9.9");
+    expect(manifest.devDependencies["@lattice-ui/cli"]).toBe("9.9.9");
+    expect(await readFile(path.join(dir, "src", "client", "App.tsx"), "utf8")).toBe("export const App = 'existing';\n");
+    const tsconfig = JSON.parse(await readFile(path.join(dir, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { typeRoots: string[] };
+    };
+    expect(tsconfig.compilerOptions.typeRoots).toEqual(["node_modules/@rbxts", "node_modules/@lattice-ui"]);
+    const gitignore = await readFile(path.join(dir, ".gitignore"), "utf8");
+    expect(gitignore).toContain("dist");
+    expect(gitignore).toContain("node_modules");
+    expect(gitignore).toContain("out");
+    expect(install).toHaveBeenCalledWith(dir);
+  });
+
+  it("init keeps existing dependency and script values when names already exist", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "existing-game",
+          scripts: {
+            build: "custom-build",
+            watch: "custom-watch",
+            typecheck: "custom-typecheck",
+          },
+          dependencies: {
+            "@lattice-ui/style": "workspace:*",
+            "@rbxts/react": "18.0.0",
+            "@rbxts/react-roblox": "18.0.0",
+          },
+          devDependencies: {
+            "@lattice-ui/cli": "workspace:*",
+            "roblox-ts": "99.0.0",
+            "typescript": "99.0.0",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager(),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
+      },
+    );
+
+    const manifest = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+      dependencies: Record<string, string>;
+      devDependencies: Record<string, string>;
+    };
+    expect(manifest.scripts.build).toBe("custom-build");
+    expect(manifest.scripts.watch).toBe("custom-watch");
+    expect(manifest.scripts.typecheck).toBe("custom-typecheck");
+    expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
+    expect(manifest.dependencies["@rbxts/react"]).toBe("18.0.0");
+    expect(manifest.dependencies["@rbxts/react-roblox"]).toBe("18.0.0");
+    expect(manifest.devDependencies["@lattice-ui/cli"]).toBe("workspace:*");
+    expect(manifest.devDependencies["roblox-ts"]).toBe("99.0.0");
+    expect(manifest.devDependencies["typescript"]).toBe("99.0.0");
+  });
+
+  it("init only adds lint configuration when --lint is enabled", async () => {
+    const plainDir = await createTempDir();
+    const lintDir = await createTempDir();
+    await writeFile(path.join(plainDir, "package.json"), JSON.stringify({ name: "plain" }, null, 2), "utf8");
+    await writeFile(path.join(lintDir, "package.json"), JSON.stringify({ name: "lint" }, null, 2), "utf8");
+
+    const detectPackageManagerFn = vi.fn(async (_cwd: string, override?: string) => ({
+      name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+      manager: createPackageManager(),
+      lockfiles: [],
+    }));
+
+    await runInitCommand(
+      {
+        cwd: plainDir,
+        yes: true,
+        dryRun: false,
+      },
+      {
+        detectPackageManagerFn,
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    await runInitCommand(
+      {
+        cwd: lintDir,
+        yes: true,
+        dryRun: false,
+        lint: true,
+      },
+      {
+        detectPackageManagerFn,
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    await expect(readFile(path.join(plainDir, "eslint.config.mjs"), "utf8")).rejects.toThrow();
+    await expect(readFile(path.join(plainDir, ".prettierrc"), "utf8")).rejects.toThrow();
+    await expect(readFile(path.join(lintDir, "eslint.config.mjs"), "utf8")).resolves.toContain("@typescript-eslint/parser");
+    await expect(readFile(path.join(lintDir, ".prettierrc"), "utf8")).resolves.toContain('"printWidth": 120');
+  });
+
+  it("init is idempotent and skips install on the second run", async () => {
+    const dir = await createTempDir();
+    const install = vi.fn(async () => undefined);
+    const logger = createLogger();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp" }, null, 2), "utf8");
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager({ install }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    install.mockClear();
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+      },
+      {
+        createLoggerFn: () => logger,
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager({ install }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    expect(install).not.toHaveBeenCalled();
+    expect(logger.success).toHaveBeenCalledWith("Project already matches the Lattice init template.");
   });
 
   it("add expands presets and installs peers, excluding optional providers", async () => {

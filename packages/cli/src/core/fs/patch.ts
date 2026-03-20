@@ -12,6 +12,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
 function sortRecord(record: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right)));
 }
@@ -91,6 +95,10 @@ export function mergeStringArraysUnique(existing: string[] | undefined, incoming
 export function mergeMissing(template: unknown, current: unknown): unknown {
   if (current === undefined) {
     return template;
+  }
+
+  if (isStringArray(template) && isStringArray(current)) {
+    return mergeStringArraysUnique(current, template);
   }
 
   if (Array.isArray(template) || Array.isArray(current)) {

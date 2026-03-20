@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { runAddCommand } from "./commands/add";
 import { runCreateCommand } from "./commands/create";
 import { runDoctorCommand } from "./commands/doctor";
+import { runInitCommand } from "./commands/init";
 import { runRemoveCommand } from "./commands/remove";
 import { runUpgradeCommand } from "./commands/upgrade";
 import { usageError } from "./core/errors";
@@ -16,6 +17,9 @@ Usage:
 Commands:
   create [project-path] [--yes] [--pm <pnpm|npm|yarn>] [--git] [--template rbxts] [--lint] [--no-lint]
     Create a new project from the rbxts template.
+
+  init [--yes] [--dry-run] [--pm <pnpm|npm|yarn>] [--template rbxts] [--lint]
+    Initialize Lattice in an existing project.
 
   add [name...] [--preset <preset...>] [--yes] [--dry-run]
     Install component packages and their required peers.
@@ -42,6 +46,7 @@ Global options:
 Examples:
   npx @lattice-ui/cli create
   npx @lattice-ui/cli create my-game --pm npm --git --no-lint
+  npx @lattice-ui/cli init --dry-run
   npx @lattice-ui/cli add dialog,toast --preset overlay
   npx @lattice-ui/cli remove dialog --dry-run
   npx @lattice-ui/cli upgrade --dry-run
@@ -69,6 +74,14 @@ interface ParsedSelectionArgs {
   presets: string[];
   yes: boolean;
   dryRun: boolean;
+}
+
+interface ParsedInitArgs {
+  yes: boolean;
+  dryRun: boolean;
+  pm?: string;
+  template?: string;
+  lint?: boolean;
 }
 
 function splitList(value: string): string[] {
@@ -204,6 +217,77 @@ function parseCreateArgs(args: string[]): ParsedCreateArgs {
   };
 }
 
+function parseInitArgs(args: string[]): ParsedInitArgs {
+  let yes = false;
+  let dryRun = false;
+  let pm: string | undefined;
+  let template: string | undefined;
+  let lint: boolean | undefined;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+
+    if (token === "--yes") {
+      yes = true;
+      continue;
+    }
+
+    if (token === "--dry-run") {
+      dryRun = true;
+      continue;
+    }
+
+    if (token === "--pm") {
+      const value = args[index + 1];
+      if (!value) {
+        throw usageError("Missing value for --pm.");
+      }
+      pm = value;
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--pm=")) {
+      pm = token.slice("--pm=".length);
+      continue;
+    }
+
+    if (token === "--template") {
+      const value = args[index + 1];
+      if (!value) {
+        throw usageError("Missing value for --template.");
+      }
+      template = value;
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--template=")) {
+      template = token.slice("--template=".length);
+      continue;
+    }
+
+    if (token === "--lint") {
+      lint = true;
+      continue;
+    }
+
+    if (token.startsWith("-")) {
+      throw usageError(`Unknown option for init: ${token}`);
+    }
+
+    throw usageError("init does not accept positional arguments.");
+  }
+
+  return {
+    yes,
+    dryRun,
+    pm,
+    template,
+    lint,
+  };
+}
+
 function parseSelectionArgs(args: string[], command: "add" | "remove" | "upgrade"): ParsedSelectionArgs {
   const names: string[] = [];
   const presets: string[] = [];
@@ -286,7 +370,12 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   if (parsed.command === "init") {
-    throw usageError("The init command has been removed. Use: lattice create [project-path]");
+    const initArgs = parseInitArgs(parsed.commandArgs);
+    await runInitCommand({
+      cwd: process.cwd(),
+      ...initArgs,
+    });
+    return;
   }
 
   if (parsed.command === "create") {

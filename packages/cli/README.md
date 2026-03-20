@@ -17,6 +17,7 @@ lattice <command> [options]
 ### Commands
 
 - `lattice create [project-path] [--yes] [--pm <pnpm|npm|yarn>] [--git] [--template rbxts] [--lint] [--no-lint]`
+- `lattice init [--yes] [--dry-run] [--pm <pnpm|npm|yarn>] [--template rbxts] [--lint]`
 - `lattice add [name...] [--preset <preset...>] [--yes] [--dry-run]`
 - `lattice remove [name...] [--preset <preset...>] [--yes] [--dry-run]`
 - `lattice upgrade [name...] [--preset <preset...>] [--yes] [--dry-run]`
@@ -34,6 +35,7 @@ lattice <command> [options]
 ```bash
 npx @lattice-ui/cli create
 npx @lattice-ui/cli create my-game --pm npm --git --no-lint
+npx @lattice-ui/cli init --dry-run
 npx @lattice-ui/cli add dialog,toast --preset overlay
 npx @lattice-ui/cli remove dialog --dry-run
 npx @lattice-ui/cli upgrade --dry-run

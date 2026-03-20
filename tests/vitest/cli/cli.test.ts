@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { runCli } from "../../../packages/cli/src/cli";
 
 describe("runCli", () => {
-  it("prints migration guidance for init", async () => {
-    await expect(runCli(["init"])).rejects.toThrow(/lattice create \[project-path\]/i);
+  it("rejects positional arguments for init", async () => {
+    await expect(runCli(["init", "apps/game"])).rejects.toThrow(/does not accept positional arguments/i);
   });
 
   it("rejects removed global options", async () => {
@@ -48,5 +48,6 @@ describe("runCli", () => {
     expect(output).toContain("npx @lattice-ui/cli upgrade --dry-run");
     expect(output).toContain("npx @lattice-ui/cli doctor");
     expect(output).toContain("npx @lattice-ui/cli create");
+    expect(output).toContain("npx @lattice-ui/cli init --dry-run");
   });
 });

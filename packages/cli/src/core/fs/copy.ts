@@ -1,13 +1,14 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import type { Logger } from "../logger";
-import { readJsonFile, writeJsonFile } from "./json";
+import { parseJsonText, readJsonFile, writeJsonFile } from "./json";
 import { mergeMissing } from "./patch";
 
 export interface CopyTemplateOptions {
   dryRun: boolean;
   logger?: Logger;
   replacements?: Record<string, string>;
+  shouldIncludeFile?: (relativePath: string) => boolean;
 }
 
 export interface CopyTemplateReport {
@@ -73,6 +74,10 @@ export async function copyTemplateSafe(
 
   for (const templateFilePath of files) {
     const relativePath = path.relative(templateDir, templateFilePath);
+    if (options.shouldIncludeFile && !options.shouldIncludeFile(relativePath)) {
+      continue;
+    }
+
     const targetFilePath = path.join(targetDir, relativePath);
     const exists = await pathExists(targetFilePath);
 
@@ -94,7 +99,7 @@ export async function copyTemplateSafe(
     }
 
     const templateRaw = await fs.readFile(templateFilePath, "utf8");
-    const templateJson = JSON.parse(applyReplacements(templateRaw, options.replacements)) as unknown;
+    const templateJson = parseJsonText(applyReplacements(templateRaw, options.replacements)) as unknown;
     const currentJson = await readJsonFile<unknown>(targetFilePath);
     const mergedJson = mergeMissing(templateJson, currentJson);
 
