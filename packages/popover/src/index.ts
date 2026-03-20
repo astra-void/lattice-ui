@@ -21,7 +21,6 @@ export const Popover = {
   Close: typeof PopoverClose;
 };
 
-
 export type {
   PopoverAnchorProps,
   PopoverCloseProps,
