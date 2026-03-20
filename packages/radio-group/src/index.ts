@@ -12,15 +12,15 @@ export const RadioGroup = {
   Indicator: typeof RadioGroupIndicator;
 };
 
-export { RadioGroupIndicator, RadioGroupItem, RadioGroupRoot };
 
 export type {
   RadioGroupContextValue,
   RadioGroupIndicatorProps,
   RadioGroupItemContextValue,
-  RadioGroupItemRegistration,
   RadioGroupItemProps,
+  RadioGroupItemRegistration,
   RadioGroupOrientation,
   RadioGroupProps,
   RadioGroupSetValue,
 } from "./RadioGroup/types";
+export { RadioGroupIndicator, RadioGroupItem, RadioGroupRoot };
