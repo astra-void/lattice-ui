@@ -1,7 +1,7 @@
 {
   "name": "@lattice-ui/test-harness",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "scripts": {
     "build": "rbxtsc -p rbxtsc.build.json",
     "watch": "rbxtsc -p rbxtsc.build.json -w",
