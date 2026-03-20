@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add an interactive `init` CLI command that bootstraps Lattice into existing projects with safe template merging, dry-run planning, and JSONC-aware config updates.
+
 ## [0.4.0] - 2026-03-20
 
 This release narrows the workspace to the maintained UI package surface, adds shared focus-management primitives, and improves interaction reliability across layered and composite components.
