@@ -12,7 +12,6 @@ export const RadioGroup = {
   Indicator: typeof RadioGroupIndicator;
 };
 
-
 export type {
   RadioGroupContextValue,
   RadioGroupIndicatorProps,
