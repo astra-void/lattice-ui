@@ -21,7 +21,6 @@ export const Popover = {
   Close: typeof PopoverClose;
 };
 
-export { PopoverAnchor, PopoverClose, PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger };
 
 export type {
   PopoverAnchorProps,
@@ -31,3 +30,4 @@ export type {
   PopoverProps,
   PopoverTriggerProps,
 } from "./Popover/types";
+export { PopoverAnchor, PopoverClose, PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger };
