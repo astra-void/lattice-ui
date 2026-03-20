@@ -27,7 +27,6 @@ export const Menu = {
   Separator: typeof MenuSeparator;
 };
 
-
 export type {
   MenuContentProps,
   MenuGroupProps,
