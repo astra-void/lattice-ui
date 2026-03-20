@@ -1125,7 +1125,7 @@ describe("command behavior", () => {
         {
           name: "tmp",
           devDependencies: {
-            "@lattice-ui/cli": "^0.3.1",
+            "@lattice-ui/cli": "^0.4.0",
           },
         },
         null,
