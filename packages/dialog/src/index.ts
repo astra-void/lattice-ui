@@ -21,7 +21,6 @@ export const Dialog = {
   Close: typeof DialogClose;
 };
 
-
 export type {
   DialogCloseProps,
   DialogContentProps,
