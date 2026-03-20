@@ -30,17 +30,6 @@ export const Select = {
   Separator: typeof SelectSeparator;
 };
 
-export {
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectPortal,
-  SelectRoot,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-};
 
 export type {
   SelectContentProps,
@@ -57,3 +46,14 @@ export type {
   SelectTriggerProps,
   SelectValueProps,
 } from "./Select/types";
+export {
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectPortal,
+  SelectRoot,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+};
