@@ -30,7 +30,6 @@ export const Select = {
   Separator: typeof SelectSeparator;
 };
 
-
 export type {
   SelectContentProps,
   SelectContextValue,
