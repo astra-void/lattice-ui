@@ -21,7 +21,6 @@ export const Dialog = {
   Close: typeof DialogClose;
 };
 
-export { DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTrigger };
 
 export type {
   DialogCloseProps,
@@ -31,3 +30,4 @@ export type {
   DialogProps,
   DialogTriggerProps,
 } from "./Dialog/types";
+export { DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTrigger };
