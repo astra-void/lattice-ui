@@ -27,7 +27,6 @@ export const Menu = {
   Separator: typeof MenuSeparator;
 };
 
-export { MenuContent, MenuGroup, MenuItem, MenuLabel, MenuPortal, MenuRoot, MenuSeparator, MenuTrigger };
 
 export type {
   MenuContentProps,
@@ -40,3 +39,4 @@ export type {
   MenuSeparatorProps,
   MenuTriggerProps,
 } from "./Menu/types";
+export { MenuContent, MenuGroup, MenuItem, MenuLabel, MenuPortal, MenuRoot, MenuSeparator, MenuTrigger };
