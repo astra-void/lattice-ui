@@ -46,7 +46,23 @@ interface GitignorePlan {
 }
 
 const SUPPORTED_TEMPLATE = "rbxts";
-const GITIGNORE_ENTRIES = ["node_modules", "out"] as const;
+const GITIGNORE_ENTRIES = [
+  "node_modules",
+  "out",
+  "include",
+  "*.rbxl",
+  "*.rbxlx",
+  "*.rbxm",
+  "*.rbxmx",
+  "*.rbxl.lock",
+  "*.rbxlx.lock",
+  "*.rbxm.lock",
+  "*.rbxmx.lock",
+  "*.tsbuildinfo",
+  ".pnpm-store",
+  ".DS_Store",
+] as const;
+const PROJECT_DIRECTORIES = ["include", "out/shared", "out/server", "out/client"] as const;
 
 const CORE_VERSION_PACKAGES = {
   latticeStyle: "@lattice-ui/style",
@@ -318,6 +334,12 @@ async function planGitignore(projectRoot: string): Promise<GitignorePlan> {
   };
 }
 
+async function ensureProjectDirectories(projectRoot: string): Promise<void> {
+  await Promise.all(
+    PROJECT_DIRECTORIES.map((directory) => fs.mkdir(path.join(projectRoot, directory), { recursive: true })),
+  );
+}
+
 function buildVersionReplacements(versions: Record<string, string>): Record<string, string> {
   return {
     __LATTICE_STYLE_VERSION__: versions[CORE_VERSION_PACKAGES.latticeStyle],
@@ -545,6 +567,8 @@ export async function runInitCommand(
       if (manifestPlan.changed) {
         await writePackageJson(projectRoot, manifestPlan.nextManifest);
       }
+
+      await ensureProjectDirectories(projectRoot);
 
       if (gitignorePlan.changed) {
         await fs.writeFile(path.join(projectRoot, ".gitignore"), gitignorePlan.nextContent, "utf8");

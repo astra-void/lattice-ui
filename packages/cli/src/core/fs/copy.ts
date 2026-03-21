@@ -34,6 +34,14 @@ function isJsonFile(filePath: string): boolean {
   return filePath.endsWith(".json");
 }
 
+function shouldPreserveJsonKeyOrder(relativePath: string): boolean {
+  return relativePath === "package.json";
+}
+
+function resolveTargetRelativePath(relativePath: string): string {
+  return relativePath.endsWith(".template") ? relativePath.slice(0, -".template".length) : relativePath;
+}
+
 async function pathExists(targetPath: string): Promise<boolean> {
   try {
     await fs.access(targetPath);
@@ -73,7 +81,7 @@ export async function copyTemplateSafe(
   };
 
   for (const templateFilePath of files) {
-    const relativePath = path.relative(templateDir, templateFilePath);
+    const relativePath = resolveTargetRelativePath(path.relative(templateDir, templateFilePath));
     if (options.shouldIncludeFile && !options.shouldIncludeFile(relativePath)) {
       continue;
     }
@@ -111,7 +119,7 @@ export async function copyTemplateSafe(
     }
 
     if (!options.dryRun) {
-      await writeJsonFile(targetFilePath, mergedJson);
+      await writeJsonFile(targetFilePath, mergedJson, !shouldPreserveJsonKeyOrder(relativePath));
     }
 
     report.merged.push(relativePath);

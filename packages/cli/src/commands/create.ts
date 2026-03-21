@@ -53,7 +53,24 @@ const LINT_VERSION_PACKAGES = {
   prettier: "prettier",
 } as const;
 
-const GITIGNORE_CONTENT = "node_modules\nout\n";
+const GITIGNORE_ENTRIES = [
+  "node_modules",
+  "out",
+  "include",
+  "*.rbxl",
+  "*.rbxlx",
+  "*.rbxm",
+  "*.rbxmx",
+  "*.rbxl.lock",
+  "*.rbxlx.lock",
+  "*.rbxm.lock",
+  "*.rbxmx.lock",
+  "*.tsbuildinfo",
+  ".pnpm-store",
+  ".DS_Store",
+] as const;
+const GITIGNORE_CONTENT = `${GITIGNORE_ENTRIES.join("\n")}\n`;
+const PROJECT_DIRECTORIES = ["include", "out/shared", "out/server", "out/client"] as const;
 
 function inferPackageName(projectRoot: string): string {
   const baseName = path.basename(projectRoot);
@@ -139,6 +156,12 @@ async function ensureGitignoreExists(targetRoot: string): Promise<void> {
   } catch {
     await fs.writeFile(gitignorePath, GITIGNORE_CONTENT, "utf8");
   }
+}
+
+async function ensureProjectDirectories(targetRoot: string): Promise<void> {
+  await Promise.all(
+    PROJECT_DIRECTORIES.map((directory) => fs.mkdir(path.join(targetRoot, directory), { recursive: true })),
+  );
 }
 
 function normalizeTemplate(template: string | undefined): string {
@@ -321,6 +344,7 @@ export async function runCreateCommand(
     lintSpinner.succeed("Lint and format configuration applied.");
   }
 
+  await ensureProjectDirectories(targetRoot);
   await ensureGitignoreExists(targetRoot);
 
   logger.section("Installing");

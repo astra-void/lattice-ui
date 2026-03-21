@@ -13,7 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "moduleDetection": "force",
     "strict": true,
-    "target": "ESNext",
+    "target": "esnext",
     "typeRoots": ["node_modules/@rbxts", "node_modules/@lattice-ui"],
     "types": ["types", "compiler-types"],
 

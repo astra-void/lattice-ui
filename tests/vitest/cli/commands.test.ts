@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -120,12 +120,33 @@ describe("command behavior", () => {
       },
     );
 
-    const packageJson = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8")) as {
+    const packageJsonRaw = await readFile(path.join(projectRoot, "package.json"), "utf8");
+    const packageJson = JSON.parse(packageJsonRaw) as {
+      version: string;
       scripts: Record<string, string>;
       dependencies: Record<string, string>;
       devDependencies: Record<string, string>;
     };
+    const defaultProject = JSON.parse(await readFile(path.join(projectRoot, "default.project.json"), "utf8")) as {
+      globIgnorePaths: string[];
+      tree: {
+        ServerScriptService: Record<string, unknown>;
+        ReplicatedStorage: Record<string, unknown>;
+        StarterPlayer: Record<string, unknown>;
+        Workspace: Record<string, unknown>;
+        HttpService: Record<string, unknown>;
+        SoundService: Record<string, unknown>;
+      };
+    };
+    const tsconfig = JSON.parse(await readFile(path.join(projectRoot, "tsconfig.json"), "utf8")) as {
+      compilerOptions: {
+        target: string;
+      };
+      include: string[];
+      rbxts?: unknown;
+    };
 
+    expect(packageJson.version).toBe("0.1.0");
     expect(packageJson.dependencies["@rbxts/react"]).toBe("9.9.9");
     expect(packageJson.dependencies["@rbxts/react-roblox"]).toBe("9.9.9");
     expect(packageJson.dependencies["@lattice-ui/style"]).toBe("9.9.9");
@@ -137,6 +158,26 @@ describe("command behavior", () => {
     expect(packageJson.devDependencies["roblox-ts"]).toBe("9.9.9");
     expect(packageJson.scripts.lint).toBe("eslint .");
     expect(packageJson.scripts["format:check"]).toBe("prettier . --check");
+    expect(defaultProject.globIgnorePaths).toEqual(["**/package.json", "**/tsconfig.json"]);
+    expect(defaultProject.tree.ServerScriptService).toHaveProperty("TS.$path", "out/server");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.$path", "include");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.node_modules.@rbxts.$path", "node_modules/@rbxts");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@lattice-ui.$path", "node_modules/@lattice-ui");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts.$path", "node_modules/@rbxts");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts-js.$path", "node_modules/@rbxts-js");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("TS.$path", "out/shared");
+    expect(defaultProject.tree.StarterPlayer).toHaveProperty("StarterPlayerScripts.TS.$path", "out/client");
+    expect(defaultProject.tree.Workspace).toHaveProperty("$properties.FilteringEnabled", true);
+    expect(defaultProject.tree.HttpService).toHaveProperty("$properties.HttpEnabled", true);
+    expect(defaultProject.tree.SoundService).toHaveProperty("$properties.RespectFilteringEnabled", true);
+    expect(tsconfig.compilerOptions.target).toBe("esnext");
+    expect(tsconfig.include).toEqual(["src"]);
+    expect(tsconfig.rbxts).toBeUndefined();
+    expect(packageJsonRaw.indexOf('"name"')).toBeLessThan(packageJsonRaw.indexOf('"version"'));
+    expect(packageJsonRaw.indexOf('"version"')).toBeLessThan(packageJsonRaw.indexOf('"private"'));
+    expect(packageJsonRaw.indexOf('"private"')).toBeLessThan(packageJsonRaw.indexOf('"scripts"'));
+    expect(packageJsonRaw.indexOf('"scripts"')).toBeLessThan(packageJsonRaw.indexOf('"dependencies"'));
+    expect(packageJsonRaw.indexOf('"dependencies"')).toBeLessThan(packageJsonRaw.indexOf('"devDependencies"'));
     expect(install).toHaveBeenCalledWith(projectRoot);
     await expect(readFile(path.join(projectRoot, "eslint.config.mjs"), "utf8")).resolves.toContain(
       "@typescript-eslint/parser",
@@ -145,6 +186,13 @@ describe("command behavior", () => {
     const gitignore = await readFile(path.join(projectRoot, ".gitignore"), "utf8");
     expect(gitignore).toContain("node_modules");
     expect(gitignore).toContain("out");
+    expect(gitignore).toContain("include");
+    expect(gitignore).toContain("*.rbxlx");
+    expect(gitignore).toContain("*.tsbuildinfo");
+    await expect(access(path.join(projectRoot, "include"))).resolves.toBeUndefined();
+    await expect(access(path.join(projectRoot, "out", "shared"))).resolves.toBeUndefined();
+    await expect(access(path.join(projectRoot, "out", "server"))).resolves.toBeUndefined();
+    await expect(access(path.join(projectRoot, "out", "client"))).resolves.toBeUndefined();
   });
 
   it("create resolves project path from interactive prompt when omitted", async () => {
@@ -469,6 +517,7 @@ describe("command behavior", () => {
       JSON.stringify(
         {
           name: "existing-game",
+          version: "3.2.1",
           scripts: {
             build: "custom-build",
           },
@@ -514,24 +563,58 @@ describe("command behavior", () => {
     );
 
     const manifest = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8")) as {
+      version: string;
       scripts: Record<string, string>;
       dependencies: Record<string, string>;
       devDependencies: Record<string, string>;
     };
+    const defaultProject = JSON.parse(await readFile(path.join(dir, "default.project.json"), "utf8")) as {
+      globIgnorePaths: string[];
+      tree: {
+        ServerScriptService: Record<string, unknown>;
+        ReplicatedStorage: Record<string, unknown>;
+        StarterPlayer: Record<string, unknown>;
+        Workspace: Record<string, unknown>;
+        HttpService: Record<string, unknown>;
+        SoundService: Record<string, unknown>;
+      };
+    };
+    const mergedTsconfig = JSON.parse(await readFile(path.join(dir, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { typeRoots: string[] };
+      rbxts?: unknown;
+    };
+    expect(manifest.version).toBe("3.2.1");
     expect(manifest.scripts.build).toBe("custom-build");
     expect(manifest.scripts.watch).toBe("rbxtsc -p tsconfig.json -w");
     expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
     expect(manifest.dependencies["@rbxts/react"]).toBe("9.9.9");
     expect(manifest.devDependencies["@lattice-ui/cli"]).toBe("9.9.9");
+    expect(defaultProject.globIgnorePaths).toEqual(["**/package.json", "**/tsconfig.json"]);
+    expect(defaultProject.tree.ServerScriptService).toHaveProperty("TS.$path", "out/server");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.$path", "include");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.node_modules.@rbxts.$path", "node_modules/@rbxts");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@lattice-ui.$path", "node_modules/@lattice-ui");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts.$path", "node_modules/@rbxts");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts-js.$path", "node_modules/@rbxts-js");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("TS.$path", "out/shared");
+    expect(defaultProject.tree.StarterPlayer).toHaveProperty("StarterPlayerScripts.TS.$path", "out/client");
+    expect(defaultProject.tree.Workspace).toHaveProperty("$properties.FilteringEnabled", true);
+    expect(defaultProject.tree.HttpService).toHaveProperty("$properties.HttpEnabled", true);
+    expect(defaultProject.tree.SoundService).toHaveProperty("$properties.RespectFilteringEnabled", true);
     expect(await readFile(path.join(dir, "src", "client", "App.tsx"), "utf8")).toBe("export const App = 'existing';\n");
-    const tsconfig = JSON.parse(await readFile(path.join(dir, "tsconfig.json"), "utf8")) as {
-      compilerOptions: { typeRoots: string[] };
-    };
-    expect(tsconfig.compilerOptions.typeRoots).toEqual(["node_modules/@rbxts", "node_modules/@lattice-ui"]);
+    expect(mergedTsconfig.compilerOptions.typeRoots).toEqual(["node_modules/@rbxts", "node_modules/@lattice-ui"]);
+    expect(mergedTsconfig.rbxts).toBeUndefined();
     const gitignore = await readFile(path.join(dir, ".gitignore"), "utf8");
     expect(gitignore).toContain("dist");
     expect(gitignore).toContain("node_modules");
     expect(gitignore).toContain("out");
+    expect(gitignore).toContain("include");
+    expect(gitignore).toContain("*.rbxlx");
+    expect(gitignore).toContain("*.tsbuildinfo");
+    await expect(access(path.join(dir, "include"))).resolves.toBeUndefined();
+    await expect(access(path.join(dir, "out", "shared"))).resolves.toBeUndefined();
+    await expect(access(path.join(dir, "out", "server"))).resolves.toBeUndefined();
+    await expect(access(path.join(dir, "out", "client"))).resolves.toBeUndefined();
     expect(install).toHaveBeenCalledWith(dir);
   });
 

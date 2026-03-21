@@ -1,2 +1,14 @@
 node_modules
 out
+include
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+*.rbxl.lock
+*.rbxlx.lock
+*.rbxm.lock
+*.rbxmx.lock
+*.tsbuildinfo
+.pnpm-store
+.DS_Store
