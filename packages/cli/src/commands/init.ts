@@ -45,6 +45,12 @@ interface GitignorePlan {
   nextContent: string;
 }
 
+interface NpmrcPlan {
+  changed: boolean;
+  created: boolean;
+  nextContent: string;
+}
+
 const SUPPORTED_TEMPLATE = "rbxts";
 const GITIGNORE_ENTRIES = [
   "node_modules",
@@ -63,6 +69,8 @@ const GITIGNORE_ENTRIES = [
   ".DS_Store",
 ] as const;
 const PROJECT_DIRECTORIES = ["include", "out/shared", "out/server", "out/client"] as const;
+const PNPM_NPMRC_PATH = ".npmrc";
+const PNPM_NODE_LINKER_LINE = "node-linker=hoisted";
 
 const CORE_VERSION_PACKAGES = {
   latticeStyle: "@lattice-ui/style",
@@ -362,11 +370,74 @@ function buildVersionReplacements(versions: Record<string, string>): Record<stri
   };
 }
 
+async function planPnpmNpmrc(projectRoot: string, packageManager: PackageManagerName): Promise<NpmrcPlan> {
+  if (packageManager !== "pnpm") {
+    return {
+      changed: false,
+      created: false,
+      nextContent: "",
+    };
+  }
+
+  const npmrcPath = path.join(projectRoot, PNPM_NPMRC_PATH);
+
+  let currentContent = "";
+  let exists = true;
+  try {
+    currentContent = await fs.readFile(npmrcPath, "utf8");
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code !== "ENOENT") {
+      throw error;
+    }
+
+    exists = false;
+  }
+
+  const eol = currentContent.includes("\r\n") ? "\r\n" : "\n";
+  const lines = currentContent.length > 0 ? currentContent.split(/\r?\n/) : [];
+  const nodeLinkerIndex = lines.findIndex((line) => /^\s*node-linker\s*=/.test(line));
+
+  if (nodeLinkerIndex >= 0) {
+    if (lines[nodeLinkerIndex].trim() === PNPM_NODE_LINKER_LINE) {
+      return {
+        changed: false,
+        created: false,
+        nextContent: currentContent,
+      };
+    }
+
+    lines[nodeLinkerIndex] = PNPM_NODE_LINKER_LINE;
+    return {
+      changed: true,
+      created: false,
+      nextContent: lines.join(eol),
+    };
+  }
+
+  if (!exists) {
+    return {
+      changed: true,
+      created: true,
+      nextContent: `${PNPM_NODE_LINKER_LINE}\n`,
+    };
+  }
+
+  return {
+    changed: true,
+    created: false,
+    nextContent: currentContent.endsWith("\n")
+      ? `${currentContent}${PNPM_NODE_LINKER_LINE}${eol}`
+      : `${currentContent}${eol}${PNPM_NODE_LINKER_LINE}${eol}`,
+  };
+}
+
 function collectChangedFiles(
   templateReport: CopyTemplateReport,
   lintReport: CopyTemplateReport | undefined,
   manifestPlan: ManifestPlan,
   gitignorePlan: GitignorePlan,
+  npmrcPlan: NpmrcPlan,
 ): string[] {
   const files = [
     ...templateReport.created,
@@ -382,6 +453,10 @@ function collectChangedFiles(
     files.push(".gitignore");
   }
 
+  if (npmrcPlan.changed) {
+    files.push(PNPM_NPMRC_PATH);
+  }
+
   return [...new Set(files)].sort((left, right) => left.localeCompare(right));
 }
 
@@ -389,8 +464,14 @@ function countCreatedFiles(
   templateReport: CopyTemplateReport,
   lintReport: CopyTemplateReport | undefined,
   gitignorePlan: GitignorePlan,
+  npmrcPlan: NpmrcPlan,
 ): number {
-  return templateReport.created.length + (lintReport?.created.length ?? 0) + (gitignorePlan.created ? 1 : 0);
+  return (
+    templateReport.created.length +
+    (lintReport?.created.length ?? 0) +
+    (gitignorePlan.created ? 1 : 0) +
+    (npmrcPlan.created ? 1 : 0)
+  );
 }
 
 function countMergedFiles(
@@ -398,12 +479,14 @@ function countMergedFiles(
   lintReport: CopyTemplateReport | undefined,
   manifestPlan: ManifestPlan,
   gitignorePlan: GitignorePlan,
+  npmrcPlan: NpmrcPlan,
 ): number {
   return (
     templateReport.merged.length +
     (lintReport?.merged.length ?? 0) +
     (manifestPlan.changed ? 1 : 0) +
-    (gitignorePlan.changed && !gitignorePlan.created ? 1 : 0)
+    (gitignorePlan.changed && !gitignorePlan.created ? 1 : 0) +
+    (npmrcPlan.changed && !npmrcPlan.created ? 1 : 0)
   );
 }
 
@@ -476,13 +559,15 @@ export async function runInitCommand(
     lintManifest ? [templateManifest, lintManifest] : [templateManifest],
   );
   const gitignorePlan = await planGitignore(projectRoot);
-  const changedFiles = collectChangedFiles(templateReport, lintReport, manifestPlan, gitignorePlan);
+  const npmrcPlan = await planPnpmNpmrc(projectRoot, resolvedPm.name);
+  const changedFiles = collectChangedFiles(templateReport, lintReport, manifestPlan, gitignorePlan, npmrcPlan);
   const addedPackages = [...new Set([...manifestPlan.addedDependencies, ...manifestPlan.addedDevDependencies])].sort(
     (left, right) => left.localeCompare(right),
   );
-  const createdCount = countCreatedFiles(templateReport, lintReport, gitignorePlan);
-  const mergedCount = countMergedFiles(templateReport, lintReport, manifestPlan, gitignorePlan);
+  const createdCount = countCreatedFiles(templateReport, lintReport, gitignorePlan, npmrcPlan);
+  const mergedCount = countMergedFiles(templateReport, lintReport, manifestPlan, gitignorePlan, npmrcPlan);
   const localLattice = resolveLocalLatticeCommand(resolvedPm.name);
+  const installRequired = manifestPlan.changed || npmrcPlan.changed;
 
   logger.section("Planning");
   logger.kv("Files to create", String(createdCount));
@@ -529,7 +614,7 @@ export async function runInitCommand(
       }
     }
 
-    if (manifestPlan.changed) {
+    if (installRequired) {
       logger.step(`[dry-run] ${resolvedPm.name} install`);
     } else {
       logger.step("[dry-run] No install required.");
@@ -574,7 +659,11 @@ export async function runInitCommand(
         await fs.writeFile(path.join(projectRoot, ".gitignore"), gitignorePlan.nextContent, "utf8");
       }
 
-      if (manifestPlan.changed) {
+      if (npmrcPlan.changed) {
+        await fs.writeFile(path.join(projectRoot, PNPM_NPMRC_PATH), npmrcPlan.nextContent, "utf8");
+      }
+
+      if (installRequired) {
         const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
         await resolvedPm.manager.install(projectRoot);
         installSpinner.succeed("Dependencies installed.");

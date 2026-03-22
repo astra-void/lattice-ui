@@ -71,6 +71,8 @@ const GITIGNORE_ENTRIES = [
 ] as const;
 const GITIGNORE_CONTENT = `${GITIGNORE_ENTRIES.join("\n")}\n`;
 const PROJECT_DIRECTORIES = ["include", "out/shared", "out/server", "out/client"] as const;
+const PNPM_NPMRC_PATH = ".npmrc";
+const PNPM_NODE_LINKER_LINE = "node-linker=hoisted";
 
 function inferPackageName(projectRoot: string): string {
   const baseName = path.basename(projectRoot);
@@ -183,6 +185,43 @@ function normalizePackageManager(pm: string | undefined): PackageManagerName | u
   }
 
   throw usageError(`Invalid --pm value "${pm}". Use pnpm, npm, or yarn.`);
+}
+
+async function ensurePnpmNodeLinkerConfig(targetRoot: string, packageManager: PackageManagerName): Promise<void> {
+  if (packageManager !== "pnpm") {
+    return;
+  }
+
+  const npmrcPath = path.join(targetRoot, PNPM_NPMRC_PATH);
+
+  try {
+    const currentContent = await fs.readFile(npmrcPath, "utf8");
+    const eol = currentContent.includes("\r\n") ? "\r\n" : "\n";
+    const lines = currentContent.split(/\r?\n/);
+    const nodeLinkerIndex = lines.findIndex((line) => /^\s*node-linker\s*=/.test(line));
+
+    if (nodeLinkerIndex >= 0) {
+      if (lines[nodeLinkerIndex].trim() === PNPM_NODE_LINKER_LINE) {
+        return;
+      }
+
+      lines[nodeLinkerIndex] = PNPM_NODE_LINKER_LINE;
+      await fs.writeFile(npmrcPath, lines.join(eol), "utf8");
+      return;
+    }
+
+    const nextContent = currentContent.endsWith("\n")
+      ? `${currentContent}${PNPM_NODE_LINKER_LINE}${eol}`
+      : `${currentContent}${eol}${PNPM_NODE_LINKER_LINE}${eol}`;
+    await fs.writeFile(npmrcPath, nextContent, "utf8");
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code !== "ENOENT") {
+      throw error;
+    }
+
+    await fs.writeFile(npmrcPath, `${PNPM_NODE_LINKER_LINE}\n`, "utf8");
+  }
 }
 
 async function selectTemplate(providedTemplate: string | undefined): Promise<string> {
@@ -346,6 +385,7 @@ export async function runCreateCommand(
 
   await ensureProjectDirectories(targetRoot);
   await ensureGitignoreExists(targetRoot);
+  await ensurePnpmNodeLinkerConfig(targetRoot, resolvedPm.name);
 
   logger.section("Installing");
   const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);

@@ -145,6 +145,7 @@ describe("command behavior", () => {
       include: string[];
       rbxts?: unknown;
     };
+    const mainClient = await readFile(path.join(projectRoot, "src", "client", "main.client.tsx"), "utf8");
 
     expect(packageJson.version).toBe("0.1.0");
     expect(packageJson.dependencies["@rbxts/react"]).toBe("9.9.9");
@@ -173,6 +174,8 @@ describe("command behavior", () => {
     expect(tsconfig.compilerOptions.target).toBe("esnext");
     expect(tsconfig.include).toEqual(["src"]);
     expect(tsconfig.rbxts).toBeUndefined();
+    expect(mainClient).toContain('import { ThemeProvider, defaultLightTheme } from "@lattice-ui/style";');
+    expect(mainClient).toContain("<ThemeProvider theme={defaultLightTheme}>");
     expect(packageJsonRaw.indexOf('"name"')).toBeLessThan(packageJsonRaw.indexOf('"version"'));
     expect(packageJsonRaw.indexOf('"version"')).toBeLessThan(packageJsonRaw.indexOf('"private"'));
     expect(packageJsonRaw.indexOf('"private"')).toBeLessThan(packageJsonRaw.indexOf('"scripts"'));
@@ -225,6 +228,46 @@ describe("command behavior", () => {
     const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as { name: string };
     expect(packageJson.name).toBe("my-interactive-game");
     expect(install).toHaveBeenCalledWith(path.join(dir, "my-interactive-game"));
+  });
+
+  it("create writes pnpm hoisted linker config", async () => {
+    const dir = await createTempDir();
+    const projectRoot = path.join(dir, "my-game");
+
+    await runCreateCommand(
+      {
+        cwd: dir,
+        projectPath: "my-game",
+        yes: true,
+        pm: "pnpm",
+        template: "rbxts",
+        git: false,
+        lint: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "pnpm" as const,
+          manager: createPackageManager({ name: "pnpm" }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: vi.fn(async (packages) =>
+          Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
+        ),
+      },
+    );
+
+    const defaultProject = JSON.parse(await readFile(path.join(projectRoot, "default.project.json"), "utf8")) as {
+      tree: {
+        ReplicatedStorage: Record<string, unknown>;
+      };
+    };
+    const npmrc = await readFile(path.join(projectRoot, ".npmrc"), "utf8");
+
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "node_modules.@rbxts-js.$path",
+      "node_modules/@rbxts-js",
+    );
+    expect(npmrc).toBe("node-linker=hoisted\n");
   });
 
   it("create requires project path in --yes mode", async () => {
@@ -583,6 +626,7 @@ describe("command behavior", () => {
       compilerOptions: { typeRoots: string[] };
       rbxts?: unknown;
     };
+    const mainClient = await readFile(path.join(dir, "src", "client", "main.client.tsx"), "utf8");
     expect(manifest.version).toBe("3.2.1");
     expect(manifest.scripts.build).toBe("custom-build");
     expect(manifest.scripts.watch).toBe("rbxtsc -p tsconfig.json -w");
@@ -602,6 +646,7 @@ describe("command behavior", () => {
     expect(defaultProject.tree.HttpService).toHaveProperty("$properties.HttpEnabled", true);
     expect(defaultProject.tree.SoundService).toHaveProperty("$properties.RespectFilteringEnabled", true);
     expect(await readFile(path.join(dir, "src", "client", "App.tsx"), "utf8")).toBe("export const App = 'existing';\n");
+    expect(mainClient).toContain('import { ThemeProvider, defaultLightTheme } from "@lattice-ui/style";');
     expect(mergedTsconfig.compilerOptions.typeRoots).toEqual(["node_modules/@rbxts", "node_modules/@lattice-ui"]);
     expect(mergedTsconfig.rbxts).toBeUndefined();
     const gitignore = await readFile(path.join(dir, ".gitignore"), "utf8");
@@ -677,6 +722,43 @@ describe("command behavior", () => {
     expect(manifest.devDependencies["@lattice-ui/cli"]).toBe("workspace:*");
     expect(manifest.devDependencies["roblox-ts"]).toBe("99.0.0");
     expect(manifest.devDependencies["typescript"]).toBe("99.0.0");
+  });
+
+  it("init writes pnpm hoisted linker config", async () => {
+    const dir = await createTempDir();
+    const install = vi.fn(async () => undefined);
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp" }, null, 2), "utf8");
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+        pm: "pnpm",
+      },
+      {
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "pnpm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager({ name: "pnpm", install }),
+          lockfiles: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
+      },
+    );
+
+    const defaultProject = JSON.parse(await readFile(path.join(dir, "default.project.json"), "utf8")) as {
+      tree: {
+        ReplicatedStorage: Record<string, unknown>;
+      };
+    };
+    const npmrc = await readFile(path.join(dir, ".npmrc"), "utf8");
+
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "node_modules.@rbxts-js.$path",
+      "node_modules/@rbxts-js",
+    );
+    expect(npmrc).toBe("node-linker=hoisted\n");
+    expect(install).toHaveBeenCalledWith(dir);
   });
 
   it("init only adds lint configuration when --lint is enabled", async () => {

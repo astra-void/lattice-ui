@@ -1,5 +1,6 @@
 import React from "@rbxts/react";
 import ReactRoblox from "@rbxts/react-roblox";
+import { ThemeProvider, defaultLightTheme } from "@lattice-ui/style";
 import { App } from "./App";
 
 const Players = game.GetService("Players");
@@ -18,4 +19,8 @@ container.Name = "LatticeRoot";
 container.Parent = playerGuiInstance;
 
 const root = ReactRoblox.createRoot(container);
-root.render(React.createElement(App));
+root.render(
+  <ThemeProvider theme={defaultLightTheme}>
+    <App />
+  </ThemeProvider>,
+);
