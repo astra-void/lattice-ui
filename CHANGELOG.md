@@ -10,6 +10,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add an interactive `init` CLI command that bootstraps Lattice into existing projects with safe template merging, dry-run planning, and JSONC-aware config updates.
 
+## [0.4.4] - 2026-03-22
+
+This patch completes the CLI package rename so generated files, docs, and workspace tooling consistently target the published `lattice-ui` package.
+
+Migration notes:
+
+- Replace any remaining `@lattice-ui/cli` install or script references with `lattice-ui`.
+
+### Fixed
+
+- Update the CLI docs, generated templates, and command output to use the published `lattice-ui` package name consistently.
+- Fix workspace tooling classification so the renamed `lattice-ui` package is handled correctly by workspace policy checks.
+
+## [0.4.3] - 2026-03-22
+
+This release renames the published CLI package to `lattice-ui` so installation and upgrade flows match the supported package name.
+
+Migration notes:
+
+- Replace `@lattice-ui/cli` with `lattice-ui` in install commands, scripts, and automation before upgrading.
+
+### Changed
+
+- Rename the published CLI package from `@lattice-ui/cli` to `lattice-ui`.
+
+## [0.4.2] - 2026-03-22
+
+### Added
+
+- Add automatic package manager detection across CLI commands so `create`, `init`, and related flows adapt to the project's existing npm, pnpm, yarn, or bun setup.
+
+## [0.4.1] - 2026-03-22
+
+### Fixed
+
+- Fix CLI scaffolding for pnpm-based projects by wiring the generated setup for hoisting and the theme provider more reliably.
+
 ## [0.4.0] - 2026-03-20
 
 This release narrows the workspace to the maintained UI package surface, adds shared focus-management primitives, and improves interaction reliability across layered and composite components.
