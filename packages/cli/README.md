@@ -1,11 +1,11 @@
-# @lattice-ui/cli
+# lattice-ui
 
 Node CLI for Lattice UI projects.
 
 ## Install (Optional Global)
 
 ```bash
-npm i -g @lattice-ui/cli
+npm i -g lattice-ui
 ```
 
 ## Usage
@@ -33,13 +33,13 @@ lattice <command> [options]
 ### Examples
 
 ```bash
-npx @lattice-ui/cli create
-npx @lattice-ui/cli create my-game --pm npm --git --no-lint
-npx @lattice-ui/cli init --dry-run
-npx @lattice-ui/cli add dialog,toast --preset overlay
-npx @lattice-ui/cli remove dialog --dry-run
-npx @lattice-ui/cli upgrade --dry-run
-npx @lattice-ui/cli doctor
+npx lattice-ui create
+npx lattice-ui create my-game --pm npm --git --no-lint
+npx lattice-ui init --dry-run
+npx lattice-ui add dialog,toast --preset overlay
+npx lattice-ui remove dialog --dry-run
+npx lattice-ui upgrade --dry-run
+npx lattice-ui doctor
 ```
 
 When `--pm` is omitted, the CLI resolves a package manager automatically from the project lockfile or installed managers. Use `--pm` to override that choice explicitly.

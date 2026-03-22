@@ -24,7 +24,7 @@ type Issue = {
   message: string;
 };
 
-const LATTICE_TOOLING_PACKAGES = new Set<string>(["@lattice-ui/cli"]);
+const LATTICE_TOOLING_PACKAGES = new Set<string>(["lattice-ui"]);
 
 function collectRecommendations(issues: Issue[], pmName: PackageManagerName): string[] {
   const recommendationSet = new Set<string>();

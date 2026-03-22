@@ -13,7 +13,7 @@
     "@rbxts/react-roblox": "__RBXTS_REACT_ROBLOX_VERSION__"
   },
   "devDependencies": {
-    "@lattice-ui/cli": "__LATTICE_CLI_VERSION__",
+    "lattice-ui": "__LATTICE_CLI_VERSION__",
     "@rbxts/compiler-types": "__RBXTS_COMPILER_TYPES_VERSION__",
     "@rbxts/types": "__RBXTS_TYPES_VERSION__",
     "roblox-ts": "__ROBLOX_TS_VERSION__",

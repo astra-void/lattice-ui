@@ -43,11 +43,11 @@ describe("runCli", () => {
       process.stdout.write = write;
     }
 
-    expect(output).toContain("npx @lattice-ui/cli add dialog,toast --preset overlay");
-    expect(output).toContain("npx @lattice-ui/cli remove dialog --dry-run");
-    expect(output).toContain("npx @lattice-ui/cli upgrade --dry-run");
-    expect(output).toContain("npx @lattice-ui/cli doctor");
-    expect(output).toContain("npx @lattice-ui/cli create");
-    expect(output).toContain("npx @lattice-ui/cli init --dry-run");
+    expect(output).toContain("npx lattice-ui add dialog,toast --preset overlay");
+    expect(output).toContain("npx lattice-ui remove dialog --dry-run");
+    expect(output).toContain("npx lattice-ui upgrade --dry-run");
+    expect(output).toContain("npx lattice-ui doctor");
+    expect(output).toContain("npx lattice-ui create");
+    expect(output).toContain("npx lattice-ui init --dry-run");
   });
 });

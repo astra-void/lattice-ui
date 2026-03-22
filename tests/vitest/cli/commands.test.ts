@@ -156,7 +156,7 @@ describe("command behavior", () => {
     expect(packageJson.dependencies["@rbxts/react"]).toBe("9.9.9");
     expect(packageJson.dependencies["@rbxts/react-roblox"]).toBe("9.9.9");
     expect(packageJson.dependencies["@lattice-ui/style"]).toBe("9.9.9");
-    expect(packageJson.devDependencies["@lattice-ui/cli"]).toBe("9.9.9");
+    expect(packageJson.devDependencies["lattice-ui"]).toBe("9.9.9");
     expect(packageJson.devDependencies["@eslint/eslintrc"]).toBe("9.9.9");
     expect(packageJson.devDependencies["eslint"]).toBe("9.9.9");
     expect(packageJson.devDependencies["eslint-plugin-roblox-ts"]).toBe("9.9.9");
@@ -372,7 +372,7 @@ describe("command behavior", () => {
       scripts: Record<string, string>;
       devDependencies: Record<string, string>;
     };
-    expect(packageJson.devDependencies["@lattice-ui/cli"]).toBe("1.0.0");
+    expect(packageJson.devDependencies["lattice-ui"]).toBe("1.0.0");
     expect(packageJson.devDependencies["@eslint/eslintrc"]).toBeUndefined();
     expect(packageJson.devDependencies["eslint"]).toBeUndefined();
     expect(packageJson.devDependencies["prettier"]).toBeUndefined();
@@ -713,7 +713,7 @@ describe("command behavior", () => {
     expect(manifest.scripts.watch).toBe("rbxtsc -p tsconfig.json -w");
     expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
     expect(manifest.dependencies["@rbxts/react"]).toBe("9.9.9");
-    expect(manifest.devDependencies["@lattice-ui/cli"]).toBe("9.9.9");
+    expect(manifest.devDependencies["lattice-ui"]).toBe("9.9.9");
     expect(defaultProject.name).toBe("existing-game");
     expect(defaultProject.globIgnorePaths).toEqual(["**/package.json", "**/tsconfig.json"]);
     expect(defaultProject.tree.ServerScriptService).toHaveProperty("TS.$path", "out/server");
@@ -835,7 +835,7 @@ describe("command behavior", () => {
             "@rbxts/react-roblox": "18.0.0",
           },
           devDependencies: {
-            "@lattice-ui/cli": "workspace:*",
+            "lattice-ui": "workspace:*",
             "roblox-ts": "99.0.0",
             "typescript": "99.0.0",
           },
@@ -875,7 +875,7 @@ describe("command behavior", () => {
     expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
     expect(manifest.dependencies["@rbxts/react"]).toBe("18.0.0");
     expect(manifest.dependencies["@rbxts/react-roblox"]).toBe("18.0.0");
-    expect(manifest.devDependencies["@lattice-ui/cli"]).toBe("workspace:*");
+    expect(manifest.devDependencies["lattice-ui"]).toBe("workspace:*");
     expect(manifest.devDependencies["roblox-ts"]).toBe("99.0.0");
     expect(manifest.devDependencies["typescript"]).toBe("99.0.0");
   });
@@ -1446,7 +1446,7 @@ describe("command behavior", () => {
     expect(logger.list).toHaveBeenCalledWith(expect.arrayContaining(["pnpm lattice add <component>"]));
   });
 
-  it("doctor ignores @lattice-ui/cli as a tooling package", async () => {
+  it("doctor ignores lattice-ui as a tooling package", async () => {
     const dir = await createTempDir();
     await writeFile(
       path.join(dir, "package.json"),
@@ -1454,7 +1454,7 @@ describe("command behavior", () => {
         {
           name: "tmp",
           devDependencies: {
-            "@lattice-ui/cli": "^0.4.0",
+            "lattice-ui": "^0.4.0",
           },
         },
         null,
@@ -1478,7 +1478,7 @@ describe("command behavior", () => {
     const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
     const listedMessages = listCalls.flatMap((call) => call[0]);
 
-    expect(listedMessages).not.toContain("@lattice-ui/cli is installed but not found in CLI registry.");
+    expect(listedMessages).not.toContain("lattice-ui is installed but not found in CLI registry.");
     expect(listedMessages).toContain("No @lattice-ui component packages are installed.");
   });
 

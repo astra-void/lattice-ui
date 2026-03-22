@@ -33,7 +33,7 @@ const SUPPORTED_TEMPLATE = "rbxts";
 
 const CORE_VERSION_PACKAGES = {
   latticeStyle: "@lattice-ui/style",
-  latticeCli: "@lattice-ui/cli",
+  latticeCli: "lattice-ui",
   rbxtsReact: "@rbxts/react",
   rbxtsReactRoblox: "@rbxts/react-roblox",
   rbxtsCompilerTypes: "@rbxts/compiler-types",
