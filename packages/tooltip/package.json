@@ -1,6 +1,6 @@
 {
   "name": "@lattice-ui/tooltip",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": false,
   "main": "out/init.luau",
   "types": "out/index.d.ts",

@@ -1,6 +1,6 @@
 {
-  "name": "@lattice-ui/cli",
-  "version": "0.4.2",
+  "name": "lattice-ui",
+  "version": "0.4.3",
   "private": false,
   "description": "Lattice UI CLI",
   "main": "dist/index.js",
@@ -21,6 +21,7 @@
     "node": ">=20"
   },
   "bin": {
+    "lattice-ui": "dist/index.js",
     "lattice": "dist/index.js"
   }
 }

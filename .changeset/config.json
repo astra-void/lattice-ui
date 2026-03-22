@@ -11,7 +11,6 @@
       "@lattice-ui/accordion",
       "@lattice-ui/avatar",
       "@lattice-ui/checkbox",
-      "@lattice-ui/cli",
       "@lattice-ui/combobox",
       "@lattice-ui/core",
       "@lattice-ui/dialog",
@@ -33,7 +32,8 @@
       "@lattice-ui/textarea",
       "@lattice-ui/toast",
       "@lattice-ui/toggle-group",
-      "@lattice-ui/tooltip"
+      "@lattice-ui/tooltip",
+      "lattice-ui"
     ]
   ],
   "linked": []
