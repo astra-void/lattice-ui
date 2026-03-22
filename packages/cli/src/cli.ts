@@ -21,16 +21,16 @@ Commands:
   init [--yes] [--dry-run] [--pm <pnpm|npm|yarn>] [--template rbxts] [--lint]
     Initialize Lattice in an existing project.
 
-  add [name...] [--preset <preset...>] [--yes] [--dry-run]
+  add [name...] [--preset <preset...>] [--pm <pnpm|npm|yarn>] [--yes] [--dry-run]
     Install component packages and their required peers.
 
-  remove [name...] [--preset <preset...>] [--yes] [--dry-run]
+  remove [name...] [--preset <preset...>] [--pm <pnpm|npm|yarn>] [--yes] [--dry-run]
     Remove selected component packages.
 
-  upgrade [name...] [--preset <preset...>] [--yes] [--dry-run]
+  upgrade [name...] [--preset <preset...>] [--pm <pnpm|npm|yarn>] [--yes] [--dry-run]
     Upgrade installed @lattice-ui/* packages.
 
-  doctor
+  doctor [--pm <pnpm|npm|yarn>]
     Check lockfiles, peers, and provider expectations.
 
   help
@@ -72,6 +72,7 @@ interface ParsedCreateArgs {
 interface ParsedSelectionArgs {
   names: string[];
   presets: string[];
+  pm?: string;
   yes: boolean;
   dryRun: boolean;
 }
@@ -82,6 +83,10 @@ interface ParsedInitArgs {
   pm?: string;
   template?: string;
   lint?: boolean;
+}
+
+interface ParsedDoctorArgs {
+  pm?: string;
 }
 
 function splitList(value: string): string[] {
@@ -291,6 +296,7 @@ function parseInitArgs(args: string[]): ParsedInitArgs {
 function parseSelectionArgs(args: string[], command: "add" | "remove" | "upgrade"): ParsedSelectionArgs {
   const names: string[] = [];
   const presets: string[] = [];
+  let pm: string | undefined;
   let yes = false;
   let dryRun = false;
 
@@ -310,6 +316,22 @@ function parseSelectionArgs(args: string[], command: "add" | "remove" | "upgrade
 
     if (token.startsWith("--preset=")) {
       presets.push(...splitList(token.slice("--preset=".length)));
+      continue;
+    }
+
+    if (token === "--pm") {
+      const value = args[index + 1];
+      if (!value) {
+        throw usageError("Missing value for --pm.");
+      }
+
+      pm = value;
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--pm=")) {
+      pm = token.slice("--pm=".length);
       continue;
     }
 
@@ -333,15 +355,42 @@ function parseSelectionArgs(args: string[], command: "add" | "remove" | "upgrade
   return {
     names,
     presets,
+    pm,
     yes,
     dryRun,
   };
 }
 
-function parseDoctorArgs(args: string[]) {
-  if (args.length > 0) {
-    throw usageError("doctor does not accept positional arguments or flags.");
+function parseDoctorArgs(args: string[]): ParsedDoctorArgs {
+  let pm: string | undefined;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+
+    if (token === "--pm") {
+      const value = args[index + 1];
+      if (!value) {
+        throw usageError("Missing value for --pm.");
+      }
+
+      pm = value;
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith("--pm=")) {
+      pm = token.slice("--pm=".length);
+      continue;
+    }
+
+    if (token.startsWith("-")) {
+      throw usageError(`Unknown option for doctor: ${token}`);
+    }
+
+    throw usageError("doctor does not accept positional arguments.");
   }
+
+  return { pm };
 }
 
 async function readCliVersion(): Promise<string> {
@@ -391,7 +440,7 @@ export async function runCli(argv: string[]): Promise<void> {
     const selection = parseSelectionArgs(parsed.commandArgs, "add");
     const ctx = await createContext({
       cwd: process.cwd(),
-      pm: undefined,
+      pm: selection.pm,
       dryRun: selection.dryRun,
       yes: selection.yes,
       verbose: false,
@@ -404,7 +453,7 @@ export async function runCli(argv: string[]): Promise<void> {
     const selection = parseSelectionArgs(parsed.commandArgs, "upgrade");
     const ctx = await createContext({
       cwd: process.cwd(),
-      pm: undefined,
+      pm: selection.pm,
       dryRun: selection.dryRun,
       yes: selection.yes,
       verbose: false,
@@ -417,7 +466,7 @@ export async function runCli(argv: string[]): Promise<void> {
     const selection = parseSelectionArgs(parsed.commandArgs, "remove");
     const ctx = await createContext({
       cwd: process.cwd(),
-      pm: undefined,
+      pm: selection.pm,
       dryRun: selection.dryRun,
       yes: selection.yes,
       verbose: false,
@@ -427,10 +476,10 @@ export async function runCli(argv: string[]): Promise<void> {
   }
 
   if (parsed.command === "doctor") {
-    parseDoctorArgs(parsed.commandArgs);
+    const doctorArgs = parseDoctorArgs(parsed.commandArgs);
     const ctx = await createContext({
       cwd: process.cwd(),
-      pm: undefined,
+      pm: doctorArgs.pm,
       dryRun: false,
       yes: false,
       verbose: false,

@@ -25,7 +25,7 @@ describe("runCli", () => {
   });
 
   it("rejects unknown options for remove", async () => {
-    await expect(runCli(["remove", "--pm", "npm"])).rejects.toThrow(/unknown option for remove/i);
+    await expect(runCli(["remove", "--bogus"])).rejects.toThrow(/unknown option for remove/i);
   });
 
   it("prints help examples with local lattice command usage", async () => {

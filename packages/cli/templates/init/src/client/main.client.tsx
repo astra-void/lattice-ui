@@ -1,6 +1,6 @@
+import { defaultLightTheme, ThemeProvider } from "@lattice-ui/style";
 import React from "@rbxts/react";
 import ReactRoblox from "@rbxts/react-roblox";
-import { ThemeProvider, defaultLightTheme } from "@lattice-ui/style";
 import { App } from "./App";
 
 const Players = game.GetService("Players");

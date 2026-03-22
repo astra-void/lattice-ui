@@ -104,18 +104,6 @@ function normalizeTemplate(template: string | undefined): string {
   return value;
 }
 
-function normalizePackageManager(pm: string | undefined): PackageManagerName | undefined {
-  if (!pm) {
-    return undefined;
-  }
-
-  if (pm === "npm" || pm === "pnpm" || pm === "yarn") {
-    return pm;
-  }
-
-  throw usageError(`Invalid --pm value "${pm}". Use pnpm, npm, or yarn.`);
-}
-
 async function selectTemplate(providedTemplate: string | undefined): Promise<string> {
   const normalized = normalizeTemplate(providedTemplate);
 
@@ -124,45 +112,6 @@ async function selectTemplate(providedTemplate: string | undefined): Promise<str
   }
 
   return normalized;
-}
-
-function getPackageManagerDefaultIndex(packageManager: PackageManagerName): number {
-  if (packageManager === "npm") {
-    return 0;
-  }
-
-  if (packageManager === "pnpm") {
-    return 1;
-  }
-
-  return 2;
-}
-
-async function selectPackageManager(
-  runtime: PromptRuntime,
-  providedPm: string | undefined,
-  detectedPm: PackageManagerName,
-  promptSelectFn: typeof promptSelect,
-): Promise<PackageManagerName> {
-  const normalized = normalizePackageManager(providedPm);
-  if (normalized) {
-    return normalized;
-  }
-
-  if (runtime.yes) {
-    return detectedPm;
-  }
-
-  return promptSelectFn(
-    runtime,
-    "Select a package manager",
-    [
-      { label: "npm", value: "npm" as const },
-      { label: "pnpm", value: "pnpm" as const },
-      { label: "yarn", value: "yarn" as const },
-    ],
-    { defaultIndex: getPackageManagerDefaultIndex(detectedPm) },
-  );
 }
 
 async function selectLintEnabled(
@@ -348,8 +297,18 @@ async function ensureProjectDirectories(projectRoot: string): Promise<void> {
   );
 }
 
-function buildVersionReplacements(versions: Record<string, string>): Record<string, string> {
+function inferProjectName(projectRoot: string, manifest: PackageJson): string {
+  const packageName = manifest.name?.trim();
+  if (packageName && packageName.length > 0) {
+    return packageName;
+  }
+
+  return path.basename(projectRoot);
+}
+
+function buildVersionReplacements(projectName: string, versions: Record<string, string>): Record<string, string> {
   return {
+    __PROJECT_NAME__: projectName,
     __LATTICE_STYLE_VERSION__: versions[CORE_VERSION_PACKAGES.latticeStyle],
     __LATTICE_CLI_VERSION__: versions[CORE_VERSION_PACKAGES.latticeCli],
     __RBXTS_REACT_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsReact],
@@ -508,10 +467,26 @@ export async function runInitCommand(
   }
 
   const template = await selectTemplate(input.template);
-  const detectedPm = await detectPackageManagerFn(projectRoot);
-  const packageManager = await selectPackageManager(runtime, input.pm, detectedPm.name, promptSelectFn);
   const lintEnabled = await selectLintEnabled(runtime, input.lint, promptConfirmFn);
-  const resolvedPm = await detectPackageManagerFn(projectRoot, packageManager);
+  const resolvedPm = await detectPackageManagerFn(projectRoot, input.pm, {
+    runtime,
+    promptSelectFn,
+  });
+  let packageManagerSourceLabel: string;
+  switch (resolvedPm.source) {
+    case "override":
+      packageManagerSourceLabel = "explicit --pm";
+      break;
+    case "lockfile":
+      packageManagerSourceLabel = "lockfile";
+      break;
+    case "installed":
+      packageManagerSourceLabel = "only installed package manager";
+      break;
+    case "prompt":
+      packageManagerSourceLabel = "interactive selection";
+      break;
+  }
 
   const logger = createLoggerFn({
     verbose: false,
@@ -521,16 +496,17 @@ export async function runInitCommand(
   logger.section("Inspecting");
   logger.kv("Project", projectRoot);
   logger.kv("Template", template);
-  logger.kv("Detected package manager", detectedPm.name);
-  logger.kv("Package manager", resolvedPm.name);
+  logger.kv("Resolved package manager", resolvedPm.name);
+  logger.kv("Package manager source", packageManagerSourceLabel);
   logger.kv("Lint/format", lintEnabled ? "enabled" : "disabled");
 
+  const currentManifest = await readPackageJson(projectRoot);
   const packagesToResolve = [
     ...Object.values(CORE_VERSION_PACKAGES),
     ...(lintEnabled ? Object.values(LINT_VERSION_PACKAGES) : []),
   ];
   const versions = await resolveLatestVersionsFn(packagesToResolve);
-  const replacements = buildVersionReplacements(versions);
+  const replacements = buildVersionReplacements(inferProjectName(projectRoot, currentManifest), versions);
 
   const templateDir = path.resolve(__dirname, "../../templates/init");
   const lintTemplateDir = path.resolve(__dirname, "../../templates/init-lint");
@@ -538,7 +514,6 @@ export async function runInitCommand(
   const lintManifest = lintEnabled
     ? await readTemplateJson<PackageJson>(lintTemplateDir, "package.json", replacements)
     : undefined;
-  const currentManifest = await readPackageJson(projectRoot);
 
   const templateReport = await copyTemplateSafe(templateDir, projectRoot, {
     dryRun: true,

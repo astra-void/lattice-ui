@@ -65,6 +65,7 @@ function collectRecommendations(issues: Issue[], pmName: PackageManagerName): st
 export async function runDoctorCommand(ctx: CliContext): Promise<void> {
   ctx.logger.section("Checking");
   ctx.logger.kv("Project", ctx.projectRoot);
+  ctx.logger.kv("Resolved package manager", ctx.pmName);
 
   const manifest = await readPackageJson(ctx.projectRoot);
   const installedDependencies = getDependencyNames(manifest);
@@ -75,7 +76,7 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
     issues.push({
       code: "missing-lockfile",
       level: "warn",
-      message: "No lockfile found. Detected package manager defaults to npm.",
+      message: `No lockfile found. Resolved package manager is ${ctx.pmName}.`,
     });
   }
 
@@ -93,7 +94,7 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
       issues.push({
         code: "package-manager-mismatch",
         level: "warn",
-        message: `packageManager field is ${manifest.packageManager} but detected ${ctx.pmName}.`,
+        message: `packageManager field is ${manifest.packageManager} but resolved ${ctx.pmName}.`,
       });
     }
   }

@@ -9,6 +9,7 @@ import { runInitCommand } from "../../../packages/cli/src/commands/init";
 import { runRemoveCommand } from "../../../packages/cli/src/commands/remove";
 import { runUpgradeCommand } from "../../../packages/cli/src/commands/upgrade";
 import type { Logger } from "../../../packages/cli/src/core/logger";
+import { detectPackageManager } from "../../../packages/cli/src/core/pm/detect";
 import type { PackageManager } from "../../../packages/cli/src/core/pm/types";
 import * as promptModule from "../../../packages/cli/src/core/prompt";
 import type { Registry } from "../../../packages/cli/src/core/registry/schema";
@@ -89,6 +90,8 @@ function createContext(params: {
     pm,
     pmName: pm.name,
     detectedLockfiles: params.detectedLockfiles ?? ["npm"],
+    installedPackageManagers: [pm.name],
+    pmResolutionSource: (params.detectedLockfiles ?? ["npm"]).length > 0 ? "lockfile" : "installed",
     registry: params.registry,
   };
 }
@@ -113,6 +116,8 @@ describe("command behavior", () => {
           name: "npm" as const,
           manager: createPackageManager({ install }),
           lockfiles: [],
+          installed: ["npm"],
+          source: "override" as const,
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "9.9.9"])),
@@ -174,7 +179,7 @@ describe("command behavior", () => {
     expect(tsconfig.compilerOptions.target).toBe("esnext");
     expect(tsconfig.include).toEqual(["src"]);
     expect(tsconfig.rbxts).toBeUndefined();
-    expect(mainClient).toContain('import { ThemeProvider, defaultLightTheme } from "@lattice-ui/style";');
+    expect(mainClient).toContain('import { defaultLightTheme, ThemeProvider } from "@lattice-ui/style";');
     expect(mainClient).toContain("<ThemeProvider theme={defaultLightTheme}>");
     expect(packageJsonRaw.indexOf('"name"')).toBeLessThan(packageJsonRaw.indexOf('"version"'));
     expect(packageJsonRaw.indexOf('"version"')).toBeLessThan(packageJsonRaw.indexOf('"private"'));
@@ -217,6 +222,8 @@ describe("command behavior", () => {
           name: "npm" as const,
           manager: createPackageManager({ install }),
           lockfiles: [],
+          installed: ["npm"],
+          source: "override" as const,
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -249,6 +256,8 @@ describe("command behavior", () => {
           name: "pnpm" as const,
           manager: createPackageManager({ name: "pnpm" }),
           lockfiles: [],
+          installed: ["pnpm"],
+          source: "override" as const,
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -320,6 +329,8 @@ describe("command behavior", () => {
             name: "npm" as const,
             manager: createPackageManager(),
             lockfiles: [],
+            installed: ["npm"],
+            source: "override" as const,
           })),
           resolveLatestVersionsFn: vi.fn(async () => {
             throw new Error("registry unavailable");
@@ -348,6 +359,8 @@ describe("command behavior", () => {
           name: "npm" as const,
           manager: createPackageManager(),
           lockfiles: [],
+          installed: ["npm"],
+          source: "override" as const,
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -387,6 +400,8 @@ describe("command behavior", () => {
           name: "npm" as const,
           manager: createPackageManager(),
           lockfiles: [],
+          installed: ["npm"],
+          source: "override" as const,
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -420,6 +435,8 @@ describe("command behavior", () => {
           name: "npm" as const,
           manager: createPackageManager(),
           lockfiles: [],
+          installed: ["npm"],
+          source: "override" as const,
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -434,6 +451,48 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenCalledWith("Installing");
     expect(logger.section).toHaveBeenCalledWith("Next Steps");
     expect(logger.step).toHaveBeenCalledWith("npx lattice add --preset form");
+  });
+
+  it("create auto-selects the only installed package manager without prompting", async () => {
+    const dir = await createTempDir();
+    const projectRoot = path.join(dir, "single-pm");
+    const install = vi.fn(async () => undefined);
+    const promptSelectFn = vi.fn(async () => "yarn");
+
+    await runCreateCommand(
+      {
+        cwd: dir,
+        projectPath: "single-pm",
+        yes: false,
+        template: "rbxts",
+        git: false,
+        lint: false,
+      },
+      {
+        promptSelectFn,
+        detectPackageManagerFn: async (cwd, override, options) => {
+          const result = await detectPackageManager(cwd, override, {
+            ...options,
+            runtime: {
+              ...options?.runtime,
+              yes: options?.runtime?.yes ?? false,
+              stdin: { isTTY: true } as NodeJS.ReadStream,
+              stdout: { isTTY: true } as NodeJS.WriteStream,
+            },
+            detectInstalledPackageManagersFn: async () => ["pnpm"],
+          });
+
+          return {
+            ...result,
+            manager: createPackageManager({ name: result.name, install }),
+          };
+        },
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    expect(promptSelectFn).not.toHaveBeenCalled();
+    expect(install).toHaveBeenCalledWith(projectRoot);
   });
 
   it("init fails when package.json cannot be found", async () => {
@@ -472,6 +531,8 @@ describe("command behavior", () => {
             install,
           }),
           lockfiles: [],
+          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },
@@ -499,26 +560,41 @@ describe("command behavior", () => {
       {
         promptSelectFn,
         promptConfirmFn,
-        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
-          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
-          manager: createPackageManager({
-            name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
-            install,
-          }),
-          lockfiles: override ? ["npm"] : ["npm"],
-        })),
+        detectPackageManagerFn: async (cwd, override, options) => {
+          const result = await detectPackageManager(cwd, override, {
+            ...options,
+            runtime: {
+              ...options?.runtime,
+              yes: options?.runtime?.yes ?? false,
+              stdin: { isTTY: true } as NodeJS.ReadStream,
+              stdout: { isTTY: true } as NodeJS.WriteStream,
+            },
+            detectInstalledPackageManagersFn: async () => ["npm", "pnpm"],
+          });
+
+          return {
+            ...result,
+            manager: createPackageManager({
+              name: result.name,
+              install,
+            }),
+          };
+        },
         resolveLatestVersionsFn: createResolvedVersions(),
         createLoggerFn: () => createLogger(),
       },
     );
 
     expect(promptSelectFn).toHaveBeenCalledWith(
-      { yes: false },
+      expect.objectContaining({ yes: false }),
       "Select a package manager",
-      expect.any(Array),
+      [
+        { label: "npm", value: "npm" },
+        { label: "pnpm", value: "pnpm" },
+      ],
       { defaultIndex: 0 },
     );
-    expect(promptConfirmFn).toHaveBeenCalledWith({ yes: false }, "Set up ESLint + Prettier?", { defaultValue: false });
+    expect(promptConfirmFn).toHaveBeenCalledWith(expect.objectContaining({ yes: false }), "Set up ESLint + Prettier?", { defaultValue: false });
     expect(install).toHaveBeenCalledWith(dir);
   });
 
@@ -540,6 +616,8 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
+          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },
@@ -600,6 +678,8 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
+          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions("9.9.9"),
       },
@@ -612,6 +692,7 @@ describe("command behavior", () => {
       devDependencies: Record<string, string>;
     };
     const defaultProject = JSON.parse(await readFile(path.join(dir, "default.project.json"), "utf8")) as {
+      name: string;
       globIgnorePaths: string[];
       tree: {
         ServerScriptService: Record<string, unknown>;
@@ -633,6 +714,7 @@ describe("command behavior", () => {
     expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
     expect(manifest.dependencies["@rbxts/react"]).toBe("9.9.9");
     expect(manifest.devDependencies["@lattice-ui/cli"]).toBe("9.9.9");
+    expect(defaultProject.name).toBe("existing-game");
     expect(defaultProject.globIgnorePaths).toEqual(["**/package.json", "**/tsconfig.json"]);
     expect(defaultProject.tree.ServerScriptService).toHaveProperty("TS.$path", "out/server");
     expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.$path", "include");
@@ -646,7 +728,7 @@ describe("command behavior", () => {
     expect(defaultProject.tree.HttpService).toHaveProperty("$properties.HttpEnabled", true);
     expect(defaultProject.tree.SoundService).toHaveProperty("$properties.RespectFilteringEnabled", true);
     expect(await readFile(path.join(dir, "src", "client", "App.tsx"), "utf8")).toBe("export const App = 'existing';\n");
-    expect(mainClient).toContain('import { ThemeProvider, defaultLightTheme } from "@lattice-ui/style";');
+    expect(mainClient).toContain('import { defaultLightTheme, ThemeProvider } from "@lattice-ui/style";');
     expect(mergedTsconfig.compilerOptions.typeRoots).toEqual(["node_modules/@rbxts", "node_modules/@lattice-ui"]);
     expect(mergedTsconfig.rbxts).toBeUndefined();
     const gitignore = await readFile(path.join(dir, ".gitignore"), "utf8");
@@ -661,6 +743,78 @@ describe("command behavior", () => {
     await expect(access(path.join(dir, "out", "server"))).resolves.toBeUndefined();
     await expect(access(path.join(dir, "out", "client"))).resolves.toBeUndefined();
     expect(install).toHaveBeenCalledWith(dir);
+  });
+
+  it("init merges missing ReplicatedStorage node_modules entries into an existing default.project.json", async () => {
+    const dir = await createTempDir();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "existing-game" }, null, 2), "utf8");
+    await writeFile(
+      path.join(dir, "default.project.json"),
+      JSON.stringify(
+        {
+          name: "existing-game",
+          tree: {
+            ReplicatedStorage: {
+              node_modules: {
+                "@rbxts": {
+                  $path: "custom/node_modules/@rbxts",
+                },
+              },
+              ExistingFolder: {
+                $className: "Folder",
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        yes: true,
+        dryRun: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async (_cwd: string, override?: string) => ({
+          name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
+          manager: createPackageManager(),
+          lockfiles: [],
+          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
+        })),
+        resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
+      },
+    );
+
+    const defaultProject = JSON.parse(await readFile(path.join(dir, "default.project.json"), "utf8")) as {
+      tree: {
+        ReplicatedStorage: {
+          ExistingFolder: {
+            $className: string;
+          };
+          node_modules: {
+            "@lattice-ui": {
+              $path: string;
+            };
+            "@rbxts": {
+              $path: string;
+            };
+            "@rbxts-js": {
+              $path: string;
+            };
+          };
+        };
+      };
+    };
+
+    expect(defaultProject.tree.ReplicatedStorage.ExistingFolder.$className).toBe("Folder");
+    expect(defaultProject.tree.ReplicatedStorage.node_modules["@lattice-ui"].$path).toBe("node_modules/@lattice-ui");
+    expect(defaultProject.tree.ReplicatedStorage.node_modules["@rbxts"].$path).toBe("custom/node_modules/@rbxts");
+    expect(defaultProject.tree.ReplicatedStorage.node_modules["@rbxts-js"].$path).toBe("node_modules/@rbxts-js");
   });
 
   it("init keeps existing dependency and script values when names already exist", async () => {
@@ -703,6 +857,8 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager(),
           lockfiles: [],
+          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
       },
@@ -741,6 +897,8 @@ describe("command behavior", () => {
           name: (override ?? "pnpm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ name: "pnpm", install }),
           lockfiles: [],
+          installed: [((override ?? "pnpm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
       },
@@ -771,6 +929,8 @@ describe("command behavior", () => {
       name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
       manager: createPackageManager(),
       lockfiles: [],
+      installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+      source: override ? ("override" as const) : ("installed" as const),
     }));
 
     await runInitCommand(
@@ -821,6 +981,8 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
+          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },
@@ -840,6 +1002,8 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
+          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },

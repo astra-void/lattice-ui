@@ -26,6 +26,7 @@ interface CreateCommandRuntimeOverrides {
   runProcessFn?: (command: string, args: string[], cwd: string) => Promise<void>;
   createLoggerFn?: typeof createLogger;
   promptInputFn?: typeof promptInput;
+  promptSelectFn?: typeof promptSelect;
 }
 
 const SUPPORTED_TEMPLATE = "rbxts";
@@ -175,18 +176,6 @@ function normalizeTemplate(template: string | undefined): string {
   return value;
 }
 
-function normalizePackageManager(pm: string | undefined): PackageManagerName | undefined {
-  if (!pm) {
-    return undefined;
-  }
-
-  if (pm === "npm" || pm === "pnpm" || pm === "yarn") {
-    return pm;
-  }
-
-  throw usageError(`Invalid --pm value "${pm}". Use pnpm, npm, or yarn.`);
-}
-
 async function ensurePnpmNodeLinkerConfig(targetRoot: string, packageManager: PackageManagerName): Promise<void> {
   if (packageManager !== "pnpm") {
     return;
@@ -232,27 +221,6 @@ async function selectTemplate(providedTemplate: string | undefined): Promise<str
   }
 
   return normalized;
-}
-
-async function selectPackageManager(
-  runtime: PromptRuntime,
-  providedPm: string | undefined,
-): Promise<PackageManagerName> {
-  const normalized = normalizePackageManager(providedPm);
-  if (normalized) {
-    return normalized;
-  }
-
-  return promptSelect(
-    runtime,
-    "Select a package manager",
-    [
-      { label: "npm", value: "npm" as const },
-      { label: "pnpm", value: "pnpm" as const },
-      { label: "yarn", value: "yarn" as const },
-    ],
-    { defaultIndex: 0 },
-  );
 }
 
 async function selectGitEnabled(runtime: PromptRuntime, providedGit: boolean | undefined): Promise<boolean> {
@@ -301,6 +269,7 @@ export async function runCreateCommand(
   const runProcessFn = runtimeOverrides?.runProcessFn ?? runProcess;
   const createLoggerFn = runtimeOverrides?.createLoggerFn ?? createLogger;
   const promptInputFn = runtimeOverrides?.promptInputFn ?? promptInput;
+  const promptSelectFn = runtimeOverrides?.promptSelectFn ?? promptSelect;
 
   const runtime: PromptRuntime = { yes: input.yes };
 
@@ -309,7 +278,6 @@ export async function runCreateCommand(
     throw usageError(`Unsupported template: ${template}`);
   }
 
-  const packageManager = await selectPackageManager(runtime, input.pm);
   const gitEnabled = await selectGitEnabled(runtime, input.git);
   const lintEnabled = await selectLintEnabled(runtime, input.lint);
 
@@ -324,11 +292,31 @@ export async function runCreateCommand(
     yes: input.yes,
   });
 
-  const resolvedPm = await detectPackageManagerFn(targetRoot, packageManager);
+  const resolvedPm = await detectPackageManagerFn(targetRoot, input.pm, {
+    runtime,
+    promptSelectFn,
+  });
+  let packageManagerSourceLabel: string;
+  switch (resolvedPm.source) {
+    case "override":
+      packageManagerSourceLabel = "explicit --pm";
+      break;
+    case "lockfile":
+      packageManagerSourceLabel = "lockfile";
+      break;
+    case "installed":
+      packageManagerSourceLabel = "only installed package manager";
+      break;
+    case "prompt":
+      packageManagerSourceLabel = "interactive selection";
+      break;
+  }
+
   logger.section("Creating a new Lattice app");
   logger.kv("Location", targetRoot);
   logger.kv("Template", template);
-  logger.kv("Package manager", resolvedPm.name);
+  logger.kv("Resolved package manager", resolvedPm.name);
+  logger.kv("Package manager source", packageManagerSourceLabel);
   logger.kv("Git", gitEnabled ? "enabled" : "disabled (use --git to enable)");
   logger.kv("Lint/format", lintEnabled ? "enabled" : "disabled");
 

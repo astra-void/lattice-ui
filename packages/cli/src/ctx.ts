@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import { projectNotFoundError } from "./core/errors";
 import { createLogger, type Logger } from "./core/logger";
-import { detectPackageManager } from "./core/pm/detect";
+import { detectPackageManager, type PackageManagerResolutionSource } from "./core/pm/detect";
 import type { PackageManager, PackageManagerName } from "./core/pm/types";
 import { findRoot } from "./core/project/findRoot";
 import { loadRegistry } from "./core/registry/load";
@@ -24,6 +24,8 @@ export interface CliContext {
   pm: PackageManager;
   pmName: PackageManagerName;
   detectedLockfiles: PackageManagerName[];
+  installedPackageManagers: PackageManagerName[];
+  pmResolutionSource: PackageManagerResolutionSource;
   registry: Registry;
 }
 
@@ -44,7 +46,13 @@ export async function createContext(
     yes: options.yes,
   });
 
-  const pm = await detectPackageManager(projectRoot, options.pm);
+  const pm = await detectPackageManager(projectRoot, options.pm, {
+    runtime: {
+      yes: options.yes,
+      stdin: process.stdin,
+      stdout: process.stdout,
+    },
+  });
   const registry = await loadRegistry();
 
   return {
@@ -56,6 +64,8 @@ export async function createContext(
     pm: pm.manager,
     pmName: pm.name,
     detectedLockfiles: pm.lockfiles,
+    installedPackageManagers: pm.installed,
+    pmResolutionSource: pm.source,
     registry,
   };
 }

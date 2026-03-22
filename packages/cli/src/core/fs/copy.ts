@@ -101,7 +101,7 @@ export async function copyTemplateSafe(
       continue;
     }
 
-    if (!isJsonFile(templateFilePath)) {
+    if (!isJsonFile(relativePath)) {
       report.skipped.push(relativePath);
       continue;
     }
