@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Add an interactive `init` CLI command that bootstraps Lattice into existing projects with safe template merging, dry-run planning, and JSONC-aware config updates.
 
 ## [0.4.4] - 2026-03-22
@@ -39,7 +40,7 @@ Migration notes:
 
 ### Added
 
-- Add automatic package manager detection across CLI commands so `create`, `init`, and related flows adapt to the project's existing npm, pnpm, yarn, or bun setup.
+- Add automatic package manager detection across CLI commands so `create`, `init`, and related flows adapt to the project's existing npm, pnpm, or yarn setup.
 
 ## [0.4.1] - 2026-03-22
 
