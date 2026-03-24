@@ -167,10 +167,19 @@ describe("command behavior", () => {
     expect(defaultProject.globIgnorePaths).toEqual(["**/package.json", "**/tsconfig.json"]);
     expect(defaultProject.tree.ServerScriptService).toHaveProperty("TS.$path", "out/server");
     expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.$path", "include");
-    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.node_modules.@rbxts.$path", "node_modules/@rbxts");
-    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@lattice-ui.$path", "node_modules/@lattice-ui");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "rbxts_include.node_modules.@rbxts.$path",
+      "node_modules/@rbxts",
+    );
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "node_modules.@lattice-ui.$path",
+      "node_modules/@lattice-ui",
+    );
     expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts.$path", "node_modules/@rbxts");
-    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts-js.$path", "node_modules/@rbxts-js");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "node_modules.@rbxts-js.$path",
+      "node_modules/@rbxts-js",
+    );
     expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("TS.$path", "out/shared");
     expect(defaultProject.tree.StarterPlayer).toHaveProperty("StarterPlayerScripts.TS.$path", "out/client");
     expect(defaultProject.tree.Workspace).toHaveProperty("$properties.FilteringEnabled", true);
@@ -531,7 +540,7 @@ describe("command behavior", () => {
             install,
           }),
           lockfiles: [],
-          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
@@ -594,7 +603,9 @@ describe("command behavior", () => {
       ],
       { defaultIndex: 0 },
     );
-    expect(promptConfirmFn).toHaveBeenCalledWith(expect.objectContaining({ yes: false }), "Set up ESLint + Prettier?", { defaultValue: false });
+    expect(promptConfirmFn).toHaveBeenCalledWith(expect.objectContaining({ yes: false }), "Set up ESLint + Prettier?", {
+      defaultValue: false,
+    });
     expect(install).toHaveBeenCalledWith(dir);
   });
 
@@ -616,7 +627,7 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
-          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
@@ -678,7 +689,7 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
-          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions("9.9.9"),
@@ -718,10 +729,19 @@ describe("command behavior", () => {
     expect(defaultProject.globIgnorePaths).toEqual(["**/package.json", "**/tsconfig.json"]);
     expect(defaultProject.tree.ServerScriptService).toHaveProperty("TS.$path", "out/server");
     expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.$path", "include");
-    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("rbxts_include.node_modules.@rbxts.$path", "node_modules/@rbxts");
-    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@lattice-ui.$path", "node_modules/@lattice-ui");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "rbxts_include.node_modules.@rbxts.$path",
+      "node_modules/@rbxts",
+    );
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "node_modules.@lattice-ui.$path",
+      "node_modules/@lattice-ui",
+    );
     expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts.$path", "node_modules/@rbxts");
-    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("node_modules.@rbxts-js.$path", "node_modules/@rbxts-js");
+    expect(defaultProject.tree.ReplicatedStorage).toHaveProperty(
+      "node_modules.@rbxts-js.$path",
+      "node_modules/@rbxts-js",
+    );
     expect(defaultProject.tree.ReplicatedStorage).toHaveProperty("TS.$path", "out/shared");
     expect(defaultProject.tree.StarterPlayer).toHaveProperty("StarterPlayerScripts.TS.$path", "out/client");
     expect(defaultProject.tree.Workspace).toHaveProperty("$properties.FilteringEnabled", true);
@@ -783,7 +803,7 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager(),
           lockfiles: [],
-          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
@@ -837,7 +857,7 @@ describe("command behavior", () => {
           devDependencies: {
             "lattice-ui": "workspace:*",
             "roblox-ts": "99.0.0",
-            "typescript": "99.0.0",
+            typescript: "99.0.0",
           },
         },
         null,
@@ -857,7 +877,7 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager(),
           lockfiles: [],
-          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
@@ -897,7 +917,7 @@ describe("command behavior", () => {
           name: (override ?? "pnpm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ name: "pnpm", install }),
           lockfiles: [],
-          installed: [((override ?? "pnpm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "pnpm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
@@ -929,7 +949,7 @@ describe("command behavior", () => {
       name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
       manager: createPackageManager(),
       lockfiles: [],
-      installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+      installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
       source: override ? ("override" as const) : ("installed" as const),
     }));
 
@@ -960,7 +980,9 @@ describe("command behavior", () => {
 
     await expect(readFile(path.join(plainDir, "eslint.config.mjs"), "utf8")).rejects.toThrow();
     await expect(readFile(path.join(plainDir, ".prettierrc"), "utf8")).rejects.toThrow();
-    await expect(readFile(path.join(lintDir, "eslint.config.mjs"), "utf8")).resolves.toContain("@typescript-eslint/parser");
+    await expect(readFile(path.join(lintDir, "eslint.config.mjs"), "utf8")).resolves.toContain(
+      "@typescript-eslint/parser",
+    );
     await expect(readFile(path.join(lintDir, ".prettierrc"), "utf8")).resolves.toContain('"printWidth": 120');
   });
 
@@ -981,7 +1003,7 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
-          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
@@ -1002,7 +1024,7 @@ describe("command behavior", () => {
           name: (override ?? "npm") as "npm" | "pnpm" | "yarn",
           manager: createPackageManager({ install }),
           lockfiles: [],
-          installed: [((override ?? "npm") as "npm" | "pnpm" | "yarn")],
+          installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
         })),
         resolveLatestVersionsFn: createResolvedVersions(),

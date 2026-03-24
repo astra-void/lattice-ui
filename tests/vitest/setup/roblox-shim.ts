@@ -1,4 +1,4 @@
-type LuauMath = {
+﻿type LuauMath = {
   floor: (value: number) => number;
   clamp: (value: number, min: number, max: number) => number;
   max: (...values: number[]) => number;
@@ -96,6 +96,12 @@ function* ipairs<T>(value: Array<T>) {
   }
 }
 
+function* pairs<T extends Record<string, unknown>>(value: T) {
+  for (const key of Object.keys(value)) {
+    yield [key, value[key]] as const;
+  }
+}
+
 const arrayProto = Array.prototype as unknown as { size?: () => number };
 if (arrayProto.size === undefined) {
   Object.defineProperty(arrayProto, "size", {
@@ -131,6 +137,7 @@ if (stringProto.size === undefined) {
 
 Object.assign(globalThis as Record<string, unknown>, {
   ipairs,
+  pairs,
   math: luauMath,
   string: luauString,
   typeIs,
