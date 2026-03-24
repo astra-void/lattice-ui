@@ -1,6 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { Popover } from "@lattice-ui/popover";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { playgroundSurfaceTransition } from "../motion";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 export function PopoverBasicScene() {
@@ -40,7 +41,12 @@ export function PopoverBasicScene() {
         </Popover.Trigger>
 
         <Popover.Portal>
-          <Popover.Content asChild offset={new Vector2(0, 10)} placement="bottom">
+          <Popover.Content
+            asChild
+            offset={new Vector2(0, 10)}
+            placement="bottom"
+            transition={playgroundSurfaceTransition}
+          >
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Size: UDim2.fromOffset(300, 180),

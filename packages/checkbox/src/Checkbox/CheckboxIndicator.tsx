@@ -1,6 +1,84 @@
-import { React, Slot } from "@lattice-ui/core";
+﻿import {
+  getMotionTransitionExitFallbackMs,
+  type MotionTransition,
+  mergeMotionTransition,
+  React,
+  Slot,
+  useMotionTween,
+} from "@lattice-ui/core";
+import { Presence } from "@lattice-ui/layer";
 import { useCheckboxContext } from "./context";
 import type { CheckboxIndicatorProps } from "./types";
+
+const INDICATOR_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const INDICATOR_EXIT_TWEEN_INFO = new TweenInfo(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+
+function buildCheckboxIndicatorTransition(size: UDim2): MotionTransition {
+  return {
+    enter: {
+      tweenInfo: INDICATOR_TWEEN_INFO,
+      from: {
+        Size: UDim2.fromOffset(0, 0),
+        BackgroundTransparency: 1,
+      },
+      to: {
+        Size: size,
+        BackgroundTransparency: 0,
+      },
+    },
+    exit: {
+      tweenInfo: INDICATOR_EXIT_TWEEN_INFO,
+      to: {
+        Size: UDim2.fromOffset(0, 0),
+        BackgroundTransparency: 1,
+      },
+    },
+  };
+}
+
+function CheckboxIndicatorImpl(props: {
+  visible: boolean;
+  transition?: MotionTransition | false;
+  onExitComplete?: () => void;
+  asChild?: boolean;
+  children?: React.ReactNode;
+}) {
+  const indicatorRef = React.useRef<Frame>();
+  const motionTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildCheckboxIndicatorTransition(UDim2.fromOffset(12, 12)), props.transition);
+  }, [props.transition]);
+
+  useMotionTween(indicatorRef as React.MutableRefObject<Instance | undefined>, {
+    active: props.visible,
+    onExitComplete: props.onExitComplete,
+    transition: motionTransition,
+  });
+
+  if (props.asChild) {
+    const child = props.children;
+    if (!React.isValidElement(child)) {
+      error("[CheckboxIndicator] `asChild` requires a child element.");
+    }
+
+    return (
+      <Slot Visible={props.visible} ref={indicatorRef}>
+        {child}
+      </Slot>
+    );
+  }
+
+  return (
+    <frame
+      BackgroundColor3={Color3.fromRGB(240, 244, 252)}
+      BorderSizePixel={0}
+      Size={UDim2.fromOffset(12, 12)}
+      Visible={props.visible}
+      ref={indicatorRef}
+    >
+      {props.children}
+    </frame>
+  );
+}
 
 export function CheckboxIndicator(props: CheckboxIndicatorProps) {
   const checkboxContext = useCheckboxContext();
@@ -11,24 +89,31 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
     return undefined;
   }
 
-  const child = props.children;
+  const transition = props.transition;
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
 
-  if (props.asChild) {
-    if (!React.isValidElement(child)) {
-      error("[CheckboxIndicator] `asChild` requires a child element.");
-    }
-
-    return <Slot Visible={visible}>{child}</Slot>;
+  if (forceMount) {
+    return (
+      <CheckboxIndicatorImpl asChild={props.asChild} transition={transition} visible={visible}>
+        {props.children}
+      </CheckboxIndicatorImpl>
+    );
   }
 
   return (
-    <frame
-      BackgroundColor3={Color3.fromRGB(240, 244, 252)}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(12, 12)}
-      Visible={visible}
-    >
-      {child}
-    </frame>
+    <Presence
+      exitFallbackMs={exitFallbackMs}
+      present={visible}
+      render={(state) => (
+        <CheckboxIndicatorImpl
+          asChild={props.asChild}
+          onExitComplete={state.onExitComplete}
+          transition={transition}
+          visible={true}
+        >
+          {props.children}
+        </CheckboxIndicatorImpl>
+      )}
+    />
   );
 }

@@ -1,3 +1,4 @@
+﻿import type { MotionTransition } from "@lattice-ui/core";
 import type React from "@rbxts/react";
 
 export type SwitchSetChecked = (checked: boolean) => void;
@@ -20,5 +21,6 @@ export type SwitchProps = {
 export type SwitchThumbProps = {
   forceMount?: boolean;
   asChild?: boolean;
+  transition?: MotionTransition | false;
   children?: React.ReactNode;
 };

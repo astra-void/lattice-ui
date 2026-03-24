@@ -1,3 +1,4 @@
+﻿import type { MotionTransition } from "@lattice-ui/core";
 import type React from "@rbxts/react";
 import type { AccordionType } from "./state";
 
@@ -42,5 +43,6 @@ export type AccordionTriggerProps = {
 export type AccordionContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
+  transition?: MotionTransition | false;
   children?: React.ReactNode;
 };

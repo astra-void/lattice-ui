@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+﻿import { React } from "@lattice-ui/core";
 import { ToastContextProvider, useToastContext } from "./context";
 import { enqueueToast, getVisibleToasts, pruneExpiredToasts, type ToastRecord } from "./queue";
 import type { ToastApi, ToastOptions, ToastProviderProps } from "./types";
@@ -33,9 +33,39 @@ export function ToastProvider(props: ToastProviderProps) {
     return id;
   }, []);
 
-  const remove = React.useCallback((id: string) => {
-    setToasts((currentQueue) => currentQueue.filter((toast) => toast.id !== id));
-  }, []);
+  const remove = React.useCallback(
+    (id: string) => {
+      setToasts((currentQueue) => {
+        const nextQueue = [...currentQueue];
+        const index = nextQueue.findIndex((toast) => toast.id === id);
+        if (index < 0) {
+          return currentQueue;
+        }
+
+        const toast = nextQueue[index];
+        if (!toast) {
+          return currentQueue;
+        }
+
+        if (toast.exiting) {
+          return currentQueue;
+        }
+
+        if (index >= maxVisible) {
+          return nextQueue.filter((entry) => entry.id !== id);
+        }
+
+        nextQueue[index] = {
+          ...toast,
+          exiting: true,
+          exitStartedAtMs: nowMs(),
+        };
+
+        return nextQueue;
+      });
+    },
+    [maxVisible],
+  );
 
   const clear = React.useCallback(() => {
     setToasts([]);

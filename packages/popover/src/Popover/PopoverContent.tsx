@@ -1,15 +1,28 @@
-import { React, Slot } from "@lattice-ui/core";
+﻿import {
+  getMotionTransitionExitFallbackMs,
+  type MotionTransition,
+  mergeMotionTransition,
+  React,
+  Slot,
+  useMotionTween,
+} from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";
 
+const CONTENT_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const CONTENT_EXIT_TWEEN_INFO = new TweenInfo(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+const CONTENT_OFFSET = 6;
+
 type PopoverContentImplProps = {
   enabled: boolean;
   visible: boolean;
   onDismiss: () => void;
+  onExitComplete?: () => void;
   asChild?: boolean;
+  transition?: MotionTransition | false;
   placement?: PopoverContentProps["placement"];
   offset?: PopoverContentProps["offset"];
   padding?: PopoverContentProps["padding"];
@@ -21,6 +34,30 @@ function toGuiObject(instance: Instance | undefined) {
   }
 
   return instance;
+}
+
+function withVerticalOffset(position: UDim2, offset: number) {
+  return new UDim2(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + offset);
+}
+
+function buildPopoverContentTransition(position: UDim2): MotionTransition {
+  return {
+    enter: {
+      tweenInfo: CONTENT_TWEEN_INFO,
+      from: {
+        Position: withVerticalOffset(position, CONTENT_OFFSET),
+      },
+      to: {
+        Position: position,
+      },
+    },
+    exit: {
+      tweenInfo: CONTENT_EXIT_TWEEN_INFO,
+      to: {
+        Position: withVerticalOffset(position, CONTENT_OFFSET),
+      },
+    },
+  };
 }
 
 function PopoverContentImpl(props: PopoverContentImplProps) {
@@ -42,6 +79,16 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
     },
     [popoverContext.contentRef],
   );
+
+  const motionTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildPopoverContentTransition(popper.position), props.transition);
+  }, [popper.position, props.transition]);
+
+  useMotionTween(popoverContext.contentRef as React.MutableRefObject<Instance | undefined>, {
+    active: props.visible,
+    onExitComplete: props.onExitComplete,
+    transition: motionTransition,
+  });
 
   const contentNode = props.asChild ? (
     (() => {
@@ -98,6 +145,9 @@ export function PopoverContent(props: PopoverContentProps) {
     return undefined;
   }
 
+  const transition = props.transition;
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+
   if (forceMount) {
     return (
       <PopoverContentImpl
@@ -109,6 +159,7 @@ export function PopoverContent(props: PopoverContentProps) {
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
         placement={props.placement}
+        transition={transition}
         visible={open}
       >
         {props.children}
@@ -118,7 +169,7 @@ export function PopoverContent(props: PopoverContentProps) {
 
   return (
     <Presence
-      exitFallbackMs={0}
+      exitFallbackMs={exitFallbackMs}
       present={open}
       render={(state) => (
         <PopoverContentImpl
@@ -126,11 +177,13 @@ export function PopoverContent(props: PopoverContentProps) {
           enabled={state.isPresent}
           offset={props.offset}
           onDismiss={handleDismiss}
+          onExitComplete={state.onExitComplete}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}
           placement={props.placement}
-          visible={state.isPresent}
+          transition={transition}
+          visible={true}
         >
           {props.children}
         </PopoverContentImpl>

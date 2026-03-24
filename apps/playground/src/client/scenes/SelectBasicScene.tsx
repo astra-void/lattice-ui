@@ -1,6 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { Select } from "@lattice-ui/select";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { playgroundSurfaceTransition } from "../motion";
 import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 
 export function SelectBasicScene() {
@@ -91,7 +92,12 @@ export function SelectBasicScene() {
             </Select.Trigger>
 
             <Select.Portal>
-              <Select.Content asChild offset={new Vector2(0, 8)} placement="bottom">
+              <Select.Content
+                asChild
+                offset={new Vector2(0, 8)}
+                placement="bottom"
+                transition={playgroundSurfaceTransition}
+              >
                 <frame
                   {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                     Size: UDim2.fromOffset(320, 176),
@@ -208,7 +214,12 @@ export function SelectBasicScene() {
             </Select.Trigger>
 
             <Select.Portal>
-              <Select.Content asChild offset={new Vector2(0, 8)} placement="bottom">
+              <Select.Content
+                asChild
+                offset={new Vector2(0, 8)}
+                placement="bottom"
+                transition={playgroundSurfaceTransition}
+              >
                 <frame
                   {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                     Size: UDim2.fromOffset(320, 126),

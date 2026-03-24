@@ -1,6 +1,11 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@rbxts/react": "react",
+    },
+  },
   test: {
     environment: "node",
     include: ["tests/vitest/**/*.test.ts", "tests/vitest/**/*.test.tsx"],

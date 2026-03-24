@@ -1,9 +1,42 @@
-import { React, Slot } from "@lattice-ui/core";
+﻿import { type MotionTransition, mergeMotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";
 
+const THUMB_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const THUMB_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+
+function buildSwitchThumbTransition() {
+  return {
+    enter: {
+      tweenInfo: THUMB_TWEEN_INFO,
+      from: {
+        Position: UDim2.fromOffset(2, 2),
+      },
+      to: {
+        Position: new UDim2(1, -18, 0, 2),
+      },
+    },
+    exit: {
+      tweenInfo: THUMB_EXIT_TWEEN_INFO,
+      to: {
+        Position: UDim2.fromOffset(2, 2),
+      },
+    },
+  } satisfies MotionTransition;
+}
+
 export function SwitchThumb(props: SwitchThumbProps) {
   const switchContext = useSwitchContext();
+  const thumbRef = React.useRef<Frame>();
+  const motionTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildSwitchThumbTransition(), props.transition);
+  }, [props.transition]);
+
+  useMotionTween(thumbRef as React.MutableRefObject<Instance | undefined>, {
+    active: switchContext.checked,
+    transition: motionTransition,
+  });
+
   const child = props.children;
 
   if (props.asChild) {
@@ -11,7 +44,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
       error("[SwitchThumb] `asChild` requires a child element.");
     }
 
-    return <Slot>{child}</Slot>;
+    return <Slot ref={thumbRef}>{child}</Slot>;
   }
 
   return (
@@ -20,6 +53,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
       BorderSizePixel={0}
       Position={switchContext.checked ? new UDim2(1, -18, 0, 2) : UDim2.fromOffset(2, 2)}
       Size={UDim2.fromOffset(16, 16)}
+      ref={thumbRef}
     >
       {child}
     </frame>
