@@ -10,6 +10,7 @@
     "workspace:check": "node --import tsx ./scripts/workspace-check.ts",
     "build": "turbo run build",
     "watch": "turbo run watch",
+    "preview:loom": "pnpm --dir ../../typescript/loom exec tsx packages/cli/src/index.ts preview --cwd ../../rojo/lattice-ui",
     "typecheck": "turbo run typecheck",
     "test": "pnpm run test:unit",
     "test:unit": "vitest run",
