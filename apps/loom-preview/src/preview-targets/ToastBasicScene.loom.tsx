@@ -3,6 +3,6 @@ import { ToastBasicScene } from "../../../playground/src/client/scenes/ToastBasi
 export { ToastBasicScene };
 
 export const preview = {
-  entry: ToastBasicScene,
+  render: ToastBasicScene,
   title: "Toast Basic",
-};
+} as const;

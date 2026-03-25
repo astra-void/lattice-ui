@@ -3,6 +3,6 @@ import { DialogModalBlockScene } from "../../../playground/src/client/scenes/Dia
 export { DialogModalBlockScene };
 
 export const preview = {
-  entry: DialogModalBlockScene,
+  render: DialogModalBlockScene,
   title: "Dialog Modal Block",
-};
+} as const;

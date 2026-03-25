@@ -3,6 +3,6 @@ import { ModalBlockScene } from "../../../playground/src/client/scenes/ModalBloc
 export { ModalBlockScene };
 
 export const preview = {
-  entry: ModalBlockScene,
+  render: ModalBlockScene,
   title: "Modal Block",
-};
+} as const;

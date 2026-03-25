@@ -3,6 +3,6 @@ import { ScrollAreaBasicScene } from "../../../playground/src/client/scenes/Scro
 export { ScrollAreaBasicScene };
 
 export const preview = {
-  entry: ScrollAreaBasicScene,
+  render: ScrollAreaBasicScene,
   title: "Scroll Area Basic",
-};
+} as const;

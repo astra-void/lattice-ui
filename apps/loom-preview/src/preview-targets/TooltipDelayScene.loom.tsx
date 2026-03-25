@@ -3,6 +3,6 @@ import { TooltipDelayScene } from "../../../playground/src/client/scenes/Tooltip
 export { TooltipDelayScene };
 
 export const preview = {
-  entry: TooltipDelayScene,
+  render: TooltipDelayScene,
   title: "Tooltip Delay",
-};
+} as const;

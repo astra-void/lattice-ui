@@ -3,6 +3,6 @@ import { ComboboxBasicScene } from "../../../playground/src/client/scenes/Combob
 export { ComboboxBasicScene };
 
 export const preview = {
-  entry: ComboboxBasicScene,
+  render: ComboboxBasicScene,
   title: "Combobox Basic",
-};
+} as const;

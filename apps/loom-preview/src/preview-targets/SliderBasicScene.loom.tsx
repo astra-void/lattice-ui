@@ -3,6 +3,6 @@ import { SliderBasicScene } from "../../../playground/src/client/scenes/SliderBa
 export { SliderBasicScene };
 
 export const preview = {
-  entry: SliderBasicScene,
+  render: SliderBasicScene,
   title: "Slider Basic",
-};
+} as const;

@@ -3,6 +3,6 @@ import { TextFieldBasicScene } from "../../../playground/src/client/scenes/TextF
 export { TextFieldBasicScene };
 
 export const preview = {
-  entry: TextFieldBasicScene,
+  render: TextFieldBasicScene,
   title: "TextField Basic",
-};
+} as const;

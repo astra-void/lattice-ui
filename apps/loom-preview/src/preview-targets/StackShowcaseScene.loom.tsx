@@ -3,6 +3,6 @@ import { StackShowcaseScene } from "../../../playground/src/client/scenes/StackS
 export { StackShowcaseScene };
 
 export const preview = {
-  entry: StackShowcaseScene,
+  render: StackShowcaseScene,
   title: "Stack Showcase",
-};
+} as const;

@@ -3,6 +3,6 @@ import { SelectBasicScene } from "../../../playground/src/client/scenes/SelectBa
 export { SelectBasicScene };
 
 export const preview = {
-  entry: SelectBasicScene,
+  render: SelectBasicScene,
   title: "Select Basic",
-};
+} as const;

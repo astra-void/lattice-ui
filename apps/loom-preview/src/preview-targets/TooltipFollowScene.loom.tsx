@@ -3,6 +3,6 @@ import { TooltipFollowScene } from "../../../playground/src/client/scenes/Toolti
 export { TooltipFollowScene };
 
 export const preview = {
-  entry: TooltipFollowScene,
+  render: TooltipFollowScene,
   title: "Tooltip Follow",
-};
+} as const;

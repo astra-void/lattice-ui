@@ -3,6 +3,6 @@ import { DialogBasicScene } from "../../../playground/src/client/scenes/DialogBa
 export { DialogBasicScene };
 
 export const preview = {
-  entry: DialogBasicScene,
+  render: DialogBasicScene,
   title: "Dialog Basic",
-};
+} as const;

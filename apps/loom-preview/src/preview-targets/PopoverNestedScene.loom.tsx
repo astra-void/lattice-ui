@@ -3,6 +3,6 @@ import { PopoverNestedScene } from "../../../playground/src/client/scenes/Popove
 export { PopoverNestedScene };
 
 export const preview = {
-  entry: PopoverNestedScene,
+  render: PopoverNestedScene,
   title: "Popover Nested",
-};
+} as const;

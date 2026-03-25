@@ -3,6 +3,6 @@ import { AccordionBasicScene } from "../../../playground/src/client/scenes/Accor
 export { AccordionBasicScene };
 
 export const preview = {
-  entry: AccordionBasicScene,
+  render: AccordionBasicScene,
   title: "Accordion Basic",
-};
+} as const;

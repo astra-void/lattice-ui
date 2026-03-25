@@ -3,6 +3,6 @@ import { SurfaceShowcaseScene } from "../../../playground/src/client/scenes/Surf
 export { SurfaceShowcaseScene };
 
 export const preview = {
-  entry: SurfaceShowcaseScene,
+  render: SurfaceShowcaseScene,
   title: "Surface Showcase",
-};
+} as const;

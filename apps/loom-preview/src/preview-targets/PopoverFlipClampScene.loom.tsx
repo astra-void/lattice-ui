@@ -3,6 +3,6 @@ import { PopoverFlipClampScene } from "../../../playground/src/client/scenes/Pop
 export { PopoverFlipClampScene };
 
 export const preview = {
-  entry: PopoverFlipClampScene,
+  render: PopoverFlipClampScene,
   title: "Popover Flip Clamp",
-};
+} as const;

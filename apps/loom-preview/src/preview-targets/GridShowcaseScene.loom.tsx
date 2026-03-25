@@ -3,6 +3,6 @@ import { GridShowcaseScene } from "../../../playground/src/client/scenes/GridSho
 export { GridShowcaseScene };
 
 export const preview = {
-  entry: GridShowcaseScene,
+  render: GridShowcaseScene,
   title: "Grid Showcase",
-};
+} as const;

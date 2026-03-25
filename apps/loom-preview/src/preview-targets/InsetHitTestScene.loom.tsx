@@ -3,6 +3,6 @@ import { InsetHitTestScene } from "../../../playground/src/client/scenes/InsetHi
 export { InsetHitTestScene };
 
 export const preview = {
-  entry: InsetHitTestScene,
+  render: InsetHitTestScene,
   title: "Inset Hit Test",
-};
+} as const;

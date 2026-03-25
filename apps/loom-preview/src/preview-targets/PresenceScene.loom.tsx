@@ -3,6 +3,6 @@ import { PresenceScene } from "../../../playground/src/client/scenes/PresenceSce
 export { PresenceScene };
 
 export const preview = {
-  entry: PresenceScene,
+  render: PresenceScene,
   title: "Presence",
-};
+} as const;

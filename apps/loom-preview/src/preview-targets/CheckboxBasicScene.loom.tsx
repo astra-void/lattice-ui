@@ -3,6 +3,6 @@ import { CheckboxBasicScene } from "../../../playground/src/client/scenes/Checkb
 export { CheckboxBasicScene };
 
 export const preview = {
-  entry: CheckboxBasicScene,
+  render: CheckboxBasicScene,
   title: "Checkbox Basic",
-};
+} as const;

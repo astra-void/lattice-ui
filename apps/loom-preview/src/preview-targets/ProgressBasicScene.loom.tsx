@@ -3,6 +3,6 @@ import { ProgressBasicScene } from "../../../playground/src/client/scenes/Progre
 export { ProgressBasicScene };
 
 export const preview = {
-  entry: ProgressBasicScene,
+  render: ProgressBasicScene,
   title: "Progress Basic",
-};
+} as const;

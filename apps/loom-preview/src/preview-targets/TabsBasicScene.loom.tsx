@@ -3,6 +3,6 @@ import { TabsBasicScene } from "../../../playground/src/client/scenes/TabsBasicS
 export { TabsBasicScene };
 
 export const preview = {
-  entry: TabsBasicScene,
+  render: TabsBasicScene,
   title: "Tabs Basic",
-};
+} as const;

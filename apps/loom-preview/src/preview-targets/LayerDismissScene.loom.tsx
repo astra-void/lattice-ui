@@ -3,6 +3,6 @@ import { LayerDismissScene } from "../../../playground/src/client/scenes/LayerDi
 export { LayerDismissScene };
 
 export const preview = {
-  entry: LayerDismissScene,
+  render: LayerDismissScene,
   title: "Layer Dismiss",
-};
+} as const;

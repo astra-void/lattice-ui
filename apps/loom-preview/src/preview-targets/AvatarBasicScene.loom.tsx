@@ -3,6 +3,6 @@ import { AvatarBasicScene } from "../../../playground/src/client/scenes/AvatarBa
 export { AvatarBasicScene };
 
 export const preview = {
-  entry: AvatarBasicScene,
+  render: AvatarBasicScene,
   title: "Avatar Basic",
-};
+} as const;

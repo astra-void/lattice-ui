@@ -3,6 +3,6 @@ import { RadioGroupDisabledScene } from "../../../playground/src/client/scenes/R
 export { RadioGroupDisabledScene };
 
 export const preview = {
-  entry: RadioGroupDisabledScene,
+  render: RadioGroupDisabledScene,
   title: "Radio Group Disabled",
-};
+} as const;

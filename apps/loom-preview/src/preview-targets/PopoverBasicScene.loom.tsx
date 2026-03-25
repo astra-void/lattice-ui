@@ -3,6 +3,6 @@ import { PopoverBasicScene } from "../../../playground/src/client/scenes/Popover
 export { PopoverBasicScene };
 
 export const preview = {
-  entry: PopoverBasicScene,
+  render: PopoverBasicScene,
   title: "Popover Basic",
-};
+} as const;

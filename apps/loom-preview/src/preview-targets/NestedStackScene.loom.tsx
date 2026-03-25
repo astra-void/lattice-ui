@@ -3,6 +3,6 @@ import { NestedStackScene } from "../../../playground/src/client/scenes/NestedSt
 export { NestedStackScene };
 
 export const preview = {
-  entry: NestedStackScene,
+  render: NestedStackScene,
   title: "Nested Stack",
-};
+} as const;

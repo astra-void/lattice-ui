@@ -3,6 +3,6 @@ import { DialogNestedScene } from "../../../playground/src/client/scenes/DialogN
 export { DialogNestedScene };
 
 export const preview = {
-  entry: DialogNestedScene,
+  render: DialogNestedScene,
   title: "Dialog Nested",
-};
+} as const;

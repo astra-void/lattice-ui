@@ -3,6 +3,6 @@ import { SwitchBasicScene } from "../../../playground/src/client/scenes/SwitchBa
 export { SwitchBasicScene };
 
 export const preview = {
-  entry: SwitchBasicScene,
+  render: SwitchBasicScene,
   title: "Switch Basic",
-};
+} as const;

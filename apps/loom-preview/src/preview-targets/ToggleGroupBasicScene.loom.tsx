@@ -3,6 +3,6 @@ import { ToggleGroupBasicScene } from "../../../playground/src/client/scenes/Tog
 export { ToggleGroupBasicScene };
 
 export const preview = {
-  entry: ToggleGroupBasicScene,
+  render: ToggleGroupBasicScene,
   title: "Toggle Group Basic",
-};
+} as const;

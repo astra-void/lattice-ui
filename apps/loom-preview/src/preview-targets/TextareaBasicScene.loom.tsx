@@ -3,6 +3,6 @@ import { TextareaBasicScene } from "../../../playground/src/client/scenes/Textar
 export { TextareaBasicScene };
 
 export const preview = {
-  entry: TextareaBasicScene,
+  render: TextareaBasicScene,
   title: "Textarea Basic",
-};
+} as const;

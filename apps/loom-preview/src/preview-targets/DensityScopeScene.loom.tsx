@@ -3,6 +3,6 @@ import { DensityScopeScene } from "../../../playground/src/client/scenes/Density
 export { DensityScopeScene };
 
 export const preview = {
-  entry: DensityScopeScene,
+  render: DensityScopeScene,
   title: "Density Scope",
-};
+} as const;
