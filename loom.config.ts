@@ -10,16 +10,22 @@ export default {
     port: 4175,
   },
   transformMode: "compatibility",
-  targetDiscovery: {
-    discoverTargets() {
-      return [
-        {
-          name: "playground",
-          packageName: "@lattice-ui/loom-preview",
-          packageRoot: "./apps/loom-preview",
-          sourceRoot: "./apps/loom-preview/src/preview-targets",
-        },
-      ];
-    },
-  },
+	targetDiscovery: {
+		discoverTargets() {
+			return [
+				{
+					name: "playground",
+					packageName: "@lattice-ui/loom-preview",
+					packageRoot: "./apps/loom-preview",
+					sourceRoot: "./apps/loom-preview/src/preview-targets",
+				},
+				{
+					name: "playground-client",
+					packageName: "@lattice-ui/playground",
+					packageRoot: "./apps/playground",
+					sourceRoot: "./apps/playground/src/client",
+				},
+			];
+		},
+	},
 };
