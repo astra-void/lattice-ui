@@ -1,11 +1,15 @@
-import { React, Slot } from "@lattice-ui/core";
-import { FocusScope } from "@lattice-ui/focus";
-import { DismissableLayer, Presence } from "@lattice-ui/layer";
+﻿import {
+  getMotionTransitionExitFallbackMs,
+  type MotionTransition,
+  mergeMotionTransition,
+  React,
+  Slot,
+  useMotionTween,
+} from "@lattice-ui/core";
+import { Presence } from "@lattice-ui/layer";
 import { usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
-
-const TweenService = game.GetService("TweenService");
 
 const OPEN_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
 const CLOSE_TWEEN_INFO = new TweenInfo(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
@@ -14,10 +18,10 @@ const CONTENT_OPEN_Y_OFFSET = 6;
 type SelectContentImplProps = {
   enabled: boolean;
   visible: boolean;
-  exiting: boolean;
   onDismiss: () => void;
   onExitComplete?: () => void;
   asChild?: boolean;
+  transition?: MotionTransition | false;
   placement?: SelectContentProps["placement"];
   offset?: SelectContentProps["offset"];
   padding?: SelectContentProps["padding"];
@@ -33,6 +37,26 @@ function toGuiObject(instance: Instance | undefined) {
 
 function withVerticalOffset(position: UDim2, offset: number) {
   return new UDim2(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + offset);
+}
+
+function buildSelectContentTransition(position: UDim2): MotionTransition {
+  return {
+    enter: {
+      tweenInfo: OPEN_TWEEN_INFO,
+      from: {
+        Position: withVerticalOffset(position, CONTENT_OPEN_Y_OFFSET),
+      },
+      to: {
+        Position: position,
+      },
+    },
+    exit: {
+      tweenInfo: CLOSE_TWEEN_INFO,
+      to: {
+        Position: withVerticalOffset(position, CONTENT_OPEN_Y_OFFSET),
+      },
+    },
+  };
 }
 
 function SelectContentImpl(props: SelectContentImplProps) {
@@ -54,123 +78,41 @@ function SelectContentImpl(props: SelectContentImplProps) {
     [selectContext.contentRef],
   );
 
-  const positionTweenRef = React.useRef<Tween>();
-  const tweenCompletedConnectionRef = React.useRef<RBXScriptConnection>();
-  const previousVisibleRef = React.useRef(props.visible);
-  const previousExitingRef = React.useRef(props.exiting);
+  const motionTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildSelectContentTransition(popper.position), props.transition);
+  }, [popper.position, props.transition]);
 
-  const clearTween = React.useCallback(() => {
-    const tween = positionTweenRef.current;
-    if (tween) {
-      tween.Cancel();
-      positionTweenRef.current = undefined;
+  useMotionTween(selectContext.contentRef as React.MutableRefObject<Instance | undefined>, {
+    active: props.visible,
+    onExitComplete: props.onExitComplete,
+    transition: motionTransition,
+  });
+
+  if (props.asChild) {
+    const child = props.children;
+    if (!React.isValidElement(child)) {
+      error("[SelectContent] `asChild` requires a child element.");
     }
 
-    const completedConnection = tweenCompletedConnectionRef.current;
-    if (completedConnection) {
-      completedConnection.Disconnect();
-      tweenCompletedConnectionRef.current = undefined;
-    }
-  }, []);
+    return (
+      <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
+        {child}
+      </Slot>
+    );
+  }
 
-  React.useEffect(() => {
-    return () => {
-      clearTween();
-    };
-  }, [clearTween]);
-
-  React.useEffect(() => {
-    const contentNode = selectContext.contentRef.current;
-    if (!contentNode) {
-      return;
-    }
-
-    const wasVisible = previousVisibleRef.current;
-    const wasExiting = previousExitingRef.current;
-    previousVisibleRef.current = props.visible;
-    previousExitingRef.current = props.exiting;
-
-    if (props.exiting) {
-      if (wasExiting) {
-        return;
-      }
-
-      clearTween();
-
-      const tween = TweenService.Create(contentNode, CLOSE_TWEEN_INFO, {
-        Position: withVerticalOffset(popper.position, CONTENT_OPEN_Y_OFFSET),
-      });
-
-      positionTweenRef.current = tween;
-      tweenCompletedConnectionRef.current = tween.Completed.Connect((playbackState) => {
-        if (playbackState === Enum.PlaybackState.Completed) {
-          props.onExitComplete?.();
-        }
-      });
-
-      tween.Play();
-      return;
-    }
-
-    clearTween();
-
-    if (props.visible && !wasVisible) {
-      contentNode.Position = withVerticalOffset(popper.position, CONTENT_OPEN_Y_OFFSET);
-      const tween = TweenService.Create(contentNode, OPEN_TWEEN_INFO, {
-        Position: popper.position,
-      });
-      positionTweenRef.current = tween;
-      tween.Play();
-      return;
-    }
-
-    contentNode.Position = popper.position;
-  }, [clearTween, popper.position, props.exiting, props.onExitComplete, props.visible, selectContext.contentRef]);
-
-  const contentNode = props.asChild ? (
-    (() => {
-      const child = props.children;
-      if (!React.isValidElement(child)) {
-        error("[SelectContent] `asChild` requires a child element.");
-      }
-
-      return (
-        <Slot
-          AnchorPoint={popper.anchorPoint}
-          Position={popper.position}
-          Visible={props.visible || props.exiting}
-          ref={setContentRef}
-        >
-          {child}
-        </Slot>
-      );
-    })()
-  ) : (
+  return (
     <frame
       AnchorPoint={popper.anchorPoint}
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Position={popper.position}
       Size={UDim2.fromOffset(0, 0)}
-      Visible={props.visible || props.exiting}
+      Visible={props.visible}
       ref={setContentRef}
     >
       {props.children}
     </frame>
-  );
-
-  return (
-    <DismissableLayer
-      enabled={props.enabled}
-      modal={false}
-      onDismiss={props.onDismiss}
-      onInteractOutside={props.onInteractOutside}
-      onPointerDownOutside={props.onPointerDownOutside}
-    >
-      <FocusScope active={props.enabled} restoreFocus={true} trapped={false}>
-        {contentNode}
-      </FocusScope>
-    </DismissableLayer>
   );
 }
 
@@ -181,24 +123,27 @@ export function SelectContent(props: SelectContentProps) {
 
   const handleDismiss = React.useCallback(() => {
     selectContext.setOpen(false);
-  }, [selectContext]);
+  }, [selectContext.setOpen]);
 
   if (!open && !forceMount) {
     return undefined;
   }
+
+  const transition = props.transition;
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
 
   if (forceMount) {
     return (
       <SelectContentImpl
         asChild={props.asChild}
         enabled={open}
-        exiting={false}
         offset={props.offset}
         onDismiss={handleDismiss}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
         placement={props.placement}
+        transition={transition}
         visible={open}
       >
         {props.children}
@@ -208,13 +153,12 @@ export function SelectContent(props: SelectContentProps) {
 
   return (
     <Presence
-      exitFallbackMs={180}
+      exitFallbackMs={exitFallbackMs}
       present={open}
       render={(state) => (
         <SelectContentImpl
           asChild={props.asChild}
           enabled={state.isPresent}
-          exiting={!state.isPresent}
           offset={props.offset}
           onDismiss={handleDismiss}
           onExitComplete={state.onExitComplete}
@@ -222,7 +166,8 @@ export function SelectContent(props: SelectContentProps) {
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}
           placement={props.placement}
-          visible={state.isPresent}
+          transition={transition}
+          visible={true}
         >
           {props.children}
         </SelectContentImpl>

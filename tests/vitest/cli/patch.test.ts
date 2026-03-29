@@ -28,7 +28,10 @@ describe("json patch helpers", () => {
   });
 
   it("merges string arrays uniquely when applying template defaults", () => {
-    const merged = mergeMissing({ typeRoots: ["node_modules/@rbxts", "node_modules/@lattice-ui"] }, { typeRoots: ["node_modules/@rbxts"] }) as {
+    const merged = mergeMissing(
+      { typeRoots: ["node_modules/@rbxts", "node_modules/@lattice-ui"] },
+      { typeRoots: ["node_modules/@rbxts"] },
+    ) as {
       typeRoots: string[];
     };
 

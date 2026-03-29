@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+﻿import { React, Slot } from "@lattice-ui/core";
 import { useToastContext } from "./context";
 import { ToastClose } from "./ToastClose";
 import { ToastDescription } from "./ToastDescription";
@@ -26,7 +26,7 @@ export function ToastViewport(props: ToastViewportProps) {
         SortOrder={Enum.SortOrder.LayoutOrder}
       />
       {toastContext.visibleToasts.map((toast) => (
-        <ToastRoot key={toast.id}>
+        <ToastRoot key={toast.id} visible={!toast.exiting}>
           <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromOffset(300, 22)}>
             <ToastTitle asChild>
               <textlabel

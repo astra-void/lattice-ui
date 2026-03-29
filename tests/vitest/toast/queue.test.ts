@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import {
   dequeueToast,
   enqueueToast,
@@ -28,7 +28,7 @@ describe("toast queue", () => {
     expect(getVisibleToasts(queue, 2).map((item) => item.id)).toEqual(["a", "b"]);
   });
 
-  it("prunes only expired visible toasts", () => {
+  it("marks expired visible toasts as exiting before removing them", () => {
     const queue = [
       { id: "a", createdAtMs: 0, durationMs: 1000 },
       { id: "b", createdAtMs: 0, durationMs: 5000 },
@@ -36,6 +36,17 @@ describe("toast queue", () => {
     ];
 
     const pruned = pruneExpiredToasts(queue, 2000, 2, 4000);
-    expect(pruned.map((item) => item.id)).toEqual(["b", "c"]);
+    expect(pruned.map((item) => item.id)).toEqual(["a", "b", "c"]);
+    expect(pruned[0]?.exiting).toBe(true);
+  });
+
+  it("eventually removes exiting toasts after the exit window", () => {
+    const queue = [
+      { id: "a", createdAtMs: 0, durationMs: 1000, exiting: true, exitStartedAtMs: 0 },
+      { id: "b", createdAtMs: 0, durationMs: 5000 },
+    ];
+
+    const pruned = pruneExpiredToasts(queue, 300, 2, 4000);
+    expect(pruned.map((item) => item.id)).toEqual(["b"]);
   });
 });

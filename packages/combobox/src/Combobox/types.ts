@@ -1,3 +1,4 @@
+﻿import type { MotionTransition } from "@lattice-ui/core";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import type React from "@rbxts/react";
@@ -82,6 +83,7 @@ export type ComboboxPortalProps = {
 export type ComboboxContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
+  transition?: MotionTransition | false;
   placement?: PopperPlacement;
   offset?: Vector2;
   padding?: number;

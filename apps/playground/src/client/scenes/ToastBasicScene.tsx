@@ -1,6 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { Toast } from "@lattice-ui/toast";
+import { playgroundToastTransition } from "../motion";
 import { panelRecipe } from "../theme/recipes";
 
 export function ToastBasicScene() {
@@ -32,7 +33,7 @@ export function ToastBasicScene() {
         />
         <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
-        <Toast.Root asChild>
+        <Toast.Root asChild transition={playgroundToastTransition}>
           <frame
             BackgroundColor3={theme.colors.surfaceElevated}
             BorderSizePixel={0}
@@ -81,7 +82,7 @@ export function ToastBasicScene() {
           </frame>
         </Toast.Root>
 
-        <Toast.Root asChild>
+        <Toast.Root asChild transition={playgroundToastTransition}>
           <frame
             BackgroundColor3={theme.colors.surfaceElevated}
             BorderSizePixel={0}

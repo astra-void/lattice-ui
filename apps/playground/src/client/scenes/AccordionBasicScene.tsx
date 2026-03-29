@@ -1,6 +1,7 @@
 import { Accordion } from "@lattice-ui/accordion";
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { playgroundAccordionTransition } from "../motion";
 import { panelRecipe } from "../theme/recipes";
 
 export function AccordionBasicScene() {
@@ -56,7 +57,7 @@ export function AccordionBasicScene() {
                       </Accordion.Trigger>
                     </frame>
                   </Accordion.Header>
-                  <Accordion.Content asChild>
+                  <Accordion.Content asChild transition={playgroundAccordionTransition}>
                     <Text
                       BackgroundTransparency={1}
                       Position={UDim2.fromOffset(10, 40)}

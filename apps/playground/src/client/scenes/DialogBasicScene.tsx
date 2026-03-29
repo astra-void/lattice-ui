@@ -1,5 +1,6 @@
 import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
+import { playgroundOverlayTransition, playgroundSurfaceTransition } from "../motion";
 
 export function DialogBasicScene() {
   const [open, setOpen] = React.useState(false);
@@ -40,8 +41,8 @@ export function DialogBasicScene() {
         </Dialog.Trigger>
 
         <Dialog.Portal>
-          <Dialog.Content>
-            <Dialog.Overlay />
+          <Dialog.Content transition={playgroundSurfaceTransition}>
+            <Dialog.Overlay transition={playgroundOverlayTransition} />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(33, 41, 56)}

@@ -1,18 +1,59 @@
-import { React, Slot } from "@lattice-ui/core";
+﻿import {
+  getMotionTransitionExitFallbackMs,
+  type MotionTransition,
+  mergeMotionTransition,
+  React,
+  Slot,
+  useMotionTween,
+} from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
 import { useTabsContext } from "./context";
 import { createTabsContentName } from "./internals/ids";
 import type { TabsContentProps } from "./types";
 
-type TabsContentImplProps = {
+const CONTENT_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const CONTENT_EXIT_TWEEN_INFO = new TweenInfo(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+const CONTENT_OFFSET = 4;
+
+function buildTabsContentTransition(): MotionTransition {
+  return {
+    enter: {
+      tweenInfo: CONTENT_TWEEN_INFO,
+      from: {
+        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
+      },
+      to: {
+        Position: UDim2.fromOffset(0, 0),
+      },
+    },
+    exit: {
+      tweenInfo: CONTENT_EXIT_TWEEN_INFO,
+      to: {
+        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
+      },
+    },
+  };
+}
+
+function TabsContentImpl(props: {
   visible: boolean;
+  transition?: MotionTransition | false;
+  onExitComplete?: () => void;
   value: string;
   asChild?: boolean;
   children?: React.ReactNode;
-};
-
-function TabsContentImpl(props: TabsContentImplProps) {
+}) {
   const contentName = createTabsContentName(props.value);
+  const contentRef = React.useRef<Frame>();
+  const motionTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildTabsContentTransition(), props.transition);
+  }, [props.transition]);
+
+  useMotionTween(contentRef as React.MutableRefObject<Instance | undefined>, {
+    active: props.visible,
+    onExitComplete: props.onExitComplete,
+    transition: motionTransition,
+  });
 
   if (props.asChild) {
     const child = props.children;
@@ -21,14 +62,20 @@ function TabsContentImpl(props: TabsContentImplProps) {
     }
 
     return (
-      <Slot Name={contentName} Visible={props.visible}>
+      <Slot Name={contentName} Visible={props.visible} ref={contentRef}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromOffset(0, 0)} Visible={props.visible}>
+    <frame
+      BackgroundTransparency={1}
+      BorderSizePixel={0}
+      Size={UDim2.fromOffset(0, 0)}
+      Visible={props.visible}
+      ref={contentRef}
+    >
       {props.children}
     </frame>
   );
@@ -43,9 +90,12 @@ export function TabsContent(props: TabsContentProps) {
     return undefined;
   }
 
+  const transition = props.transition;
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+
   if (forceMount) {
     return (
-      <TabsContentImpl asChild={props.asChild} value={props.value} visible={selected}>
+      <TabsContentImpl asChild={props.asChild} transition={transition} value={props.value} visible={selected}>
         {props.children}
       </TabsContentImpl>
     );
@@ -53,10 +103,16 @@ export function TabsContent(props: TabsContentProps) {
 
   return (
     <Presence
-      exitFallbackMs={0}
+      exitFallbackMs={exitFallbackMs}
       present={selected}
       render={(state) => (
-        <TabsContentImpl asChild={props.asChild} value={props.value} visible={state.isPresent}>
+        <TabsContentImpl
+          asChild={props.asChild}
+          onExitComplete={state.onExitComplete}
+          transition={transition}
+          value={props.value}
+          visible={true}
+        >
           {props.children}
         </TabsContentImpl>
       )}

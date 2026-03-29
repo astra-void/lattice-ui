@@ -1,6 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { Tabs } from "@lattice-ui/tabs";
+import { playgroundTabsTransition } from "../motion";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 type DemoTabKey = "overview" | "activity" | "settings";
@@ -81,7 +82,7 @@ export function TabsBasicScene() {
             </frame>
           </Tabs.List>
 
-          <Tabs.Content asChild value="overview">
+          <Tabs.Content asChild transition={playgroundTabsTransition} value="overview">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
@@ -101,7 +102,7 @@ export function TabsBasicScene() {
             </frame>
           </Tabs.Content>
 
-          <Tabs.Content asChild value="activity">
+          <Tabs.Content asChild transition={playgroundTabsTransition} value="activity">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
@@ -121,7 +122,7 @@ export function TabsBasicScene() {
             </frame>
           </Tabs.Content>
 
-          <Tabs.Content asChild value="settings">
+          <Tabs.Content asChild transition={playgroundTabsTransition} value="settings">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
@@ -201,7 +202,7 @@ export function TabsBasicScene() {
               </frame>
             </Tabs.List>
 
-            <Tabs.Content asChild forceMount value="alpha">
+            <Tabs.Content asChild forceMount transition={playgroundTabsTransition} value="alpha">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
@@ -221,7 +222,7 @@ export function TabsBasicScene() {
               </frame>
             </Tabs.Content>
 
-            <Tabs.Content asChild value="beta">
+            <Tabs.Content asChild transition={playgroundTabsTransition} value="beta">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
@@ -241,7 +242,7 @@ export function TabsBasicScene() {
               </frame>
             </Tabs.Content>
 
-            <Tabs.Content asChild value="gamma">
+            <Tabs.Content asChild transition={playgroundTabsTransition} value="gamma">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),

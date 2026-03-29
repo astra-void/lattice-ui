@@ -1,8 +1,39 @@
-import { React, Slot } from "@lattice-ui/core";
+﻿import { type MotionTransition, mergeMotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
 import type { ToastRootProps } from "./types";
+
+const TOAST_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+
+function buildToastTransition(): MotionTransition {
+  return {
+    enter: {
+      tweenInfo: TOAST_TWEEN_INFO,
+      from: {
+        BackgroundTransparency: 1,
+      },
+      to: {
+        BackgroundTransparency: 0,
+      },
+    },
+    exit: {
+      tweenInfo: TOAST_TWEEN_INFO,
+      to: {
+        BackgroundTransparency: 1,
+      },
+    },
+  };
+}
 
 export function ToastRoot(props: ToastRootProps) {
   const visible = props.visible ?? true;
+  const rootRef = React.useRef<Frame>();
+  const motionTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildToastTransition(), props.transition);
+  }, [props.transition]);
+
+  useMotionTween(rootRef as React.MutableRefObject<Instance | undefined>, {
+    active: visible,
+    transition: motionTransition,
+  });
 
   if (props.asChild) {
     const child = props.children;
@@ -10,15 +41,21 @@ export function ToastRoot(props: ToastRootProps) {
       error("[ToastRoot] `asChild` requires a child element.");
     }
 
-    return <Slot Visible={visible}>{child}</Slot>;
+    return (
+      <Slot Visible={true} ref={rootRef}>
+        {child}
+      </Slot>
+    );
   }
 
   return (
     <frame
       BackgroundColor3={Color3.fromRGB(38, 45, 59)}
+      BackgroundTransparency={0}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(320, 72)}
-      Visible={visible}
+      Visible={true}
+      ref={rootRef}
     >
       <uicorner CornerRadius={new UDim(0, 10)} />
       <uipadding

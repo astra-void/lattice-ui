@@ -1,10 +1,14 @@
-export type ToastRecord = {
+﻿export type ToastRecord = {
   id: string;
   title?: string;
   description?: string;
   durationMs?: number;
   createdAtMs: number;
+  exiting?: boolean;
+  exitStartedAtMs?: number;
 };
+
+const TOAST_EXIT_DURATION_MS = 160;
 
 export function enqueueToast(queue: Array<ToastRecord>, toast: ToastRecord) {
   return [...queue, toast];
@@ -39,6 +43,11 @@ export function getVisibleToasts(queue: Array<ToastRecord>, maxVisible: number) 
   return visible;
 }
 
+function shouldKeepExitingToast(toast: ToastRecord, nowMs: number) {
+  const exitStartedAtMs = toast.exitStartedAtMs ?? nowMs;
+  return nowMs - exitStartedAtMs < TOAST_EXIT_DURATION_MS;
+}
+
 export function pruneExpiredToasts(
   queue: Array<ToastRecord>,
   nowMs: number,
@@ -55,6 +64,15 @@ export function pruneExpiredToasts(
       continue;
     }
 
+    if (toast.exiting) {
+      if (shouldKeepExitingToast(toast, nowMs)) {
+        nextQueue.push(toast);
+      } else {
+        changed = true;
+      }
+      continue;
+    }
+
     if (index + 1 > visibleCount) {
       nextQueue.push(toast);
       continue;
@@ -68,6 +86,11 @@ export function pruneExpiredToasts(
 
     if (nowMs - toast.createdAtMs >= duration) {
       changed = true;
+      nextQueue.push({
+        ...toast,
+        exiting: true,
+        exitStartedAtMs: nowMs,
+      });
       continue;
     }
 

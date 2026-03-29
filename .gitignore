@@ -17,3 +17,5 @@ pnpm-publish-summary.json
 run-in-roblox.log
 
 .turbo
+
+.loom-preview-cache
