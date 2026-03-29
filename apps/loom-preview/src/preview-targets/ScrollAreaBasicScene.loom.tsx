@@ -10,5 +10,5 @@ export const preview = {
       <ScrollAreaBasicScene />
     </PreviewTargetShell>
   ),
-  title: "Scroll Area Basic",
+  title: "ScrollArea Basic",
 } as const;

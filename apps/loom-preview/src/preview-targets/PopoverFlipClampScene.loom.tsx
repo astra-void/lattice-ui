@@ -10,5 +10,5 @@ export const preview = {
       <PopoverFlipClampScene />
     </PreviewTargetShell>
   ),
-  title: "Popover Flip Clamp",
+  title: "Popover Flip/Clamp",
 } as const;

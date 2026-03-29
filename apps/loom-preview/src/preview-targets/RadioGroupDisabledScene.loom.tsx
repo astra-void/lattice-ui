@@ -10,5 +10,5 @@ export const preview = {
       <RadioGroupDisabledScene />
     </PreviewTargetShell>
   ),
-  title: "Radio Group Disabled",
+  title: "Radio Disabled",
 } as const;

@@ -10,5 +10,5 @@ export const preview = {
       <InsetHitTestScene />
     </PreviewTargetShell>
   ),
-  title: "Inset Hit Test",
+  title: "Inset Hit-Test",
 } as const;

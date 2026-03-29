@@ -10,5 +10,5 @@ export const preview = {
       <ToggleGroupBasicScene />
     </PreviewTargetShell>
   ),
-  title: "Toggle Group Basic",
+  title: "Toggle Basic",
 } as const;
