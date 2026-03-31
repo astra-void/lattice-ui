@@ -26,7 +26,9 @@ function getPreviewPortalContainer() {
 export function PreviewTargetShell(props: PreviewTargetShellProps) {
   return (
     <PortalProvider container={getPreviewPortalContainer()}>
-      <SystemProvider defaultDensity="comfortable" defaultTheme={defaultDarkTheme}>{props.children}</SystemProvider>
+      <SystemProvider defaultDensity="comfortable" defaultTheme={defaultDarkTheme}>
+        {props.children}
+      </SystemProvider>
     </PortalProvider>
   );
 }
