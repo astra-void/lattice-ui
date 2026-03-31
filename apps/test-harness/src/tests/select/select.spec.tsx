@@ -82,6 +82,29 @@ export = () => {
       });
     });
 
+    it("mounts into portal and becomes visible when open=true", () => {
+      withReactHarness("SelectOpenVisible", (harness) => {
+        harness.render(
+          renderSelectTree(
+            {
+              open: true,
+              forceMount: false,
+              markerText: "select-marker-open-visible",
+            },
+            harness.playerGui,
+          ),
+        );
+
+        waitForEffects();
+        const marker = findTextLabelByText(harness.playerGui, "select-marker-open-visible");
+        assert(marker !== undefined, "Select content should mount when open is true.");
+
+        const contentFrame = marker.Parent;
+        assert(contentFrame !== undefined && contentFrame.IsA("GuiObject"), "Marker parent should be a GuiObject.");
+        assert(contentFrame.Visible === true, "SelectContent should be visible when open is true.");
+      });
+    });
+
     it("does not mount content while closed without forceMount", () => {
       withReactHarness("SelectClosed", (harness) => {
         harness.render(

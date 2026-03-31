@@ -6,7 +6,7 @@
   Slot,
   useMotionTween,
 } from "@lattice-ui/core";
-import { Presence } from "@lattice-ui/layer";
+import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
@@ -88,20 +88,20 @@ function SelectContentImpl(props: SelectContentImplProps) {
     transition: motionTransition,
   });
 
-  if (props.asChild) {
-    const child = props.children;
-    if (!React.isValidElement(child)) {
-      error("[SelectContent] `asChild` requires a child element.");
-    }
+  const contentNode = props.asChild ? (
+    (() => {
+      const child = props.children;
+      if (!React.isValidElement(child)) {
+        error("[SelectContent] `asChild` requires a child element.");
+      }
 
-    return (
-      <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
-        {child}
-      </Slot>
-    );
-  }
-
-  return (
+      return (
+        <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
+          {child}
+        </Slot>
+      );
+    })()
+  ) : (
     <frame
       AnchorPoint={popper.anchorPoint}
       BackgroundTransparency={1}
@@ -113,6 +113,19 @@ function SelectContentImpl(props: SelectContentImplProps) {
     >
       {props.children}
     </frame>
+  );
+
+  return (
+    <DismissableLayer
+      enabled={props.enabled}
+      insideRefs={[selectContext.triggerRef]}
+      modal={false}
+      onDismiss={props.onDismiss}
+      onInteractOutside={props.onInteractOutside}
+      onPointerDownOutside={props.onPointerDownOutside}
+    >
+      {contentNode}
+    </DismissableLayer>
   );
 }
 
