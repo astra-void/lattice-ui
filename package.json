@@ -8,7 +8,7 @@
     "package:new": "node --import tsx ./scripts/create-package.ts",
     "workspace:sync": "node --import tsx ./scripts/workspace-sync.ts",
     "workspace:check": "node --import tsx ./scripts/workspace-check.ts",
-    "build": "turbo run build",
+    "build": "turbo run build --filter=!@lattice-ui/loom-preview",
     "watch": "turbo run watch",
     "preview:loom": "pnpm --dir ../../typescript/loom exec tsx packages/cli/src/index.ts preview --cwd ../../rojo/lattice-ui",
     "typecheck": "turbo run typecheck",

@@ -12,6 +12,7 @@ test-harness.rbxlx.lock
 .pnpm-store
 .DS_Store
 .astro
+.env
 
 pnpm-publish-summary.json
 run-in-roblox.log
