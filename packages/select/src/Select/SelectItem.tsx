@@ -33,15 +33,17 @@ export function SelectItem(props: SelectItemProps) {
     itemOrderRef.current = nextItemOrder;
   }
 
+  const registerItem = selectContext.registerItem;
+
   React.useEffect(() => {
-    return selectContext.registerItem({
+    return registerItem({
       id: itemIdRef.current,
       value: props.value,
       order: itemOrderRef.current,
       getDisabled: () => disabledRef.current,
       getTextValue: () => textValueRef.current,
     });
-  }, [props.value, selectContext]);
+  }, [props.value, registerItem]);
 
   const handleSelect = React.useCallback(() => {
     if (disabled) {

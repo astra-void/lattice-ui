@@ -50,6 +50,38 @@ function renderSelectTree(options: SelectRenderOptions, playerGui: PlayerGui) {
 
 export = () => {
   describe("select", () => {
+    it("does not enter an update loop when items mount", () => {
+      withReactHarness("SelectMountLoop", (harness) => {
+        let renderCount = 0;
+
+        function Tracker() {
+          renderCount++;
+          return <textlabel Text="tracker" />;
+        }
+
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <Select.Root defaultOpen={true}>
+              <Select.Trigger asChild>
+                <textbutton Text="select-trigger" />
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Content>
+                  <Tracker />
+                  <Select.Item value="a" textValue="A" />
+                  <Select.Item value="b" textValue="B" />
+                  <Select.Item value="c" textValue="C" />
+                </Select.Content>
+              </Select.Portal>
+            </Select.Root>
+          </PortalProvider>,
+        );
+
+        waitForEffects(10);
+        assert(renderCount < 20, "Select should not re-render infinitely when items mount.");
+      });
+    });
+
     it("does not mount content while closed without forceMount", () => {
       withReactHarness("SelectClosed", (harness) => {
         harness.render(
