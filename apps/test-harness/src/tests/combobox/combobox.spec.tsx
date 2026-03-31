@@ -84,6 +84,41 @@ function ControlledComboboxSelectionHarness(props: ControlledComboboxSelectionHa
 
 export = () => {
   describe("combobox", () => {
+    it("does not enter an update loop when items mount", () => {
+      withReactHarness("ComboboxMountLoop", (harness) => {
+        let renderCount = 0;
+
+        function Tracker() {
+          renderCount++;
+          return <textlabel Text="tracker" />;
+        }
+
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <Combobox.Root defaultOpen={true}>
+              <Combobox.Trigger asChild>
+                <textbutton Text="combobox-trigger" />
+              </Combobox.Trigger>
+              <Combobox.Input asChild>
+                <textbox />
+              </Combobox.Input>
+              <Combobox.Portal>
+                <Combobox.Content>
+                  <Tracker />
+                  <Combobox.Item value="a" textValue="A" />
+                  <Combobox.Item value="b" textValue="B" />
+                  <Combobox.Item value="c" textValue="C" />
+                </Combobox.Content>
+              </Combobox.Portal>
+            </Combobox.Root>
+          </PortalProvider>,
+        );
+
+        waitForEffects(10);
+        assert(renderCount < 20, "Combobox should not re-render infinitely when items mount.");
+      });
+    });
+
     it("syncs input text from selected value while closed", () => {
       withReactHarness("ComboboxSyncInput", (harness) => {
         harness.render(

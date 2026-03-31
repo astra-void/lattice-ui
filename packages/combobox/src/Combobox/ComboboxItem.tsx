@@ -35,15 +35,17 @@ export function ComboboxItem(props: ComboboxItemProps) {
     itemOrderRef.current = nextItemOrder;
   }
 
+  const registerItem = comboboxContext.registerItem;
+
   React.useEffect(() => {
-    return comboboxContext.registerItem({
+    return registerItem({
       id: itemIdRef.current,
       value: props.value,
       order: itemOrderRef.current,
       getDisabled: () => disabledRef.current,
       getTextValue: () => textValueRef.current,
     });
-  }, [comboboxContext, props.value]);
+  }, [registerItem, props.value]);
 
   const handleSelect = React.useCallback(() => {
     if (interactionDisabled) {

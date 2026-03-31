@@ -34,15 +34,18 @@ export function ComboboxInput(props: ComboboxInputProps) {
     [comboboxContext.anchorRef, comboboxContext.inputRef, comboboxContext.triggerRef],
   );
 
+  const lastInputValueRef = React.useRef(comboboxContext.inputValue);
+  lastInputValueRef.current = comboboxContext.inputValue;
+
   const handleTextChanged = React.useCallback(
     (textBox: TextBox) => {
-      if (textBox.Text === comboboxContext.inputValue) {
+      if (textBox.Text === lastInputValueRef.current) {
         return;
       }
 
       if (disabled || readOnly) {
-        if (textBox.Text !== comboboxContext.inputValue) {
-          textBox.Text = comboboxContext.inputValue;
+        if (textBox.Text !== lastInputValueRef.current) {
+          textBox.Text = lastInputValueRef.current;
         }
 
         return;
