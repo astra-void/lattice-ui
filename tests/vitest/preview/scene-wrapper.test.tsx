@@ -1,3 +1,5 @@
+import * as React from "react";
+
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 type PreviewModule = {
@@ -76,12 +78,24 @@ const sceneModulePaths = vi.hoisted(() => ({
     .pathname,
   scrollAreaBasic: new URL("../../../apps/playground/src/client/scenes/ScrollAreaBasicScene.tsx", import.meta.url)
     .pathname,
+  previewTargetShell: new URL(
+    "../../../apps/loom-preview/src/preview-targets/PreviewTargetShell.tsx",
+    import.meta.url,
+  ).pathname,
 }));
 
 const AccordionBasicScene = () => null;
 const DialogModalBlockScene = () => null;
 const RadioGroupDisabledScene = () => null;
 const ScrollAreaBasicScene = () => null;
+
+vi.mock("@lattice-ui/core", () => ({
+  React,
+}));
+
+vi.mock(sceneModulePaths.previewTargetShell, () => ({
+  PreviewTargetShell: (props: { children?: React.ReactNode }) => props.children,
+}));
 
 vi.mock(sceneModulePaths.accordion, () => ({
   AccordionBasicScene,
