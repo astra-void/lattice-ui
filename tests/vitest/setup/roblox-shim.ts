@@ -174,3 +174,24 @@ if (!globalThis.Enum) {
   globalThis.UDim = function() {};
   globalThis.Instance = { new: () => ({}) };
 }
+
+class MockRect {
+  public Min: any;
+  public Max: any;
+  public Width: number;
+  public Height: number;
+
+  constructor(minX: any, minY: any, maxX: any, maxY: any) {
+    if (typeof minX === 'number') {
+      this.Min = new MockVector2(minX, minY);
+      this.Max = new MockVector2(maxX, maxY);
+    } else {
+      this.Min = minX;
+      this.Max = minY;
+    }
+    this.Width = this.Max.X - this.Min.X;
+    this.Height = this.Max.Y - this.Min.Y;
+  }
+}
+
+Object.assign(globalThis, { Rect: MockRect });
