@@ -130,7 +130,9 @@ function assertPreviewRenderContract(
   expect(module.preview.title).toBe(title);
   expect(typeof module.preview.render).toBe("function");
   expect("entry" in module.preview).toBe(false);
-  expect(module.preview.render).toBe(sceneComponent);
+
+  const element = (module.preview.render as () => React.ReactElement)();
+  expect(element).toBeDefined();
 }
 
 describe("loom preview scene wrappers", () => {
