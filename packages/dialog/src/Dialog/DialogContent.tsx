@@ -46,14 +46,11 @@ type DialogContentImplProps = {
 
 function DialogContentImpl(props: DialogContentImplProps) {
   const contentRef = React.useRef<Frame>();
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildDialogContentTransition(), props.transition);
-  }, [props.transition]);
 
   useMotionTween(contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
-    transition: motionTransition,
+    transition: props.transition,
   });
 
   return (
@@ -91,12 +88,9 @@ export function DialogContent(props: DialogContentProps) {
     dialogContext.setOpen(false);
   }, [dialogContext.setOpen]);
 
-  if (!open && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const transition = React.useMemo(() => {
+    return mergeMotionTransition(buildDialogContentTransition(), props.transition);
+  }, [props.transition]);
 
   if (forceMount) {
     return (
@@ -116,13 +110,15 @@ export function DialogContent(props: DialogContentProps) {
     );
   }
 
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+
   return (
     <Presence
       exitFallbackMs={exitFallbackMs}
       present={open}
       render={(state) => (
         <DialogContentImpl
-          enabled={true}
+          enabled={state.isPresent}
           modal={dialogContext.modal}
           onDismiss={handleDismiss}
           onExitComplete={state.onExitComplete}

@@ -34,6 +34,7 @@ function buildDialogOverlayTransition(): MotionTransition {
 
 type DialogOverlayImplProps = {
   visible: boolean;
+  interactive?: boolean;
   transition?: MotionTransition | false;
   onDismiss: () => void;
   onExitComplete?: () => void;
@@ -43,14 +44,12 @@ type DialogOverlayImplProps = {
 
 function DialogOverlayImpl(props: DialogOverlayImplProps) {
   const overlayRef = React.useRef<TextButton>();
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildDialogOverlayTransition(), props.transition);
-  }, [props.transition]);
+  const interactive = props.interactive ?? props.visible;
 
   useMotionTween(overlayRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
-    transition: motionTransition,
+    transition: props.transition,
   });
 
   const handleActivated = React.useCallback(() => {
@@ -64,7 +63,7 @@ function DialogOverlayImpl(props: DialogOverlayImplProps) {
     }
 
     return (
-      <Slot Active={props.visible} Event={{ Activated: handleActivated }} Visible={props.visible} ref={overlayRef}>
+      <Slot Active={interactive} Event={{ Activated: handleActivated }} Visible={props.visible} ref={overlayRef}>
         {child}
       </Slot>
     );
@@ -72,7 +71,7 @@ function DialogOverlayImpl(props: DialogOverlayImplProps) {
 
   return (
     <textbutton
-      Active={props.visible}
+      Active={interactive}
       AutoButtonColor={false}
       BackgroundColor3={Color3.fromRGB(8, 10, 14)}
       BackgroundTransparency={0.35}
@@ -93,14 +92,10 @@ function DialogOverlayImpl(props: DialogOverlayImplProps) {
 export function DialogOverlay(props: DialogOverlayProps) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
-  const shouldRender = open || props.forceMount === true;
 
-  if (!shouldRender) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const transition = React.useMemo(() => {
+    return mergeMotionTransition(buildDialogOverlayTransition(), props.transition);
+  }, [props.transition]);
 
   if (props.forceMount) {
     return (
@@ -115,6 +110,8 @@ export function DialogOverlay(props: DialogOverlayProps) {
     );
   }
 
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+
   return (
     <Presence
       exitFallbackMs={exitFallbackMs}
@@ -122,6 +119,7 @@ export function DialogOverlay(props: DialogOverlayProps) {
       render={(state) => (
         <DialogOverlayImpl
           asChild={props.asChild}
+          interactive={state.isPresent}
           onDismiss={() => dialogContext.setOpen(false)}
           onExitComplete={state.onExitComplete}
           transition={transition}

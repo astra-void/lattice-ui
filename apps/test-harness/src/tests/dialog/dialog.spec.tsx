@@ -95,5 +95,54 @@ export = () => {
         GuiService.SelectedObject = undefined;
       });
     });
+
+    it("keeps content and overlay mounted during exit animation and unmounts after", () => {
+      withReactHarness("DialogExitAnimation", (harness) => {
+        const renderDialog = (open: boolean) => (
+          <PortalProvider container={harness.playerGui}>
+            <Dialog.Root open={open}>
+              <Dialog.Portal>
+                <Dialog.Overlay>
+                  <textlabel Text="dialog-overlay" />
+                </Dialog.Overlay>
+                <Dialog.Content>
+                  <textlabel Text="dialog-content" />
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+          </PortalProvider>
+        );
+
+        harness.render(renderDialog(true));
+        waitForEffects(4);
+
+        assert(findTextLabelByText(harness.playerGui, "dialog-overlay") !== undefined, "Overlay should be mounted.");
+        assert(findTextLabelByText(harness.playerGui, "dialog-content") !== undefined, "Content should be mounted.");
+
+        harness.render(renderDialog(false));
+        waitForEffects(2); // React effects
+
+        assert(
+          findTextLabelByText(harness.playerGui, "dialog-overlay") !== undefined,
+          "Overlay should remain mounted immediately after close due to exit animation.",
+        );
+        assert(
+          findTextLabelByText(harness.playerGui, "dialog-content") !== undefined,
+          "Content should remain mounted immediately after close due to exit animation.",
+        );
+
+        task.wait(0.2); // Wait for exit animation to finish
+        waitForEffects(2);
+
+        assert(
+          findTextLabelByText(harness.playerGui, "dialog-overlay") === undefined,
+          "Overlay should unmount after exit animation completes.",
+        );
+        assert(
+          findTextLabelByText(harness.playerGui, "dialog-content") === undefined,
+          "Content should unmount after exit animation completes.",
+        );
+      });
+    });
   });
 };
