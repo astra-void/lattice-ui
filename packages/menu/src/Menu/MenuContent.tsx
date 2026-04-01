@@ -140,12 +140,10 @@ export function MenuContent(props: MenuContentProps) {
     menuContext.setOpen(false);
   }, [menuContext.setOpen]);
 
-  if (!open && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const fallbackTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildMenuContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+  }, [props.transition]);
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 
   if (forceMount) {
     return (
@@ -158,7 +156,7 @@ export function MenuContent(props: MenuContentProps) {
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
         placement={props.placement}
-        transition={transition}
+        transition={props.transition}
         visible={open}
       >
         {props.children}
@@ -181,7 +179,7 @@ export function MenuContent(props: MenuContentProps) {
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}
           placement={props.placement}
-          transition={transition}
+          transition={props.transition}
           visible={true}
         >
           {props.children}
