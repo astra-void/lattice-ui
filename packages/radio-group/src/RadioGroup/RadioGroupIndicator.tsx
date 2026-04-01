@@ -44,14 +44,11 @@ function RadioGroupIndicatorImpl(props: {
   children?: React.ReactNode;
 }) {
   const indicatorRef = React.useRef<Frame>();
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildRadioGroupIndicatorTransition(UDim2.fromOffset(10, 10)), props.transition);
-  }, [props.transition]);
 
   useMotionTween(indicatorRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
-    transition: motionTransition,
+    transition: props.transition,
   });
 
   if (props.asChild) {
@@ -85,12 +82,9 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
   const visible = radioGroupItemContext.checked;
   const forceMount = props.forceMount === true;
 
-  if (!visible && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const transition = React.useMemo(() => {
+    return mergeMotionTransition(buildRadioGroupIndicatorTransition(UDim2.fromOffset(10, 10)), props.transition);
+  }, [props.transition]);
 
   if (forceMount) {
     return (
@@ -99,6 +93,8 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
       </RadioGroupIndicatorImpl>
     );
   }
+
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
 
   return (
     <Presence

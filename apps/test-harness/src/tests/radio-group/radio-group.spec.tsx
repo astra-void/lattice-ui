@@ -70,5 +70,56 @@ export = () => {
         GuiService.SelectedObject = undefined;
       });
     });
+
+    it("keeps indicator mounted during exit animation and unmounts after", () => {
+      withReactHarness("RadioGroupIndicatorExitAnimation", (harness) => {
+        const renderRadioGroup = (value: string) => (
+          <RadioGroup.Root value={value}>
+            <RadioGroup.Item asChild value="alpha">
+              <textbutton Text="radio-item-alpha">
+                <RadioGroup.Indicator asChild>
+                  <textlabel Text="indicator-alpha" />
+                </RadioGroup.Indicator>
+              </textbutton>
+            </RadioGroup.Item>
+            <RadioGroup.Item asChild value="beta">
+              <textbutton Text="radio-item-beta">
+                <RadioGroup.Indicator asChild>
+                  <textlabel Text="indicator-beta" />
+                </RadioGroup.Indicator>
+              </textbutton>
+            </RadioGroup.Item>
+          </RadioGroup.Root>
+        );
+
+        harness.render(renderRadioGroup("alpha"));
+        waitForEffects(3);
+
+        assert(
+          findTextLabelByText(harness.container, "indicator-alpha") !== undefined,
+          "Indicator alpha should be mounted initially.",
+        );
+
+        harness.render(renderRadioGroup("beta"));
+        waitForEffects(2); // React effects
+
+        assert(
+          findTextLabelByText(harness.container, "indicator-alpha") !== undefined,
+          "Indicator alpha should remain mounted immediately after switch due to exit animation.",
+        );
+
+        task.wait(0.15); // Wait for exit animation
+        waitForEffects(2);
+
+        assert(
+          findTextLabelByText(harness.container, "indicator-alpha") === undefined,
+          "Indicator alpha should unmount after exit animation completes.",
+        );
+        assert(
+          findTextLabelByText(harness.container, "indicator-beta") !== undefined,
+          "Indicator beta should be mounted.",
+        );
+      });
+    });
   });
 };
