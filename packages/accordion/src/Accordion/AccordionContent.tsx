@@ -42,14 +42,11 @@ function AccordionContentImpl(props: {
   children?: React.ReactNode;
 }) {
   const contentRef = React.useRef<Frame>();
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildAccordionContentTransition(), props.transition);
-  }, [props.transition]);
 
   useMotionTween(contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
-    transition: motionTransition,
+    transition: props.transition,
   });
 
   if (props.asChild) {
@@ -82,12 +79,9 @@ export function AccordionContent(props: AccordionContentProps) {
   const itemContext = useAccordionItemContext();
   const forceMount = props.forceMount === true;
 
-  if (!itemContext.open && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const transition = React.useMemo(() => {
+    return mergeMotionTransition(buildAccordionContentTransition(), props.transition);
+  }, [props.transition]);
 
   if (forceMount) {
     return (
@@ -96,6 +90,8 @@ export function AccordionContent(props: AccordionContentProps) {
       </AccordionContentImpl>
     );
   }
+
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
 
   return (
     <Presence
