@@ -39,6 +39,8 @@
     "release:publish": "pnpm run release:publish:local",
     "release:publish:local": "pnpm run build && pnpm -r --filter \"./packages/*\" publish --access public --tag latest --no-git-checks --report-summary",
     "release:publish:dry-run": "pnpm run build && pnpm -r --filter \"./packages/*\" publish --dry-run --access public --tag latest --no-git-checks --report-summary",
+    "release:publish:ci": "pnpm -r --filter \"./packages/*\" publish --access public --tag latest --report-summary --provenance",
+    "release:publish:dry-run:ci": "pnpm -r --filter \"./packages/*\" publish --dry-run --access public --tag latest --report-summary --provenance",
     "release:publish:workspace": "pnpm -r --filter \"./packages/*\" publish --access public --tag latest --report-summary",
     "release": "pnpm run release:prepare && pnpm run release:publish",
     "publish:summary": "cat pnpm-publish-summary.json"
