@@ -1,0 +1,79 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Run a dry-run publish instead of publishing to npm
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  NODE_VERSION: 22
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate ref
+        run: |
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "This workflow only publishes from refs/heads/main. Current ref: ${GITHUB_REF}" >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure no pending changesets remain
+        run: |
+          pending_changesets="$(find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md')"
+          if [ -n "${pending_changesets}" ]; then
+            echo "Pending changesets must be versioned before publish:" >&2
+            echo "${pending_changesets}" >&2
+            exit 1
+          fi
+
+      - name: Run checks
+        run: pnpm run check
+
+      - name: Run build
+        run: pnpm run build
+
+      - name: Dry-run publish
+        if: ${{ inputs.dry_run }}
+        run: pnpm run release:publish:dry-run:ci
+
+      - name: Publish packages
+        if: ${{ !inputs.dry_run }}
+        run: pnpm run release:publish:ci
+
+      - name: Upload publish summary
+        if: ${{ always() && hashFiles('pnpm-publish-summary.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-publish-summary
+          path: pnpm-publish-summary.json
