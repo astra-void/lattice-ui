@@ -40,14 +40,14 @@ function getOverflowDistance(
   positionX: number,
   positionY: number,
   contentSize: Vector2,
-  viewportSize: Vector2,
+  viewportRect: Rect,
   padding: number,
 ) {
-  const minX = padding;
-  const minY = padding;
+  const minX = viewportRect.Min.X + padding;
+  const minY = viewportRect.Min.Y + padding;
   // Prevent negative max boundaries if content is larger than viewport
-  const maxX = math.max(minX, viewportSize.X - contentSize.X - padding);
-  const maxY = math.max(minY, viewportSize.Y - contentSize.Y - padding);
+  const maxX = math.max(minX, viewportRect.Max.X - contentSize.X - padding);
+  const maxY = math.max(minY, viewportRect.Max.Y - contentSize.Y - padding);
 
   let overflowX = 0;
   if (positionX < minX) {
@@ -70,14 +70,14 @@ function clampToViewport(
   positionX: number,
   positionY: number,
   contentSize: Vector2,
-  viewportSize: Vector2,
+  viewportRect: Rect,
   padding: number,
   out: XY,
 ): XY {
-  const minX = padding;
-  const minY = padding;
-  const maxX = math.max(minX, viewportSize.X - contentSize.X - padding);
-  const maxY = math.max(minY, viewportSize.Y - contentSize.Y - padding);
+  const minX = viewportRect.Min.X + padding;
+  const minY = viewportRect.Min.Y + padding;
+  const maxX = math.max(minX, viewportRect.Max.X - contentSize.X - padding);
+  const maxY = math.max(minY, viewportRect.Max.Y - contentSize.Y - padding);
 
   out.x = math.clamp(positionX, minX, maxX);
   out.y = math.clamp(positionY, minY, maxY);
@@ -131,7 +131,7 @@ export function computePopper(input: ComputePopperInput): ComputePopperResult {
       y: 0,
     });
 
-    const score = getOverflowDistance(pos.x, pos.y, input.contentSize, input.viewportSize, padding);
+    const score = getOverflowDistance(pos.x, pos.y, input.contentSize, input.viewportRect, padding);
 
     if (score === 0) {
       bestPlacement = placement;
@@ -147,7 +147,7 @@ export function computePopper(input: ComputePopperInput): ComputePopperResult {
   }
 
   // Clamp the least-bad candidate
-  const clamped = clampToViewport(bestPos.x, bestPos.y, input.contentSize, input.viewportSize, padding, { x: 0, y: 0 });
+  const clamped = clampToViewport(bestPos.x, bestPos.y, input.contentSize, input.viewportRect, padding, { x: 0, y: 0 });
 
   // Derive meaningful attachment metadata
   const anchorPoint = getAnchorPointForPlacement(bestPlacement);

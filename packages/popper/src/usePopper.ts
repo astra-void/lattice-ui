@@ -5,6 +5,7 @@ import type { ComputePopperResult, UsePopperOptions, UsePopperResult } from "./t
 
 const WorkspaceService = game.GetService("Workspace");
 const RunService = game.GetService("RunService");
+const GuiService = game.GetService("GuiService");
 
 function readGuiRef(ref: UsePopperOptions["anchorRef"] | UsePopperOptions["contentRef"]): GuiObject | undefined {
   return ref.current;
@@ -30,22 +31,28 @@ function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {
   );
 }
 
-function getViewportSize(anchor: GuiObject | undefined): Vector2 {
+function getViewportRect(node: GuiObject | undefined): Rect {
   // Try to find the nearest ScreenGui or PluginGui ancestor to use its absolute size as bounds.
   // This is more accurate for portals than assuming the camera viewport size,
   // especially for studio plugins or non-fullscreen guis.
-  if (anchor) {
-    let current: Instance | undefined = anchor;
+  if (node) {
+    let current: Instance | undefined = node;
     while (current) {
       if (current.IsA("ScreenGui")) {
-        return current.AbsoluteSize;
+        let min = new Vector2(0, 0);
+        if (!current.IgnoreGuiInset) {
+          const [topLeftInset] = GuiService.GetGuiInset();
+          min = topLeftInset;
+        }
+        return new Rect(min, min.add(current.AbsoluteSize));
       }
       current = current.Parent;
     }
   }
 
   // Fallback to camera viewport size if no container is found.
-  return WorkspaceService.CurrentCamera?.ViewportSize ?? new Vector2(1920, 1080);
+  const viewportSize = WorkspaceService.CurrentCamera?.ViewportSize ?? new Vector2(1920, 1080);
+  return new Rect(new Vector2(0, 0), viewportSize);
 }
 
 export function usePopper(options: UsePopperOptions): UsePopperResult {
@@ -65,7 +72,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
       return;
     }
 
-    const viewportSize = getViewportSize(anchor);
+    const viewportRect = getViewportRect(content ?? anchor);
     const nextResult = computePopper({
       anchorPosition: anchor.AbsolutePosition,
       anchorSize: anchor.AbsoluteSize,
@@ -73,7 +80,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
       offset: options.offset,
       padding: options.padding,
       placement: options.placement,
-      viewportSize,
+      viewportRect,
     });
 
     setComputedResult((currentResult) => (areResultsEqual(currentResult, nextResult) ? currentResult : nextResult));
@@ -107,7 +114,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
 
       disconnectAnchor = subscribeAnchor(anchor, update);
       disconnectContent = subscribeContent(content, update);
-      disconnectViewport = subscribeViewport(anchor, update);
+      disconnectViewport = subscribeViewport(content, update);
       attached = true;
       return true;
     };

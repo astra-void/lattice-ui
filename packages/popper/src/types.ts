@@ -6,7 +6,7 @@ export type ComputePopperInput = {
   anchorPosition: Vector2;
   anchorSize: Vector2;
   contentSize: Vector2;
-  viewportSize: Vector2;
+  viewportRect: Rect;
   placement?: PopperPlacement;
   offset?: Vector2;
   padding?: number;
