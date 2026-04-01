@@ -105,6 +105,7 @@ function MenuContentImpl(props: MenuContentImplProps) {
   ) : (
     <frame
       AnchorPoint={popper.anchorPoint}
+      AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Position={popper.position}
