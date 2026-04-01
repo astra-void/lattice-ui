@@ -30,6 +30,24 @@ function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {
   );
 }
 
+function getViewportSize(anchor: GuiObject | undefined): Vector2 {
+  // Try to find the nearest ScreenGui or PluginGui ancestor to use its absolute size as bounds.
+  // This is more accurate for portals than assuming the camera viewport size,
+  // especially for studio plugins or non-fullscreen guis.
+  if (anchor) {
+    let current: Instance | undefined = anchor;
+    while (current) {
+      if (current.IsA("ScreenGui")) {
+        return current.AbsoluteSize;
+      }
+      current = current.Parent;
+    }
+  }
+
+  // Fallback to camera viewport size if no container is found.
+  return WorkspaceService.CurrentCamera?.ViewportSize ?? new Vector2(1920, 1080);
+}
+
 export function usePopper(options: UsePopperOptions): UsePopperResult {
   const enabled = options.enabled ?? true;
   const [computedResult, setComputedResult] = React.useState<ComputePopperResult>(() =>
@@ -47,7 +65,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
       return;
     }
 
-    const viewportSize = WorkspaceService.CurrentCamera?.ViewportSize ?? new Vector2(1920, 1080);
+    const viewportSize = getViewportSize(anchor);
     const nextResult = computePopper({
       anchorPosition: anchor.AbsolutePosition,
       anchorSize: anchor.AbsoluteSize,
@@ -89,7 +107,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
 
       disconnectAnchor = subscribeAnchor(anchor, update);
       disconnectContent = subscribeContent(content, update);
-      disconnectViewport = subscribeViewport(update);
+      disconnectViewport = subscribeViewport(anchor, update);
       attached = true;
       return true;
     };

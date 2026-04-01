@@ -24,7 +24,22 @@ export function subscribeContent(content: GuiObject, onChange: () => void): Obse
   return subscribeGuiObjectLayout(content, onChange);
 }
 
-export function subscribeViewport(onChange: () => void): ObserverUnsubscribe {
+export function subscribeViewport(anchor: GuiObject | undefined, onChange: () => void): ObserverUnsubscribe {
+  if (anchor) {
+    let container: Instance | undefined = anchor;
+    while (container) {
+      if (container.IsA("ScreenGui")) {
+        const connection = container.GetPropertyChangedSignal("AbsoluteSize").Connect(() => {
+          onChange();
+        });
+        return () => {
+          connection.Disconnect();
+        };
+      }
+      container = container.Parent;
+    }
+  }
+
   let viewportConnection: RBXScriptConnection | undefined;
 
   const reconnectViewportConnection = () => {

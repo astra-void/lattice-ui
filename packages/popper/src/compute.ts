@@ -36,7 +36,7 @@ function getPositionForPlacement(
   return out;
 }
 
-function overflowsViewport(
+function getOverflowDistance(
   positionX: number,
   positionY: number,
   contentSize: Vector2,
@@ -45,9 +45,25 @@ function overflowsViewport(
 ) {
   const minX = padding;
   const minY = padding;
-  const maxX = viewportSize.X - contentSize.X - padding;
-  const maxY = viewportSize.Y - contentSize.Y - padding;
-  return positionX < minX || positionX > maxX || positionY < minY || positionY > maxY;
+  // Prevent negative max boundaries if content is larger than viewport
+  const maxX = math.max(minX, viewportSize.X - contentSize.X - padding);
+  const maxY = math.max(minY, viewportSize.Y - contentSize.Y - padding);
+
+  let overflowX = 0;
+  if (positionX < minX) {
+    overflowX = minX - positionX;
+  } else if (positionX > maxX) {
+    overflowX = positionX - maxX;
+  }
+
+  let overflowY = 0;
+  if (positionY < minY) {
+    overflowY = minY - positionY;
+  } else if (positionY > maxY) {
+    overflowY = positionY - maxY;
+  }
+
+  return overflowX + overflowY;
 }
 
 function clampToViewport(
@@ -68,49 +84,81 @@ function clampToViewport(
   return out;
 }
 
+const OPPOSITE_PLACEMENTS: Record<PopperPlacement, PopperPlacement> = {
+  top: "bottom",
+  bottom: "top",
+  left: "right",
+  right: "left",
+};
+
+const ORTHOGONAL_PLACEMENTS: Record<PopperPlacement, [PopperPlacement, PopperPlacement]> = {
+  top: ["right", "left"],
+  bottom: ["right", "left"],
+  left: ["bottom", "top"],
+  right: ["bottom", "top"],
+};
+
+function getPlacementOrder(requested: PopperPlacement): PopperPlacement[] {
+  return [
+    requested,
+    OPPOSITE_PLACEMENTS[requested],
+    ORTHOGONAL_PLACEMENTS[requested][0],
+    ORTHOGONAL_PLACEMENTS[requested][1],
+  ];
+}
+
+function getAnchorPointForPlacement(placement: PopperPlacement): Vector2 {
+  if (placement === "top") return new Vector2(0.5, 1);
+  if (placement === "bottom") return new Vector2(0.5, 0);
+  if (placement === "left") return new Vector2(1, 0.5);
+  return new Vector2(0, 0.5); // right
+}
+
 export function computePopper(input: ComputePopperInput): ComputePopperResult {
-  const placement = input.placement ?? "bottom";
+  const requested = input.placement ?? "bottom";
   const offset = input.offset ?? new Vector2(0, 0);
   const padding = input.padding ?? 8;
 
-  const primary = getPositionForPlacement(
-    placement,
-    input.anchorPosition,
-    input.anchorSize,
-    input.contentSize,
-    offset,
-    { x: 0, y: 0 },
-  );
+  let bestPlacement = requested;
+  let bestPos = { x: 0, y: 0 };
+  let bestScore = -1; // -1 indicates unset
 
-  const fallbackPlacement: PopperPlacement =
-    placement === "top" ? "bottom" : placement === "bottom" ? "top" : placement === "left" ? "right" : "left";
+  const order = getPlacementOrder(requested);
 
-  let resolvedPlacement = placement;
-  let resolvedX = primary.x;
-  let resolvedY = primary.y;
+  for (const placement of order) {
+    const pos = getPositionForPlacement(placement, input.anchorPosition, input.anchorSize, input.contentSize, offset, {
+      x: 0,
+      y: 0,
+    });
 
-  if (overflowsViewport(primary.x, primary.y, input.contentSize, input.viewportSize, padding)) {
-    const fallback = getPositionForPlacement(
-      fallbackPlacement,
-      input.anchorPosition,
-      input.anchorSize,
-      input.contentSize,
-      offset,
-      { x: 0, y: 0 },
-    );
+    const score = getOverflowDistance(pos.x, pos.y, input.contentSize, input.viewportSize, padding);
 
-    if (!overflowsViewport(fallback.x, fallback.y, input.contentSize, input.viewportSize, padding)) {
-      resolvedPlacement = fallbackPlacement;
-      resolvedX = fallback.x;
-      resolvedY = fallback.y;
+    if (score === 0) {
+      bestPlacement = placement;
+      bestPos = pos;
+      break; // Perfect fit, use immediately
+    }
+
+    if (bestScore === -1 || score < bestScore) {
+      bestPlacement = placement;
+      bestPos = pos;
+      bestScore = score;
     }
   }
 
-  const clamped = clampToViewport(resolvedX, resolvedY, input.contentSize, input.viewportSize, padding, { x: 0, y: 0 });
+  // Clamp the least-bad candidate
+  const clamped = clampToViewport(bestPos.x, bestPos.y, input.contentSize, input.viewportSize, padding, { x: 0, y: 0 });
+
+  // Derive meaningful attachment metadata
+  const anchorPoint = getAnchorPointForPlacement(bestPlacement);
+
+  // Convert from TopLeft (clamped) to the visual origin using anchorPoint
+  const finalX = clamped.x + anchorPoint.X * input.contentSize.X;
+  const finalY = clamped.y + anchorPoint.Y * input.contentSize.Y;
 
   return {
-    position: UDim2.fromOffset(clamped.x, clamped.y),
-    anchorPoint: new Vector2(0, 0),
-    placement: resolvedPlacement,
+    position: UDim2.fromOffset(finalX, finalY),
+    anchorPoint,
+    placement: bestPlacement,
   };
 }

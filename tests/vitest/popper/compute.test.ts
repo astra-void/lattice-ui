@@ -23,7 +23,8 @@ describe("computePopper", () => {
     });
 
     expect(result.placement).toBe("bottom");
-    expect(offsets(result.position)).toEqual({ x: 35, y: 60 });
+    expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
+    expect(offsets(result.position)).toEqual({ x: 60, y: 60 });
   });
 
   it("applies explicit placement and offset", () => {
@@ -37,7 +38,8 @@ describe("computePopper", () => {
     });
 
     expect(result.placement).toBe("top");
-    expect(offsets(result.position)).toEqual({ x: 93, y: 86 });
+    expect(result.anchorPoint).toEqual(new Vector2(0.5, 1));
+    expect(offsets(result.position)).toEqual({ x: 113, y: 116 });
   });
 
   it("flips to fallback placement when primary placement overflows", () => {
@@ -50,7 +52,8 @@ describe("computePopper", () => {
     });
 
     expect(result.placement).toBe("bottom");
-    expect(offsets(result.position)).toEqual({ x: 105, y: 25 });
+    expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
+    expect(offsets(result.position)).toEqual({ x: 125, y: 25 });
   });
 
   it("clamps position to viewport padding bounds", () => {
@@ -63,8 +66,11 @@ describe("computePopper", () => {
       padding: 8,
     });
 
-    expect(result.placement).toBe("right");
-    expect(offsets(result.position)).toEqual({ x: 8, y: 8 });
+    // Content is larger than viewport. 'bottom' ends up with less overflow (65) than 'right' (75).
+    // Clamped TopLeft is (8, 8). For bottom, anchorPoint is (0.5, 0).
+    expect(result.placement).toBe("bottom");
+    expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
+    expect(offsets(result.position)).toEqual({ x: 68, y: 8 }); // 8 + 0.5*120, 8 + 0*140
   });
 
   it("respects padding while clamping near lower bounds", () => {
@@ -77,6 +83,66 @@ describe("computePopper", () => {
       padding: 6,
     });
 
-    expect(offsets(result.position)).toEqual({ x: 6, y: 6 });
+    // 'right' is much better here because it avoids the left boundary entirely.
+    // Clamped TopLeft is x=14, y=6. AnchorPoint for right is (0, 0.5).
+    expect(result.placement).toBe("right");
+    expect(result.anchorPoint).toEqual(new Vector2(0, 0.5));
+    expect(offsets(result.position)).toEqual({ x: 14, y: 16 }); // 14 + 0*20, 6 + 0.5*20
+  });
+
+  it("chooses orthogonal side when requested and opposite both overflow", () => {
+    const result = computePopper({
+      anchorPosition: vector2(10, 100),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(50, 150),
+      viewportSize: vector2(300, 200),
+      placement: "top",
+      padding: 8,
+    });
+
+    expect(result.placement).toBe("right");
+    expect(result.anchorPoint).toEqual(new Vector2(0, 0.5));
+  });
+
+  it("chooses the least-overflow placement when all overflow", () => {
+    const result = computePopper({
+      anchorPosition: vector2(5, 5),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(190, 190),
+      viewportSize: vector2(200, 200),
+      placement: "top",
+      padding: 8,
+    });
+
+    expect(result.placement).toBe("bottom");
+  });
+
+  it("handles corner cases correctly without detaching", () => {
+    const result = computePopper({
+      anchorPosition: vector2(280, 280),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(100, 100),
+      viewportSize: vector2(300, 300),
+      placement: "right",
+      padding: 8,
+    });
+
+    expect(result.placement).toBe("left");
+    expect(offsets(result.position)).toEqual({ x: 280, y: 242 });
+  });
+
+  it("keeps placement consistent when content is larger than viewport", () => {
+    const result = computePopper({
+      anchorPosition: vector2(50, 50),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(500, 500),
+      viewportSize: vector2(200, 200),
+      placement: "bottom",
+      padding: 8,
+    });
+
+    expect(result.placement).toBe("bottom");
+    expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
+    expect(offsets(result.position)).toEqual({ x: 258, y: 8 });
   });
 });
