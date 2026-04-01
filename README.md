@@ -23,6 +23,12 @@ These packages are available, but should still be treated as experimental, evolv
 Some parts of the UI surface may reach `v1.x` earlier in practice, while feature-limited packages may remain in `0.x` for longer.
 A future `v1` milestone for the main UI layer does **not** automatically mean every experimental or tooling package is fully stabilized.
 
+## Release workflow
+
+- Package publishing is handled by the manual GitHub Actions workflow in `.github/workflows/publish.yml`.
+- The workflow only publishes from a pre-versioned `main` branch. It does not run `changeset version`, create release PRs, or generate tags.
+- npm trusted publisher settings must target the exact `publish.yml` workflow filename, and the same trusted publisher configuration must be applied to each published package.
+
 ## Roadmap
 
 ### v0.4.x - RC to stable 0.4
