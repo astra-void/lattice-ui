@@ -138,12 +138,10 @@ export function ComboboxContent(props: ComboboxContentProps) {
     comboboxContext.setOpen(false);
   }, [comboboxContext]);
 
-  if (!open && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const fallbackTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildComboboxContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+  }, [props.transition]);
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 
   if (forceMount) {
     return (
@@ -156,7 +154,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
         placement={props.placement}
-        transition={transition}
+        transition={props.transition}
         visible={open}
       >
         {props.children}
@@ -179,7 +177,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}
           placement={props.placement}
-          transition={transition}
+          transition={props.transition}
           visible={true}
         >
           {props.children}
