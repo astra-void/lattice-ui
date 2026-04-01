@@ -44,14 +44,11 @@ function CheckboxIndicatorImpl(props: {
   children?: React.ReactNode;
 }) {
   const indicatorRef = React.useRef<Frame>();
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildCheckboxIndicatorTransition(UDim2.fromOffset(12, 12)), props.transition);
-  }, [props.transition]);
 
   useMotionTween(indicatorRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
-    transition: motionTransition,
+    transition: props.transition,
   });
 
   if (props.asChild) {
@@ -85,12 +82,9 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
   const visible = checkboxContext.checked !== false;
   const forceMount = props.forceMount === true;
 
-  if (!visible && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const transition = React.useMemo(() => {
+    return mergeMotionTransition(buildCheckboxIndicatorTransition(UDim2.fromOffset(12, 12)), props.transition);
+  }, [props.transition]);
 
   if (forceMount) {
     return (
@@ -99,6 +93,8 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
       </CheckboxIndicatorImpl>
     );
   }
+
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
 
   return (
     <Presence
