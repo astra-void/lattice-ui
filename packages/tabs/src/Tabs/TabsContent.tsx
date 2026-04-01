@@ -45,14 +45,11 @@ function TabsContentImpl(props: {
 }) {
   const contentName = createTabsContentName(props.value);
   const contentRef = React.useRef<Frame>();
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildTabsContentTransition(), props.transition);
-  }, [props.transition]);
 
   useMotionTween(contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
-    transition: motionTransition,
+    transition: props.transition,
   });
 
   if (props.asChild) {
@@ -86,12 +83,9 @@ export function TabsContent(props: TabsContentProps) {
   const selected = tabsContext.value === props.value;
   const forceMount = props.forceMount === true;
 
-  if (!selected && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const transition = React.useMemo(() => {
+    return mergeMotionTransition(buildTabsContentTransition(), props.transition);
+  }, [props.transition]);
 
   if (forceMount) {
     return (
@@ -100,6 +94,8 @@ export function TabsContent(props: TabsContentProps) {
       </TabsContentImpl>
     );
   }
+
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
 
   return (
     <Presence

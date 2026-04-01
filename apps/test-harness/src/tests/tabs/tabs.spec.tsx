@@ -200,5 +200,56 @@ export = () => {
         GuiService.SelectedObject = undefined;
       });
     });
+
+    it("keeps content mounted during exit animation and unmounts after", () => {
+      withReactHarness("TabsExitAnimation", (harness) => {
+        const renderControlledTabs = (value: string) => (
+          <Tabs.Root value={value}>
+            <Tabs.List>
+              <Tabs.Trigger asChild value="left">
+                <textbutton Text="tabs-trigger-left" />
+              </Tabs.Trigger>
+              <Tabs.Trigger asChild value="right">
+                <textbutton Text="tabs-trigger-right" />
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content asChild value="left">
+              <textlabel Text="tabs-content-left" />
+            </Tabs.Content>
+            <Tabs.Content asChild value="right">
+              <textlabel Text="tabs-content-right" />
+            </Tabs.Content>
+          </Tabs.Root>
+        );
+
+        harness.render(renderControlledTabs("left"));
+        waitForEffects(3);
+
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-left") !== undefined,
+          "Left content should be mounted initially.",
+        );
+
+        harness.render(renderControlledTabs("right"));
+        waitForEffects(2); // React effects
+
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-left") !== undefined,
+          "Left content should remain mounted immediately after switch due to exit animation.",
+        );
+
+        task.wait(0.15); // wait for 0.09s exit animation
+        waitForEffects(2);
+
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-left") === undefined,
+          "Left content should be unmounted after exit animation.",
+        );
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-right") !== undefined,
+          "Right content should be mounted.",
+        );
+      });
+    });
   });
 };
