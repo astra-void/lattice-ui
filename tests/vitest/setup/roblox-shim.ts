@@ -144,3 +144,33 @@ Object.assign(globalThis as Record<string, unknown>, {
   Vector2: MockVector2,
   UDim2: MockUDim2,
 });
+
+// Popover testing shim for game
+if (!globalThis.game) {
+  const mockWorkspace = { GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }),
+    CurrentCamera: { ViewportSize: new MockVector2(1920, 1080), GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }) }
+  };
+  const mockRunService = {
+    Heartbeat: { Connect: () => ({ Disconnect: () => {} }) }
+  };
+  globalThis.game = {
+    GetService: (service: string) => {
+      if (service === "Workspace") return mockWorkspace;
+      if (service === "RunService") return mockRunService;
+      return {};
+    }
+  };
+}
+
+if (!globalThis.Enum) {
+  globalThis.Enum = {
+    EasingStyle: { Quad: "Quad" },
+    EasingDirection: { Out: "Out", In: "In" },
+    TextXAlignment: { Left: "Left" },
+    TextYAlignment: { Top: "Top" },
+  };
+  globalThis.TweenInfo = function() {};
+  globalThis.Color3 = { fromRGB: () => ({}) };
+  globalThis.UDim = function() {};
+  globalThis.Instance = { new: () => ({}) };
+}
