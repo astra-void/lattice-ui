@@ -141,12 +141,10 @@ export function PopoverContent(props: PopoverContentProps) {
     popoverContext.setOpen(false);
   }, [popoverContext.setOpen]);
 
-  if (!open && !forceMount) {
-    return undefined;
-  }
-
-  const transition = props.transition;
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const fallbackTransition = React.useMemo(() => {
+    return mergeMotionTransition(buildPopoverContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+  }, [props.transition]);
+  const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 
   if (forceMount) {
     return (
@@ -159,7 +157,7 @@ export function PopoverContent(props: PopoverContentProps) {
         onPointerDownOutside={props.onPointerDownOutside}
         padding={props.padding}
         placement={props.placement}
-        transition={transition}
+        transition={props.transition}
         visible={open}
       >
         {props.children}
@@ -182,7 +180,7 @@ export function PopoverContent(props: PopoverContentProps) {
           onPointerDownOutside={props.onPointerDownOutside}
           padding={props.padding}
           placement={props.placement}
-          transition={transition}
+          transition={props.transition}
           visible={true}
         >
           {props.children}
