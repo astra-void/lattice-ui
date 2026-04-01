@@ -17,11 +17,17 @@ class MockTweenInfo {
   public Time: number;
   public EasingStyle: string;
   public EasingDirection: string;
+  public RepeatCount: number;
+  public Reverses: boolean;
+  public DelayTime: number;
 
-  constructor(time: number, easingStyle: string, easingDirection: string) {
+  constructor(time: number, easingStyle: string, easingDirection: string, repeatCount = 0, reverses = false, delayTime = 0) {
     this.Time = time;
     this.EasingStyle = easingStyle;
     this.EasingDirection = easingDirection;
+    this.RepeatCount = repeatCount;
+    this.Reverses = reverses;
+    this.DelayTime = delayTime;
   }
 }
 
@@ -156,6 +162,40 @@ describe("core motion helpers", () => {
     expect(mergedTransition.enter?.from).toEqual({ Position: UDim2.fromOffset(0, 6) });
     expect(mergedTransition.enter?.to).toEqual({ Position: UDim2.fromOffset(0, 2) });
     expect(getMotionTransitionExitFallbackMs(mergedTransition)).toBe(100);
+  });
+
+  it("computes full exit duration including delay, repeats, and reverses", () => {
+    const complexTweenInfo = new MockTweenInfo(
+      0.1, // time
+      "Quad",
+      "Out",
+      2, // repeatCount (3 times total)
+      true, // reverses (x2)
+      0.05 // delay
+    ) as unknown as TweenInfo;
+
+    const transition: MotionTransition = {
+      exit: {
+        tweenInfo: complexTweenInfo,
+        to: {},
+      },
+    };
+
+    // delay(0.05) + (time(0.1) * (repeatCount(2) + 1) * reverses(2))
+    // 0.05 + 0.1 * 3 * 2 = 0.05 + 0.6 = 0.65 seconds = 650 ms
+    expect(getMotionTransitionExitFallbackMs(transition)).toBe(650);
+
+    const infiniteTweenInfo = new MockTweenInfo(0.1, "Quad", "Out", -1, false, 0) as unknown as TweenInfo;
+    const transitionInfinite: MotionTransition = {
+      exit: {
+        tweenInfo: infiniteTweenInfo,
+        to: {},
+      },
+    };
+
+    // for infinite repeats (-1), fallback is clamped to 1 repeat
+    // time(0.1) * 1 = 0.1 seconds = 100 ms
+    expect(getMotionTransitionExitFallbackMs(transitionInfinite)).toBe(100);
   });
 
   it("applies motion properties directly", () => {

@@ -97,7 +97,27 @@ function getTweenDurationMs(tweenInfo?: TweenInfo) {
     return 0;
   }
 
-  return math.max(0, math.floor(tweenInfo.Time * 1000));
+  const time = tweenInfo.Time;
+  const delay = tweenInfo.DelayTime;
+  const repeatCount = tweenInfo.RepeatCount;
+  const reverses = tweenInfo.Reverses;
+
+  let multiplier;
+  if (repeatCount >= 0) {
+    multiplier = repeatCount + 1;
+  } else {
+    // If infinite (-1), fallback should not be infinite. Just use 1 repeat as a baseline,
+    // or cap the total time. Let's say 1 repeat for fallback.
+    multiplier = 1;
+  }
+
+  if (reverses) {
+    multiplier *= 2;
+  }
+
+  const totalTime = delay + time * multiplier;
+
+  return math.max(0, math.floor(totalTime * 1000));
 }
 
 export function getMotionTransitionExitFallbackMs(transition?: MotionTransition | false) {
