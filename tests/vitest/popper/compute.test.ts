@@ -19,7 +19,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(10, 20),
       anchorSize: vector2(100, 40),
       contentSize: vector2(50, 30),
-      viewportSize: vector2(500, 500),
+      viewportRect: new Rect(0, 0, 500, 500),
     });
 
     expect(result.placement).toBe("bottom");
@@ -32,7 +32,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(80, 120),
       anchorSize: vector2(60, 20),
       contentSize: vector2(40, 30),
-      viewportSize: vector2(500, 500),
+      viewportRect: new Rect(0, 0, 500, 500),
       placement: "top",
       offset: vector2(3, -4),
     });
@@ -47,7 +47,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(100, 5),
       anchorSize: vector2(50, 20),
       contentSize: vector2(40, 40),
-      viewportSize: vector2(300, 300),
+      viewportRect: new Rect(0, 0, 300, 300),
       placement: "top",
     });
 
@@ -61,7 +61,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(10, 10),
       anchorSize: vector2(10, 10),
       contentSize: vector2(120, 140),
-      viewportSize: vector2(100, 100),
+      viewportRect: new Rect(0, 0, 100, 100),
       placement: "right",
       padding: 8,
     });
@@ -78,7 +78,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(4, 4),
       anchorSize: vector2(10, 10),
       contentSize: vector2(20, 20),
-      viewportSize: vector2(40, 40),
+      viewportRect: new Rect(0, 0, 40, 40),
       placement: "left",
       padding: 6,
     });
@@ -95,7 +95,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(10, 100),
       anchorSize: vector2(20, 20),
       contentSize: vector2(50, 150),
-      viewportSize: vector2(300, 200),
+      viewportRect: new Rect(0, 0, 300, 200),
       placement: "top",
       padding: 8,
     });
@@ -109,7 +109,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(5, 5),
       anchorSize: vector2(20, 20),
       contentSize: vector2(190, 190),
-      viewportSize: vector2(200, 200),
+      viewportRect: new Rect(0, 0, 200, 200),
       placement: "top",
       padding: 8,
     });
@@ -122,7 +122,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(280, 280),
       anchorSize: vector2(20, 20),
       contentSize: vector2(100, 100),
-      viewportSize: vector2(300, 300),
+      viewportRect: new Rect(0, 0, 300, 300),
       placement: "right",
       padding: 8,
     });
@@ -136,7 +136,7 @@ describe("computePopper", () => {
       anchorPosition: vector2(50, 50),
       anchorSize: vector2(20, 20),
       contentSize: vector2(500, 500),
-      viewportSize: vector2(200, 200),
+      viewportRect: new Rect(0, 0, 200, 200),
       placement: "bottom",
       padding: 8,
     });
@@ -144,5 +144,32 @@ describe("computePopper", () => {
     expect(result.placement).toBe("bottom");
     expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
     expect(offsets(result.position)).toEqual({ x: 258, y: 8 });
+  });
+
+  it("computes overflow correctly with non-zero viewport origin", () => {
+    const result = computePopper({
+      anchorPosition: vector2(20, 20),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(40, 40),
+      viewportRect: new Rect(10, 10, 110, 110),
+      placement: "top",
+      padding: 0,
+    });
+
+    expect(result.placement).toBe("bottom");
+  });
+
+  it("clamps to non-zero viewport origin", () => {
+    const result = computePopper({
+      anchorPosition: vector2(0, 0),
+      anchorSize: vector2(10, 10),
+      contentSize: vector2(50, 50),
+      viewportRect: new Rect(20, 20, 120, 120),
+      placement: "bottom",
+      padding: 0,
+    });
+
+    expect(result.placement).toBe("bottom");
+    expect(offsets(result.position)).toEqual({ x: 45, y: 20 });
   });
 });

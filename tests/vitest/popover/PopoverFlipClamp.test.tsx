@@ -27,6 +27,7 @@ globalThis.game = {
   GetService: (service: string) => {
     if (service === "Workspace") return mockWorkspace;
     if (service === "RunService") return mockRunService;
+    if (service === "GuiService") return { GetGuiInset: () => [new Vector2(0, 36), new Vector2(0, 0)] };
     return {};
   }
 };
