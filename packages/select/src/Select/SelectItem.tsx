@@ -1,9 +1,27 @@
-import { React, Slot } from "@lattice-ui/core";
+import { type MotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
 import { useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
 
 let nextItemId = 0;
 let nextItemOrder = 0;
+
+const ITEM_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const ITEM_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+
+const transition = {
+  enter: {
+    tweenInfo: ITEM_TWEEN_INFO,
+    to: {
+      BackgroundColor3: Color3.fromRGB(66, 73, 91), // slightly lighter than base 47, 53, 68
+    },
+  },
+  exit: {
+    tweenInfo: ITEM_EXIT_TWEEN_INFO,
+    to: {
+      BackgroundColor3: Color3.fromRGB(47, 53, 68),
+    },
+  },
+} satisfies MotionTransition;
 
 export function SelectItem(props: SelectItemProps) {
   const selectContext = useSelectContext();
@@ -12,6 +30,14 @@ export function SelectItem(props: SelectItemProps) {
 
   const disabledRef = React.useRef(disabled);
   const textValueRef = React.useRef(textValue);
+
+  const [active, setActive] = React.useState(false);
+  const itemRef = React.useRef<GuiObject>();
+
+  useMotionTween(itemRef as React.MutableRefObject<Instance | undefined>, {
+    active: active && !disabled,
+    transition,
+  });
 
   React.useEffect(() => {
     disabledRef.current = disabled;
@@ -71,13 +97,28 @@ export function SelectItem(props: SelectItemProps) {
     [disabled, props.value, selectContext],
   );
 
+  const handlePointerEnter = React.useCallback(() => setActive(true), []);
+  const handlePointerLeave = React.useCallback(() => setActive(false), []);
+
   const eventHandlers = React.useMemo(
     () => ({
       Activated: handleSelect,
       InputBegan: handleInputBegan,
+      MouseEnter: handlePointerEnter,
+      MouseLeave: handlePointerLeave,
+      SelectionGained: handlePointerEnter,
+      SelectionLost: handlePointerLeave,
     }),
-    [handleInputBegan, handleSelect],
+    [handleInputBegan, handleSelect, handlePointerEnter, handlePointerLeave],
   );
+
+  const setItemRef = React.useCallback((instance: Instance | undefined) => {
+    if (!instance || !instance.IsA("GuiObject")) {
+      itemRef.current = undefined;
+      return;
+    }
+    itemRef.current = instance;
+  }, []);
 
   if (props.asChild) {
     const child = props.children;
@@ -86,7 +127,7 @@ export function SelectItem(props: SelectItemProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={false}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={setItemRef}>
         {child}
       </Slot>
     );
@@ -105,6 +146,7 @@ export function SelectItem(props: SelectItemProps) {
       TextColor3={disabled ? Color3.fromRGB(134, 141, 156) : Color3.fromRGB(234, 239, 247)}
       TextSize={15}
       TextXAlignment={Enum.TextXAlignment.Left}
+      ref={setItemRef}
     >
       <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
       {props.children}
