@@ -1,4 +1,4 @@
-import { React, Slot, useFocusNode } from "@lattice-ui/core";
+import { type MotionTransition, React, Slot, useFocusNode, useMotionTween } from "@lattice-ui/core";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
@@ -13,6 +13,24 @@ function toGuiObject(instance: Instance | undefined) {
 
   return instance;
 }
+
+const TRIGGER_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const TRIGGER_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+
+const transition = {
+  enter: {
+    tweenInfo: TRIGGER_TWEEN_INFO,
+    to: {
+      BackgroundColor3: Color3.fromRGB(86, 137, 245),
+    },
+  },
+  exit: {
+    tweenInfo: TRIGGER_EXIT_TWEEN_INFO,
+    to: {
+      BackgroundColor3: Color3.fromRGB(47, 53, 68),
+    },
+  },
+} satisfies MotionTransition;
 
 export function TabsTrigger(props: TabsTriggerProps) {
   const tabsContext = useTabsContext();
@@ -55,6 +73,11 @@ export function TabsTrigger(props: TabsTriggerProps) {
   const setTriggerRef = React.useCallback((instance: Instance | undefined) => {
     triggerRef.current = toGuiObject(instance);
   }, []);
+
+  useMotionTween(triggerRef as React.MutableRefObject<Instance | undefined>, {
+    active: selected,
+    transition,
+  });
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {
@@ -134,7 +157,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
     <textbutton
       Active={!disabled}
       AutoButtonColor={false}
-      BackgroundColor3={selected ? Color3.fromRGB(86, 137, 245) : Color3.fromRGB(47, 53, 68)}
+      BackgroundColor3={Color3.fromRGB(47, 53, 68)}
       BorderSizePixel={0}
       Event={eventHandlers}
       Selectable={!disabled}
