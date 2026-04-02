@@ -147,18 +147,22 @@ Object.assign(globalThis as Record<string, unknown>, {
 
 // Popover testing shim for game
 if (!globalThis.game) {
-  const mockWorkspace = { GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }),
-    CurrentCamera: { ViewportSize: new MockVector2(1920, 1080), GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }) }
+  const mockWorkspace = {
+    GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }),
+    CurrentCamera: {
+      ViewportSize: new MockVector2(1920, 1080),
+      GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }),
+    },
   };
   const mockRunService = {
-    Heartbeat: { Connect: () => ({ Disconnect: () => {} }) }
+    Heartbeat: { Connect: () => ({ Disconnect: () => {} }) },
   };
   globalThis.game = {
     GetService: (service: string) => {
       if (service === "Workspace") return mockWorkspace;
       if (service === "RunService") return mockRunService;
       return {};
-    }
+    },
   };
 }
 
@@ -169,9 +173,9 @@ if (!globalThis.Enum) {
     TextXAlignment: { Left: "Left" },
     TextYAlignment: { Top: "Top" },
   };
-  globalThis.TweenInfo = function() {};
+  globalThis.TweenInfo = function () {};
   globalThis.Color3 = { fromRGB: () => ({}) };
-  globalThis.UDim = function() {};
+  globalThis.UDim = function () {};
   globalThis.Instance = { new: () => ({}) };
 }
 
@@ -182,7 +186,7 @@ class MockRect {
   public Height: number;
 
   constructor(minX: any, minY: any, maxX: any, maxY: any) {
-    if (typeof minX === 'number') {
+    if (typeof minX === "number") {
       this.Min = new MockVector2(minX, minY);
       this.Max = new MockVector2(maxX, maxY);
     } else {
