@@ -24,7 +24,9 @@ export function Presence(props: PresenceProps) {
 
     const fallbackTask = fallbackTaskRef.current;
     if (fallbackTask) {
-      task.cancel(fallbackTask);
+      if (fallbackTask !== coroutine.running()) {
+        task.cancel(fallbackTask);
+      }
       fallbackTaskRef.current = undefined;
     }
 
@@ -37,7 +39,9 @@ export function Presence(props: PresenceProps) {
     if (props.present) {
       const fallbackTask = fallbackTaskRef.current;
       if (fallbackTask) {
-        task.cancel(fallbackTask);
+        if (fallbackTask !== coroutine.running()) {
+          task.cancel(fallbackTask);
+        }
         fallbackTaskRef.current = undefined;
       }
 
@@ -57,7 +61,9 @@ export function Presence(props: PresenceProps) {
 
     const fallbackTask = fallbackTaskRef.current;
     if (fallbackTask) {
-      task.cancel(fallbackTask);
+      if (fallbackTask !== coroutine.running()) {
+        task.cancel(fallbackTask);
+      }
       fallbackTaskRef.current = undefined;
     }
 
@@ -71,7 +77,9 @@ export function Presence(props: PresenceProps) {
     return () => {
       const fallbackTask = fallbackTaskRef.current;
       if (fallbackTask) {
-        task.cancel(fallbackTask);
+        if (fallbackTask !== coroutine.running()) {
+          task.cancel(fallbackTask);
+        }
         fallbackTaskRef.current = undefined;
       }
     };
