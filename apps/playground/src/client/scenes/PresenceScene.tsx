@@ -17,7 +17,9 @@ function ExitAnimatedCard(props: ExitCardProps) {
     });
 
     return () => {
-      task.cancel(delayThread);
+      if (delayThread !== coroutine.running()) {
+        task.cancel(delayThread);
+      }
     };
   }, [props.isPresent, props.onExitComplete]);
 
