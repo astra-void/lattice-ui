@@ -4,8 +4,10 @@
   "private": false,
   "main": "out/init.luau",
   "types": "out/index.d.ts",
+  "source": "src/index.ts",
   "files": [
     "out",
+    "src",
     "README.md"
   ],
   "scripts": {
