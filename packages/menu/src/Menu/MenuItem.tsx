@@ -1,4 +1,4 @@
-import { React, Slot, useFocusNode } from "@lattice-ui/core";
+import { type MotionTransition, React, Slot, useFocusNode, useMotionTween } from "@lattice-ui/core";
 import { useMenuContext } from "./context";
 import type { MenuItemProps, MenuSelectEvent } from "./types";
 
@@ -16,10 +16,30 @@ function createMenuSelectEvent(): MenuSelectEvent {
   return event;
 }
 
+const ITEM_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const ITEM_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+
+const transition = {
+  enter: {
+    tweenInfo: ITEM_TWEEN_INFO,
+    to: {
+      BackgroundColor3: Color3.fromRGB(66, 73, 91), // slightly lighter than base 47, 53, 68
+    },
+  },
+  exit: {
+    tweenInfo: ITEM_EXIT_TWEEN_INFO,
+    to: {
+      BackgroundColor3: Color3.fromRGB(47, 53, 68),
+    },
+  },
+} satisfies MotionTransition;
+
 export function MenuItem(props: MenuItemProps) {
   const menuContext = useMenuContext();
   const itemRef = React.useRef<GuiObject>();
   const disabledRef = React.useRef(props.disabled === true);
+
+  const [active, setActive] = React.useState(false);
 
   React.useEffect(() => {
     disabledRef.current = props.disabled === true;
@@ -49,6 +69,11 @@ export function MenuItem(props: MenuItemProps) {
   useFocusNode({
     ref: itemRef,
     getDisabled: () => disabledRef.current,
+  });
+
+  useMotionTween(itemRef as React.MutableRefObject<Instance | undefined>, {
+    active: active && props.disabled !== true,
+    transition,
   });
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
@@ -92,6 +117,21 @@ export function MenuItem(props: MenuItemProps) {
     [handleActivated, menuContext, props.disabled],
   );
 
+  const handlePointerEnter = React.useCallback(() => setActive(true), []);
+  const handlePointerLeave = React.useCallback(() => setActive(false), []);
+
+  const eventHandlers = React.useMemo(
+    () => ({
+      Activated: handleActivated,
+      InputBegan: handleInputBegan,
+      MouseEnter: handlePointerEnter,
+      MouseLeave: handlePointerLeave,
+      SelectionGained: handlePointerEnter,
+      SelectionLost: handlePointerLeave,
+    }),
+    [handleActivated, handleInputBegan, handlePointerEnter, handlePointerLeave],
+  );
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
@@ -101,7 +141,7 @@ export function MenuItem(props: MenuItemProps) {
     return (
       <Slot
         Active={props.disabled !== true}
-        Event={{ Activated: handleActivated, InputBegan: handleInputBegan }}
+        Event={eventHandlers}
         Selectable={props.disabled !== true}
         ref={setItemRef}
       >
@@ -116,7 +156,7 @@ export function MenuItem(props: MenuItemProps) {
       AutoButtonColor={false}
       BackgroundColor3={Color3.fromRGB(47, 53, 68)}
       BorderSizePixel={0}
-      Event={{ Activated: handleActivated, InputBegan: handleInputBegan }}
+      Event={eventHandlers}
       Selectable={props.disabled !== true}
       Size={UDim2.fromOffset(220, 34)}
       Text="Menu Item"
