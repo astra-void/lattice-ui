@@ -1,8 +1,15 @@
 name: Publish
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
+      release_tag:
+        description: Release tag to publish, for example v0.4.4 or v0.4.4-alpha.1
+        required: true
+        type: string
       dry_run:
         description: Run a dry-run publish instead of publishing to npm
         required: false
@@ -25,13 +32,6 @@ jobs:
     name: publish
     runs-on: ubuntu-latest
     steps:
-      - name: Validate ref
-        run: |
-          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
-            echo "This workflow only publishes from refs/heads/main. Current ref: ${GITHUB_REF}" >&2
-            exit 1
-          fi
-
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -63,13 +63,33 @@ jobs:
       - name: Run build
         run: pnpm run build
 
+      - name: Resolve release metadata
+        id: release
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
+        run: pnpm run release:resolve -- --tag "${RELEASE_TAG}" --github-output "${GITHUB_OUTPUT}"
+
       - name: Dry-run publish
-        if: ${{ inputs.dry_run }}
-        run: pnpm run release:publish:dry-run:ci
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        env:
+          NPM_DIST_TAG: ${{ steps.release.outputs.npm_dist_tag }}
+        run: |
+          publish_args=()
+          if [ -n "${NPM_DIST_TAG}" ]; then
+            publish_args+=(--tag "${NPM_DIST_TAG}")
+          fi
+          pnpm run release:publish:dry-run:ci -- "${publish_args[@]}"
 
       - name: Publish packages
-        if: ${{ !inputs.dry_run }}
-        run: pnpm run release:publish:ci
+        if: ${{ github.event_name == 'push' || !inputs.dry_run }}
+        env:
+          NPM_DIST_TAG: ${{ steps.release.outputs.npm_dist_tag }}
+        run: |
+          publish_args=()
+          if [ -n "${NPM_DIST_TAG}" ]; then
+            publish_args+=(--tag "${NPM_DIST_TAG}")
+          fi
+          pnpm run release:publish:ci -- "${publish_args[@]}"
 
       - name: Upload publish summary
         if: ${{ always() && hashFiles('pnpm-publish-summary.json') != '' }}
