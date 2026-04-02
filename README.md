@@ -25,8 +25,10 @@ A future `v1` milestone for the main UI layer does **not** automatically mean ev
 
 ## Release workflow
 
-- Package publishing is handled by the manual GitHub Actions workflow in `.github/workflows/publish.yml`.
-- The workflow only publishes from a pre-versioned `main` branch. It does not run `changeset version`, create release PRs, or generate tags.
+- Package publishing is handled by `.github/workflows/publish.yml` from release tags such as `v0.4.4` or `v0.4.4-alpha.1`.
+- Stable tags publish with npm's default `latest` dist-tag. Prerelease tags automatically publish to the first prerelease identifier, for example `v0.4.4-alpha.1 -> --tag alpha`.
+- The workflow validates that every publishable workspace package version exactly matches the release tag version before publishing. It does not run `changeset version`, create release PRs, or generate tags.
+- `workflow_dispatch` remains available for manual dry-runs or manual publishes when you provide the exact release tag to validate.
 - npm trusted publisher settings must target the exact `publish.yml` workflow filename, and the same trusted publisher configuration must be applied to each published package.
 
 ## Roadmap
