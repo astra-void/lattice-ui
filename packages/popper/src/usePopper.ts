@@ -60,6 +60,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
   const [computedResult, setComputedResult] = React.useState<ComputePopperResult>(() =>
     getDefaultComputedResult(options.placement),
   );
+  const [isPositioned, setIsPositioned] = React.useState(false);
 
   const update = React.useCallback(() => {
     if (!enabled) {
@@ -69,6 +70,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
     const anchor = readGuiRef(options.anchorRef);
     const content = readGuiRef(options.contentRef);
     if (!anchor || !content) {
+      setIsPositioned(false);
       return;
     }
 
@@ -84,13 +86,14 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
     });
 
     setComputedResult((currentResult) => (areResultsEqual(currentResult, nextResult) ? currentResult : nextResult));
+    setIsPositioned(true);
   }, [enabled, options.anchorRef, options.contentRef, options.offset, options.padding, options.placement]);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     update();
   }, [update]);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!enabled) {
       return;
     }
@@ -148,8 +151,9 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
   return React.useMemo(
     () => ({
       ...computedResult,
+      isPositioned,
       update,
     }),
-    [computedResult, update],
+    [computedResult, isPositioned, update],
   );
 }

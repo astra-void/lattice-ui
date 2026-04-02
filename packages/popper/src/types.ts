@@ -28,5 +28,6 @@ export type UsePopperOptions = {
 };
 
 export type UsePopperResult = ComputePopperResult & {
+  isPositioned: boolean;
   update: () => void;
 };
