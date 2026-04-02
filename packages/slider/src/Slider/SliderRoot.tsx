@@ -42,6 +42,8 @@ export function SliderRoot(props: SliderProps) {
   const thumbRef = React.useRef<GuiObject>();
   const latestValueRef = React.useRef(value);
 
+  const [isDragging, setIsDragging] = React.useState(false);
+
   React.useEffect(() => {
     latestValueRef.current = value;
   }, [value]);
@@ -83,6 +85,7 @@ export function SliderRoot(props: SliderProps) {
     endConnectionRef.current = undefined;
 
     activeDragInputRef.current = undefined;
+    setIsDragging(false);
   }, []);
 
   const updateValueFromInput = React.useCallback(
@@ -134,6 +137,8 @@ export function SliderRoot(props: SliderProps) {
       if (disabled || !isPointerStartInput(inputObject)) {
         return;
       }
+
+      setIsDragging(true);
 
       activeDragInputRef.current = inputObject;
       const initialValue = updateValueFromInput(inputObject);
@@ -217,11 +222,25 @@ export function SliderRoot(props: SliderProps) {
       step,
       orientation,
       disabled,
+      isDragging,
       setTrackNode,
       setThumbNode,
       startDrag,
     }),
-    [commitValue, disabled, max, min, orientation, setThumbNode, setTrackNode, setValue, startDrag, step, value],
+    [
+      commitValue,
+      disabled,
+      max,
+      min,
+      orientation,
+      setThumbNode,
+      setTrackNode,
+      setValue,
+      startDrag,
+      step,
+      value,
+      isDragging,
+    ],
   );
 
   return <SliderContextProvider value={contextValue}>{props.children}</SliderContextProvider>;

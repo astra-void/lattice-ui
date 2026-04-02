@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { type MotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderThumbProps } from "./types";
@@ -10,12 +10,45 @@ function isPointerStartInput(inputObject: InputObject) {
   );
 }
 
+const THUMB_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+
 export function SliderThumb(props: SliderThumbProps) {
   const sliderContext = useSliderContext();
   const percent = valueToPercent(sliderContext.value, sliderContext.min, sliderContext.max);
 
   const position =
     sliderContext.orientation === "horizontal" ? UDim2.fromScale(percent, 0.5) : UDim2.fromScale(0.5, 1 - percent);
+
+  const transition = React.useMemo<MotionTransition>(() => {
+    return {
+      enter: {
+        tweenInfo: sliderContext.isDragging ? undefined : THUMB_TWEEN_INFO,
+        to: {
+          Position: position,
+        },
+      },
+    };
+  }, [position, sliderContext.isDragging]);
+
+  const thumbRef = React.useRef<GuiObject>();
+
+  const setNodeRef = React.useCallback(
+    (instance: Instance | undefined) => {
+      if (!instance || !instance.IsA("GuiObject")) {
+        thumbRef.current = undefined;
+        sliderContext.setThumbNode(undefined);
+        return;
+      }
+      thumbRef.current = instance;
+      sliderContext.setThumbNode(instance);
+    },
+    [sliderContext],
+  );
+
+  useMotionTween(thumbRef as React.MutableRefObject<Instance | undefined>, {
+    active: true,
+    transition,
+  });
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {
@@ -65,12 +98,12 @@ export function SliderThumb(props: SliderThumbProps) {
     Active: !sliderContext.disabled,
     AnchorPoint: new Vector2(0.5, 0.5),
     Name: "SliderThumb",
-    Position: position,
+    Position: sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 0.5) : UDim2.fromScale(0.5, 1),
     Selectable: !sliderContext.disabled,
     Event: {
       InputBegan: handleInputBegan,
     },
-    ref: sliderContext.setThumbNode,
+    ref: setNodeRef,
   };
 
   if (props.asChild) {

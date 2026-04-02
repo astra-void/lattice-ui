@@ -14,6 +14,7 @@ export type SliderContextValue = {
   step: number;
   orientation: SliderOrientation;
   disabled: boolean;
+  isDragging: boolean;
   setTrackNode: (instance: Instance | undefined) => void;
   setThumbNode: (instance: Instance | undefined) => void;
   startDrag: (inputObject: InputObject) => void;
