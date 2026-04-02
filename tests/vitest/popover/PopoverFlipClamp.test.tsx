@@ -11,16 +11,16 @@ class MockConnection {
 
 const mockWorkspace = {
   CurrentCamera: { ViewportSize: new Vector2(1920, 1080) },
-  GetPropertyChangedSignal: () => ({ Connect: () => new MockConnection() })
+  GetPropertyChangedSignal: () => ({ Connect: () => new MockConnection() }),
 };
 let heartbeatCallback: any = null;
 const mockRunService = {
-  Heartbeat: { 
+  Heartbeat: {
     Connect: (cb: any) => {
       heartbeatCallback = cb;
       return new MockConnection();
-    }
-  }
+    },
+  },
 };
 
 globalThis.game = {
@@ -29,9 +29,8 @@ globalThis.game = {
     if (service === "RunService") return mockRunService;
     if (service === "GuiService") return { GetGuiInset: () => [new Vector2(0, 36), new Vector2(0, 0)] };
     return {};
-  }
+  },
 };
-
 
 vi.mock("@lattice-ui/core", () => ({ React: require("react") }));
 
@@ -39,21 +38,20 @@ import { usePopper } from "../../../packages/popper/src/usePopper";
 
 describe("Popover flip and clamp regression (consumer level)", () => {
   it("resolves placement and propagates AnchorPoint/Position properly to Content", () => {
-    
     let currentResult: any = null;
-    
+
     function TestConsumer({ anchorPos, placement }) {
       const anchorRef = React.useRef({
         AbsolutePosition: anchorPos,
         AbsoluteSize: new Vector2(100, 30),
         IsA: (type) => type === "GuiObject",
-        GetPropertyChangedSignal: () => ({ Connect: () => new MockConnection() })
+        GetPropertyChangedSignal: () => ({ Connect: () => new MockConnection() }),
       });
       const contentRef = React.useRef({
         AbsolutePosition: new Vector2(0, 0),
         AbsoluteSize: new Vector2(200, 100),
         IsA: (type) => type === "GuiObject",
-        GetPropertyChangedSignal: () => ({ Connect: () => new MockConnection() })
+        GetPropertyChangedSignal: () => ({ Connect: () => new MockConnection() }),
       });
 
       const popper = usePopper({
@@ -61,11 +59,11 @@ describe("Popover flip and clamp regression (consumer level)", () => {
         contentRef,
         placement,
         padding: 10,
-        enabled: true
+        enabled: true,
       });
-      
+
       currentResult = popper;
-      
+
       return null;
     }
 
@@ -74,7 +72,7 @@ describe("Popover flip and clamp regression (consumer level)", () => {
     act(() => {
       if (heartbeatCallback) heartbeatCallback();
     });
-    
+
     expect(currentResult.placement).toBe("left");
     expect(currentResult.anchorPoint.X).toBe(1);
     expect(currentResult.anchorPoint.Y).toBe(0.5);
