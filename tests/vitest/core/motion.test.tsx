@@ -21,7 +21,14 @@ class MockTweenInfo {
   public Reverses: boolean;
   public DelayTime: number;
 
-  constructor(time: number, easingStyle: string, easingDirection: string, repeatCount = 0, reverses = false, delayTime = 0) {
+  constructor(
+    time: number,
+    easingStyle: string,
+    easingDirection: string,
+    repeatCount = 0,
+    reverses = false,
+    delayTime = 0,
+  ) {
     this.Time = time;
     this.EasingStyle = easingStyle;
     this.EasingDirection = easingDirection;
@@ -171,7 +178,7 @@ describe("core motion helpers", () => {
       "Out",
       2, // repeatCount (3 times total)
       true, // reverses (x2)
-      0.05 // delay
+      0.05, // delay
     ) as unknown as TweenInfo;
 
     const transition: MotionTransition = {
