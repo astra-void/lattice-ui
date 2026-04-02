@@ -5,8 +5,8 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: "@rbxts/react", replacement: "react" },
-      { find: /^@lattice-ui\/(.*)$/, replacement: path.resolve(__dirname, "./packages/$1/src") }
-    ]
+      { find: /^@lattice-ui\/(.*)$/, replacement: path.resolve(__dirname, "./packages/$1/src") },
+    ],
   },
   test: {
     environment: "node",
