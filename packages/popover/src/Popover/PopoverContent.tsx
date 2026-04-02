@@ -18,6 +18,7 @@ const CONTENT_OFFSET = 6;
 
 type PopoverContentImplProps = {
   enabled: boolean;
+  present: boolean;
   visible: boolean;
   onDismiss: () => void;
   onExitComplete?: () => void;
@@ -36,25 +37,21 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-function withVerticalOffset(position: UDim2, offset: number) {
-  return new UDim2(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + offset);
-}
-
-function buildPopoverContentTransition(position: UDim2): MotionTransition {
+function buildPopoverContentTransition(): MotionTransition {
   return {
     enter: {
       tweenInfo: CONTENT_TWEEN_INFO,
       from: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
+        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
       },
       to: {
-        Position: position,
+        Position: UDim2.fromOffset(0, 0),
       },
     },
     exit: {
       tweenInfo: CONTENT_EXIT_TWEEN_INFO,
       to: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
+        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
       },
     },
   };
@@ -81,14 +78,17 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildPopoverContentTransition(popper.position), props.transition);
-  }, [popper.position, props.transition]);
+    return mergeMotionTransition(buildPopoverContentTransition(), props.transition);
+  }, [props.transition]);
 
   useMotionTween(popoverContext.contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
+    active: props.present,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
+
+  // Wait until popper has at least one valid measurement to avoid a frame at (0, 0)
+  const isActuallyVisible = popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -98,7 +98,12 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       }
 
       return (
-        <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
+        <Slot
+          AnchorPoint={popper.anchorPoint}
+          Position={UDim2.fromOffset(0, 0)}
+          Visible={isActuallyVisible}
+          ref={setContentRef}
+        >
           {child}
         </Slot>
       );
@@ -109,9 +114,9 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Position={popper.position}
+      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
-      Visible={props.visible}
+      Visible={isActuallyVisible}
       ref={setContentRef}
     >
       {props.children}
@@ -127,7 +132,9 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       onPointerDownOutside={props.onPointerDownOutside}
     >
       <FocusScope active={props.enabled} restoreFocus={true} trapped={popoverContext.modal}>
-        {contentNode}
+        <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+          {contentNode}
+        </frame>
       </FocusScope>
     </DismissableLayer>
   );
@@ -143,7 +150,7 @@ export function PopoverContent(props: PopoverContentProps) {
   }, [popoverContext.setOpen]);
 
   const fallbackTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildPopoverContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+    return mergeMotionTransition(buildPopoverContentTransition(), props.transition);
   }, [props.transition]);
   const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 
@@ -159,7 +166,8 @@ export function PopoverContent(props: PopoverContentProps) {
         padding={props.padding}
         placement={props.placement}
         transition={props.transition}
-        visible={open}
+        present={open}
+        visible={true}
       >
         {props.children}
       </PopoverContentImpl>
@@ -182,6 +190,7 @@ export function PopoverContent(props: PopoverContentProps) {
           padding={props.padding}
           placement={props.placement}
           transition={props.transition}
+          present={state.isPresent}
           visible={true}
         >
           {props.children}
