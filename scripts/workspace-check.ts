@@ -120,6 +120,12 @@ for (const pkg of packages) {
     if (defaults.types && pkg.manifest.types !== defaults.types) {
       errors.push(`${pkg.manifest.name} has types="${pkg.manifest.types}" but expected "${defaults.types}".`);
     }
+    if (defaults.source && pkg.manifest.source !== defaults.source) {
+      errors.push(`${pkg.manifest.name} has source="${pkg.manifest.source}" but expected "${defaults.source}".`);
+    }
+    if (defaults.files && !jsonEqual(pkg.manifest.files, defaults.files)) {
+      errors.push(`${pkg.manifest.name} has non-canonical files array. Run "pnpm workspace:sync".`);
+    }
 
     for (const [scriptName, scriptCommand] of Object.entries(requiredScripts)) {
       if (!pkg.manifest.scripts?.[scriptName]) {

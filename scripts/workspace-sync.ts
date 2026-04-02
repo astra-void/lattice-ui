@@ -100,6 +100,12 @@ for (const pkg of packages) {
     if (defaults.types) {
       nextManifest.types = defaults.types;
     }
+    if (defaults.source) {
+      nextManifest.source = defaults.source;
+    }
+    if (defaults.files) {
+      nextManifest.files = defaults.files;
+    }
   }
 
   nextManifest.scripts = nextManifest.scripts ?? {};

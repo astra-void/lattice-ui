@@ -16,6 +16,7 @@ export interface PackageManifest {
   description?: string;
   main?: string;
   types?: string;
+  source?: string;
   files?: string[];
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
@@ -48,6 +49,8 @@ interface PackageDefaultsPolicy {
   private?: boolean;
   main?: string;
   types?: string;
+  source?: string;
+  files?: string[];
   scripts?: Record<string, string>;
 }
 
@@ -244,6 +247,7 @@ export function normalizePackageManifest(manifest: PackageManifest): PackageMani
     "description",
     "main",
     "types",
+    "source",
     "files",
     "scripts",
     "dependencies",

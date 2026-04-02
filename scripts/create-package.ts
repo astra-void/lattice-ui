@@ -146,6 +146,8 @@ const packageManifest = normalizePackageManifest({
   private: policy.packageDefaults?.private ?? false,
   main: policy.packageDefaults?.main ?? "out/init.luau",
   types: policy.packageDefaults?.types ?? "out/index.d.ts",
+  source: policy.packageDefaults?.source ?? "src/index.ts",
+  files: policy.packageDefaults?.files ?? ["out", "src", "README.md"],
   scripts: sortRecord({ ...defaultScripts }),
   dependencies:
     dependencyNames.length > 0

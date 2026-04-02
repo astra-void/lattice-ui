@@ -5,7 +5,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@lattice-ui/playground", "@lattice-ui/test-harness"],
+  "ignore": ["@lattice-ui/loom-preview", "@lattice-ui/playground", "@lattice-ui/test-harness"],
   "fixed": [
     [
       "@lattice-ui/accordion",

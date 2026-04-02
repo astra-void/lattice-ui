@@ -10,6 +10,8 @@
     "private": false,
     "main": "out/init.luau",
     "types": "out/index.d.ts",
+    "source": "src/index.ts",
+    "files": ["out", "src", "README.md"],
     "scripts": {
       "build": "rbxtsc -p tsconfig.json",
       "watch": "rbxtsc -p tsconfig.json -w",
