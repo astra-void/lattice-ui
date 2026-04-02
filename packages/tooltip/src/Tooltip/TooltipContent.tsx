@@ -17,6 +17,7 @@ const CONTENT_OFFSET = 6;
 
 type TooltipContentImplProps = {
   enabled: boolean;
+  present: boolean;
   visible: boolean;
   onDismiss: () => void;
   onExitComplete?: () => void;
@@ -35,25 +36,21 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-function withVerticalOffset(position: UDim2, offset: number) {
-  return new UDim2(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + offset);
-}
-
-function buildTooltipContentTransition(position: UDim2): MotionTransition {
+function buildTooltipContentTransition(): MotionTransition {
   return {
     enter: {
       tweenInfo: CONTENT_TWEEN_INFO,
       from: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
+        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
       },
       to: {
-        Position: position,
+        Position: UDim2.fromOffset(0, 0),
       },
     },
     exit: {
       tweenInfo: CONTENT_EXIT_TWEEN_INFO,
       to: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
+        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
       },
     },
   };
@@ -79,14 +76,16 @@ function TooltipContentImpl(props: TooltipContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildTooltipContentTransition(popper.position), props.transition);
-  }, [popper.position, props.transition]);
+    return mergeMotionTransition(buildTooltipContentTransition(), props.transition);
+  }, [props.transition]);
 
   useMotionTween(tooltipContext.contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
+    active: props.present,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
+
+  const isActuallyVisible = popper.isPositioned;
 
   if (props.asChild) {
     const child = props.children;
@@ -102,9 +101,16 @@ function TooltipContentImpl(props: TooltipContentImplProps) {
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
       >
-        <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
-          {child}
-        </Slot>
+        <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+          <Slot
+            AnchorPoint={popper.anchorPoint}
+            Position={UDim2.fromOffset(0, 0)}
+            Visible={isActuallyVisible}
+            ref={setContentRef}
+          >
+            {child}
+          </Slot>
+        </frame>
       </DismissableLayer>
     );
   }
@@ -117,16 +123,19 @@ function TooltipContentImpl(props: TooltipContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <frame
-        AnchorPoint={popper.anchorPoint}
-        BackgroundTransparency={1}
-        BorderSizePixel={0}
-        Position={popper.position}
-        Size={UDim2.fromOffset(0, 0)}
-        Visible={props.visible}
-        ref={setContentRef}
-      >
-        {props.children}
+      <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+        <frame
+          AnchorPoint={popper.anchorPoint}
+          AutomaticSize={Enum.AutomaticSize.XY}
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Position={UDim2.fromOffset(0, 0)}
+          Size={UDim2.fromOffset(0, 0)}
+          Visible={isActuallyVisible}
+          ref={setContentRef}
+        >
+          {props.children}
+        </frame>
       </frame>
     </DismissableLayer>
   );
@@ -142,7 +151,7 @@ export function TooltipContent(props: TooltipContentProps) {
   }, [tooltipContext]);
 
   const fallbackTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildTooltipContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+    return mergeMotionTransition(buildTooltipContentTransition(), props.transition);
   }, [props.transition]);
   const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 
@@ -158,7 +167,8 @@ export function TooltipContent(props: TooltipContentProps) {
         padding={props.padding}
         placement={props.placement}
         transition={props.transition}
-        visible={open}
+        present={open}
+        visible={true}
       >
         {props.children}
       </TooltipContentImpl>
@@ -181,6 +191,7 @@ export function TooltipContent(props: TooltipContentProps) {
           padding={props.padding}
           placement={props.placement}
           transition={props.transition}
+          present={state.isPresent}
           visible={true}
         >
           {props.children}
