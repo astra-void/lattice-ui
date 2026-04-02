@@ -17,6 +17,7 @@ const CONTENT_OPEN_Y_OFFSET = 6;
 
 type SelectContentImplProps = {
   enabled: boolean;
+  present: boolean;
   visible: boolean;
   onDismiss: () => void;
   onExitComplete?: () => void;
@@ -35,25 +36,21 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-function withVerticalOffset(position: UDim2, offset: number) {
-  return new UDim2(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + offset);
-}
-
-function buildSelectContentTransition(position: UDim2): MotionTransition {
+function buildSelectContentTransition(): MotionTransition {
   return {
     enter: {
       tweenInfo: OPEN_TWEEN_INFO,
       from: {
-        Position: withVerticalOffset(position, CONTENT_OPEN_Y_OFFSET),
+        Position: UDim2.fromOffset(0, CONTENT_OPEN_Y_OFFSET),
       },
       to: {
-        Position: position,
+        Position: UDim2.fromOffset(0, 0),
       },
     },
     exit: {
       tweenInfo: CLOSE_TWEEN_INFO,
       to: {
-        Position: withVerticalOffset(position, CONTENT_OPEN_Y_OFFSET),
+        Position: UDim2.fromOffset(0, CONTENT_OPEN_Y_OFFSET),
       },
     },
   };
@@ -79,14 +76,16 @@ function SelectContentImpl(props: SelectContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildSelectContentTransition(popper.position), props.transition);
-  }, [popper.position, props.transition]);
+    return mergeMotionTransition(buildSelectContentTransition(), props.transition);
+  }, [props.transition]);
 
   useMotionTween(selectContext.contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
+    active: props.present,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
+
+  const isActuallyVisible = popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -96,7 +95,12 @@ function SelectContentImpl(props: SelectContentImplProps) {
       }
 
       return (
-        <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
+        <Slot
+          AnchorPoint={popper.anchorPoint}
+          Position={UDim2.fromOffset(0, 0)}
+          Visible={isActuallyVisible}
+          ref={setContentRef}
+        >
           {child}
         </Slot>
       );
@@ -107,9 +111,9 @@ function SelectContentImpl(props: SelectContentImplProps) {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Position={popper.position}
+      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
-      Visible={props.visible}
+      Visible={isActuallyVisible}
       ref={setContentRef}
     >
       {props.children}
@@ -125,7 +129,9 @@ function SelectContentImpl(props: SelectContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      {contentNode}
+      <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+        {contentNode}
+      </frame>
     </DismissableLayer>
   );
 }
@@ -140,7 +146,7 @@ export function SelectContent(props: SelectContentProps) {
   }, [selectContext.setOpen]);
 
   const fallbackTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildSelectContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+    return mergeMotionTransition(buildSelectContentTransition(), props.transition);
   }, [props.transition]);
   const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 
@@ -156,7 +162,8 @@ export function SelectContent(props: SelectContentProps) {
         padding={props.padding}
         placement={props.placement}
         transition={props.transition}
-        visible={open}
+        present={open}
+        visible={true}
       >
         {props.children}
       </SelectContentImpl>
@@ -179,6 +186,7 @@ export function SelectContent(props: SelectContentProps) {
           padding={props.padding}
           placement={props.placement}
           transition={props.transition}
+          present={state.isPresent}
           visible={true}
         >
           {props.children}
