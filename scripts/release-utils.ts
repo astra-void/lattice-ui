@@ -44,7 +44,11 @@ export function resolveReleaseTag(tag: string): ParsedReleaseTag {
   return parsed;
 }
 
-export function validatePackageVersionMatchesRelease(tag: string, packageVersion: string, packageName = "package"): ParsedReleaseTag {
+export function validatePackageVersionMatchesRelease(
+  tag: string,
+  packageVersion: string,
+  packageName = "package",
+): ParsedReleaseTag {
   const parsed = resolveReleaseTag(tag);
   if (packageVersion !== parsed.version) {
     throw new Error(`${packageName} version ${packageVersion} does not match release tag ${tag}.`);
