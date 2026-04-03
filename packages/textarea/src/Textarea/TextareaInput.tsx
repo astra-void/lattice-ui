@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { buildTweenTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
 import { resolveTextareaHeight } from "./autoResize";
 import { useTextareaContext } from "./context";
 import type { TextareaInputProps } from "./types";
@@ -40,17 +40,31 @@ function resolveMeasuredRows(textBox: TextBox, lineHeight: number) {
   return math.max(1, math.ceil(textBoundsHeight / lineHeight));
 }
 
+const transition = buildTweenTransition(
+  { BackgroundColor3: Color3.fromRGB(47, 53, 68) }, // Focused
+  { BackgroundColor3: Color3.fromRGB(39, 46, 61) }, // Default
+);
+
 export function TextareaInput(props: TextareaInputProps) {
   const textareaContext = useTextareaContext();
   const disabled = textareaContext.disabled || props.disabled === true;
   const readOnly = textareaContext.readOnly || props.readOnly === true;
+  const [focused, setFocused] = React.useState(false);
+
+  const localRef = React.useRef<TextBox>();
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
+      localRef.current = toTextBox(instance);
       textareaContext.inputRef.current = toTextBox(instance);
     },
     [textareaContext.inputRef],
   );
+
+  useMotionTween(localRef as React.MutableRefObject<Instance | undefined>, {
+    active: focused && !disabled && !readOnly,
+    transition,
+  });
 
   const applyAutoResize = React.useCallback(
     (textBox: TextBox) => {
@@ -100,8 +114,13 @@ export function TextareaInput(props: TextareaInputProps) {
     [applyAutoResize, disabled, readOnly, textareaContext],
   );
 
+  const handleFocused = React.useCallback(() => {
+    setFocused(true);
+  }, []);
+
   const handleFocusLost = React.useCallback(
     (textBox: TextBox) => {
+      setFocused(false);
       if (disabled) {
         return;
       }
@@ -137,6 +156,7 @@ export function TextareaInput(props: TextareaInputProps) {
       Text: handleTextChanged,
     },
     Event: {
+      Focused: handleFocused,
       FocusLost: handleFocusLost,
     },
     ref: setInputRef,
@@ -154,7 +174,7 @@ export function TextareaInput(props: TextareaInputProps) {
   return (
     <textbox
       {...sharedProps}
-      BackgroundColor3={Color3.fromRGB(39, 46, 61)}
+      BackgroundColor3={focused && !disabled && !readOnly ? Color3.fromRGB(47, 53, 68) : Color3.fromRGB(39, 46, 61)}
       BorderSizePixel={0}
       PlaceholderText="Type..."
       Size={UDim2.fromOffset(240, 68)}
