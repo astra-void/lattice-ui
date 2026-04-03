@@ -8,7 +8,7 @@
 } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { usePopper } from "@lattice-ui/popper";
+import { buildPopperContentMotionTransition, usePopper } from "@lattice-ui/popper";
 import { useMenuContext } from "./context";
 import type { MenuContentProps } from "./types";
 
@@ -36,28 +36,12 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-function withVerticalOffset(position: UDim2, offset: number) {
-  return new UDim2(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + offset);
-}
-
-function buildMenuContentTransition(position: UDim2): MotionTransition {
-  return {
-    enter: {
-      tweenInfo: CONTENT_TWEEN_INFO,
-      from: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
-      },
-      to: {
-        Position: position,
-      },
-    },
-    exit: {
-      tweenInfo: CONTENT_EXIT_TWEEN_INFO,
-      to: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
-      },
-    },
-  };
+function buildMenuContentTransition(): MotionTransition {
+  return buildPopperContentMotionTransition("bottom", {
+    distance: CONTENT_OFFSET,
+    enterTweenInfo: CONTENT_TWEEN_INFO,
+    exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+  });
 }
 
 function MenuContentImpl(props: MenuContentImplProps) {
@@ -80,14 +64,23 @@ function MenuContentImpl(props: MenuContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildMenuContentTransition(popper.position), props.transition);
-  }, [popper.position, props.transition]);
+    return mergeMotionTransition(
+      buildPopperContentMotionTransition(popper.placement, {
+        distance: CONTENT_OFFSET,
+        enterTweenInfo: CONTENT_TWEEN_INFO,
+        exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+      }),
+      props.transition,
+    );
+  }, [popper.placement, props.transition]);
 
   useMotionTween(menuContext.contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
+
+  const isActuallyVisible = props.visible && popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -97,7 +90,12 @@ function MenuContentImpl(props: MenuContentImplProps) {
       }
 
       return (
-        <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
+        <Slot
+          AnchorPoint={popper.anchorPoint}
+          Position={UDim2.fromOffset(0, 0)}
+          Visible={isActuallyVisible}
+          ref={setContentRef}
+        >
           {child}
         </Slot>
       );
@@ -108,9 +106,9 @@ function MenuContentImpl(props: MenuContentImplProps) {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Position={popper.position}
+      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
-      Visible={props.visible}
+      Visible={isActuallyVisible}
       ref={setContentRef}
     >
       {props.children}
@@ -126,7 +124,9 @@ function MenuContentImpl(props: MenuContentImplProps) {
       onPointerDownOutside={props.onPointerDownOutside}
     >
       <FocusScope active={props.enabled} restoreFocus={true} trapped={menuContext.modal}>
-        {contentNode}
+        <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+          {contentNode}
+        </frame>
       </FocusScope>
     </DismissableLayer>
   );
@@ -142,7 +142,7 @@ export function MenuContent(props: MenuContentProps) {
   }, [menuContext.setOpen]);
 
   const fallbackTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildMenuContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+    return mergeMotionTransition(buildMenuContentTransition(), props.transition);
   }, [props.transition]);
   const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 

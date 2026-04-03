@@ -8,7 +8,7 @@
 } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { usePopper } from "@lattice-ui/popper";
+import { buildPopperContentMotionTransition, usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";
 
@@ -38,23 +38,11 @@ function toGuiObject(instance: Instance | undefined) {
 }
 
 function buildPopoverContentTransition(): MotionTransition {
-  return {
-    enter: {
-      tweenInfo: CONTENT_TWEEN_INFO,
-      from: {
-        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
-      },
-      to: {
-        Position: UDim2.fromOffset(0, 0),
-      },
-    },
-    exit: {
-      tweenInfo: CONTENT_EXIT_TWEEN_INFO,
-      to: {
-        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
-      },
-    },
-  };
+  return buildPopperContentMotionTransition("bottom", {
+    distance: CONTENT_OFFSET,
+    enterTweenInfo: CONTENT_TWEEN_INFO,
+    exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+  });
 }
 
 function PopoverContentImpl(props: PopoverContentImplProps) {
@@ -78,8 +66,15 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildPopoverContentTransition(), props.transition);
-  }, [props.transition]);
+    return mergeMotionTransition(
+      buildPopperContentMotionTransition(popper.placement, {
+        distance: CONTENT_OFFSET,
+        enterTweenInfo: CONTENT_TWEEN_INFO,
+        exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+      }),
+      props.transition,
+    );
+  }, [popper.placement, props.transition]);
 
   useMotionTween(popoverContext.contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.present,
@@ -88,7 +83,7 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
   });
 
   // Wait until popper has at least one valid measurement to avoid a frame at (0, 0)
-  const isActuallyVisible = popper.isPositioned;
+  const isActuallyVisible = props.visible && popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -167,7 +162,7 @@ export function PopoverContent(props: PopoverContentProps) {
         placement={props.placement}
         transition={props.transition}
         present={open}
-        visible={true}
+        visible={open}
       >
         {props.children}
       </PopoverContentImpl>

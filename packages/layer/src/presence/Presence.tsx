@@ -2,6 +2,24 @@ import { React } from "@lattice-ui/core";
 import { DEFAULT_PRESENCE_EXIT_FALLBACK_MS } from "../internals/constants";
 import type { PresenceProps } from "./types";
 
+function cancelFallbackTask(taskRef: React.MutableRefObject<thread | undefined>, currentThread?: thread) {
+  const fallbackTask = taskRef.current;
+  taskRef.current = undefined;
+
+  if (!fallbackTask || fallbackTask === currentThread) {
+    return;
+  }
+
+  const [hasStatus, status] = pcall(() => coroutine.status(fallbackTask));
+  if (hasStatus && status === "dead") {
+    return;
+  }
+
+  pcall(() => {
+    task.cancel(fallbackTask);
+  });
+}
+
 export function Presence(props: PresenceProps) {
   const [mounted, setMounted] = React.useState(props.present);
   const [isPresent, setIsPresent] = React.useState(props.present);
@@ -22,13 +40,7 @@ export function Presence(props: PresenceProps) {
       return;
     }
 
-    const fallbackTask = fallbackTaskRef.current;
-    if (fallbackTask) {
-      if (fallbackTask !== coroutine.running()) {
-        task.cancel(fallbackTask);
-      }
-      fallbackTaskRef.current = undefined;
-    }
+    cancelFallbackTask(fallbackTaskRef, coroutine.running());
 
     mountedRef.current = false;
     setMounted(false);
@@ -37,13 +49,7 @@ export function Presence(props: PresenceProps) {
 
   React.useEffect(() => {
     if (props.present) {
-      const fallbackTask = fallbackTaskRef.current;
-      if (fallbackTask) {
-        if (fallbackTask !== coroutine.running()) {
-          task.cancel(fallbackTask);
-        }
-        fallbackTaskRef.current = undefined;
-      }
+      cancelFallbackTask(fallbackTaskRef, coroutine.running());
 
       if (!mountedRef.current) {
         mountedRef.current = true;
@@ -58,14 +64,7 @@ export function Presence(props: PresenceProps) {
     }
 
     setIsPresent(false);
-
-    const fallbackTask = fallbackTaskRef.current;
-    if (fallbackTask) {
-      if (fallbackTask !== coroutine.running()) {
-        task.cancel(fallbackTask);
-      }
-      fallbackTaskRef.current = undefined;
-    }
+    cancelFallbackTask(fallbackTaskRef, coroutine.running());
 
     const timeoutMs = props.exitFallbackMs ?? DEFAULT_PRESENCE_EXIT_FALLBACK_MS;
     fallbackTaskRef.current = task.delay(timeoutMs / 1000, () => {
@@ -75,13 +74,7 @@ export function Presence(props: PresenceProps) {
 
   React.useEffect(() => {
     return () => {
-      const fallbackTask = fallbackTaskRef.current;
-      if (fallbackTask) {
-        if (fallbackTask !== coroutine.running()) {
-          task.cancel(fallbackTask);
-        }
-        fallbackTaskRef.current = undefined;
-      }
+      cancelFallbackTask(fallbackTaskRef, coroutine.running());
     };
   }, []);
 

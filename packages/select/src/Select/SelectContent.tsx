@@ -7,7 +7,7 @@
   useMotionTween,
 } from "@lattice-ui/core";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { usePopper } from "@lattice-ui/popper";
+import { buildPopperContentMotionTransition, usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
 
@@ -37,23 +37,11 @@ function toGuiObject(instance: Instance | undefined) {
 }
 
 function buildSelectContentTransition(): MotionTransition {
-  return {
-    enter: {
-      tweenInfo: OPEN_TWEEN_INFO,
-      from: {
-        Position: UDim2.fromOffset(0, CONTENT_OPEN_Y_OFFSET),
-      },
-      to: {
-        Position: UDim2.fromOffset(0, 0),
-      },
-    },
-    exit: {
-      tweenInfo: CLOSE_TWEEN_INFO,
-      to: {
-        Position: UDim2.fromOffset(0, CONTENT_OPEN_Y_OFFSET),
-      },
-    },
-  };
+  return buildPopperContentMotionTransition("bottom", {
+    distance: CONTENT_OPEN_Y_OFFSET,
+    enterTweenInfo: OPEN_TWEEN_INFO,
+    exitTweenInfo: CLOSE_TWEEN_INFO,
+  });
 }
 
 function SelectContentImpl(props: SelectContentImplProps) {
@@ -76,8 +64,15 @@ function SelectContentImpl(props: SelectContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildSelectContentTransition(), props.transition);
-  }, [props.transition]);
+    return mergeMotionTransition(
+      buildPopperContentMotionTransition(popper.placement, {
+        distance: CONTENT_OPEN_Y_OFFSET,
+        enterTweenInfo: OPEN_TWEEN_INFO,
+        exitTweenInfo: CLOSE_TWEEN_INFO,
+      }),
+      props.transition,
+    );
+  }, [popper.placement, props.transition]);
 
   useMotionTween(selectContext.contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.present,
@@ -85,7 +80,7 @@ function SelectContentImpl(props: SelectContentImplProps) {
     transition: motionTransition,
   });
 
-  const isActuallyVisible = popper.isPositioned;
+  const isActuallyVisible = props.visible && popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -163,7 +158,7 @@ export function SelectContent(props: SelectContentProps) {
         placement={props.placement}
         transition={props.transition}
         present={open}
-        visible={true}
+        visible={open}
       >
         {props.children}
       </SelectContentImpl>

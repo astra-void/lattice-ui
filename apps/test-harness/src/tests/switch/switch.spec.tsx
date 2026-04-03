@@ -3,10 +3,29 @@ import { Switch } from "@lattice-ui/switch";
 import { findFirstDescendant } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
-function findThumbFrame(root: Instance, width: number) {
+const TRACK_ON_COLOR = Color3.fromRGB(86, 141, 255);
+const TRACK_OFF_COLOR = Color3.fromRGB(66, 73, 91);
+
+function assertWithinTolerance(actual: number, expected: number, tolerance: number, message: string) {
+  assert(math.abs(actual - expected) <= tolerance, `${message} (expected ${expected}, got ${actual})`);
+}
+
+function findSwitchRoot(root: Instance) {
   const matched = findFirstDescendant(
     root,
-    (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === width && instance.AbsoluteSize.Y === 20,
+    (instance) => instance.IsA("TextButton") && instance.AbsoluteSize.X === 160 && instance.AbsoluteSize.Y === 36,
+  );
+  if (!matched || !matched.IsA("TextButton")) {
+    return undefined;
+  }
+
+  return matched;
+}
+
+function findSwitchThumb(root: Instance) {
+  const matched = findFirstDescendant(
+    root,
+    (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === 16 && instance.AbsoluteSize.Y === 16,
   );
   if (!matched || !matched.IsA("Frame")) {
     return undefined;
@@ -15,116 +34,189 @@ function findThumbFrame(root: Instance, width: number) {
   return matched;
 }
 
+function renderSwitch(checked: boolean, disabled = false) {
+  return (
+    <Switch.Root checked={checked} disabled={disabled}>
+      <Switch.Thumb />
+    </Switch.Root>
+  );
+}
+
+function getThumbTargetX(root: TextButton, checked: boolean) {
+  return root.AbsolutePosition.X + (checked ? root.AbsoluteSize.X - 18 : 2);
+}
+
 export = () => {
   describe("switch", () => {
-    it("positions the default thumb from switch checked state", () => {
-      withReactHarness("SwitchDefaultThumbPosition", (harness) => {
-        const renderTree = (checked: boolean) => (
-          <Switch.Root asChild checked={checked}>
-            <textbutton Text="">
-              <frame Size={UDim2.fromOffset(46, 24)}>
-                <Switch.Thumb />
-              </frame>
-            </textbutton>
-          </Switch.Root>
-        );
+    it("animates the thumb in both directions and settles on the checked state", () => {
+      withReactHarness("SwitchBidirectionalMotion", (harness) => {
+        harness.render(renderSwitch(false));
+        waitForEffects(4);
 
-        harness.render(renderTree(false));
-        waitForEffects(3);
-        const uncheckedThumb = findFirstDescendant(
-          harness.container,
-          (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === 16 && instance.AbsoluteSize.Y === 16,
-        );
-        assert(uncheckedThumb !== undefined && uncheckedThumb.IsA("Frame"), "Default SwitchThumb should mount.");
-        assert(uncheckedThumb.Position.X.Offset === 2, "Unchecked default thumb should align to the leading edge.");
-        assert(uncheckedThumb.Position.X.Scale === 0, "Unchecked default thumb should use offset positioning.");
+        const root = findSwitchRoot(harness.container);
+        const initialThumb = findSwitchThumb(harness.container);
+        assert(root !== undefined, "Switch root should mount for motion coverage.");
+        assert(initialThumb !== undefined, "Switch thumb should mount for motion coverage.");
 
-        harness.render(renderTree(true));
-        waitForEffects(3);
-        const checkedThumb = findFirstDescendant(
-          harness.container,
-          (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === 16 && instance.AbsoluteSize.Y === 16,
+        const uncheckedX = getThumbTargetX(root, false);
+        const checkedX = getThumbTargetX(root, true);
+        assertWithinTolerance(
+          initialThumb.AbsolutePosition.X,
+          uncheckedX,
+          1,
+          "Unchecked thumb should start at the leading edge.",
+        );
+        assert(root.BackgroundColor3 === TRACK_OFF_COLOR, "Unchecked switch track should start with the off color.");
+
+        harness.render(renderSwitch(true));
+        waitForEffects(2);
+        task.wait(0.06);
+        waitForEffects(1);
+
+        const enteringThumb = findSwitchThumb(harness.container);
+        const enteringRoot = findSwitchRoot(harness.container);
+        assert(
+          enteringThumb !== undefined && enteringRoot !== undefined,
+          "Switch should stay mounted while animating on.",
         );
         assert(
-          checkedThumb !== undefined && checkedThumb.IsA("Frame"),
-          "Checked default SwitchThumb should remain mounted.",
+          enteringThumb.AbsolutePosition.X > uncheckedX && enteringThumb.AbsolutePosition.X < checkedX,
+          "Switch thumb should move smoothly toward the checked position while toggling on.",
         );
-        assert(checkedThumb.Position.X.Scale === 1, "Checked default thumb should anchor from the trailing edge.");
-        assert(checkedThumb.Position.X.Offset === -18, "Checked default thumb should shift to the trailing offset.");
+        assert(
+          enteringRoot.BackgroundColor3 !== TRACK_OFF_COLOR && enteringRoot.BackgroundColor3 !== TRACK_ON_COLOR,
+          "Switch track color should tween instead of snapping on toggle.",
+        );
+
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const checkedThumb = findSwitchThumb(harness.container);
+        const checkedRoot = findSwitchRoot(harness.container);
+        assert(
+          checkedThumb !== undefined && checkedRoot !== undefined,
+          "Checked switch should remain mounted after settling.",
+        );
+        assertWithinTolerance(
+          checkedThumb.AbsolutePosition.X,
+          checkedX,
+          1,
+          "Checked thumb should settle at the trailing edge.",
+        );
+        assert(checkedRoot.BackgroundColor3 === TRACK_ON_COLOR, "Checked switch track should settle on the on color.");
+
+        harness.render(renderSwitch(false));
+        waitForEffects(2);
+        task.wait(0.05);
+        waitForEffects(1);
+
+        const exitingThumb = findSwitchThumb(harness.container);
+        assert(exitingThumb !== undefined, "Switch thumb should remain mounted while animating off.");
+        assert(
+          exitingThumb.AbsolutePosition.X > uncheckedX && exitingThumb.AbsolutePosition.X < checkedX,
+          "Switch thumb should animate back toward the unchecked position when toggled off.",
+        );
+
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const finalThumb = findSwitchThumb(harness.container);
+        const finalRoot = findSwitchRoot(harness.container);
+        assert(
+          finalThumb !== undefined && finalRoot !== undefined,
+          "Unchecked switch should remain mounted after settling.",
+        );
+        assertWithinTolerance(
+          finalThumb.AbsolutePosition.X,
+          uncheckedX,
+          1,
+          "Unchecked thumb should settle back at the leading edge.",
+        );
+        assert(
+          finalRoot.BackgroundColor3 === TRACK_OFF_COLOR,
+          "Unchecked switch track should settle back on the off color.",
+        );
       });
     });
 
-    it("keeps thumb mounted while unchecked without forceMount", () => {
-      withReactHarness("SwitchThumbUnchecked", (harness) => {
-        harness.render(
-          <Switch.Root asChild checked={false}>
-            <textbutton Text="">
-              <Switch.Thumb asChild>
-                <frame Size={UDim2.fromOffset(20, 20)} />
-              </Switch.Thumb>
-            </textbutton>
-          </Switch.Root>,
-        );
-
+    it("converges on the final checked state after rapid toggles", () => {
+      withReactHarness("SwitchRapidToggleMotion", (harness) => {
+        harness.render(renderSwitch(false));
         waitForEffects(3);
-        const thumb = findThumbFrame(harness.container, 20);
-        assert(thumb !== undefined, "SwitchThumb should remain mounted while unchecked without forceMount.");
-        assert(thumb.Visible === true, "SwitchThumb should stay visible unless the caller hides it.");
-      });
-    });
 
-    it("keeps the same thumb mounted across checked transitions", () => {
-      withReactHarness("SwitchThumbToggle", (harness) => {
-        const renderTree = (checked: boolean) => (
-          <Switch.Root asChild checked={checked}>
-            <textbutton Text="">
-              <Switch.Thumb asChild>
-                <frame
-                  Position={checked ? UDim2.fromOffset(24, 2) : UDim2.fromOffset(2, 2)}
-                  Size={UDim2.fromOffset(20, 20)}
-                />
-              </Switch.Thumb>
-            </textbutton>
-          </Switch.Root>
+        harness.render(renderSwitch(true));
+        waitForEffects(1);
+        task.wait(0.03);
+        waitForEffects(1);
+
+        harness.render(renderSwitch(false));
+        waitForEffects(1);
+        task.wait(0.03);
+        waitForEffects(1);
+
+        harness.render(renderSwitch(true));
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const root = findSwitchRoot(harness.container);
+        const thumb = findSwitchThumb(harness.container);
+        assert(root !== undefined && thumb !== undefined, "Switch should remain mounted after rapid toggles.");
+        assertWithinTolerance(
+          thumb.AbsolutePosition.X,
+          getThumbTargetX(root, true),
+          1,
+          "Rapid toggles should converge on the final checked thumb position.",
         );
-
-        harness.render(renderTree(false));
-        waitForEffects(3);
-        const uncheckedThumb = findThumbFrame(harness.container, 20);
-        assert(uncheckedThumb !== undefined, "SwitchThumb should mount for unchecked state.");
         assert(
-          uncheckedThumb.Position.X.Offset === 2,
-          "Unchecked switch should use the caller-provided thumb position.",
-        );
-
-        harness.render(renderTree(true));
-        waitForEffects(3);
-        const checkedThumb = findThumbFrame(harness.container, 20);
-        assert(checkedThumb !== undefined, "SwitchThumb should remain mounted after toggling on.");
-        assert(checkedThumb === uncheckedThumb, "SwitchThumb should not unmount and remount across toggles.");
-        assert(
-          checkedThumb.Position.X.Offset === 24,
-          "Checked switch should reflect the caller-provided thumb position update.",
+          root.BackgroundColor3 === TRACK_ON_COLOR,
+          "Rapid toggles should converge on the final checked track color.",
         );
       });
     });
 
-    it("treats forceMount as a compatibility no-op", () => {
-      withReactHarness("SwitchThumbForceMountNoop", (harness) => {
-        harness.render(
-          <Switch.Root asChild checked={false}>
-            <textbutton Text="">
-              <Switch.Thumb asChild forceMount>
-                <frame Size={UDim2.fromOffset(20, 20)} />
-              </Switch.Thumb>
-            </textbutton>
-          </Switch.Root>,
+    it("keeps disabled switches stable while following controlled checked state", () => {
+      withReactHarness("SwitchDisabledControlled", (harness) => {
+        harness.render(renderSwitch(false, true));
+        waitForEffects(4);
+
+        const initialRoot = findSwitchRoot(harness.container);
+        const initialThumb = findSwitchThumb(harness.container);
+        assert(
+          initialRoot !== undefined && initialThumb !== undefined,
+          "Disabled switch should mount for controlled coverage.",
+        );
+        assert(initialRoot.Active === false, "Disabled switch should stay non-interactive.");
+        assert(initialRoot.Selectable === false, "Disabled switch should stay out of native selection.");
+        assertWithinTolerance(
+          initialThumb.AbsolutePosition.X,
+          getThumbTargetX(initialRoot, false),
+          1,
+          "Disabled switch should still render the unchecked thumb position correctly.",
         );
 
-        waitForEffects(3);
-        const thumb = findThumbFrame(harness.container, 20);
-        assert(thumb !== undefined, "SwitchThumb should still mount when forceMount is passed.");
-        assert(thumb.Visible === true, "forceMount should not change default visible behavior after the fix.");
+        harness.render(renderSwitch(true, true));
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const checkedRoot = findSwitchRoot(harness.container);
+        const checkedThumb = findSwitchThumb(harness.container);
+        assert(
+          checkedRoot !== undefined && checkedThumb !== undefined,
+          "Disabled controlled switch should remain mounted after external updates.",
+        );
+        assert(checkedRoot.Active === false, "Disabled controlled switch should remain non-interactive after updates.");
+        assertWithinTolerance(
+          checkedThumb.AbsolutePosition.X,
+          getThumbTargetX(checkedRoot, true),
+          1,
+          "Disabled controlled switch should still follow the external checked state.",
+        );
+        assert(
+          checkedRoot.BackgroundColor3 === TRACK_ON_COLOR,
+          "Disabled controlled switch should still render the checked track state.",
+        );
       });
     });
   });

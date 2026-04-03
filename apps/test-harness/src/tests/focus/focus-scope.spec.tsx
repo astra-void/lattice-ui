@@ -70,6 +70,35 @@ export = () => {
       });
     });
 
+    it("focuses the first selectable descendant in tree order when a trap activates", () => {
+      withReactHarness("FocusScopeTreeOrder", (harness) => {
+        const renderTree = (active: boolean) => (
+          <frame>
+            <FocusScope active={active} asChild trapped={true}>
+              <frame>
+                <textbutton Text="focus-scope-tree-first" />
+                <textbutton Text="focus-scope-tree-second" />
+              </frame>
+            </FocusScope>
+          </frame>
+        );
+
+        harness.render(renderTree(false));
+        waitForEffects(3);
+
+        harness.render(renderTree(true));
+        waitForEffects(3);
+
+        const first = findButtonOrThrow(harness.container, "focus-scope-tree-first");
+        assert(
+          GuiService.SelectedObject === first,
+          "Trapped FocusScope should fall back to the first selectable descendant in tree order.",
+        );
+
+        GuiService.SelectedObject = undefined;
+      });
+    });
+
     it("restores previous focus when scope unmounts", () => {
       withReactHarness("FocusScopeRestore", (harness) => {
         const renderTree = (open: boolean) => (

@@ -1,4 +1,4 @@
-﻿import {
+import {
   getMotionTransitionExitFallbackMs,
   type MotionTransition,
   mergeMotionTransition,
@@ -33,7 +33,8 @@ function buildDialogOverlayTransition(): MotionTransition {
 }
 
 type DialogOverlayImplProps = {
-  visible: boolean;
+  active: boolean;
+  rendered: boolean;
   interactive?: boolean;
   transition?: MotionTransition | false;
   onDismiss: () => void;
@@ -44,10 +45,10 @@ type DialogOverlayImplProps = {
 
 function DialogOverlayImpl(props: DialogOverlayImplProps) {
   const overlayRef = React.useRef<TextButton>();
-  const interactive = props.interactive ?? props.visible;
+  const interactive = props.interactive ?? props.active;
 
   useMotionTween(overlayRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
+    active: props.active,
     onExitComplete: props.onExitComplete,
     transition: props.transition,
   });
@@ -63,7 +64,7 @@ function DialogOverlayImpl(props: DialogOverlayImplProps) {
     }
 
     return (
-      <Slot Active={interactive} Event={{ Activated: handleActivated }} Visible={props.visible} ref={overlayRef}>
+      <Slot Active={interactive} Event={{ Activated: handleActivated }} Visible={props.rendered} ref={overlayRef}>
         {child}
       </Slot>
     );
@@ -82,7 +83,7 @@ function DialogOverlayImpl(props: DialogOverlayImplProps) {
       Size={UDim2.fromScale(1, 1)}
       Text=""
       TextTransparency={1}
-      Visible={props.visible}
+      Visible={props.rendered}
       ZIndex={5}
       ref={overlayRef}
     />
@@ -100,10 +101,11 @@ export function DialogOverlay(props: DialogOverlayProps) {
   if (props.forceMount) {
     return (
       <DialogOverlayImpl
+        active={open}
         asChild={props.asChild}
         onDismiss={() => dialogContext.setOpen(false)}
+        rendered={open}
         transition={transition}
-        visible={open}
       >
         {props.children}
       </DialogOverlayImpl>
@@ -118,12 +120,13 @@ export function DialogOverlay(props: DialogOverlayProps) {
       present={open}
       render={(state) => (
         <DialogOverlayImpl
+          active={state.isPresent}
           asChild={props.asChild}
           interactive={state.isPresent}
           onDismiss={() => dialogContext.setOpen(false)}
           onExitComplete={state.onExitComplete}
+          rendered={true}
           transition={transition}
-          visible={true}
         >
           {props.children}
         </DialogOverlayImpl>

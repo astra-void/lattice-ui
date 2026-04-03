@@ -89,7 +89,8 @@ export function useMotionTween(ref: React.MutableRefObject<Instance | undefined>
     }
 
     initializedRef.current = true;
-    const wasActive = lastActiveRef.current === true;
+    const previousActive = lastActiveRef.current;
+    const activeChanged = previousActive !== options.active;
     lastActiveRef.current = options.active;
     lastTransitionRef.current = transition;
 
@@ -119,7 +120,7 @@ export function useMotionTween(ref: React.MutableRefObject<Instance | undefined>
       return;
     }
 
-    if (!wasActive && options.active && phaseKeyframe.from) {
+    if (phaseKeyframe.from && (isInitialRender ? options.active : activeChanged)) {
       applyMotionProperties(instance, phaseKeyframe.from);
     }
 

@@ -7,7 +7,7 @@
   useMotionTween,
 } from "@lattice-ui/core";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { usePopper } from "@lattice-ui/popper";
+import { buildPopperContentMotionTransition, usePopper } from "@lattice-ui/popper";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
 
@@ -37,23 +37,11 @@ function toGuiObject(instance: Instance | undefined) {
 }
 
 function buildTooltipContentTransition(): MotionTransition {
-  return {
-    enter: {
-      tweenInfo: CONTENT_TWEEN_INFO,
-      from: {
-        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
-      },
-      to: {
-        Position: UDim2.fromOffset(0, 0),
-      },
-    },
-    exit: {
-      tweenInfo: CONTENT_EXIT_TWEEN_INFO,
-      to: {
-        Position: UDim2.fromOffset(0, CONTENT_OFFSET),
-      },
-    },
-  };
+  return buildPopperContentMotionTransition("bottom", {
+    distance: CONTENT_OFFSET,
+    enterTweenInfo: CONTENT_TWEEN_INFO,
+    exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+  });
 }
 
 function TooltipContentImpl(props: TooltipContentImplProps) {
@@ -76,8 +64,15 @@ function TooltipContentImpl(props: TooltipContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildTooltipContentTransition(), props.transition);
-  }, [props.transition]);
+    return mergeMotionTransition(
+      buildPopperContentMotionTransition(popper.placement, {
+        distance: CONTENT_OFFSET,
+        enterTweenInfo: CONTENT_TWEEN_INFO,
+        exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+      }),
+      props.transition,
+    );
+  }, [popper.placement, props.transition]);
 
   useMotionTween(tooltipContext.contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.present,
@@ -85,7 +80,7 @@ function TooltipContentImpl(props: TooltipContentImplProps) {
     transition: motionTransition,
   });
 
-  const isActuallyVisible = popper.isPositioned;
+  const isActuallyVisible = props.visible && popper.isPositioned;
 
   if (props.asChild) {
     const child = props.children;
@@ -168,7 +163,7 @@ export function TooltipContent(props: TooltipContentProps) {
         placement={props.placement}
         transition={props.transition}
         present={open}
-        visible={true}
+        visible={open}
       >
         {props.children}
       </TooltipContentImpl>

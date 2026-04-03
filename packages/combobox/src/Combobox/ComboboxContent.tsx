@@ -7,7 +7,7 @@
   useMotionTween,
 } from "@lattice-ui/core";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { usePopper } from "@lattice-ui/popper";
+import { buildPopperContentMotionTransition, usePopper } from "@lattice-ui/popper";
 import { useComboboxContext } from "./context";
 import type { ComboboxContentProps } from "./types";
 
@@ -35,28 +35,12 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-function withVerticalOffset(position: UDim2, offset: number) {
-  return new UDim2(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + offset);
-}
-
-function buildComboboxContentTransition(position: UDim2): MotionTransition {
-  return {
-    enter: {
-      tweenInfo: CONTENT_TWEEN_INFO,
-      from: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
-      },
-      to: {
-        Position: position,
-      },
-    },
-    exit: {
-      tweenInfo: CONTENT_EXIT_TWEEN_INFO,
-      to: {
-        Position: withVerticalOffset(position, CONTENT_OFFSET),
-      },
-    },
-  };
+function buildComboboxContentTransition(): MotionTransition {
+  return buildPopperContentMotionTransition("bottom", {
+    distance: CONTENT_OFFSET,
+    enterTweenInfo: CONTENT_TWEEN_INFO,
+    exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+  });
 }
 
 function ComboboxContentImpl(props: ComboboxContentImplProps) {
@@ -79,14 +63,23 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
   );
 
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildComboboxContentTransition(popper.position), props.transition);
-  }, [popper.position, props.transition]);
+    return mergeMotionTransition(
+      buildPopperContentMotionTransition(popper.placement, {
+        distance: CONTENT_OFFSET,
+        enterTweenInfo: CONTENT_TWEEN_INFO,
+        exitTweenInfo: CONTENT_EXIT_TWEEN_INFO,
+      }),
+      props.transition,
+    );
+  }, [popper.placement, props.transition]);
 
   useMotionTween(comboboxContext.contentRef as React.MutableRefObject<Instance | undefined>, {
     active: props.visible,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
+
+  const isActuallyVisible = props.visible && popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -96,7 +89,12 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       }
 
       return (
-        <Slot AnchorPoint={popper.anchorPoint} Position={popper.position} Visible={props.visible} ref={setContentRef}>
+        <Slot
+          AnchorPoint={popper.anchorPoint}
+          Position={UDim2.fromOffset(0, 0)}
+          Visible={isActuallyVisible}
+          ref={setContentRef}
+        >
           {child}
         </Slot>
       );
@@ -107,9 +105,9 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Position={popper.position}
+      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
-      Visible={props.visible}
+      Visible={isActuallyVisible}
       ref={setContentRef}
     >
       {props.children}
@@ -125,7 +123,9 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      {contentNode}
+      <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+        {contentNode}
+      </frame>
     </DismissableLayer>
   );
 }
@@ -140,7 +140,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
   }, [comboboxContext]);
 
   const fallbackTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildComboboxContentTransition(UDim2.fromOffset(0, 0)), props.transition);
+    return mergeMotionTransition(buildComboboxContentTransition(), props.transition);
   }, [props.transition]);
   const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
 

@@ -403,7 +403,7 @@ function getBestScopeFallbackNode(scopeRecord: FocusScopeRecord) {
     }
   }
 
-  return findFirstRegisteredNodeInScope(scopeRecord) ?? findFirstFocusableDescendantInScope(scopeRecord);
+  return findFirstFocusableDescendantInScope(scopeRecord) ?? findFirstRegisteredNodeInScope(scopeRecord);
 }
 
 function enforceTrappedFocus(excludingScopeId?: number) {
@@ -452,7 +452,7 @@ function pruneImplicitFocusNodes() {
       continue;
     }
 
-    if (isLiveGuiObject(nodeRecord.getGuiObject()) || isFocusNodeReferenced(nodeRecord.id)) {
+    if (isFocusNodeReferenced(nodeRecord.id)) {
       continue;
     }
 
@@ -591,7 +591,6 @@ export function registerFocusNode(params: RegisterFocusNodeParams) {
       }
     }
   }
-
   enforceTrappedFocus();
   return nodeRecord.id;
 }

@@ -1,8 +1,34 @@
-import { buildColorTransition, React, Slot, useControllableState, useMotionTween } from "@lattice-ui/core";
+import { type MotionTransition, React, Slot, useControllableState, useMotionTween } from "@lattice-ui/core";
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";
 
-const bgTransition = buildColorTransition(Color3.fromRGB(86, 141, 255), Color3.fromRGB(66, 73, 91));
+const TRACK_ON_COLOR = Color3.fromRGB(86, 141, 255);
+const TRACK_OFF_COLOR = Color3.fromRGB(66, 73, 91);
+const TRACK_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const TRACK_EXIT_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+
+function buildSwitchRootTransition(): MotionTransition {
+  return {
+    enter: {
+      tweenInfo: TRACK_TWEEN_INFO,
+      from: {
+        BackgroundColor3: TRACK_OFF_COLOR,
+      },
+      to: {
+        BackgroundColor3: TRACK_ON_COLOR,
+      },
+    },
+    exit: {
+      tweenInfo: TRACK_EXIT_TWEEN_INFO,
+      from: {
+        BackgroundColor3: TRACK_ON_COLOR,
+      },
+      to: {
+        BackgroundColor3: TRACK_OFF_COLOR,
+      },
+    },
+  };
+}
 
 export function SwitchRoot(props: SwitchProps) {
   const [checked, setCheckedState] = useControllableState<boolean>({
@@ -13,10 +39,16 @@ export function SwitchRoot(props: SwitchProps) {
 
   const disabled = props.disabled === true;
   const rootRef = React.useRef<TextButton>();
+  const [motionReady, setMotionReady] = React.useState(false);
+  const motionTransition = React.useMemo(() => buildSwitchRootTransition(), []);
+
+  React.useEffect(() => {
+    setMotionReady(true);
+  }, []);
 
   useMotionTween(rootRef as React.MutableRefObject<Instance | undefined>, {
     active: checked,
-    transition: bgTransition,
+    transition: motionReady ? motionTransition : false,
   });
 
   const setChecked = React.useCallback(
@@ -67,7 +99,7 @@ export function SwitchRoot(props: SwitchProps) {
         <textbutton
           Active={!disabled}
           AutoButtonColor={false}
-          BackgroundColor3={checked ? Color3.fromRGB(86, 141, 255) : Color3.fromRGB(66, 73, 91)}
+          BackgroundColor3={checked ? TRACK_ON_COLOR : TRACK_OFF_COLOR}
           BorderSizePixel={0}
           Event={{ Activated: toggle }}
           Selectable={!disabled}

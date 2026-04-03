@@ -330,6 +330,111 @@ describe("focusManager", () => {
     harness.focusManager.releaseExternalFocusBridge();
   });
 
+  it("bridges external selection into an implicit focus node when needed", async () => {
+    const harness = await createFocusManagerHarness();
+    const rawButton = createGuiObject("raw-button", {
+      parent: harness.mountRoot,
+    });
+
+    harness.focusManager.retainExternalFocusBridge();
+    harness.setSelectedObject(rawButton);
+
+    expect(harness.focusManager.getFocusedNode()?.implicit).toBe(true);
+    expect(harness.focusManager.getFocusedGuiObject()).toBe(rawButton);
+
+    harness.focusManager.releaseExternalFocusBridge();
+  });
+
+  it("prunes unreferenced implicit nodes once external bridge focus moves elsewhere", async () => {
+    const harness = await createFocusManagerHarness();
+    const first = createGuiObject("first-implicit", {
+      parent: harness.mountRoot,
+    });
+    const second = createGuiObject("second-implicit", {
+      parent: harness.mountRoot,
+    });
+
+    harness.focusManager.retainExternalFocusBridge();
+
+    harness.setSelectedObject(first);
+    const firstFocusId = harness.focusManager.getFocusedNode()?.id;
+    expect(firstFocusId).toBeDefined();
+    expect(harness.focusManager.getFocusedNode()?.implicit).toBe(true);
+
+    harness.setSelectedObject(second);
+    const secondFocusId = harness.focusManager.getFocusedNode()?.id;
+    expect(secondFocusId).toBeDefined();
+    expect(secondFocusId).not.toBe(firstFocusId);
+
+    harness.setSelectedObject(first);
+    const nextFirstFocusId = harness.focusManager.getFocusedNode()?.id;
+    expect(nextFirstFocusId).toBeDefined();
+    expect(nextFirstFocusId).not.toBe(firstFocusId);
+
+    harness.focusManager.releaseExternalFocusBridge();
+  });
+
+  it("keeps explicit registered nodes stable while implicit nodes are pruned", async () => {
+    const harness = await createFocusManagerHarness();
+    const explicitButton = createGuiObject("explicit-button", {
+      parent: harness.mountRoot,
+    });
+    const otherButton = createGuiObject("other-button", {
+      parent: harness.mountRoot,
+    });
+
+    const explicitNodeId = harness.focusManager.registerFocusNode({
+      getGuiObject: () => explicitButton,
+    });
+
+    harness.focusManager.retainExternalFocusBridge();
+
+    harness.setSelectedObject(explicitButton);
+    expect(harness.focusManager.getFocusedNode()?.id).toBe(explicitNodeId);
+    expect(harness.focusManager.getFocusedNode()?.implicit).toBe(false);
+
+    harness.setSelectedObject(otherButton);
+    expect(harness.focusManager.getFocusedNode()?.implicit).toBe(true);
+
+    harness.setSelectedObject(explicitButton);
+    expect(harness.focusManager.getFocusedNode()?.id).toBe(explicitNodeId);
+    expect(harness.focusManager.getFocusedNode()?.implicit).toBe(false);
+
+    harness.focusManager.releaseExternalFocusBridge();
+  });
+
+  it("prefers actual tree order over registration order for trapped scope fallback", async () => {
+    const harness = await createFocusManagerHarness();
+    const scopeRoot = createGuiObject("scope-root", {
+      parent: harness.mountRoot,
+      selectable: false,
+    });
+    const first = createGuiObject("first", { parent: scopeRoot });
+    const second = createGuiObject("second", { parent: scopeRoot });
+
+    let active = false;
+    const scopeId = harness.focusManager.createFocusScopeId();
+    harness.focusManager.registerFocusScope(scopeId, {
+      getRoot: () => scopeRoot,
+      getActive: () => active,
+      getTrapped: () => true,
+    });
+
+    harness.focusManager.registerFocusNode({
+      scopeId,
+      getGuiObject: () => second,
+    });
+    const firstId = harness.focusManager.registerFocusNode({
+      scopeId,
+      getGuiObject: () => first,
+    });
+
+    active = true;
+    harness.focusManager.syncFocusScope(scopeId);
+
+    expect(harness.focusManager.getFocusedNode()?.id).toBe(firstId);
+    expect(harness.getSelectedObject()).toBe(first);
+  });
   it("absorbs external Roblox selection only while the bridge listener is retained", async () => {
     const harness = await createFocusManagerHarness();
     const button = createGuiObject("button", {

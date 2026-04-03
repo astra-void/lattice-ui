@@ -6,6 +6,10 @@ import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness"
 
 const GuiService = game.GetService("GuiService");
 
+function assertWithinTolerance(actual: number, expected: number, tolerance: number, message: string) {
+  assert(math.abs(actual - expected) <= tolerance, `${message} (expected ${expected}, got ${actual})`);
+}
+
 function renderPopoverTestTree(open: boolean, forceMount: boolean, markerText: string, playerGui: PlayerGui) {
   return (
     <PortalProvider container={playerGui}>
@@ -61,6 +65,77 @@ export = () => {
         const content = findTextLabelByText(harness.playerGui, "PopoverPortalContent");
         assert(content !== undefined, "Open PopoverContent should mount.");
         assert(content.IsDescendantOf(harness.playerGui), "PopoverContent should render inside PlayerGui via portal.");
+      });
+    });
+
+    it("animates open content from the resolved popper position without an origin jump", () => {
+      withReactHarness("PopoverOpenMotionPlacement", (harness) => {
+        const anchorRef = React.createRef<TextButton>();
+        const contentRef = React.createRef<Frame>();
+
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <frame BackgroundTransparency={1} Size={UDim2.fromScale(1, 1)}>
+              <Popover.Root open={true}>
+                <Popover.Anchor asChild>
+                  <textbutton
+                    Position={UDim2.fromOffset(160, 96)}
+                    Size={UDim2.fromOffset(80, 32)}
+                    Text="popover-anchor-motion"
+                    ref={anchorRef}
+                  />
+                </Popover.Anchor>
+                <Popover.Portal>
+                  <Popover.Content asChild placement="bottom">
+                    <frame BackgroundTransparency={1} Size={UDim2.fromOffset(120, 64)} ref={contentRef}>
+                      <textlabel Text="popover-content-motion" />
+                    </frame>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+            </frame>
+          </PortalProvider>,
+        );
+
+        waitForEffects(4);
+
+        const anchor = anchorRef.current;
+        const content = contentRef.current;
+        const wrapper = content?.Parent;
+        assert(anchor !== undefined, "Popover anchor should mount for motion coverage.");
+        assert(content !== undefined, "Popover content should mount for motion coverage.");
+        assert(
+          wrapper !== undefined && wrapper.IsA("GuiObject"),
+          "Popover content should render inside a positioned wrapper.",
+        );
+        assert(
+          wrapper.AbsolutePosition.X > 0 || wrapper.AbsolutePosition.Y > 0,
+          "Popover wrapper should not render at the origin while opening.",
+        );
+        assertWithinTolerance(
+          wrapper.AbsolutePosition.X,
+          anchor.AbsolutePosition.X + anchor.AbsoluteSize.X / 2,
+          2,
+          "Popover wrapper should stay aligned to the anchor center while opening.",
+        );
+        assertWithinTolerance(
+          wrapper.AbsolutePosition.Y,
+          anchor.AbsolutePosition.Y + anchor.AbsoluteSize.Y,
+          2,
+          "Popover wrapper should stay aligned below the anchor while opening.",
+        );
+        assert(
+          content.Position.Y.Offset > 0,
+          "Bottom-placed popover content should animate with a relative downward offset.",
+        );
+
+        task.wait(0.2);
+        waitForEffects(2);
+
+        assert(
+          contentRef.current?.Position.Y.Offset === 0,
+          "Popover content should settle back onto the resolved popper position.",
+        );
       });
     });
 

@@ -16,7 +16,7 @@ function useLatest<T>(value: T) {
 
 export function DismissableLayer(props: DismissableLayerProps) {
   const enabled = props.enabled ?? true;
-  const shouldBlockOutsidePointer = props.modal === true || props.disableOutsidePointerEvents === true;
+  const shouldBlockOutsidePointer = enabled && (props.modal === true || props.disableOutsidePointerEvents === true);
   const layerIgnoresGuiInset = DEFAULT_LAYER_IGNORE_GUI_INSET;
 
   const portalContext = usePortalContext();
