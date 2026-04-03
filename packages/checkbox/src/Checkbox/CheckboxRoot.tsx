@@ -1,4 +1,4 @@
-import { React, Slot, useControllableState } from "@lattice-ui/core";
+import { buildColorTransition, React, Slot, useControllableState, useMotionTween } from "@lattice-ui/core";
 import { CheckboxContextProvider } from "./context";
 import type { CheckboxProps, CheckedState } from "./types";
 
@@ -10,6 +10,8 @@ function getNextCheckedState(checked: CheckedState) {
   return !checked;
 }
 
+const transition = buildColorTransition(Color3.fromRGB(88, 142, 255), Color3.fromRGB(59, 66, 84));
+
 export function CheckboxRoot(props: CheckboxProps) {
   const [checked, setCheckedState] = useControllableState<CheckedState>({
     value: props.checked,
@@ -19,6 +21,12 @@ export function CheckboxRoot(props: CheckboxProps) {
 
   const disabled = props.disabled === true;
   const required = props.required === true;
+  const rootRef = React.useRef<TextButton>();
+
+  useMotionTween(rootRef as React.MutableRefObject<Instance | undefined>, {
+    active: checked !== false,
+    transition,
+  });
 
   const setChecked = React.useCallback(
     (nextChecked: CheckedState) => {
@@ -60,7 +68,7 @@ export function CheckboxRoot(props: CheckboxProps) {
           }
 
           return (
-            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled}>
+            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled} ref={rootRef}>
               {child}
             </Slot>
           );
@@ -77,6 +85,7 @@ export function CheckboxRoot(props: CheckboxProps) {
           Text={checked === "indeterminate" ? "Indeterminate" : checked ? "Checked" : "Unchecked"}
           TextColor3={disabled ? Color3.fromRGB(145, 152, 168) : Color3.fromRGB(240, 244, 252)}
           TextSize={15}
+          ref={rootRef}
         >
           {child}
         </textbutton>
