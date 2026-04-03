@@ -1,11 +1,20 @@
-import { React, Slot } from "@lattice-ui/core";
+import { buildColorTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
 import { useAccordionContext, useAccordionItemContext } from "./context";
 import type { AccordionTriggerProps } from "./types";
+
+const transition = buildColorTransition(Color3.fromRGB(59, 66, 84), Color3.fromRGB(41, 48, 63));
 
 export function AccordionTrigger(props: AccordionTriggerProps) {
   const accordionContext = useAccordionContext();
   const itemContext = useAccordionItemContext();
   const disabled = itemContext.disabled;
+
+  const triggerRef = React.useRef<TextButton>();
+
+  useMotionTween(triggerRef as React.MutableRefObject<Instance | undefined>, {
+    active: itemContext.open,
+    transition,
+  });
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {
@@ -44,7 +53,7 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={false}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={triggerRef}>
         {child}
       </Slot>
     );
@@ -54,7 +63,7 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
     <textbutton
       Active={!disabled}
       AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(41, 48, 63)}
+      BackgroundColor3={itemContext.open ? Color3.fromRGB(59, 66, 84) : Color3.fromRGB(41, 48, 63)}
       BorderSizePixel={0}
       Event={eventHandlers}
       Selectable={false}
@@ -63,6 +72,7 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
       TextColor3={disabled ? Color3.fromRGB(143, 150, 165) : Color3.fromRGB(236, 241, 249)}
       TextSize={14}
       TextXAlignment={Enum.TextXAlignment.Left}
+      ref={triggerRef}
     >
       <uipadding PaddingLeft={new UDim(0, 10)} />
       {props.children}
