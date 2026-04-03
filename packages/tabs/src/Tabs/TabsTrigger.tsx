@@ -1,4 +1,4 @@
-import { type MotionTransition, React, Slot, useFocusNode, useMotionTween } from "@lattice-ui/core";
+import { buildTweenTransition, React, Slot, useFocusNode, useMotionTween } from "@lattice-ui/core";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
@@ -14,23 +14,10 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-const TRIGGER_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-const TRIGGER_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
-
-const transition = {
-  enter: {
-    tweenInfo: TRIGGER_TWEEN_INFO,
-    to: {
-      BackgroundColor3: Color3.fromRGB(86, 137, 245),
-    },
-  },
-  exit: {
-    tweenInfo: TRIGGER_EXIT_TWEEN_INFO,
-    to: {
-      BackgroundColor3: Color3.fromRGB(47, 53, 68),
-    },
-  },
-} satisfies MotionTransition;
+const transition = buildTweenTransition(
+  { BackgroundColor3: Color3.fromRGB(86, 137, 245), TextColor3: Color3.fromRGB(235, 240, 248) },
+  { BackgroundColor3: Color3.fromRGB(47, 53, 68), TextColor3: Color3.fromRGB(136, 144, 159) },
+);
 
 export function TabsTrigger(props: TabsTriggerProps) {
   const tabsContext = useTabsContext();
@@ -157,13 +144,19 @@ export function TabsTrigger(props: TabsTriggerProps) {
     <textbutton
       Active={!disabled}
       AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(47, 53, 68)}
+      BackgroundColor3={selected ? Color3.fromRGB(86, 137, 245) : Color3.fromRGB(47, 53, 68)}
       BorderSizePixel={0}
       Event={eventHandlers}
       Selectable={!disabled}
       Size={UDim2.fromOffset(132, 34)}
       Text={props.value}
-      TextColor3={disabled ? Color3.fromRGB(136, 144, 159) : Color3.fromRGB(235, 240, 248)}
+      TextColor3={
+        selected
+          ? Color3.fromRGB(235, 240, 248)
+          : disabled
+            ? Color3.fromRGB(136, 144, 159)
+            : Color3.fromRGB(235, 240, 248)
+      }
       TextSize={15}
       ref={setTriggerRef}
     >
