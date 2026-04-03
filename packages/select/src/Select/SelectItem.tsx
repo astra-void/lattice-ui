@@ -1,27 +1,14 @@
-import { type MotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
+import { buildTweenTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
 import { useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
 
 let nextItemId = 0;
 let nextItemOrder = 0;
 
-const ITEM_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-const ITEM_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
-
-const transition = {
-  enter: {
-    tweenInfo: ITEM_TWEEN_INFO,
-    to: {
-      BackgroundColor3: Color3.fromRGB(66, 73, 91), // slightly lighter than base 47, 53, 68
-    },
-  },
-  exit: {
-    tweenInfo: ITEM_EXIT_TWEEN_INFO,
-    to: {
-      BackgroundColor3: Color3.fromRGB(47, 53, 68),
-    },
-  },
-} satisfies MotionTransition;
+const transition = buildTweenTransition(
+  { BackgroundColor3: Color3.fromRGB(66, 73, 91) },
+  { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
+);
 
 export function SelectItem(props: SelectItemProps) {
   const selectContext = useSelectContext();
@@ -137,7 +124,7 @@ export function SelectItem(props: SelectItemProps) {
     <textbutton
       Active={!disabled}
       AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(47, 53, 68)}
+      BackgroundColor3={active && !disabled ? Color3.fromRGB(66, 73, 91) : Color3.fromRGB(47, 53, 68)}
       BorderSizePixel={0}
       Event={eventHandlers}
       Selectable={false}
