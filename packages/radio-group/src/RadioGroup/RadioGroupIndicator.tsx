@@ -1,5 +1,6 @@
 ﻿import {
   getMotionTransitionExitFallbackMs,
+  MOTION_PRESETS,
   type MotionTransition,
   mergeMotionTransition,
   React,
@@ -10,13 +11,10 @@ import { Presence } from "@lattice-ui/layer";
 import { useRadioGroupItemContext } from "./context";
 import type { RadioGroupIndicatorProps } from "./types";
 
-const INDICATOR_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-const INDICATOR_EXIT_TWEEN_INFO = new TweenInfo(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
-
 function buildRadioGroupIndicatorTransition(size: UDim2): MotionTransition {
   return {
     enter: {
-      tweenInfo: INDICATOR_TWEEN_INFO,
+      tweenInfo: MOTION_PRESETS.indicatorEnter,
       from: {
         Size: UDim2.fromOffset(0, 0),
         BackgroundTransparency: 1,
@@ -27,7 +25,7 @@ function buildRadioGroupIndicatorTransition(size: UDim2): MotionTransition {
       },
     },
     exit: {
-      tweenInfo: INDICATOR_EXIT_TWEEN_INFO,
+      tweenInfo: MOTION_PRESETS.indicatorExit,
       to: {
         Size: UDim2.fromOffset(0, 0),
         BackgroundTransparency: 1,

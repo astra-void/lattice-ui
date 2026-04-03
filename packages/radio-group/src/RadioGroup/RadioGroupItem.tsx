@@ -1,9 +1,11 @@
-import { React, Slot, useFocusNode } from "@lattice-ui/core";
+import { buildColorTransition, React, Slot, useFocusNode, useMotionTween } from "@lattice-ui/core";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
 
 let nextItemId = 0;
 let nextItemOrder = 0;
+
+const transition = buildColorTransition(Color3.fromRGB(88, 142, 255), Color3.fromRGB(47, 53, 68));
 
 export function RadioGroupItem(props: RadioGroupItemProps) {
   const radioGroupContext = useRadioGroupContext();
@@ -51,6 +53,11 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
 
     itemRef.current = instance;
   }, []);
+
+  useMotionTween(itemRef as React.MutableRefObject<Instance | undefined>, {
+    active: checked,
+    transition,
+  });
 
   const handleSelect = React.useCallback(() => {
     if (disabled) {
