@@ -1,24 +1,8 @@
-import { type MotionTransition, React, Slot, useControllableState, useMotionTween } from "@lattice-ui/core";
+import { buildColorTransition, React, Slot, useControllableState, useMotionTween } from "@lattice-ui/core";
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";
 
-const TRACK_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-const TRACK_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
-
-const transition = {
-  enter: {
-    tweenInfo: TRACK_TWEEN_INFO,
-    to: {
-      BackgroundColor3: Color3.fromRGB(86, 141, 255),
-    },
-  },
-  exit: {
-    tweenInfo: TRACK_EXIT_TWEEN_INFO,
-    to: {
-      BackgroundColor3: Color3.fromRGB(66, 73, 91),
-    },
-  },
-} satisfies MotionTransition;
+const bgTransition = buildColorTransition(Color3.fromRGB(86, 141, 255), Color3.fromRGB(66, 73, 91));
 
 export function SwitchRoot(props: SwitchProps) {
   const [checked, setCheckedState] = useControllableState<boolean>({
@@ -32,7 +16,7 @@ export function SwitchRoot(props: SwitchProps) {
 
   useMotionTween(rootRef as React.MutableRefObject<Instance | undefined>, {
     active: checked,
-    transition,
+    transition: bgTransition,
   });
 
   const setChecked = React.useCallback(
@@ -74,7 +58,7 @@ export function SwitchRoot(props: SwitchProps) {
           }
 
           return (
-            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled}>
+            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled} ref={rootRef}>
               {child}
             </Slot>
           );
@@ -83,7 +67,7 @@ export function SwitchRoot(props: SwitchProps) {
         <textbutton
           Active={!disabled}
           AutoButtonColor={false}
-          BackgroundColor3={Color3.fromRGB(66, 73, 91)}
+          BackgroundColor3={checked ? Color3.fromRGB(86, 141, 255) : Color3.fromRGB(66, 73, 91)}
           BorderSizePixel={0}
           Event={{ Activated: toggle }}
           Selectable={!disabled}
