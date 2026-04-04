@@ -78,6 +78,7 @@ type SceneOption = {
   label: string;
   description: string;
   category: SceneCategory;
+  hasMotion?: boolean;
 };
 
 const sceneOptions = [
@@ -104,6 +105,7 @@ const sceneOptions = [
     label: "Presence",
     description: "Mount and unmount transitions with presence states.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "inset",
@@ -116,66 +118,77 @@ const sceneOptions = [
     label: "Dialog Basic",
     description: "Core dialog primitives and focus handoff.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "dialog-nested",
     label: "Dialog Nested",
     description: "Nested dialog sequencing and layering.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "dialog-modal",
     label: "Dialog Modal Block",
     description: "Modal dialog that locks external interaction.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "popover-basic",
     label: "Popover Basic",
     description: "Anchored popover positioning with portals.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "popover-flip",
     label: "Popover Flip/Clamp",
     description: "Viewport-aware popover fallback placement.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "popover-nested",
     label: "Popover Nested",
     description: "Layer stack behavior with nested popovers.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "tooltip-delay",
     label: "Tooltip Delay",
     description: "Open/close delay behavior for tooltips.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "tooltip-follow",
     label: "Tooltip Follow",
     description: "Tooltip movement following pointer position.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "toast-basic",
     label: "Toast Basic",
     description: "Declarative toast composition examples.",
     category: "Layering",
+    hasMotion: true,
   },
   {
     key: "checkbox-basic",
     label: "Checkbox Basic",
     description: "Checkbox states and controlled usage.",
     category: "Forms",
+    hasMotion: true,
   },
   {
     key: "switch-basic",
     label: "Switch Basic",
     description: "Switch interactions and state labels.",
     category: "Forms",
+    hasMotion: true,
   },
   {
     key: "text-field-basic",
@@ -194,24 +207,28 @@ const sceneOptions = [
     label: "Select Basic",
     description: "Trigger/content select composition.",
     category: "Forms",
+    hasMotion: true,
   },
   {
     key: "combobox-basic",
     label: "Combobox Basic",
     description: "Text input with option filtering behavior.",
     category: "Forms",
+    hasMotion: true,
   },
   {
     key: "slider-basic",
     label: "Slider Basic",
     description: "Single and range slider interaction.",
     category: "Forms",
+    hasMotion: true,
   },
   {
     key: "progress-basic",
     label: "Progress Basic",
     description: "Progress indicators with semantic states.",
     category: "Forms",
+    hasMotion: true,
   },
   {
     key: "avatar-basic",
@@ -236,12 +253,14 @@ const sceneOptions = [
     label: "Tabs Basic",
     description: "Tabs activation, indicators and content.",
     category: "Selection",
+    hasMotion: true,
   },
   {
     key: "accordion-basic",
     label: "Accordion Basic",
     description: "Expandable sections with animated disclosure.",
     category: "Selection",
+    hasMotion: true,
   },
   {
     key: "density-scope",
@@ -565,7 +584,7 @@ function AppContent(props: PlaygroundWorkspaceProps) {
               <frame BackgroundTransparency={1} Size={new UDim2(1, 0, 0, 62)}>
                 <Text
                   BackgroundTransparency={1}
-                  Size={new UDim2(1, -150, 0, 26)}
+                  Size={new UDim2(1, -260, 0, 26)}
                   Text={activeSceneMeta.label}
                   TextColor3={theme.colors.textPrimary}
                   TextSize={theme.typography.titleMd.textSize}
@@ -581,21 +600,45 @@ function AppContent(props: PlaygroundWorkspaceProps) {
                   TextTruncate={Enum.TextTruncate.AtEnd}
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
-                <frame
-                  BackgroundColor3={theme.colors.surfaceElevated}
-                  BorderSizePixel={0}
-                  Position={new UDim2(1, -144, 0, 0)}
-                  Size={UDim2.fromOffset(144, 26)}
-                >
-                  <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-                  <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.4} />
-                  <Text
-                    BackgroundTransparency={1}
-                    Size={UDim2.fromScale(1, 1)}
-                    Text={activeSceneMeta.category}
-                    TextColor3={theme.colors.textSecondary}
-                    TextSize={theme.typography.labelSm.textSize}
+                <frame BackgroundTransparency={1} Position={new UDim2(1, -300, 0, 0)} Size={new UDim2(0, 300, 0, 26)}>
+                  <uilistlayout
+                    FillDirection={Enum.FillDirection.Horizontal}
+                    HorizontalAlignment={Enum.HorizontalAlignment.Right}
+                    Padding={new UDim(0, theme.space[8])}
+                    VerticalAlignment={Enum.VerticalAlignment.Center}
                   />
+                  {activeSceneMeta.hasMotion === true ? (
+                    <frame
+                      BackgroundColor3={theme.colors.surfaceElevated}
+                      BorderSizePixel={0}
+                      Size={UDim2.fromOffset(80, 26)}
+                    >
+                      <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                      <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.4} />
+                      <Text
+                        BackgroundTransparency={1}
+                        Size={UDim2.fromScale(1, 1)}
+                        Text="Motion"
+                        TextColor3={theme.colors.textSecondary}
+                        TextSize={theme.typography.labelSm.textSize}
+                      />
+                    </frame>
+                  ) : undefined}
+                  <frame
+                    BackgroundColor3={theme.colors.surfaceElevated}
+                    BorderSizePixel={0}
+                    Size={UDim2.fromOffset(144, 26)}
+                  >
+                    <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                    <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.4} />
+                    <Text
+                      BackgroundTransparency={1}
+                      Size={UDim2.fromScale(1, 1)}
+                      Text={activeSceneMeta.category}
+                      TextColor3={theme.colors.textSecondary}
+                      TextSize={theme.typography.labelSm.textSize}
+                    />
+                  </frame>
                 </frame>
               </frame>
 
