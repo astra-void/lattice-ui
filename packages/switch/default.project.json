@@ -1,0 +1,9 @@
+{
+  "name": "switch",
+  "tree": {
+    "$path": "out",
+    "out": {
+      "$path": "out"
+    }
+  }
+}
