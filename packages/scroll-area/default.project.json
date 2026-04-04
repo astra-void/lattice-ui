@@ -1,0 +1,9 @@
+{
+  "name": "scroll-area",
+  "tree": {
+    "$path": "out",
+    "out": {
+      "$path": "out"
+    }
+  }
+}
