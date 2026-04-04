@@ -1,12 +1,6 @@
-﻿import {
-  getMotionTransitionExitFallbackMs,
-  MOTION_PRESETS,
-  type MotionTransition,
-  mergeMotionTransition,
-  React,
-  Slot,
-  useMotionTween,
-} from "@lattice-ui/core";
+﻿import { React, Slot } from "@lattice-ui/core";
+import { MOTION_PRESETS, type MotionTransition } from "@lattice-ui/motion";
+import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
 import { Presence } from "@lattice-ui/layer";
 import { useCheckboxContext } from "./context";
 import type { CheckboxIndicatorProps } from "./types";

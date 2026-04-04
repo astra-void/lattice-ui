@@ -1,4 +1,6 @@
-import { buildColorTransition, React, Slot, useControllableState, useMotionTween } from "@lattice-ui/core";
+import { React, Slot, useControllableState } from "@lattice-ui/core";
+import { buildColorTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
 import { CheckboxContextProvider } from "./context";
 import type { CheckboxProps, CheckedState } from "./types";
 
