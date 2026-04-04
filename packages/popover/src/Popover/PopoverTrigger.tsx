@@ -1,4 +1,6 @@
-import { focusGuiObject, React, Slot, useFocusNode } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { useFocusNode } from "@lattice-ui/focus";
+import { focusGuiObject } from "@lattice-ui/focus";
 import { usePopoverContext } from "./context";
 import type { PopoverTriggerProps } from "./types";
 
