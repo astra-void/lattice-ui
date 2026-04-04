@@ -1,4 +1,6 @@
-import { type MotionTransition, React, useMotionTween } from "@lattice-ui/core";
+import { React } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
 import { useProgressContext } from "./context";
 import type { ProgressIndicatorProps } from "./types";
 
