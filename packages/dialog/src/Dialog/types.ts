@@ -1,4 +1,4 @@
-﻿import type { MotionTransition } from "@lattice-ui/core";
+﻿import type { MotionTransition } from "@lattice-ui/motion";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import type React from "@rbxts/react";
 

@@ -1,12 +1,6 @@
-import {
-  getMotionTransitionExitFallbackMs,
-  type MotionProperties,
-  type MotionTransition,
-  mergeMotionTransition,
-  React,
-  Slot,
-  useMotionTween,
-} from "@lattice-ui/core";
+import { React } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
+import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
 import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { DialogOverlay } from "./DialogOverlay";
@@ -81,59 +75,12 @@ type FlattenedDialogChild = {
   node: React.ReactNode;
 };
 
-function addUDim2(a: UDim2, b: UDim2) {
-  return new UDim2(a.X.Scale + b.X.Scale, a.X.Offset + b.X.Offset, a.Y.Scale + b.Y.Scale, a.Y.Offset + b.Y.Offset);
-}
-
-function offsetMotionProperties(position: UDim2, properties?: MotionProperties) {
-  if (!properties) {
-    return undefined;
-  }
-
-  const nextProperties = { ...properties };
-  const motionPosition = properties.Position;
-  if (motionPosition !== undefined && typeIs(motionPosition, "userdata")) {
-    nextProperties.Position = addUDim2(position, motionPosition as UDim2);
-  }
-
-  return nextProperties;
-}
-
-function buildVisualMotionTransition(position: UDim2, transition?: MotionTransition | false) {
-  if (transition === false || transition === undefined) {
-    return transition;
-  }
-
-  return {
-    ...transition,
-    enter: transition.enter
-      ? {
-          ...transition.enter,
-          from: offsetMotionProperties(position, transition.enter.from),
-          to: offsetMotionProperties(position, transition.enter.to),
-        }
-      : undefined,
-    exit: transition.exit
-      ? {
-          ...transition.exit,
-          from: offsetMotionProperties(position, transition.exit.from),
-          to: offsetMotionProperties(position, transition.exit.to),
-        }
-      : undefined,
-  } satisfies MotionTransition;
-}
-
 function isOverlayElement(child: React.ReactNode): child is React.ReactElement {
   return React.isValidElement(child) && child.type === DialogOverlay;
 }
 
 function isAnimatableDialogChild(child: React.ReactNode): child is React.ReactElement {
   return React.isValidElement(child) && child.type !== DialogOverlay;
-}
-
-function getChildBasePosition(child: React.ReactElement) {
-  const childProps = child.props as { Position?: UDim2 };
-  return childProps.Position ?? UDim2.fromScale(0, 0);
 }
 
 function flattenDialogChildren(children: React.ReactNode, path = "dialog"): Array<FlattenedDialogChild> {
@@ -165,19 +112,23 @@ function flattenDialogChildren(children: React.ReactNode, path = "dialog"): Arra
 
 function DialogContentMotionChild(props: DialogContentMotionChildProps) {
   const motionRef = React.useRef<Instance>();
-  const basePosition = getChildBasePosition(props.child);
-  const transition = React.useMemo(
-    () => buildVisualMotionTransition(basePosition, props.transition),
-    [basePosition, props.transition],
-  );
 
   useMotionTween(motionRef, {
     active: props.motionActive,
     onExitComplete: props.onExitComplete,
-    transition,
+    transition: props.transition,
   });
 
-  return <Slot ref={motionRef}>{props.child}</Slot>;
+  return (
+    <canvasgroup
+      ref={motionRef as React.MutableRefObject<CanvasGroup>}
+      BackgroundTransparency={1}
+      BorderSizePixel={0}
+      Size={UDim2.fromScale(1, 1)}
+    >
+      {props.child}
+    </canvasgroup>
+  );
 }
 
 function DialogContentImpl(props: DialogContentImplProps) {
