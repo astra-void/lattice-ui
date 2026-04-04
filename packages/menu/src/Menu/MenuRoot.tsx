@@ -1,12 +1,11 @@
+import { React, useControllableState } from "@lattice-ui/core";
 import {
   focusGuiObject,
   focusOrderedSelectionEntry,
   getCurrentOrderedSelectionEntry,
   getFirstOrderedSelectionEntry,
   getRelativeOrderedSelectionEntry,
-  React,
-  useControllableState,
-} from "@lattice-ui/core";
+} from "@lattice-ui/focus";
 import { MenuContextProvider } from "./context";
 import type { MenuItemRegistration, MenuProps } from "./types";
 

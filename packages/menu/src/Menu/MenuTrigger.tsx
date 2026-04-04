@@ -1,4 +1,6 @@
-import { focusGuiObject, React, Slot, useFocusNode } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { useFocusNode } from "@lattice-ui/focus";
+import { focusGuiObject } from "@lattice-ui/focus";
 import { useMenuContext } from "./context";
 import type { MenuTriggerProps } from "./types";
 
