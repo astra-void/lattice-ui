@@ -1,0 +1,9 @@
+{
+  "name": "popper",
+  "tree": {
+    "$path": "out",
+    "out": {
+      "$path": "out"
+    }
+  }
+}
