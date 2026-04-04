@@ -1,0 +1,9 @@
+{
+  "name": "core",
+  "tree": {
+    "$path": "out",
+    "out": {
+      "$path": "out"
+    }
+  }
+}
