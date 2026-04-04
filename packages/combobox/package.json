@@ -18,6 +18,7 @@
   "dependencies": {
     "@lattice-ui/core": "workspace:*",
     "@lattice-ui/layer": "workspace:*",
+    "@lattice-ui/motion": "workspace:*",
     "@lattice-ui/popper": "workspace:*"
   },
   "devDependencies": {
