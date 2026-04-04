@@ -1,9 +1,4 @@
 ﻿export * from "./context";
-export * from "./focus/context";
-export * from "./focus/focusManager";
-export * from "./focus/useFocusNode";
-export * from "./motion";
-export * from "./orderedSelection";
 export { default as React } from "./react";
 export { default as ReactRoblox } from "./reactRoblox";
 export * from "./refs";

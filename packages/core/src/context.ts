@@ -1,6 +1,6 @@
 import React from "@rbxts/react";
 
-export function createStrictContext<T>(name: string) {
+export function createStrictContext<T>(name: string): readonly [React.Provider<T | undefined>, () => T] {
   const Ctx = React.createContext<T | undefined>(undefined);
 
   function useCtx(): T {

@@ -10,7 +10,11 @@ function isUpdater<T>(value: T | ((prev: T) => T)): value is (prev: T) => T {
   return typeIs(value, "function");
 }
 
-export function useControllableState<T>({ value, defaultValue, onChange }: Props<T>) {
+export function useControllableState<T>({
+  value,
+  defaultValue,
+  onChange,
+}: Props<T>): readonly [T, (nextValue: T | ((prev: T) => T)) => void] {
   const [inner, setInner] = React.useState(defaultValue);
   const controlled = value !== undefined;
   const state = value !== undefined ? value : inner;
