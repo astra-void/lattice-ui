@@ -65,7 +65,7 @@ export function SwitchBasicScene() {
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
-                  Position={controlled ? UDim2.fromOffset(24, 2) : UDim2.fromOffset(2, 2)}
+                  Position={UDim2.fromOffset(2, 2)}
                   Size={UDim2.fromOffset(20, 20)}
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
@@ -102,7 +102,7 @@ export function SwitchBasicScene() {
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
-                  Position={uncontrolled ? UDim2.fromOffset(24, 2) : UDim2.fromOffset(2, 2)}
+                  Position={UDim2.fromOffset(2, 2)}
                   Size={UDim2.fromOffset(20, 20)}
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
@@ -139,7 +139,7 @@ export function SwitchBasicScene() {
                 <frame
                   BackgroundColor3={theme.colors.textSecondary}
                   BorderSizePixel={0}
-                  Position={UDim2.fromOffset(24, 2)}
+                  Position={UDim2.fromOffset(2, 2)}
                   Size={UDim2.fromOffset(20, 20)}
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />

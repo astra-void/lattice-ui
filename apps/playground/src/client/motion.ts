@@ -1,4 +1,4 @@
-import type { MotionTransition } from "@lattice-ui/core";
+import type { MotionTransition } from "@lattice-ui/motion";
 
 const OVERLAY_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
 const SURFACE_TWEEN_INFO = new TweenInfo(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
@@ -134,18 +134,9 @@ export const playgroundIndicatorTransition = {
 export const playgroundSwitchThumbTransition = {
   enter: {
     tweenInfo: THUMB_TWEEN_INFO,
-    from: {
-      Position: UDim2.fromOffset(2, 2),
-    },
-    to: {
-      Position: new UDim2(1, -18, 0, 2),
-    },
   },
   exit: {
     tweenInfo: THUMB_EXIT_TWEEN_INFO,
-    to: {
-      Position: UDim2.fromOffset(2, 2),
-    },
   },
 } satisfies MotionTransition;
 
