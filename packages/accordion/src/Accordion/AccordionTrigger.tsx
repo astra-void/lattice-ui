@@ -1,4 +1,6 @@
-import { buildColorTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { buildColorTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
 import { useAccordionContext, useAccordionItemContext } from "./context";
 import type { AccordionTriggerProps } from "./types";
 
