@@ -1,4 +1,6 @@
-import { type MotionTransition, React, Slot, useControllableState, useMotionTween } from "@lattice-ui/core";
+import { React, Slot, useControllableState } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";
 

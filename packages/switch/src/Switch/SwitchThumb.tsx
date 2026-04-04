@@ -1,4 +1,5 @@
-import { type MotionTransition, mergeMotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { type MotionTransition, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";
 
