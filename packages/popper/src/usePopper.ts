@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import React from "@rbxts/react";
 import { computePopper } from "./compute";
 import { subscribeAnchor, subscribeContent, subscribeViewport } from "./observers";
 import type { ComputePopperResult, UsePopperOptions, UsePopperResult } from "./types";
