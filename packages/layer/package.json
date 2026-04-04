@@ -16,7 +16,8 @@
     "watch": "rbxtsc -p tsconfig.json -w"
   },
   "dependencies": {
-    "@lattice-ui/core": "workspace:*"
+    "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/focus": "workspace:*"
   },
   "devDependencies": {
     "@rbxts/react": "17.3.7-ts.1",

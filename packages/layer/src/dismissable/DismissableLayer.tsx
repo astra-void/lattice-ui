@@ -1,4 +1,5 @@
-import { FocusLayerProvider, React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/core";
+import { FocusLayerProvider } from "@lattice-ui/focus";
 import { DEFAULT_LAYER_IGNORE_GUI_INSET } from "../internals/constants";
 import { Portal } from "../portal/Portal";
 import { usePortalContext } from "../portal/PortalProvider";
