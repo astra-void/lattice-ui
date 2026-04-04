@@ -1,4 +1,5 @@
-import { type MotionTransition, React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
