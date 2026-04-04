@@ -1,10 +1,9 @@
+import { React, useControllableState } from "@lattice-ui/core";
 import {
   findOrderedSelectionEntry,
   focusOrderedSelectionEntry,
   getRelativeOrderedSelectionEntry,
-  React,
-  useControllableState,
-} from "@lattice-ui/core";
+} from "@lattice-ui/focus";
 import { RadioGroupContextProvider } from "./context";
 import type { RadioGroupItemRegistration, RadioGroupProps } from "./types";
 

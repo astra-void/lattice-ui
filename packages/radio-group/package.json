@@ -17,7 +17,9 @@
   },
   "dependencies": {
     "@lattice-ui/core": "workspace:*",
-    "@lattice-ui/layer": "workspace:*"
+    "@lattice-ui/focus": "workspace:*",
+    "@lattice-ui/layer": "workspace:*",
+    "@lattice-ui/motion": "workspace:*"
   },
   "devDependencies": {
     "@rbxts/react": "17.3.7-ts.1",

@@ -1,4 +1,7 @@
-import { buildColorTransition, React, Slot, useFocusNode, useMotionTween } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { buildColorTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
+import { useFocusNode } from "@lattice-ui/focus";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
 
