@@ -1,0 +1,9 @@
+{
+  "name": "focus",
+  "tree": {
+    "$path": "out",
+    "out": {
+      "$path": "out"
+    }
+  }
+}
