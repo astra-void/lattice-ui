@@ -6,6 +6,7 @@
   "types": "out/index.d.ts",
   "source": "src/index.ts",
   "files": [
+    "default.project.json",
     "out",
     "src",
     "README.md"
