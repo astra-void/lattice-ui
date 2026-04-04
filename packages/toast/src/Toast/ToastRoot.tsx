@@ -1,4 +1,6 @@
-﻿import { type MotionTransition, mergeMotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
+﻿import { React, Slot } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
+import { mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
 import type { ToastRootProps } from "./types";
 
 const TOAST_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
