@@ -26,9 +26,9 @@ describe("release tag validation", () => {
   });
 
   it("fails when a prerelease tag does not match the package version", () => {
-    expect(() =>
-      validatePackageVersionMatchesRelease("v0.1.0-alpha.1", "0.1.0-beta.1", "@lattice-ui/core"),
-    ).toThrow("@lattice-ui/core version 0.1.0-beta.1 does not match release tag v0.1.0-alpha.1.");
+    expect(() => validatePackageVersionMatchesRelease("v0.1.0-alpha.1", "0.1.0-beta.1", "@lattice-ui/core")).toThrow(
+      "@lattice-ui/core version 0.1.0-beta.1 does not match release tag v0.1.0-alpha.1.",
+    );
   });
 
   it("derives dist-tags from the first prerelease identifier", () => {

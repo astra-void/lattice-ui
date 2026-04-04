@@ -8,11 +8,7 @@ vi.mock("@lattice-ui/core", () => ({
   React: require("react"),
 }));
 import { MotionPolicyProvider } from "@lattice-ui/motion";
-import {
-  applyMotionProperties,
-  getMotionTransitionExitFallbackMs,
-  mergeMotionTransition,
-} from "@lattice-ui/motion";
+import { applyMotionProperties, getMotionTransitionExitFallbackMs, mergeMotionTransition } from "@lattice-ui/motion";
 import type { MotionTransition } from "@lattice-ui/motion";
 import { useMotionTween } from "@lattice-ui/motion";
 
