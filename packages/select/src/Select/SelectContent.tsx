@@ -1,11 +1,6 @@
-﻿import {
-  getMotionTransitionExitFallbackMs,
-  type MotionTransition,
-  mergeMotionTransition,
-  React,
-  Slot,
-  useMotionTween,
-} from "@lattice-ui/core";
+﻿import { React, Slot } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
+import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { buildPopperContentMotionTransition, usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
