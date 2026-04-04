@@ -1,16 +1,13 @@
+import { React, Slot } from "@lattice-ui/core";
+import { FocusScopeProvider, useFocusLayerOrder, useFocusScopeId } from "../context";
 import {
   createFocusScopeId,
-  FocusScopeProvider,
-  React,
   registerFocusScope,
   releaseExternalFocusBridge,
   retainExternalFocusBridge,
-  Slot,
   syncFocusScope,
   unregisterFocusScope,
-  useFocusLayerOrder,
-  useFocusScopeId,
-} from "@lattice-ui/core";
+} from "../focusManager";
 import type { FocusScopeProps } from "./types";
 
 function toGuiObject(instance: Instance | undefined) {
