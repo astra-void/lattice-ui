@@ -1,4 +1,6 @@
-import { type MotionTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderRangeProps } from "./types";
