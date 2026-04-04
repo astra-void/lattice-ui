@@ -175,6 +175,9 @@ importers:
       '@lattice-ui/menu':
         specifier: workspace:*
         version: link:../../packages/menu
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../../packages/motion
       '@lattice-ui/popover':
         specifier: workspace:*
         version: link:../../packages/popover
@@ -260,6 +263,9 @@ importers:
       '@lattice-ui/menu':
         specifier: workspace:*
         version: link:../../packages/menu
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../../packages/motion
       '@lattice-ui/popover':
         specifier: workspace:*
         version: link:../../packages/popover
@@ -327,6 +333,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -356,6 +365,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -374,6 +386,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:../popper
@@ -405,6 +420,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -431,6 +449,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -450,9 +471,25 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:../popper
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/motion:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -472,6 +509,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:../popper
@@ -488,6 +528,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -501,6 +544,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -514,9 +560,15 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -549,6 +601,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:../popper
@@ -565,6 +620,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -591,6 +649,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -619,9 +680,15 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -635,6 +702,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -648,6 +718,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -664,6 +737,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -677,6 +753,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -693,6 +772,9 @@ importers:
       '@lattice-ui/layer':
         specifier: workspace:*
         version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
       '@lattice-ui/popper':
         specifier: workspace:*
         version: link:../popper

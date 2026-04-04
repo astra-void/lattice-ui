@@ -12,6 +12,7 @@
       "@lattice-ui/dialog": ["packages/dialog/src/index.ts"],
       "@lattice-ui/layer": ["packages/layer/src/index.ts"],
       "@lattice-ui/focus": ["packages/focus/src/index.ts"],
+      "@lattice-ui/motion": ["packages/motion/src/index.ts"],
       "@lattice-ui/menu": ["packages/menu/src/index.ts"],
       "@lattice-ui/popover": ["packages/popover/src/index.ts"],
       "@lattice-ui/popper": ["packages/popper/src/index.ts"],

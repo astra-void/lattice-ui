@@ -5,7 +5,11 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@lattice-ui/loom-preview", "@lattice-ui/playground", "@lattice-ui/test-harness"],
+  "ignore": [
+    "@lattice-ui/loom-preview",
+    "@lattice-ui/playground",
+    "@lattice-ui/test-harness"
+  ],
   "fixed": [
     [
       "@lattice-ui/accordion",
@@ -17,6 +21,7 @@
       "@lattice-ui/focus",
       "@lattice-ui/layer",
       "@lattice-ui/menu",
+      "@lattice-ui/motion",
       "@lattice-ui/popover",
       "@lattice-ui/popper",
       "@lattice-ui/progress",
