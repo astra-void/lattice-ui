@@ -1,4 +1,6 @@
-import { buildTweenTransition, React, Slot, useMotionTween } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { buildTweenTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
 import { useToggleGroupContext } from "./context";
 import type { ToggleGroupItemProps } from "./types";
 
