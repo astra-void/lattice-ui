@@ -2,7 +2,7 @@ import type { CheckedState } from "@lattice-ui/checkbox";
 import { Checkbox } from "@lattice-ui/checkbox";
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { playgroundIndicatorTransition } from "../motion";
+
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function toCheckedLabel(value: CheckedState) {
@@ -62,7 +62,7 @@ export function CheckboxBasicScene() {
               Size={UDim2.fromOffset(24, 24)}
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
-              <Checkbox.Indicator asChild forceMount transition={playgroundIndicatorTransition}>
+              <Checkbox.Indicator asChild forceMount>
                 <Text
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(0, 0)}
@@ -99,7 +99,7 @@ export function CheckboxBasicScene() {
               Size={UDim2.fromOffset(24, 24)}
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
-              <Checkbox.Indicator asChild forceMount transition={playgroundIndicatorTransition}>
+              <Checkbox.Indicator asChild forceMount>
                 <Text
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(0, 0)}
@@ -136,7 +136,7 @@ export function CheckboxBasicScene() {
               Size={UDim2.fromOffset(24, 24)}
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
-              <Checkbox.Indicator asChild transition={playgroundIndicatorTransition}>
+              <Checkbox.Indicator asChild>
                 <Text
                   BackgroundTransparency={1}
                   Position={UDim2.fromOffset(0, 0)}

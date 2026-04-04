@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
 import { type MotionTransition } from "@lattice-ui/motion";
 import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
 import { FocusScope } from "@lattice-ui/focus";
@@ -119,15 +119,22 @@ function DialogContentMotionChild(props: DialogContentMotionChildProps) {
     transition: props.transition,
   });
 
+  const childProps = (props.child as { props?: Record<string, unknown> }).props ?? {};
+  const position = childProps.Position as UDim2 | undefined;
+  const zIndex = childProps.ZIndex as number | undefined;
+
   return (
-    <canvasgroup
-      ref={motionRef as React.MutableRefObject<CanvasGroup>}
+    <frame
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Size={UDim2.fromScale(1, 1)}
+      Position={position}
+      Size={UDim2.fromOffset(0, 0)}
+      ZIndex={zIndex}
     >
-      {props.child}
-    </canvasgroup>
+      <Slot Position={UDim2.fromScale(0, 0)} ref={motionRef}>
+        {props.child}
+      </Slot>
+    </frame>
   );
 }
 

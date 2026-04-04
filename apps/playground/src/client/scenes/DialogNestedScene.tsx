@@ -1,6 +1,5 @@
 import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
-import { playgroundOverlayTransition, playgroundSurfaceTransition } from "../motion";
 
 export function DialogNestedScene() {
   const [outerOpen, setOuterOpen] = React.useState(false);
@@ -41,8 +40,8 @@ export function DialogNestedScene() {
         </Dialog.Trigger>
 
         <Dialog.Portal>
-          <Dialog.Content transition={playgroundSurfaceTransition}>
-            <Dialog.Overlay transition={playgroundOverlayTransition} />
+          <Dialog.Content>
+            <Dialog.Overlay />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(25, 38, 56)}
@@ -79,8 +78,8 @@ export function DialogNestedScene() {
                 </Dialog.Trigger>
 
                 <Dialog.Portal>
-                  <Dialog.Content transition={playgroundSurfaceTransition}>
-                    <Dialog.Overlay transition={playgroundOverlayTransition} />
+                  <Dialog.Content>
+                    <Dialog.Overlay />
                     <frame
                       AnchorPoint={new Vector2(0.5, 0.5)}
                       BackgroundColor3={Color3.fromRGB(45, 31, 68)}

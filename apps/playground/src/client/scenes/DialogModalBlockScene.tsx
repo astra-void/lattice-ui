@@ -1,6 +1,5 @@
 import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
-import { playgroundOverlayTransition, playgroundSurfaceTransition } from "../motion";
 
 export function DialogModalBlockScene() {
   const [backgroundPresses, setBackgroundPresses] = React.useState(0);
@@ -48,8 +47,8 @@ export function DialogModalBlockScene() {
         </Dialog.Trigger>
 
         <Dialog.Portal>
-          <Dialog.Content transition={playgroundSurfaceTransition}>
-            <Dialog.Overlay transition={playgroundOverlayTransition} />
+          <Dialog.Content>
+            <Dialog.Overlay />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(30, 39, 54)}

@@ -1,6 +1,5 @@
 import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
-import { playgroundOverlayTransition, playgroundSurfaceTransition } from "../motion";
 
 export function DialogBasicScene() {
   const [open, setOpen] = React.useState(false);
@@ -11,7 +10,7 @@ export function DialogBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 0)}
         Size={UDim2.fromOffset(760, 28)}
-        Text="Trigger opens a dialog. Outside click, overlay click, and Close button dismiss."
+        Text="Trigger opens a dialog. Outside click and Close button dismiss."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -26,7 +25,7 @@ export function DialogBasicScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <Dialog.Root onOpenChange={setOpen} open={open}>
+      <Dialog.Root modal={false} onOpenChange={setOpen} open={open}>
         <Dialog.Trigger asChild>
           <textbutton
             AutoButtonColor={false}
@@ -41,8 +40,7 @@ export function DialogBasicScene() {
         </Dialog.Trigger>
 
         <Dialog.Portal>
-          <Dialog.Content transition={playgroundSurfaceTransition}>
-            <Dialog.Overlay transition={playgroundOverlayTransition} />
+          <Dialog.Content>
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(33, 41, 56)}
@@ -67,7 +65,7 @@ export function DialogBasicScene() {
                 BackgroundTransparency={1}
                 Position={UDim2.fromOffset(0, 38)}
                 Size={UDim2.fromOffset(360, 72)}
-                Text="Click outside the content or use the Close button. Overlay click also closes the dialog."
+                Text="Click outside the content or use the Close button."
                 TextColor3={Color3.fromRGB(184, 195, 209)}
                 TextSize={17}
                 TextWrapped={true}

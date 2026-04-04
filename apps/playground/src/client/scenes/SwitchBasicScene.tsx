@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { Switch } from "@lattice-ui/switch";
-import { playgroundSwitchThumbTransition } from "../motion";
+
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function toSwitchLabel(checked: boolean) {
@@ -61,7 +61,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <Switch.Thumb asChild transition={playgroundSwitchThumbTransition}>
+              <Switch.Thumb asChild>
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
@@ -98,7 +98,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <Switch.Thumb asChild transition={playgroundSwitchThumbTransition}>
+              <Switch.Thumb asChild>
                 <frame
                   BackgroundColor3={theme.colors.accentContrast}
                   BorderSizePixel={0}
@@ -135,7 +135,7 @@ export function SwitchBasicScene() {
               Size={UDim2.fromOffset(46, 24)}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <Switch.Thumb asChild transition={playgroundSwitchThumbTransition}>
+              <Switch.Thumb asChild>
                 <frame
                   BackgroundColor3={theme.colors.textSecondary}
                   BorderSizePixel={0}
