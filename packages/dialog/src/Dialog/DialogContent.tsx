@@ -7,15 +7,15 @@ import { DialogOverlay } from "./DialogOverlay";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
-const CONTENT_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-const CONTENT_EXIT_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
+const CONTENT_TWEEN_INFO = new TweenInfo(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+const CONTENT_EXIT_TWEEN_INFO = new TweenInfo(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
 
 function buildDialogContentTransition(): MotionTransition {
   return {
     enter: {
       tweenInfo: CONTENT_TWEEN_INFO,
       from: {
-        Position: UDim2.fromOffset(0, 8),
+        Position: UDim2.fromOffset(0, 16),
       },
       to: {
         Position: UDim2.fromOffset(0, 0),
@@ -24,7 +24,7 @@ function buildDialogContentTransition(): MotionTransition {
     exit: {
       tweenInfo: CONTENT_EXIT_TWEEN_INFO,
       to: {
-        Position: UDim2.fromOffset(0, 8),
+        Position: UDim2.fromOffset(0, 16),
       },
     },
   };

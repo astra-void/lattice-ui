@@ -572,5 +572,49 @@ export = () => {
         GuiService.SelectedObject = undefined;
       });
     });
+
+    it("plays a perceptible close motion on exit by default", () => {
+      withReactHarness("DialogPerceptibleCloseMotion", (harness) => {
+        const renderDialog = (open: boolean) => (
+          <PortalProvider container={harness.playerGui}>
+            <Dialog.Root open={open}>
+              <Dialog.Portal>
+                <Dialog.Content>
+                  <textlabel Text="dialog-close-motion-marker" />
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+          </PortalProvider>
+        );
+
+        harness.render(renderDialog(true));
+        waitForEffects(2);
+        task.wait(0.2);
+
+        assert(
+          findTextLabelByText(harness.playerGui, "dialog-close-motion-marker") !== undefined,
+          "Dialog content should be mounted after opening.",
+        );
+
+        harness.render(renderDialog(false));
+        waitForEffects(2);
+
+        task.wait(0.05);
+        waitForEffects(1);
+
+        assert(
+          findTextLabelByText(harness.playerGui, "dialog-close-motion-marker") !== undefined,
+          "Dialog content should remain mounted while exit motion runs (close should not be instantaneous).",
+        );
+
+        task.wait(0.2);
+        waitForEffects(2);
+
+        assert(
+          findTextLabelByText(harness.playerGui, "dialog-close-motion-marker") === undefined,
+          "Dialog content should unmount after close motion completes.",
+        );
+      });
+    });
   });
 };
