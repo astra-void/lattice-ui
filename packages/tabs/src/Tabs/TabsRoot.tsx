@@ -1,11 +1,10 @@
+import { React, useControllableState } from "@lattice-ui/core";
 import {
   findOrderedSelectionEntry,
   focusOrderedSelectionEntry,
   getOrderedSelectionEntries,
   getRelativeOrderedSelectionEntry,
-  React,
-  useControllableState,
-} from "@lattice-ui/core";
+} from "@lattice-ui/focus";
 import { TabsContextProvider } from "./context";
 import type { TabsProps, TabsTriggerRegistration } from "./types";
 

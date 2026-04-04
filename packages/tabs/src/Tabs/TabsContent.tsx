@@ -1,11 +1,6 @@
-﻿import {
-  getMotionTransitionExitFallbackMs,
-  type MotionTransition,
-  mergeMotionTransition,
-  React,
-  Slot,
-  useMotionTween,
-} from "@lattice-ui/core";
+﻿import { React, Slot } from "@lattice-ui/core";
+import { type MotionTransition } from "@lattice-ui/motion";
+import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
 import { Presence } from "@lattice-ui/layer";
 import { useTabsContext } from "./context";
 import { createTabsContentName } from "./internals/ids";

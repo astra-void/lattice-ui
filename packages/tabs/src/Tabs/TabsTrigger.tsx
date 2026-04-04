@@ -1,4 +1,7 @@
-import { buildTweenTransition, React, Slot, useFocusNode, useMotionTween } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
+import { buildTweenTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
+import { useFocusNode } from "@lattice-ui/focus";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
