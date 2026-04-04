@@ -147,7 +147,7 @@ const packageManifest = normalizePackageManifest({
   main: policy.packageDefaults?.main ?? "out/init.luau",
   types: policy.packageDefaults?.types ?? "out/index.d.ts",
   source: policy.packageDefaults?.source ?? "src/index.ts",
-  files: policy.packageDefaults?.files ?? ["out", "src", "README.md"],
+  files: policy.packageDefaults?.files ?? ["default.project.json", "out", "src", "README.md"],
   scripts: sortRecord({ ...defaultScripts }),
   dependencies:
     dependencyNames.length > 0
@@ -158,6 +158,16 @@ const packageManifest = normalizePackageManifest({
 });
 
 writeJson(`${packageDir}/package.json`, packageManifest);
+
+writeJson(`${packageDir}/default.project.json`, {
+  name: args.name,
+  tree: {
+    $path: "out",
+    out: {
+      $path: "out",
+    },
+  },
+});
 
 writeJson(`${packageDir}/tsconfig.json`, {
   extends: "../../tsconfig.base.json",

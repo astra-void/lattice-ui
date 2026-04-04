@@ -11,7 +11,7 @@
     "main": "out/init.luau",
     "types": "out/index.d.ts",
     "source": "src/index.ts",
-    "files": ["out", "src", "README.md"],
+    "files": ["default.project.json", "out", "src", "README.md"],
     "scripts": {
       "build": "rbxtsc -p tsconfig.json",
       "watch": "rbxtsc -p tsconfig.json -w",
@@ -27,7 +27,7 @@
     "@rbxts/react-roblox": "17.3.7-ts.1"
   },
   "toolingPackages": ["lattice-ui"],
-  "requiredFiles": ["src/index.ts", "tsconfig.json", "tsconfig.typecheck.json"],
+  "requiredFiles": ["default.project.json", "src/index.ts", "tsconfig.json", "tsconfig.typecheck.json"],
   "changesets": {
     "baseBranch": "main",
     "access": "public"
