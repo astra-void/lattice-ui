@@ -1,0 +1,9 @@
+{
+  "name": "motion",
+  "tree": {
+    "$path": "out",
+    "out": {
+      "$path": "out"
+    }
+  }
+}
