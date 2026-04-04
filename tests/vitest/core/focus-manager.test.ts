@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type FocusManagerModule = typeof import("../../../packages/core/src/focus/focusManager");
+type FocusManagerModule = typeof import("../../../packages/focus/src/focusManager");
 
 type MockGuiObject = GuiObject & {
   children: MockGuiObject[];
@@ -82,7 +82,7 @@ async function createFocusManagerHarness(): Promise<FocusManagerHarness> {
   let selectedObject: MockGuiObject | undefined;
   const selectedObjectListeners = new Set<() => void>();
 
-  vi.doMock("../../../packages/core/src/focus/env", () => ({
+  vi.doMock("../../../packages/focus/src/env", () => ({
     GuiService: {
       get SelectedObject() {
         return selectedObject;
@@ -109,7 +109,7 @@ async function createFocusManagerHarness(): Promise<FocusManagerHarness> {
     },
   }));
 
-  const focusManager = await import("../../../packages/core/src/focus/focusManager");
+  const focusManager = await import("../../../packages/focus/src/focusManager");
   const mountRoot = createGuiObject("mount-root", {
     selectable: false,
   });

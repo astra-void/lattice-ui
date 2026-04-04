@@ -4,14 +4,17 @@
 import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MotionPolicyProvider } from "../../../packages/core/src/motion/policy";
+vi.mock("@lattice-ui/core", () => ({
+  React: require("react"),
+}));
+import { MotionPolicyProvider } from "@lattice-ui/motion";
 import {
   applyMotionProperties,
   getMotionTransitionExitFallbackMs,
   mergeMotionTransition,
-} from "../../../packages/core/src/motion/transition";
-import type { MotionTransition } from "../../../packages/core/src/motion/types";
-import { useMotionTween } from "../../../packages/core/src/motion/useMotionTween";
+} from "@lattice-ui/motion";
+import type { MotionTransition } from "@lattice-ui/motion";
+import { useMotionTween } from "@lattice-ui/motion";
 
 class MockTweenInfo {
   public Time: number;
