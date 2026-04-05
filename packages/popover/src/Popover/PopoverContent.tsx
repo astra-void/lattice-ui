@@ -72,13 +72,13 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
   }, [popper.placement, props.transition]);
 
   useMotionTween(popoverContext.contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.present,
+    active: props.present && popper.isPositioned,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
 
   // Wait until popper has at least one valid measurement to avoid a frame at (0, 0)
-  const isActuallyVisible = props.visible && popper.isPositioned;
+  const isActuallyVisible = props.visible;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -88,12 +88,7 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       }
 
       return (
-        <Slot
-          AnchorPoint={popper.anchorPoint}
-          Position={UDim2.fromOffset(0, 0)}
-          Visible={isActuallyVisible}
-          ref={setContentRef}
-        >
+        <Slot AnchorPoint={popper.anchorPoint} Visible={isActuallyVisible} ref={setContentRef}>
           {child}
         </Slot>
       );
@@ -104,7 +99,6 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
       Visible={isActuallyVisible}
       ref={setContentRef}
@@ -122,7 +116,12 @@ function PopoverContentImpl(props: PopoverContentImplProps) {
       onPointerDownOutside={props.onPointerDownOutside}
     >
       <FocusScope active={props.enabled} restoreFocus={true} trapped={popoverContext.modal}>
-        <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+        <frame
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Position={popper.isPositioned ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Size={UDim2.fromOffset(0, 0)}
+        >
           {contentNode}
         </frame>
       </FocusScope>
