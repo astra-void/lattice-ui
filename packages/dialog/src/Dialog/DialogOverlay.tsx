@@ -27,6 +27,27 @@ function buildDialogOverlayTransition(): MotionTransition {
   };
 }
 
+function useForceMountRenderedState(active: boolean) {
+  const [renderedWhileClosed, setRenderedWhileClosed] = React.useState(active);
+
+  React.useLayoutEffect(() => {
+    if (active && !renderedWhileClosed) {
+      setRenderedWhileClosed(true);
+    }
+  }, [active, renderedWhileClosed]);
+
+  const handleExitComplete = React.useCallback(() => {
+    if (!active) {
+      setRenderedWhileClosed(false);
+    }
+  }, [active]);
+
+  return {
+    onExitComplete: handleExitComplete,
+    rendered: active || renderedWhileClosed,
+  };
+}
+
 type DialogOverlayImplProps = {
   active: boolean;
   rendered: boolean;
@@ -88,6 +109,7 @@ function DialogOverlayImpl(props: DialogOverlayImplProps) {
 export function DialogOverlay(props: DialogOverlayProps) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
+  const forceMountRenderState = useForceMountRenderedState(open);
 
   const transition = React.useMemo(() => {
     return mergeMotionTransition(buildDialogOverlayTransition(), props.transition);
@@ -99,7 +121,8 @@ export function DialogOverlay(props: DialogOverlayProps) {
         active={open}
         asChild={props.asChild}
         onDismiss={() => dialogContext.setOpen(false)}
-        rendered={open}
+        onExitComplete={forceMountRenderState.onExitComplete}
+        rendered={forceMountRenderState.rendered}
         transition={transition}
       >
         {props.children}

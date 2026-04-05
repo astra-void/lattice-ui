@@ -110,28 +110,28 @@ function flattenDialogChildren(children: React.ReactNode, path = "dialog"): Arra
   return flattenedChildren;
 }
 
+const ZERO_POSITION = UDim2.fromOffset(0, 0);
+
 function DialogContentMotionChild(props: DialogContentMotionChildProps) {
   const motionRef = React.useRef<Instance>();
 
-  useMotionTween(motionRef, {
+  useMotionTween(motionRef as React.MutableRefObject<Instance | undefined>, {
     active: props.motionActive,
     onExitComplete: props.onExitComplete,
     transition: props.transition,
   });
 
   const childProps = (props.child as { props?: Record<string, unknown> }).props ?? {};
-  const position = childProps.Position as UDim2 | undefined;
+  // Use useMemo to avoid recreating position object every render if it's the default
+  const position = React.useMemo(
+    () => (childProps.Position as UDim2 | undefined) ?? ZERO_POSITION,
+    [childProps.Position],
+  );
   const zIndex = childProps.ZIndex as number | undefined;
 
   return (
-    <frame
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Position={position}
-      Size={UDim2.fromOffset(0, 0)}
-      ZIndex={zIndex}
-    >
-      <Slot Position={UDim2.fromScale(0, 0)} ref={motionRef}>
+    <frame BackgroundTransparency={1} BorderSizePixel={0} Position={position} Size={ZERO_POSITION} ZIndex={zIndex}>
+      <Slot Position={ZERO_POSITION} ref={motionRef as React.MutableRefObject<Instance | undefined>}>
         {props.child}
       </Slot>
     </frame>
@@ -210,13 +210,7 @@ function DialogContentImpl(props: DialogContentImplProps) {
       onPointerDownOutside={props.onPointerDownOutside}
     >
       <FocusScope active={props.enabled} restoreFocus={props.restoreFocus} trapped={props.trapFocus}>
-        <frame
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Position={UDim2.fromScale(0, 0)}
-          Size={UDim2.fromScale(1, 1)}
-          Visible={props.rendered}
-        >
+        <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)} Visible={props.rendered}>
           {flattenedChildren.map((child) => {
             if (isOverlayElement(child.node) || !isAnimatableDialogChild(child.node)) {
               return child.node;
