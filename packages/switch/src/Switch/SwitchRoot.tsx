@@ -13,18 +13,12 @@ function buildSwitchRootTransition(): MotionTransition {
   return {
     enter: {
       tweenInfo: TRACK_TWEEN_INFO,
-      from: {
-        BackgroundColor3: TRACK_OFF_COLOR,
-      },
       to: {
         BackgroundColor3: TRACK_ON_COLOR,
       },
     },
     exit: {
       tweenInfo: TRACK_EXIT_TWEEN_INFO,
-      from: {
-        BackgroundColor3: TRACK_ON_COLOR,
-      },
       to: {
         BackgroundColor3: TRACK_OFF_COLOR,
       },
@@ -101,7 +95,7 @@ export function SwitchRoot(props: SwitchProps) {
         <textbutton
           Active={!disabled}
           AutoButtonColor={false}
-          BackgroundColor3={checked ? TRACK_ON_COLOR : TRACK_OFF_COLOR}
+          BackgroundColor3={motionReady ? undefined : checked ? TRACK_ON_COLOR : TRACK_OFF_COLOR}
           BorderSizePixel={0}
           Event={{ Activated: toggle }}
           Selectable={!disabled}

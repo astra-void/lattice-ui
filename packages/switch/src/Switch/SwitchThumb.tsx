@@ -12,18 +12,12 @@ function buildSwitchThumbTransition() {
   return {
     enter: {
       tweenInfo: THUMB_TWEEN_INFO,
-      from: {
-        Position: UNCHECKED_THUMB_POSITION,
-      },
       to: {
         Position: CHECKED_THUMB_POSITION,
       },
     },
     exit: {
       tweenInfo: THUMB_EXIT_TWEEN_INFO,
-      from: {
-        Position: CHECKED_THUMB_POSITION,
-      },
       to: {
         Position: UNCHECKED_THUMB_POSITION,
       },
@@ -50,20 +44,28 @@ export function SwitchThumb(props: SwitchThumbProps) {
   });
 
   const child = props.children;
+  const position = switchContext.checked ? CHECKED_THUMB_POSITION : UNCHECKED_THUMB_POSITION;
 
   if (props.asChild) {
     if (!React.isValidElement(child)) {
       error("[SwitchThumb] `asChild` requires a child element.");
     }
 
-    return <Slot ref={thumbRef}>{child}</Slot>;
+    return (
+      <Slot
+        Position={motionReady ? undefined : position}
+        ref={thumbRef as React.MutableRefObject<Instance | undefined>}
+      >
+        {child}
+      </Slot>
+    );
   }
 
   return (
     <frame
       BackgroundColor3={Color3.fromRGB(240, 244, 252)}
       BorderSizePixel={0}
-      Position={switchContext.checked ? CHECKED_THUMB_POSITION : UNCHECKED_THUMB_POSITION}
+      Position={motionReady ? undefined : position}
       Size={UDim2.fromOffset(16, 16)}
       ref={thumbRef}
     >
