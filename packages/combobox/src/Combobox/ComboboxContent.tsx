@@ -12,6 +12,7 @@ const CONTENT_OFFSET = 6;
 
 type ComboboxContentImplProps = {
   enabled: boolean;
+  present: boolean;
   visible: boolean;
   onDismiss: () => void;
   onExitComplete?: () => void;
@@ -69,12 +70,12 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
   }, [popper.placement, props.transition]);
 
   useMotionTween(comboboxContext.contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
+    active: props.present && popper.isPositioned,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
 
-  const isActuallyVisible = props.visible && popper.isPositioned;
+  const isActuallyVisible = props.visible;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -84,12 +85,7 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       }
 
       return (
-        <Slot
-          AnchorPoint={popper.anchorPoint}
-          Position={UDim2.fromOffset(0, 0)}
-          Visible={isActuallyVisible}
-          ref={setContentRef}
-        >
+        <Slot AnchorPoint={popper.anchorPoint} Visible={isActuallyVisible} ref={setContentRef}>
           {child}
         </Slot>
       );
@@ -100,7 +96,6 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
       Visible={isActuallyVisible}
       ref={setContentRef}
@@ -118,7 +113,12 @@ function ComboboxContentImpl(props: ComboboxContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+      <frame
+        BackgroundTransparency={1}
+        BorderSizePixel={0}
+        Position={popper.isPositioned ? popper.position : UDim2.fromOffset(-9999, -9999)}
+        Size={UDim2.fromOffset(0, 0)}
+      >
         {contentNode}
       </frame>
     </DismissableLayer>
@@ -151,6 +151,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
         padding={props.padding}
         placement={props.placement}
         transition={props.transition}
+        present={open}
         visible={open}
       >
         {props.children}
@@ -174,6 +175,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
           padding={props.padding}
           placement={props.placement}
           transition={props.transition}
+          present={state.isPresent}
           visible={true}
         >
           {props.children}

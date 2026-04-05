@@ -19,7 +19,7 @@ export function resolveForcedComboboxValue(currentValue: string | undefined, opt
   }
 
   if (currentValue === undefined) {
-    return enabled[0]?.value;
+    return undefined;
   }
 
   const selected = enabled.find((option) => option.value === currentValue);

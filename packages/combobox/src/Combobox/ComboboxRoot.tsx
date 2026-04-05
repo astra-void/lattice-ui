@@ -55,6 +55,7 @@ export function ComboboxRoot(props: ComboboxProps) {
   const [registryRevision, setRegistryRevision] = React.useState(0);
 
   const registerItem = React.useCallback((item: ComboboxItemRegistration) => {
+    itemEntriesRef.current = itemEntriesRef.current.filter((entry) => entry.id !== item.id);
     itemEntriesRef.current.push(item);
     itemTextCacheRef.current[item.value] = item.getTextValue();
     setRegistryRevision((revision) => revision + 1);
@@ -63,6 +64,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       const index = itemEntriesRef.current.findIndex((entry) => entry.id === item.id);
       if (index >= 0) {
         itemEntriesRef.current.remove(index);
+        delete itemTextCacheRef.current[item.value];
         setRegistryRevision((revision) => revision + 1);
       }
     };
