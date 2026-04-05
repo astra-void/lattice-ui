@@ -1,30 +1,10 @@
-import { React, Slot, useControllableState } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+﻿import { React, Slot, useControllableState } from "@lattice-ui/core";
+import { useToggleMotion } from "@lattice-ui/motion";
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";
 
 const TRACK_ON_COLOR = Color3.fromRGB(86, 141, 255);
 const TRACK_OFF_COLOR = Color3.fromRGB(66, 73, 91);
-const TRACK_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-const TRACK_EXIT_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
-
-function buildSwitchRootTransition(): MotionTransition {
-  return {
-    enter: {
-      tweenInfo: TRACK_TWEEN_INFO,
-      to: {
-        BackgroundColor3: TRACK_ON_COLOR,
-      },
-    },
-    exit: {
-      tweenInfo: TRACK_EXIT_TWEEN_INFO,
-      to: {
-        BackgroundColor3: TRACK_OFF_COLOR,
-      },
-    },
-  };
-}
 
 export function SwitchRoot(props: SwitchProps) {
   const [checked, setCheckedState] = useControllableState<boolean>({
@@ -34,25 +14,14 @@ export function SwitchRoot(props: SwitchProps) {
   });
 
   const disabled = props.disabled === true;
-  const rootRef = React.useRef<TextButton>();
-  const [motionReady, setMotionReady] = React.useState(false);
-  const motionTransition = React.useMemo(() => buildSwitchRootTransition(), []);
 
-  React.useEffect(() => {
-    setMotionReady(true);
-  }, []);
-
-  useMotionTween(rootRef as React.MutableRefObject<Instance | undefined>, {
-    active: checked,
-    transition: motionReady ? motionTransition : false,
-  });
+  const { ref: motionRef } = useToggleMotion(checked, TRACK_ON_COLOR, TRACK_OFF_COLOR, false);
 
   const setChecked = React.useCallback(
     (nextChecked: boolean) => {
       if (disabled) {
         return;
       }
-
       setCheckedState(nextChecked);
     },
     [disabled, setCheckedState],
@@ -62,7 +31,6 @@ export function SwitchRoot(props: SwitchProps) {
     if (disabled) {
       return;
     }
-
     setCheckedState(!checked);
   }, [checked, disabled, setCheckedState]);
 
@@ -86,7 +54,7 @@ export function SwitchRoot(props: SwitchProps) {
           }
 
           return (
-            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled} ref={rootRef}>
+            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled} ref={motionRef}>
               {child}
             </Slot>
           );
@@ -95,7 +63,6 @@ export function SwitchRoot(props: SwitchProps) {
         <textbutton
           Active={!disabled}
           AutoButtonColor={false}
-          BackgroundColor3={motionReady ? undefined : checked ? TRACK_ON_COLOR : TRACK_OFF_COLOR}
           BorderSizePixel={0}
           Event={{ Activated: toggle }}
           Selectable={!disabled}
@@ -103,7 +70,7 @@ export function SwitchRoot(props: SwitchProps) {
           Text={checked ? "On" : "Off"}
           TextColor3={disabled ? Color3.fromRGB(145, 152, 168) : Color3.fromRGB(240, 244, 252)}
           TextSize={15}
-          ref={rootRef}
+          ref={motionRef as React.MutableRefObject<TextButton>}
         >
           {child}
         </textbutton>

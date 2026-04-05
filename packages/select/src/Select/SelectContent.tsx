@@ -1,46 +1,24 @@
 ﻿import { React, Slot } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
-import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
-import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { buildPopperContentMotionTransition, usePopper } from "@lattice-ui/popper";
+import { usePopperSurfaceMotion } from "@lattice-ui/motion";
+import { FocusScope } from "@lattice-ui/focus";
+import { DismissableLayer } from "@lattice-ui/layer";
+import { usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
 
-const OPEN_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-const CLOSE_TWEEN_INFO = new TweenInfo(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
-const CONTENT_OPEN_Y_OFFSET = 6;
-
-type SelectContentImplProps = {
-  enabled: boolean;
-  present: boolean;
-  visible: boolean;
-  onDismiss: () => void;
-  onExitComplete?: () => void;
-  asChild?: boolean;
-  transition?: MotionTransition | false;
-  placement?: SelectContentProps["placement"];
-  offset?: SelectContentProps["offset"];
-  padding?: SelectContentProps["padding"];
-} & Pick<SelectContentProps, "children" | "onInteractOutside" | "onPointerDownOutside">;
+const CONTENT_OFFSET = 6;
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
     return undefined;
   }
-
   return instance;
 }
 
-function buildSelectContentTransition(): MotionTransition {
-  return buildPopperContentMotionTransition("bottom", {
-    distance: CONTENT_OPEN_Y_OFFSET,
-    enterTweenInfo: OPEN_TWEEN_INFO,
-    exitTweenInfo: CLOSE_TWEEN_INFO,
-  });
-}
-
-function SelectContentImpl(props: SelectContentImplProps) {
+export function SelectContent(props: SelectContentProps) {
   const selectContext = useSelectContext();
+  const open = selectContext.open;
+  const forceMount = props.forceMount === true;
 
   const popper = usePopper({
     anchorRef: selectContext.triggerRef,
@@ -48,34 +26,35 @@ function SelectContentImpl(props: SelectContentImplProps) {
     placement: props.placement,
     offset: props.offset,
     padding: props.padding,
-    enabled: props.enabled,
+    enabled: open,
   });
+
+  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(
+    open && popper.isPositioned,
+    popper.placement,
+    CONTENT_OFFSET,
+    true,
+  );
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
       selectContext.contentRef.current = toGuiObject(instance);
+      if (motionRef) {
+        motionRef.current = instance;
+      }
     },
-    [selectContext.contentRef],
+    [selectContext.contentRef, motionRef],
   );
 
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(
-      buildPopperContentMotionTransition(popper.placement, {
-        distance: CONTENT_OPEN_Y_OFFSET,
-        enterTweenInfo: OPEN_TWEEN_INFO,
-        exitTweenInfo: CLOSE_TWEEN_INFO,
-      }),
-      props.transition,
-    );
-  }, [popper.placement, props.transition]);
+  const handleDismiss = React.useCallback(() => {
+    selectContext.setOpen(false);
+  }, [selectContext.setOpen]);
 
-  useMotionTween(selectContext.contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.present && popper.isPositioned,
-    onExitComplete: props.onExitComplete,
-    transition: motionTransition,
-  });
+  if (!isPresent && !forceMount) {
+    return undefined;
+  }
 
-  const isActuallyVisible = props.visible;
+  const isActuallyVisible = popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -106,81 +85,22 @@ function SelectContentImpl(props: SelectContentImplProps) {
 
   return (
     <DismissableLayer
-      enabled={props.enabled}
-      insideRefs={[selectContext.triggerRef]}
+      enabled={open}
       modal={false}
-      onDismiss={props.onDismiss}
+      onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <frame
-        BackgroundTransparency={1}
-        BorderSizePixel={0}
-        Position={popper.isPositioned ? popper.position : UDim2.fromOffset(-9999, -9999)}
-        Size={UDim2.fromOffset(0, 0)}
-      >
-        {contentNode}
-      </frame>
-    </DismissableLayer>
-  );
-}
-
-export function SelectContent(props: SelectContentProps) {
-  const selectContext = useSelectContext();
-  const open = selectContext.open;
-  const forceMount = props.forceMount === true;
-
-  const handleDismiss = React.useCallback(() => {
-    selectContext.setOpen(false);
-  }, [selectContext.setOpen]);
-
-  const fallbackTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildSelectContentTransition(), props.transition);
-  }, [props.transition]);
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(fallbackTransition);
-
-  if (forceMount) {
-    return (
-      <SelectContentImpl
-        asChild={props.asChild}
-        enabled={open}
-        offset={props.offset}
-        onDismiss={handleDismiss}
-        onInteractOutside={props.onInteractOutside}
-        onPointerDownOutside={props.onPointerDownOutside}
-        padding={props.padding}
-        placement={props.placement}
-        transition={props.transition}
-        present={open}
-        visible={open}
-      >
-        {props.children}
-      </SelectContentImpl>
-    );
-  }
-
-  return (
-    <Presence
-      exitFallbackMs={exitFallbackMs}
-      present={open}
-      render={(state) => (
-        <SelectContentImpl
-          asChild={props.asChild}
-          enabled={state.isPresent}
-          offset={props.offset}
-          onDismiss={handleDismiss}
-          onExitComplete={state.onExitComplete}
-          onInteractOutside={props.onInteractOutside}
-          onPointerDownOutside={props.onPointerDownOutside}
-          padding={props.padding}
-          placement={props.placement}
-          transition={props.transition}
-          present={state.isPresent}
-          visible={true}
+      <FocusScope active={open} restoreFocus={true} trapped={false}>
+        <frame
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Position={popper.isPositioned ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Size={UDim2.fromOffset(0, 0)}
         >
-          {props.children}
-        </SelectContentImpl>
-      )}
-    />
+          {contentNode}
+        </frame>
+      </FocusScope>
+    </DismissableLayer>
   );
 }

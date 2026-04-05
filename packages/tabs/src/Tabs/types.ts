@@ -1,5 +1,4 @@
-﻿import type { MotionTransition } from "@lattice-ui/motion";
-import type React from "@rbxts/react";
+﻿import type React from "@rbxts/react";
 
 export type TabsSetValue = (value: string) => void;
 export type TabsOrientation = "horizontal" | "vertical";
@@ -44,6 +43,5 @@ export type TabsContentProps = {
   value: string;
   asChild?: boolean;
   forceMount?: boolean;
-  transition?: MotionTransition | false;
   children?: React.ReactNode;
 };

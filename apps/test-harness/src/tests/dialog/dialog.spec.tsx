@@ -1,5 +1,5 @@
 import { React } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
+import { type MotionConfig } from "@lattice-ui/motion";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
@@ -31,20 +31,20 @@ function assertWithinTolerance(actual: number, expected: number, tolerance: numb
   assert(math.abs(actual - expected) <= tolerance, `${message} (expected ${expected}, got ${actual})`);
 }
 
-function buildSlowDialogTransition(): MotionTransition {
+function buildSlowDialogTransition(): MotionConfig {
   return {
-    enter: {
+    entering: {
       tweenInfo: new TweenInfo(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-      from: {
+      initial: {
         Position: UDim2.fromOffset(0, 24),
       },
-      to: {
+      goals: {
         Position: UDim2.fromOffset(0, 0),
       },
     },
-    exit: {
+    exiting: {
       tweenInfo: new TweenInfo(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-      to: {
+      goals: {
         Position: UDim2.fromOffset(0, 24),
       },
     },
@@ -149,20 +149,8 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Dialog.Root open={open}>
               <Dialog.Portal>
+                <Dialog.Overlay asChild></Dialog.Overlay>
                 <Dialog.Content forceMount={true} transition={transition}>
-                  <Dialog.Overlay asChild>
-                    <textbutton
-                      Active={false}
-                      AutoButtonColor={false}
-                      BackgroundTransparency={1}
-                      BorderSizePixel={0}
-                      Position={UDim2.fromScale(0, 0)}
-                      Size={UDim2.fromScale(1, 1)}
-                      Text="dialog-force-mount-overlay-marker"
-                      TextTransparency={1}
-                      ref={overlayRef}
-                    />
-                  </Dialog.Overlay>
                   <frame
                     BackgroundTransparency={1}
                     Position={UDim2.fromOffset(32, 32)}
@@ -330,21 +318,9 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Dialog.Root open={open}>
               <Dialog.Portal>
+                <Dialog.Overlay asChild></Dialog.Overlay>
                 <Dialog.Content transition={transition}>
                   <>
-                    <Dialog.Overlay asChild>
-                      <textbutton
-                        Active={false}
-                        AutoButtonColor={false}
-                        BackgroundTransparency={1}
-                        BorderSizePixel={0}
-                        Position={UDim2.fromScale(0, 0)}
-                        Size={UDim2.fromScale(1, 1)}
-                        Text="dialog-overlay-marker"
-                        TextTransparency={1}
-                        ref={overlayRef}
-                      />
-                    </Dialog.Overlay>
                     <frame
                       BackgroundTransparency={1}
                       Position={UDim2.fromOffset(40, 40)}

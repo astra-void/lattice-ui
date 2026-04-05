@@ -1,26 +1,32 @@
-﻿import { React, Slot } from "@lattice-ui/core";
-import { MOTION_PRESETS, type MotionTransition } from "@lattice-ui/motion";
-import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
+import { React, Slot } from "@lattice-ui/core";
+import { MOTION_PRESETS, useStateMotion } from "@lattice-ui/motion";
+import type { MotionConfig } from "@lattice-ui/motion";
 import { Presence } from "@lattice-ui/layer";
 import { useRadioGroupItemContext } from "./context";
 import type { RadioGroupIndicatorProps } from "./types";
 
-function buildRadioGroupIndicatorTransition(size: UDim2): MotionTransition {
+function buildRadioGroupIndicatorTransition(size: UDim2): MotionConfig {
   return {
-    enter: {
+    entering: {
       tweenInfo: MOTION_PRESETS.indicatorEnter,
-      from: {
+      initial: {
         Size: UDim2.fromOffset(0, 0),
         BackgroundTransparency: 1,
       },
-      to: {
+      goals: {
         Size: size,
         BackgroundTransparency: 0,
       },
     },
-    exit: {
+    entered: {
+      goals: {
+        Size: size,
+        BackgroundTransparency: 0,
+      },
+    },
+    exiting: {
       tweenInfo: MOTION_PRESETS.indicatorExit,
-      to: {
+      goals: {
         Size: UDim2.fromOffset(0, 0),
         BackgroundTransparency: 1,
       },
@@ -30,18 +36,19 @@ function buildRadioGroupIndicatorTransition(size: UDim2): MotionTransition {
 
 function RadioGroupIndicatorImpl(props: {
   visible: boolean;
-  transition?: MotionTransition | false;
+  transition?: MotionConfig;
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
 }) {
   const indicatorRef = React.useRef<Frame>();
 
-  useMotionTween(indicatorRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
-    onExitComplete: props.onExitComplete,
-    transition: props.transition,
-  });
+  const __motionRef = useStateMotion(props.visible, props.transition || ({} as MotionConfig), false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && indicatorRef.current !== __motionRef.current) {
+      indicatorRef.current = __motionRef.current as Frame;
+    }
+  }, [__motionRef]);
 
   if (props.asChild) {
     const child = props.children;
@@ -75,7 +82,10 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
   const forceMount = props.forceMount === true;
 
   const transition = React.useMemo(() => {
-    return mergeMotionTransition(buildRadioGroupIndicatorTransition(UDim2.fromOffset(10, 10)), props.transition);
+    return {
+      ...buildRadioGroupIndicatorTransition(UDim2.fromOffset(10, 10)),
+      ...(props.transition as MotionConfig | undefined),
+    };
   }, [props.transition]);
 
   if (forceMount) {
@@ -86,7 +96,7 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
     );
   }
 
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const exitFallbackMs = 0;
 
   return (
     <Presence

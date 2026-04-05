@@ -40,8 +40,8 @@ export function DialogNestedScene() {
         </Dialog.Trigger>
 
         <Dialog.Portal>
+          <Dialog.Overlay />
           <Dialog.Content>
-            <Dialog.Overlay />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(25, 38, 56)}
@@ -78,8 +78,8 @@ export function DialogNestedScene() {
                 </Dialog.Trigger>
 
                 <Dialog.Portal>
+                  <Dialog.Overlay />
                   <Dialog.Content>
-                    <Dialog.Overlay />
                     <frame
                       AnchorPoint={new Vector2(0.5, 0.5)}
                       BackgroundColor3={Color3.fromRGB(45, 31, 68)}

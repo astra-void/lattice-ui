@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
 import { useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
 
@@ -23,10 +22,12 @@ export function SelectItem(props: SelectItemProps) {
   const [active, setActive] = React.useState(false);
   const itemRef = React.useRef<GuiObject>();
 
-  useMotionTween(itemRef as React.MutableRefObject<Instance | undefined>, {
-    active: active && !disabled,
-    transition,
-  });
+  const __motionRef = useStateMotion(active && !disabled, transition, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && itemRef.current !== __motionRef.current) {
+      itemRef.current = __motionRef.current as GuiObject;
+    }
+  }, [__motionRef]);
 
   React.useEffect(() => {
     disabledRef.current = disabled;

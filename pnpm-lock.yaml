@@ -490,6 +490,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@rbxts/services':
+        specifier: ^1.6.0
+        version: 1.6.0
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -1315,6 +1318,9 @@ packages:
 
   '@rbxts/react@17.3.7-ts.1':
     resolution: {integrity: sha512-/jqZ2TvyLSAPwC30h95loUmy4XN2PwPhv6fBARJKtZfyozFx2RuxC9FiQSjpEZ2uOOPzr60It0MBUf94D+tsMg==}
+
+  '@rbxts/services@1.6.0':
+    resolution: {integrity: sha512-YH02E1/tGHeMXB0Mam8qPdAZa2fjQWdylEscSL4Zn0RIaQeByYImA2qUsXM3nBdhcyKHDwltzSznDKyCGfFEWA==}
 
   '@rbxts/testez@0.4.2-ts.0':
     resolution: {integrity: sha512-8Q+OG9ddTD2P3aARCuRKpPqUBvuifgSnHvQMZ6jBMqUzxhIysnb0l4c3vnnaQnvdyZ1OW9tKxcdEHMGTb67uOw==}
@@ -3343,6 +3349,8 @@ snapshots:
   '@rbxts/react@17.3.7-ts.1':
     dependencies:
       '@rbxts-js/react': 17.3.7-ts.1
+
+  '@rbxts/services@1.6.0': {}
 
   '@rbxts/testez@0.4.2-ts.0': {}
 

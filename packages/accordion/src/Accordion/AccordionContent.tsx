@@ -1,6 +1,5 @@
 ﻿import { React, Slot } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
-import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import { Presence } from "@lattice-ui/layer";
 import { useAccordionItemContext } from "./context";
 import type { AccordionContentProps } from "./types";
@@ -9,7 +8,7 @@ const CONTENT_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.Easin
 const CONTENT_EXIT_TWEEN_INFO = new TweenInfo(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
 const CONTENT_OFFSET = 4;
 
-function buildAccordionContentTransition(): MotionTransition {
+function buildAccordionContentTransition(): unknown {
   return {
     enter: {
       tweenInfo: CONTENT_TWEEN_INFO,
@@ -31,18 +30,19 @@ function buildAccordionContentTransition(): MotionTransition {
 
 function AccordionContentImpl(props: {
   visible: boolean;
-  transition?: MotionTransition | false;
+  transition?: unknown | false;
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
 }) {
   const contentRef = React.useRef<Frame>();
 
-  useMotionTween(contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
-    onExitComplete: props.onExitComplete,
-    transition: props.transition,
-  });
+  const __motionRef = useStateMotion(props.visible, props.transition as unknown, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && contentRef.current !== __motionRef.current) {
+      contentRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   if (props.asChild) {
     const child = props.children;
@@ -75,7 +75,7 @@ export function AccordionContent(props: AccordionContentProps) {
   const forceMount = props.forceMount === true;
 
   const transition = React.useMemo(() => {
-    return mergeMotionTransition(buildAccordionContentTransition(), props.transition);
+    return buildAccordionContentTransition();
   }, [props.transition]);
 
   if (forceMount) {
@@ -86,7 +86,7 @@ export function AccordionContent(props: AccordionContentProps) {
     );
   }
 
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const exitFallbackMs = 0;
 
   return (
     <Presence

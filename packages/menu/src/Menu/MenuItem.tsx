@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
 import { useFocusNode } from "@lattice-ui/focus";
 import { useMenuContext } from "./context";
 import type { MenuItemProps, MenuSelectEvent } from "./types";
@@ -61,10 +60,12 @@ export function MenuItem(props: MenuItemProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  useMotionTween(itemRef as React.MutableRefObject<Instance | undefined>, {
-    active: active && props.disabled !== true,
-    transition,
-  });
+  const __motionRef = useStateMotion(active && props.disabled !== true, transition, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && itemRef.current !== __motionRef.current) {
+      itemRef.current = __motionRef.current as GuiObject;
+    }
+  }, [__motionRef]);
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
     if (!instance || !instance.IsA("GuiObject")) {

@@ -1,18 +1,20 @@
-import { React } from "@lattice-ui/core";
+﻿import { React } from "@lattice-ui/core";
 
-import type { MotionPolicyProviderProps, MotionPolicyValue } from "./types";
+export type MotionPolicyValue = {
+  disableAllMotion: boolean;
+};
 
 const MotionPolicyContext = React.createContext<MotionPolicyValue>({
   disableAllMotion: false,
 });
 
+export type MotionPolicyProviderProps = {
+  disableAllMotion?: boolean;
+  children?: React.ReactNode;
+};
+
 export function MotionPolicyProvider(props: MotionPolicyProviderProps) {
-  const value = React.useMemo<MotionPolicyValue>(
-    () => ({
-      disableAllMotion: props.disableAllMotion === true,
-    }),
-    [props.disableAllMotion],
-  );
+  const value = React.useMemo(() => ({ disableAllMotion: props.disableAllMotion ?? false }), [props.disableAllMotion]);
 
   return <MotionPolicyContext.Provider value={value}>{props.children}</MotionPolicyContext.Provider>;
 }

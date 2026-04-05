@@ -1,6 +1,5 @@
 ﻿import { React, Slot } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
-import { getMotionTransitionExitFallbackMs, mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import { Presence } from "@lattice-ui/layer";
 import { useTabsContext } from "./context";
 import { createTabsContentName } from "./internals/ids";
@@ -10,7 +9,7 @@ const CONTENT_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.Easin
 const CONTENT_EXIT_TWEEN_INFO = new TweenInfo(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
 const CONTENT_OFFSET = 4;
 
-function buildTabsContentTransition(): MotionTransition {
+function buildTabsContentTransition(): unknown {
   return {
     enter: {
       tweenInfo: CONTENT_TWEEN_INFO,
@@ -32,7 +31,7 @@ function buildTabsContentTransition(): MotionTransition {
 
 function TabsContentImpl(props: {
   visible: boolean;
-  transition?: MotionTransition | false;
+  transition?: unknown | false;
   onExitComplete?: () => void;
   value: string;
   asChild?: boolean;
@@ -41,11 +40,12 @@ function TabsContentImpl(props: {
   const contentName = createTabsContentName(props.value);
   const contentRef = React.useRef<Frame>();
 
-  useMotionTween(contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.visible,
-    onExitComplete: props.onExitComplete,
-    transition: props.transition,
-  });
+  const __motionRef = useStateMotion(props.visible, props.transition as unknown, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && contentRef.current !== __motionRef.current) {
+      contentRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   if (props.asChild) {
     const child = props.children;
@@ -79,7 +79,7 @@ export function TabsContent(props: TabsContentProps) {
   const forceMount = props.forceMount === true;
 
   const transition = React.useMemo(() => {
-    return mergeMotionTransition(buildTabsContentTransition(), props.transition);
+    return buildTabsContentTransition();
   }, [props.transition]);
 
   if (forceMount) {
@@ -90,7 +90,7 @@ export function TabsContent(props: TabsContentProps) {
     );
   }
 
-  const exitFallbackMs = getMotionTransitionExitFallbackMs(transition);
+  const exitFallbackMs = 0;
 
   return (
     <Presence

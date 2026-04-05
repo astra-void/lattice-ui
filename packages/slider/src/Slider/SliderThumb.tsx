@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderThumbProps } from "./types";
@@ -21,11 +20,11 @@ export function SliderThumb(props: SliderThumbProps) {
   const position =
     sliderContext.orientation === "horizontal" ? UDim2.fromScale(percent, 0.5) : UDim2.fromScale(0.5, 1 - percent);
 
-  const transition = React.useMemo<MotionTransition>(() => {
+  const transition = React.useMemo(() => {
     return {
-      enter: {
+      entering: {
         tweenInfo: sliderContext.isDragging ? undefined : THUMB_TWEEN_INFO,
-        to: {
+        goals: {
           Position: position,
         },
       },
@@ -47,10 +46,12 @@ export function SliderThumb(props: SliderThumbProps) {
     [sliderContext],
   );
 
-  useMotionTween(thumbRef as React.MutableRefObject<Instance | undefined>, {
-    active: true,
-    transition,
-  });
+  const __motionRef = useStateMotion(true, transition, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && thumbRef.current !== __motionRef.current) {
+      thumbRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {

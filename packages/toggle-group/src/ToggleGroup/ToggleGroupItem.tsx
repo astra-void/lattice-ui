@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
 import { useToggleGroupContext } from "./context";
 import type { ToggleGroupItemProps } from "./types";
 
@@ -15,10 +14,12 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
   const pressed = toggleGroupContext.isPressed(props.value);
   const itemRef = React.useRef<TextButton>();
 
-  useMotionTween(itemRef as React.MutableRefObject<Instance | undefined>, {
-    active: pressed,
-    transition,
-  });
+  const __motionRef = useStateMotion(pressed, transition, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && itemRef.current !== __motionRef.current) {
+      itemRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   const handleToggle = React.useCallback(() => {
     if (disabled) {

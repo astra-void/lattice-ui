@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderRangeProps } from "./types";
@@ -16,11 +15,11 @@ export function SliderRange(props: SliderRangeProps) {
   const rangePosition =
     sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 0) : UDim2.fromScale(0, 1 - percent);
 
-  const transition = React.useMemo<MotionTransition>(() => {
+  const transition = React.useMemo(() => {
     return {
-      enter: {
+      entering: {
         tweenInfo: sliderContext.isDragging ? undefined : RANGE_TWEEN_INFO,
-        to: {
+        goals: {
           Position: rangePosition,
           Size: rangeSize,
         },
@@ -38,10 +37,12 @@ export function SliderRange(props: SliderRangeProps) {
     rangeRef.current = instance;
   }, []);
 
-  useMotionTween(rangeRef as React.MutableRefObject<Instance | undefined>, {
-    active: true,
-    transition,
-  });
+  const __motionRef = useStateMotion(true, transition, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && rangeRef.current !== __motionRef.current) {
+      rangeRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   const staticPosition = sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 0) : UDim2.fromScale(0, 1);
   const staticSize = sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 1) : UDim2.fromScale(1, 0);

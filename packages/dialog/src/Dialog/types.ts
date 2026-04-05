@@ -1,5 +1,4 @@
-﻿import type { MotionTransition } from "@lattice-ui/motion";
-import type { LayerInteractEvent } from "@lattice-ui/layer";
+﻿import type { LayerInteractEvent } from "@lattice-ui/layer";
 import type React from "@rbxts/react";
 
 export type DialogSetOpen = (open: boolean) => void;
@@ -34,13 +33,11 @@ export type DialogPortalProps = {
 export type DialogOverlayProps = {
   asChild?: boolean;
   forceMount?: boolean;
-  transition?: MotionTransition | false;
   children?: React.ReactElement;
 };
 
 export type DialogContentProps = {
   forceMount?: boolean;
-  transition?: MotionTransition | false;
   trapFocus?: boolean;
   restoreFocus?: boolean;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;

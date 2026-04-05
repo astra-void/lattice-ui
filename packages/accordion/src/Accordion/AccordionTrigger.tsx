@@ -1,10 +1,7 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildColorTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import { useAccordionContext, useAccordionItemContext } from "./context";
 import type { AccordionTriggerProps } from "./types";
-
-const transition = buildColorTransition(Color3.fromRGB(59, 66, 84), Color3.fromRGB(41, 48, 63));
 
 export function AccordionTrigger(props: AccordionTriggerProps) {
   const accordionContext = useAccordionContext();
@@ -13,10 +10,12 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
 
   const triggerRef = React.useRef<TextButton>();
 
-  useMotionTween(triggerRef as React.MutableRefObject<Instance | undefined>, {
-    active: itemContext.open,
-    transition,
-  });
+  const __motionRef = useStateMotion(itemContext.open, {} as unknown, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && triggerRef.current !== __motionRef.current) {
+      triggerRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {

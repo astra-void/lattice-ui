@@ -1,6 +1,5 @@
 import { React, Slot, useControllableState } from "@lattice-ui/core";
-import { buildColorTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import { CheckboxContextProvider } from "./context";
 import type { CheckboxProps, CheckedState } from "./types";
 
@@ -11,8 +10,6 @@ function getNextCheckedState(checked: CheckedState) {
 
   return !checked;
 }
-
-const transition = buildColorTransition(Color3.fromRGB(88, 142, 255), Color3.fromRGB(59, 66, 84));
 
 export function CheckboxRoot(props: CheckboxProps) {
   const [checked, setCheckedState] = useControllableState<CheckedState>({
@@ -25,10 +22,12 @@ export function CheckboxRoot(props: CheckboxProps) {
   const required = props.required === true;
   const rootRef = React.useRef<TextButton>();
 
-  useMotionTween(rootRef as React.MutableRefObject<Instance | undefined>, {
-    active: checked !== false,
-    transition,
-  });
+  const __motionRef = useStateMotion(checked !== false, {} as unknown, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && rootRef.current !== __motionRef.current) {
+      rootRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   const setChecked = React.useCallback(
     (nextChecked: CheckedState) => {

@@ -1,11 +1,10 @@
 ﻿import { React, Slot } from "@lattice-ui/core";
-import { type MotionTransition } from "@lattice-ui/motion";
-import { mergeMotionTransition, useMotionTween } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import type { ToastRootProps } from "./types";
 
 const TOAST_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
 
-function buildToastTransition(): MotionTransition {
+function buildToastTransition(): unknown {
   return {
     enter: {
       tweenInfo: TOAST_TWEEN_INFO,
@@ -29,13 +28,15 @@ export function ToastRoot(props: ToastRootProps) {
   const visible = props.visible ?? true;
   const rootRef = React.useRef<Frame>();
   const motionTransition = React.useMemo(() => {
-    return mergeMotionTransition(buildToastTransition(), props.transition);
+    return buildToastTransition();
   }, [props.transition]);
 
-  useMotionTween(rootRef as React.MutableRefObject<Instance | undefined>, {
-    active: visible,
-    transition: motionTransition,
-  });
+  const __motionRef = useStateMotion(visible, motionTransition as unknown, false);
+  React.useLayoutEffect(() => {
+    if (__motionRef.current && rootRef.current !== __motionRef.current) {
+      rootRef.current = __motionRef.current as unknown;
+    }
+  }, [__motionRef]);
 
   if (props.asChild) {
     const child = props.children;

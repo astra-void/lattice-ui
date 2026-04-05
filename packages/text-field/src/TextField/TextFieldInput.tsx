@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
 import { useTextFieldContext } from "./context";
 import type { TextFieldInputProps } from "./types";
 
@@ -23,20 +22,16 @@ export function TextFieldInput(props: TextFieldInputProps) {
   const readOnly = textFieldContext.readOnly || props.readOnly === true;
   const [focused, setFocused] = React.useState(false);
 
-  const localRef = React.useRef<TextBox>();
+  const active = focused && !disabled && !readOnly;
+  const localRef = useStateMotion(active, transition as unknown, true) as React.MutableRefObject<TextBox | undefined>;
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
       localRef.current = toTextBox(instance);
       textFieldContext.inputRef.current = toTextBox(instance);
     },
-    [textFieldContext.inputRef],
+    [textFieldContext.inputRef, localRef],
   );
-
-  useMotionTween(localRef as React.MutableRefObject<Instance | undefined>, {
-    active: focused && !disabled && !readOnly,
-    transition,
-  });
 
   const handleTextChanged = React.useCallback(
     (textBox: TextBox) => {

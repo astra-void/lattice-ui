@@ -47,8 +47,8 @@ export function DialogModalBlockScene() {
         </Dialog.Trigger>
 
         <Dialog.Portal>
+          <Dialog.Overlay />
           <Dialog.Content>
-            <Dialog.Overlay />
             <frame
               AnchorPoint={new Vector2(0.5, 0.5)}
               BackgroundColor3={Color3.fromRGB(30, 39, 54)}
