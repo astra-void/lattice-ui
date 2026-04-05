@@ -70,12 +70,12 @@ function SelectContentImpl(props: SelectContentImplProps) {
   }, [popper.placement, props.transition]);
 
   useMotionTween(selectContext.contentRef as React.MutableRefObject<Instance | undefined>, {
-    active: props.present,
+    active: props.present && popper.isPositioned,
     onExitComplete: props.onExitComplete,
     transition: motionTransition,
   });
 
-  const isActuallyVisible = props.visible && popper.isPositioned;
+  const isActuallyVisible = props.visible;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -85,12 +85,7 @@ function SelectContentImpl(props: SelectContentImplProps) {
       }
 
       return (
-        <Slot
-          AnchorPoint={popper.anchorPoint}
-          Position={UDim2.fromOffset(0, 0)}
-          Visible={isActuallyVisible}
-          ref={setContentRef}
-        >
+        <Slot AnchorPoint={popper.anchorPoint} Visible={isActuallyVisible} ref={setContentRef}>
           {child}
         </Slot>
       );
@@ -101,7 +96,6 @@ function SelectContentImpl(props: SelectContentImplProps) {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
       Visible={isActuallyVisible}
       ref={setContentRef}
@@ -119,7 +113,12 @@ function SelectContentImpl(props: SelectContentImplProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+      <frame
+        BackgroundTransparency={1}
+        BorderSizePixel={0}
+        Position={popper.isPositioned ? popper.position : UDim2.fromOffset(-9999, -9999)}
+        Size={UDim2.fromOffset(0, 0)}
+      >
         {contentNode}
       </frame>
     </DismissableLayer>
