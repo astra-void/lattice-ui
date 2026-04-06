@@ -13,6 +13,54 @@ function findTextBox(root: Instance) {
   return matched;
 }
 
+type ComboboxRenderOptions = {
+  defaultInputValue?: string;
+  defaultOpen?: boolean;
+  defaultValue?: string;
+  forceMount?: boolean;
+  markerText: string;
+  open?: boolean;
+  value?: string;
+};
+
+function renderComboboxTree(options: ComboboxRenderOptions, playerGui: PlayerGui) {
+  return (
+    <PortalProvider container={playerGui}>
+      <Combobox.Root
+        defaultInputValue={options.defaultInputValue}
+        defaultOpen={options.defaultOpen}
+        defaultValue={options.defaultValue}
+        open={options.open}
+        value={options.value}
+      >
+        <Combobox.Trigger asChild>
+          <textbutton Text="combobox-trigger" />
+        </Combobox.Trigger>
+        <Combobox.Input asChild>
+          <textbox />
+        </Combobox.Input>
+        <Combobox.Value asChild>
+          <textlabel />
+        </Combobox.Value>
+
+        <Combobox.Portal>
+          <Combobox.Content asChild forceMount={options.forceMount === true}>
+            <frame>
+              <Combobox.Item asChild textValue="Alpha Option" value="alpha">
+                <textbutton Text="combobox-item-alpha" />
+              </Combobox.Item>
+              <Combobox.Item asChild textValue="Beta Option" value="beta">
+                <textbutton Text="combobox-item-beta" />
+              </Combobox.Item>
+              <textlabel Text={options.markerText} />
+            </frame>
+          </Combobox.Content>
+        </Combobox.Portal>
+      </Combobox.Root>
+    </PortalProvider>
+  );
+}
+
 type ControlledComboboxSelectionHarnessProps = {
   commitSelection: boolean;
   openChanges: Array<boolean>;
@@ -157,6 +205,72 @@ export = () => {
 
         const valueLabel = findTextLabelByText(harness.container, "Beta Option");
         assert(valueLabel !== undefined, "ComboboxValue should resolve selected item text.");
+      });
+    });
+
+    it("mounts into portal and becomes visible when open=true", () => {
+      withReactHarness("ComboboxOpenVisible", (harness) => {
+        harness.render(
+          renderComboboxTree(
+            {
+              open: true,
+              forceMount: false,
+              markerText: "combobox-marker-open-visible",
+            },
+            harness.playerGui,
+          ),
+        );
+
+        waitForEffects(4);
+        const marker = findTextLabelByText(harness.playerGui, "combobox-marker-open-visible");
+        assert(marker !== undefined, "Combobox content should mount when open is true.");
+
+        const contentFrame = marker.Parent;
+        assert(contentFrame !== undefined && contentFrame.IsA("GuiObject"), "Marker parent should be a GuiObject.");
+        assert(contentFrame.Visible === true, "ComboboxContent should be visible when open is true.");
+      });
+    });
+
+    it("mounts content after transitioning from closed to open", () => {
+      withReactHarness("ComboboxOpenTransitionVisible", (harness) => {
+        harness.render(
+          renderComboboxTree(
+            {
+              open: false,
+              forceMount: false,
+              markerText: "combobox-marker-transition",
+            },
+            harness.playerGui,
+          ),
+        );
+
+        waitForEffects();
+        assert(
+          findTextLabelByText(harness.playerGui, "combobox-marker-transition") === undefined,
+          "Closed ComboboxContent should start unmounted before the open transition.",
+        );
+
+        harness.render(
+          renderComboboxTree(
+            {
+              open: true,
+              forceMount: false,
+              markerText: "combobox-marker-transition",
+            },
+            harness.playerGui,
+          ),
+        );
+
+        waitForEffects(4);
+        const marker = findTextLabelByText(harness.playerGui, "combobox-marker-transition");
+        assert(marker !== undefined, "Combobox content should mount after open becomes true.");
+
+        const contentFrame = marker.Parent;
+        assert(
+          contentFrame !== undefined && contentFrame.IsA("GuiObject"),
+          "Transitioned ComboboxContent marker parent should be a GuiObject.",
+        );
+        assert(contentFrame.Visible === true, "Transitioned ComboboxContent should become visible after opening.");
       });
     });
 

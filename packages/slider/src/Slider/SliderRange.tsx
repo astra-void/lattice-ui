@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import type { MotionConfig } from "@lattice-ui/motion";
 import { useStateMotion } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
@@ -24,7 +25,14 @@ export function SliderRange(props: SliderRangeProps) {
           Size: rangeSize,
         },
       },
-    };
+      entered: {
+        tweenInfo: sliderContext.isDragging ? undefined : RANGE_TWEEN_INFO,
+        goals: {
+          Position: rangePosition,
+          Size: rangeSize,
+        },
+      },
+    } satisfies MotionConfig;
   }, [rangePosition, rangeSize, sliderContext.isDragging]);
   const motionRef = useStateMotion<Frame>(true, transition, false);
 

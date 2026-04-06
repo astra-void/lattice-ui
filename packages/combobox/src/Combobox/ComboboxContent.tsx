@@ -28,12 +28,8 @@ export function ComboboxContent(props: ComboboxContentProps) {
     enabled: open,
   });
 
-  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(
-    open && popper.isPositioned,
-    popper.placement,
-    CONTENT_OFFSET,
-    true,
-  );
+  const motionPresent = open && popper.isPositioned;
+  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(motionPresent, popper.placement, CONTENT_OFFSET, true);
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -49,11 +45,13 @@ export function ComboboxContent(props: ComboboxContentProps) {
     comboboxContext.setOpen(false);
   }, [comboboxContext]);
 
-  if (!isPresent && !forceMount) {
+  const shouldMount = forceMount || open || isPresent;
+
+  if (!shouldMount) {
     return undefined;
   }
 
-  const isActuallyVisible = popper.isPositioned;
+  const isActuallyVisible = open || (isPresent && popper.isPositioned);
 
   const contentNode = props.asChild ? (
     (() => {

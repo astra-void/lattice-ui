@@ -75,6 +75,44 @@ export = () => {
       });
     });
 
+    it("keeps the same horizontal thumb and range mounted while syncing repeated controlled updates", () => {
+      withReactHarness("SliderHorizontalControlledMotion", (harness) => {
+        harness.render(renderSlider("horizontal", 10, "slider-range-h-sync", "slider-thumb-h-sync"));
+
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const initialRange = findRangeFrame(harness.container, "slider-range-h-sync");
+        const initialThumb = findTextButtonByText(harness.container, "slider-thumb-h-sync");
+        assert(initialRange !== undefined, "Horizontal sync test should mount the range.");
+        assert(initialThumb !== undefined, "Horizontal sync test should mount the thumb.");
+        assert(approx(initialRange.Size.X.Scale, 0.1), "Horizontal slider range should start at 10% width.");
+        assert(approx(initialThumb.Position.X.Scale, 0.1), "Horizontal slider thumb should start at 10%.");
+
+        harness.render(renderSlider("horizontal", 85, "slider-range-h-sync", "slider-thumb-h-sync"));
+
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const updatedRange = findRangeFrame(harness.container, "slider-range-h-sync");
+        const updatedThumb = findTextButtonByText(harness.container, "slider-thumb-h-sync");
+        assert(updatedRange !== undefined, "Horizontal sync test should keep the range mounted after rerender.");
+        assert(updatedThumb !== undefined, "Horizontal sync test should keep the thumb mounted after rerender.");
+        assert(updatedRange === initialRange, "Horizontal slider range should update on the mounted instance.");
+        assert(updatedThumb === initialThumb, "Horizontal slider thumb should update on the mounted instance.");
+        assert(
+          approx(updatedRange.Size.X.Scale, 0.85),
+          "Horizontal slider range should follow repeated controlled updates.",
+        );
+        assert(
+          approx(updatedThumb.Position.X.Scale, 0.85),
+          "Horizontal slider thumb should follow repeated controlled updates.",
+        );
+      });
+    });
+
     it("maps vertical value to range and thumb from bottom to top", () => {
       withReactHarness("SliderVertical", (harness) => {
         harness.render(renderSlider("vertical", 25, "slider-range-v", "slider-thumb-v"));
@@ -93,6 +131,55 @@ export = () => {
           "Vertical slider range should start at 75% (fill from bottom).",
         );
         assert(approx(thumb.Position.Y.Scale, 0.75), "Vertical slider thumb should be positioned at 75% for value=25.");
+      });
+    });
+
+    it("keeps the same vertical thumb and range mounted while syncing repeated controlled updates", () => {
+      withReactHarness("SliderVerticalControlledMotion", (harness) => {
+        harness.render(renderSlider("vertical", 20, "slider-range-v-sync", "slider-thumb-v-sync"));
+
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const initialRange = findRangeFrame(harness.container, "slider-range-v-sync");
+        const initialThumb = findTextButtonByText(harness.container, "slider-thumb-v-sync");
+        assert(initialRange !== undefined, "Vertical sync test should mount the range.");
+        assert(initialThumb !== undefined, "Vertical sync test should mount the thumb.");
+        assert(approx(initialRange.Size.Y.Scale, 0.2), "Vertical slider range should start at 20% height.");
+        assert(
+          approx(initialRange.Position.Y.Scale, 0.8),
+          "Vertical slider range should start at the 20% value offset.",
+        );
+        assert(
+          approx(initialThumb.Position.Y.Scale, 0.8),
+          "Vertical slider thumb should start at the 20% value offset.",
+        );
+
+        harness.render(renderSlider("vertical", 70, "slider-range-v-sync", "slider-thumb-v-sync"));
+
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const updatedRange = findRangeFrame(harness.container, "slider-range-v-sync");
+        const updatedThumb = findTextButtonByText(harness.container, "slider-thumb-v-sync");
+        assert(updatedRange !== undefined, "Vertical sync test should keep the range mounted after rerender.");
+        assert(updatedThumb !== undefined, "Vertical sync test should keep the thumb mounted after rerender.");
+        assert(updatedRange === initialRange, "Vertical slider range should update on the mounted instance.");
+        assert(updatedThumb === initialThumb, "Vertical slider thumb should update on the mounted instance.");
+        assert(
+          approx(updatedRange.Size.Y.Scale, 0.7),
+          "Vertical slider range should follow repeated controlled updates.",
+        );
+        assert(
+          approx(updatedRange.Position.Y.Scale, 0.3),
+          "Vertical slider range should keep filling from the bottom.",
+        );
+        assert(
+          approx(updatedThumb.Position.Y.Scale, 0.3),
+          "Vertical slider thumb should follow repeated controlled updates.",
+        );
       });
     });
 

@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import type { MotionConfig } from "@lattice-ui/motion";
 import { useStateMotion } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
@@ -28,16 +29,20 @@ export function SliderThumb(props: SliderThumbProps) {
           Position: position,
         },
       },
-    };
+      entered: {
+        tweenInfo: sliderContext.isDragging ? undefined : THUMB_TWEEN_INFO,
+        goals: {
+          Position: position,
+        },
+      },
+    } satisfies MotionConfig;
   }, [position, sliderContext.isDragging]);
 
-  const thumbRef = React.useRef<GuiObject>();
   const motionRef = useStateMotion<GuiObject>(true, transition, false);
 
   const setNodeRef = React.useCallback(
     (instance: Instance | undefined) => {
       const nextThumb = !instance || !instance.IsA("GuiObject") ? undefined : instance;
-      thumbRef.current = nextThumb;
       motionRef.current = nextThumb;
       sliderContext.setThumbNode(nextThumb);
     },

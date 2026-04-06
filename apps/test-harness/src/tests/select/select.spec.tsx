@@ -113,6 +113,49 @@ export = () => {
       });
     });
 
+    it("mounts content after transitioning from closed to open", () => {
+      withReactHarness("SelectOpenTransitionVisible", (harness) => {
+        harness.render(
+          renderSelectTree(
+            {
+              open: false,
+              forceMount: false,
+              markerText: "select-marker-transition",
+            },
+            harness.playerGui,
+          ),
+        );
+
+        waitForEffects();
+        assert(
+          findTextLabelByText(harness.playerGui, "select-marker-transition") === undefined,
+          "Closed SelectContent should start unmounted before the open transition.",
+        );
+
+        harness.render(
+          renderSelectTree(
+            {
+              open: true,
+              forceMount: false,
+              markerText: "select-marker-transition",
+            },
+            harness.playerGui,
+          ),
+        );
+
+        waitForEffects(4);
+        const marker = findTextLabelByText(harness.playerGui, "select-marker-transition");
+        assert(marker !== undefined, "Select content should mount after open becomes true.");
+
+        const contentFrame = marker.Parent;
+        assert(
+          contentFrame !== undefined && contentFrame.IsA("GuiObject"),
+          "Transitioned SelectContent marker parent should be a GuiObject.",
+        );
+        assert(contentFrame.Visible === true, "Transitioned SelectContent should become visible after opening.");
+      });
+    });
+
     it("does not mount content while closed without forceMount", () => {
       withReactHarness("SelectClosed", (harness) => {
         harness.render(

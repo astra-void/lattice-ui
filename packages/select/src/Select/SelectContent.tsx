@@ -29,12 +29,8 @@ export function SelectContent(props: SelectContentProps) {
     enabled: open,
   });
 
-  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(
-    open && popper.isPositioned,
-    popper.placement,
-    CONTENT_OFFSET,
-    true,
-  );
+  const motionPresent = open && popper.isPositioned;
+  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(motionPresent, popper.placement, CONTENT_OFFSET, true);
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -50,11 +46,13 @@ export function SelectContent(props: SelectContentProps) {
     selectContext.setOpen(false);
   }, [selectContext.setOpen]);
 
-  if (!isPresent && !forceMount) {
+  const shouldMount = forceMount || open || isPresent;
+
+  if (!shouldMount) {
     return undefined;
   }
 
-  const isActuallyVisible = popper.isPositioned;
+  const isActuallyVisible = open || (isPresent && popper.isPositioned);
 
   const contentNode = props.asChild ? (
     (() => {

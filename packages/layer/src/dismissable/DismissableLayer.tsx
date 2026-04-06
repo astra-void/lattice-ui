@@ -25,6 +25,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
   const [stackOrder, setStackOrder] = React.useState(0);
 
   const enabledRef = useLatest(enabled);
+  const contentBoundaryRef = useLatest(props.contentBoundaryRef);
   const insideRefsRef = useLatest(props.insideRefs ?? []);
   const onDismissRef = useLatest(props.onDismiss);
   const onPointerDownOutsideRef = useLatest(props.onPointerDownOutside);
@@ -46,13 +47,14 @@ export function DismissableLayer(props: DismissableLayerProps) {
     const registration = registerLayer({
       getEnabled: () => enabledRef.current,
       isPointerOutside: (inputObject) => {
-        const contentWrapper = contentWrapperRef.current;
-        if (!contentWrapper) {
+        const boundaryRef = contentBoundaryRef.current;
+        const contentBoundary = boundaryRef ? boundaryRef.current : contentWrapperRef.current;
+        if (!contentBoundary) {
           return false;
         }
 
         const insideRoots = insideRefsRef.current.map((ref) => ref.current);
-        return isOutsidePointerEvent(inputObject, portalContext.container, contentWrapper, {
+        return isOutsidePointerEvent(inputObject, portalContext.container, contentBoundary, {
           insideRoots,
           layerIgnoresGuiInset,
         });
@@ -72,6 +74,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
     callInteractOutside,
     callPointerDownOutside,
     enabledRef,
+    contentBoundaryRef,
     insideRefsRef,
     layerIgnoresGuiInset,
     portalContext.container,

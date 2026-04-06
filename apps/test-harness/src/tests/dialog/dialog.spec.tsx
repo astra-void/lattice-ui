@@ -2,6 +2,7 @@ import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
 import { type MotionConfig } from "@lattice-ui/motion";
+import { isOutsidePointerEvent } from "../../../../../packages/layer/src/dismissable/events";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
@@ -29,6 +30,12 @@ function requireGuiObjectParent(instance: Instance | undefined, message: string)
 
 function assertWithinTolerance(actual: number, expected: number, tolerance: number, message: string) {
   assert(math.abs(actual - expected) <= tolerance, `${message} (expected ${expected}, got ${actual})`);
+}
+
+function createPointerInput(x: number, y: number) {
+  return {
+    Position: new Vector3(x, y, 0),
+  } as InputObject;
 }
 
 function buildSlowDialogTransition(): MotionConfig {
@@ -90,6 +97,50 @@ export = () => {
         waitForEffects();
         const content = findTextLabelByText(harness.playerGui, "dialog-open-marker");
         assert(content !== undefined, "DialogContent should mount when defaultOpen is true.");
+      });
+    });
+
+    it("keeps outside hit testing scoped to the dialog surface instead of the full-screen layout host", () => {
+      withReactHarness("DialogOutsideHitBoundary", (harness) => {
+        const panelRef = React.createRef<Frame>();
+
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <Dialog.Root defaultOpen={true}>
+              <Dialog.Portal>
+                <Dialog.Content>
+                  <frame Position={UDim2.fromOffset(80, 64)} Size={UDim2.fromOffset(180, 120)} ref={panelRef} />
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+          </PortalProvider>,
+        );
+
+        waitForEffects(2);
+
+        const panel = panelRef.current;
+        assert(
+          panel !== undefined,
+          "Dialog panel should mount so the outside-hit boundary can be evaluated against the actual surface.",
+        );
+
+        const layoutHost = requireGuiObjectParent(
+          panel,
+          "Dialog panel should remain under the full-screen layout host for layout and motion.",
+        );
+        const outsidePoint = createPointerInput(
+          panel.AbsolutePosition.X + panel.AbsoluteSize.X + 24,
+          panel.AbsolutePosition.Y + 12,
+        );
+
+        assert(
+          !isOutsidePointerEvent(outsidePoint, harness.playerGui, layoutHost, { layerIgnoresGuiInset: true }),
+          "The full-screen layout host reproduces the regression by swallowing outside hits as inside.",
+        );
+        assert(
+          isOutsidePointerEvent(outsidePoint, harness.playerGui, panel, { layerIgnoresGuiInset: true }),
+          "The actual dialog surface should classify points outside the panel as outside interactions.",
+        );
       });
     });
 

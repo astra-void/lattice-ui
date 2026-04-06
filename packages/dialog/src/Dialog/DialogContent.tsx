@@ -5,6 +5,15 @@ import { getSurfaceRecipe, type MotionConfig, useMotionController, useMotionPres
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
+function toGuiObject(instance: Instance | undefined) {
+  const candidate = instance as Instance & { IsA?: (className: string) => boolean };
+  if (!instance || !candidate.IsA || !candidate.IsA("GuiObject")) {
+    return undefined;
+  }
+
+  return candidate;
+}
+
 function mergeMotionConfig(baseConfig: MotionConfig, overrideConfig?: MotionConfig): MotionConfig {
   if (!overrideConfig) {
     return baseConfig;
@@ -25,11 +34,17 @@ export function DialogContent(props: DialogContentProps) {
 
   const { phase, isPresent, markPhaseComplete } = useMotionPresence({ present: open, appear: true });
   const motionRef = React.useRef<Instance>();
+  const contentBoundaryRef = React.useRef<GuiObject>();
   const motionConfig = React.useMemo(() => {
     return mergeMotionConfig(getSurfaceRecipe(), props.transition);
   }, [props.transition]);
 
   useMotionController(motionRef, motionConfig, phase, markPhaseComplete);
+
+  const setContentRef = React.useCallback((instance: Instance | undefined) => {
+    motionRef.current = instance;
+    contentBoundaryRef.current = toGuiObject(instance);
+  }, []);
 
   const handleDismiss = React.useCallback(() => {
     dialogContext.setOpen(false);
@@ -41,6 +56,7 @@ export function DialogContent(props: DialogContentProps) {
 
   return (
     <DismissableLayer
+      contentBoundaryRef={contentBoundaryRef}
       enabled={open}
       modal={dialogContext.modal}
       onDismiss={handleDismiss}
@@ -49,7 +65,7 @@ export function DialogContent(props: DialogContentProps) {
     >
       <FocusScope active={open} restoreFocus={restoreFocus} trapped={trapFocus}>
         <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)} ZIndex={10}>
-          <Slot ref={motionRef as React.MutableRefObject<Instance>}>{props.children}</Slot>
+          <Slot ref={setContentRef}>{props.children}</Slot>
         </frame>
       </FocusScope>
     </DismissableLayer>
