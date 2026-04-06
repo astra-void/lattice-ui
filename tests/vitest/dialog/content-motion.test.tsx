@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // @ts-nocheck
 
-import { act, render } from "@testing-library/react";
+import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -164,11 +164,12 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   vi.clearAllMocks();
 });
 
 describe("Dialog.Content motion regressions", () => {
-  it("honors transition overrides on the real rendered node and waits for exit completion before unmounting", () => {
+  it("honors transition overrides on the dialog-owned motion host and waits for exit completion before unmounting", () => {
     const customTransition: MotionConfig = {
       exiting: {
         tweenInfo: new MockTweenInfo(0.2, "Quad", "In") as unknown as TweenInfo,
@@ -187,7 +188,9 @@ describe("Dialog.Content motion regressions", () => {
     );
 
     const content = getByTestId("content");
-    expect(tweenService.createdTweens[0]?.instance).toBe(content);
+    const motionHost = content.parentElement;
+    expect(motionHost?.tagName.toLowerCase()).toBe("canvasgroup");
+    expect(tweenService.createdTweens[0]?.instance).toBe(motionHost);
 
     rerender(
       <Dialog.Root open={false}>
@@ -198,7 +201,7 @@ describe("Dialog.Content motion regressions", () => {
     );
 
     expect(queryByTestId("content")).not.toBeNull();
-    expect(tweenService.createdTweens[1]?.instance).toBe(content);
+    expect(tweenService.createdTweens[1]?.instance).toBe(motionHost);
     expect(tweenService.createdTweens[1]?.goals.BackgroundTransparency).toBe(0.85);
 
     act(() => {

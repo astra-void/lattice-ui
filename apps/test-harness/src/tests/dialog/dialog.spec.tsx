@@ -28,6 +28,12 @@ function requireGuiObjectParent(instance: Instance | undefined, message: string)
   return parent as GuiObject;
 }
 
+function requireCanvasGroupParent(instance: Instance | undefined, message: string) {
+  const parent = instance?.Parent;
+  assert(parent !== undefined && parent.IsA("CanvasGroup"), message);
+  return parent as CanvasGroup;
+}
+
 function assertWithinTolerance(actual: number, expected: number, tolerance: number, message: string) {
   assert(math.abs(actual - expected) <= tolerance, `${message} (expected ${expected}, got ${actual})`);
 }
@@ -100,6 +106,64 @@ export = () => {
       });
     });
 
+    it("renders normal Frame children inside a dialog-owned motion host without crashing", () => {
+      withReactHarness("DialogFrameChildMotionHost", (harness) => {
+        const panelRef = React.createRef<Frame>();
+
+        harness.render(
+          <PortalProvider container={harness.playerGui}>
+            <Dialog.Root defaultOpen={true}>
+              <Dialog.Portal>
+                <Dialog.Content>
+                  <frame Position={UDim2.fromOffset(72, 56)} Size={UDim2.fromOffset(180, 120)} ref={panelRef} />
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+          </PortalProvider>,
+        );
+
+        waitForEffects(2);
+
+        const panel = panelRef.current;
+        assert(panel !== undefined, "Normal Frame dialog content should mount without crashing.");
+
+        const motionHost = requireCanvasGroupParent(
+          panel,
+          "Dialog should wrap normal Frame content in a dialog-owned CanvasGroup motion host.",
+        );
+        const layoutHost = requireGuiObjectParent(
+          motionHost,
+          "Dialog motion host should remain under the full-screen layout host used for dialog layout.",
+        );
+        const viewportSize = getViewportSize();
+
+        assertWithinTolerance(
+          motionHost.AbsoluteSize.X,
+          viewportSize.X,
+          1,
+          "Dialog motion host should stay full-screen.",
+        );
+        assertWithinTolerance(
+          motionHost.AbsoluteSize.Y,
+          viewportSize.Y,
+          1,
+          "Dialog motion host should stay full-screen.",
+        );
+        assertWithinTolerance(
+          layoutHost.AbsoluteSize.X,
+          viewportSize.X,
+          1,
+          "Dialog layout host should stay full-screen.",
+        );
+        assertWithinTolerance(
+          layoutHost.AbsoluteSize.Y,
+          viewportSize.Y,
+          1,
+          "Dialog layout host should stay full-screen.",
+        );
+      });
+    });
+
     it("keeps outside hit testing scoped to the dialog surface instead of the full-screen layout host", () => {
       withReactHarness("DialogOutsideHitBoundary", (harness) => {
         const panelRef = React.createRef<Frame>();
@@ -124,9 +188,13 @@ export = () => {
           "Dialog panel should mount so the outside-hit boundary can be evaluated against the actual surface.",
         );
 
-        const layoutHost = requireGuiObjectParent(
+        const motionHost = requireCanvasGroupParent(
           panel,
-          "Dialog panel should remain under the full-screen layout host for layout and motion.",
+          "Dialog panel should render inside the dialog-owned CanvasGroup motion host.",
+        );
+        const layoutHost = requireGuiObjectParent(
+          motionHost,
+          "Dialog motion host should remain under the full-screen layout host for layout and motion.",
         );
         const outsidePoint = createPointerInput(
           panel.AbsolutePosition.X + panel.AbsoluteSize.X + 24,
@@ -136,6 +204,10 @@ export = () => {
         assert(
           !isOutsidePointerEvent(outsidePoint, harness.playerGui, layoutHost, { layerIgnoresGuiInset: true }),
           "The full-screen layout host reproduces the regression by swallowing outside hits as inside.",
+        );
+        assert(
+          !isOutsidePointerEvent(outsidePoint, harness.playerGui, motionHost, { layerIgnoresGuiInset: true }),
+          "The dialog-owned full-screen motion host should also not be used as the outside-hit boundary.",
         );
         assert(
           isOutsidePointerEvent(outsidePoint, harness.playerGui, panel, { layerIgnoresGuiInset: true }),
@@ -200,7 +272,16 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Dialog.Root open={open}>
               <Dialog.Portal>
-                <Dialog.Overlay asChild></Dialog.Overlay>
+                <Dialog.Overlay asChild>
+                  <textbutton
+                    BackgroundTransparency={1}
+                    Position={UDim2.fromScale(0, 0)}
+                    Size={UDim2.fromScale(1, 1)}
+                    Text="dialog-overlay-marker"
+                    TextTransparency={1}
+                    ref={overlayRef}
+                  />
+                </Dialog.Overlay>
                 <Dialog.Content forceMount={true} transition={transition}>
                   <frame
                     BackgroundTransparency={1}
@@ -221,12 +302,13 @@ export = () => {
 
         const openPanel = panelRef.current;
         assert(openPanel !== undefined, "Force-mounted dialog panel should mount while open.");
-        assert(openPanel.Position.Y.Offset === 32, "Force-mounted dialog panel should settle at its base position.");
-        assert(
-          requireGuiObjectParent(openPanel, "Force-mounted dialog panel should stay under the full-screen layout host.")
-            .Visible,
-          "Force-mounted dialog host should be visible while the dialog is open.",
+        const openMotionHost = requireCanvasGroupParent(
+          openPanel,
+          "Force-mounted dialog panel should stay inside the dialog-owned motion host while open.",
         );
+        assert(openPanel.Position.Y.Offset === 32, "Dialog panel layout should preserve the child's base position.");
+        assert(openMotionHost.Position.Y.Offset === 0, "Dialog motion host should settle back to its base position.");
+        assert(openMotionHost.Visible, "Force-mounted dialog motion host should be visible while the dialog is open.");
 
         harness.render(renderDialog(false));
         waitForEffects(2);
@@ -236,20 +318,25 @@ export = () => {
           exitingPanel !== undefined,
           "Force-mounted dialog panel should remain mounted while exit motion starts.",
         );
+        const exitingMotionHost = requireCanvasGroupParent(
+          exitingPanel,
+          "Force-mounted dialog panel should stay inside the motion host during exit.",
+        );
         assert(
-          requireGuiObjectParent(
-            exitingPanel,
-            "Force-mounted dialog panel should stay under the layout host during exit motion.",
-          ).Visible,
-          "Force-mounted dialog content should remain rendered while its exit motion runs.",
+          exitingMotionHost.Visible,
+          "Force-mounted dialog motion host should remain rendered while its exit motion runs.",
         );
 
         task.wait(0.05);
         waitForEffects(1);
 
         assert(
-          panelRef.current !== undefined && panelRef.current.Position.Y.Offset > 32,
-          "Force-mounted dialog panel should visibly move during close motion before hiding.",
+          panelRef.current !== undefined &&
+            requireCanvasGroupParent(
+              panelRef.current,
+              "Force-mounted dialog panel should stay inside the motion host during close motion.",
+            ).Position.Y.Offset > 0,
+          "Force-mounted dialog motion host should visibly move during close motion before hiding.",
         );
         assert(
           overlayRef.current !== undefined && overlayRef.current.Position.Y.Offset === 0,
@@ -266,8 +353,8 @@ export = () => {
         const hiddenPanel = panelRef.current;
         assert(hiddenPanel !== undefined, "Force-mounted dialog panel should stay mounted after closing.");
         assert(
-          !requireGuiObjectParent(hiddenPanel, "Force-mounted dialog host should still exist after close.").Visible,
-          "Force-mounted dialog content should hide only after the panel exit motion completes.",
+          !requireCanvasGroupParent(hiddenPanel, "Force-mounted dialog host should still exist after close.").Visible,
+          "Force-mounted dialog motion host should hide only after the panel exit motion completes.",
         );
         assert(
           overlayRef.current === undefined,
@@ -369,7 +456,16 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Dialog.Root open={open}>
               <Dialog.Portal>
-                <Dialog.Overlay asChild></Dialog.Overlay>
+                <Dialog.Overlay asChild>
+                  <textbutton
+                    BackgroundTransparency={1}
+                    Position={UDim2.fromScale(0, 0)}
+                    Size={UDim2.fromScale(1, 1)}
+                    Text="dialog-overlay-marker"
+                    TextTransparency={1}
+                    ref={overlayRef}
+                  />
+                </Dialog.Overlay>
                 <Dialog.Content transition={transition}>
                   <>
                     <frame
@@ -394,18 +490,30 @@ export = () => {
         assert(panel !== undefined, "Fragment-wrapped dialog panel should mount.");
         assert(overlay !== undefined, "Fragment-wrapped dialog overlay should mount.");
 
-        const layoutHost = requireGuiObjectParent(
+        const motionHost = requireCanvasGroupParent(
           panel,
-          "Dialog panel should remain under the full-screen layout host.",
+          "Fragment-wrapped dialog panel should render inside the dialog-owned CanvasGroup motion host.",
+        );
+        const layoutHost = requireGuiObjectParent(
+          motionHost,
+          "Dialog motion host should remain under the full-screen layout host.",
         );
         assert(layoutHost.Position.Y.Offset === 0, "Static dialog layout host should not receive content motion.");
         assertWithinTolerance(layoutHost.AbsoluteSize.X, viewportSize.X, 1, "Layout host should remain full-screen.");
         assertWithinTolerance(layoutHost.AbsoluteSize.Y, viewportSize.Y, 1, "Layout host should remain full-screen.");
         assert(
-          panel.AbsoluteSize.X < viewportSize.X && panel.AbsoluteSize.Y < viewportSize.Y,
-          "Dialog panel should remain a non-full-screen motion target.",
+          motionHost.AbsoluteSize.X === viewportSize.X && motionHost.AbsoluteSize.Y === viewportSize.Y,
+          "Dialog-owned motion host should preserve the full-screen layout space for child positioning.",
         );
-        assert(panel.Position.Y.Offset > 40, "Fragment-wrapped dialog panel should receive the open motion offset.");
+        assert(
+          panel.AbsoluteSize.X < viewportSize.X && panel.AbsoluteSize.Y < viewportSize.Y,
+          "User dialog panel should remain smaller than the full-screen motion/layout hosts.",
+        );
+        assert(
+          panel.Position.Y.Offset === 40,
+          "Fragment-wrapped dialog panel should preserve its local layout position.",
+        );
+        assert(motionHost.Position.Y.Offset > 0, "Dialog-owned motion host should receive the open motion offset.");
         assertWithinTolerance(
           overlay.AbsoluteSize.X,
           viewportSize.X,
@@ -423,8 +531,10 @@ export = () => {
         task.wait(0.45);
         waitForEffects(2);
         assert(
-          panelRef.current?.Position.Y.Offset === 40,
-          "Dialog panel should settle back to its base position after enter motion.",
+          panelRef.current !== undefined &&
+            requireCanvasGroupParent(panelRef.current, "Dialog panel should still be inside the motion host.").Position
+              .Y.Offset === 0,
+          "Dialog motion host should settle back to its base position after enter motion.",
         );
 
         harness.render(renderDialog(false));
@@ -439,8 +549,12 @@ export = () => {
         task.wait(0.05);
         waitForEffects(1);
         assert(
-          panelRef.current !== undefined && panelRef.current.Position.Y.Offset > 40,
-          "Dialog panel should continue moving during close motion.",
+          panelRef.current !== undefined &&
+            requireCanvasGroupParent(
+              panelRef.current,
+              "Dialog panel should stay inside the motion host during close motion.",
+            ).Position.Y.Offset > 0,
+          "Dialog motion host should continue moving during close motion.",
         );
         assert(
           overlayRef.current !== undefined && overlayRef.current.Position.Y.Offset === 0,
