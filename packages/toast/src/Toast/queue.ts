@@ -1,4 +1,4 @@
-﻿export type ToastRecord = {
+export type ToastRecord = {
   id: string;
   title?: string;
   description?: string;

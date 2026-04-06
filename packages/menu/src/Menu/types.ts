@@ -1,4 +1,5 @@
-﻿import type { LayerInteractEvent } from "@lattice-ui/layer";
+import type { MotionConfig } from "@lattice-ui/motion";
+import type { LayerInteractEvent } from "@lattice-ui/layer";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import type React from "@rbxts/react";
 
@@ -44,6 +45,7 @@ export type MenuPortalProps = {
 };
 
 export type MenuContentProps = {
+  transition?: MotionConfig;
   asChild?: boolean;
   forceMount?: boolean;
   placement?: PopperPlacement;

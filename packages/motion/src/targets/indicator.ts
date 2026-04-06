@@ -1,3 +1,3 @@
-﻿export function getIndicatorTargetProps(transparency: number) {
+export function getIndicatorTargetProps(transparency: number) {
   return { BackgroundTransparency: transparency };
 }

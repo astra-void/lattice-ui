@@ -1,5 +1,5 @@
-﻿import { MOTION_TIMINGS } from "./timings";
 import type { MotionConfig } from "../runtime/types";
+import { MOTION_TIMINGS } from "./timings";
 
 export function getAccordionRecipe(openHeight: number): MotionConfig {
   return {

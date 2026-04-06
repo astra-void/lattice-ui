@@ -1,8 +1,8 @@
-﻿import { React } from "@lattice-ui/core";
-import { type MotionConfig } from "./types";
-import { type MotionPhase } from "./motion-phase";
+import { React } from "@lattice-ui/core";
 import { applyMotionProperties } from "../targets/apply";
+import { type MotionPhase } from "./motion-phase";
 import { useMotionPolicy } from "./motion-policy";
+import { type MotionConfig } from "./types";
 
 const TweenService = game.GetService("TweenService");
 

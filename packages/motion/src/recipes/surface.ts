@@ -1,6 +1,6 @@
-﻿import { MOTION_TIMINGS } from "./timings";
-import { getSurfaceTargetProps } from "../targets/surface";
 import type { MotionConfig } from "../runtime/types";
+import { getSurfaceTargetProps } from "../targets/surface";
+import { MOTION_TIMINGS } from "./timings";
 
 export function getSurfaceRecipe(): MotionConfig {
   return {

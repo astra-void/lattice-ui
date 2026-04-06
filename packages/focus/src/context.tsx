@@ -1,5 +1,4 @@
-import { type React as ReactType } from "@lattice-ui/core";
-import { React } from "@lattice-ui/core";
+import { React, type React as ReactType } from "@lattice-ui/core";
 
 const FocusScopeIdContext = React.createContext<number | undefined>(undefined);
 const FocusLayerOrderContext = React.createContext<number | undefined>(undefined);

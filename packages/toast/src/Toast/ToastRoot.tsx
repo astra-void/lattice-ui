@@ -1,4 +1,4 @@
-﻿import { React, Slot } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
 import { useStateMotion } from "@lattice-ui/motion";
 import type { ToastRootProps } from "./types";
 
@@ -31,10 +31,10 @@ export function ToastRoot(props: ToastRootProps) {
     return buildToastTransition();
   }, [props.transition]);
 
-  const __motionRef = useStateMotion(visible, motionTransition as unknown, false);
+  const __motionRef = useStateMotion<Frame>(visible, motionTransition ?? {}, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && rootRef.current !== __motionRef.current) {
-      rootRef.current = __motionRef.current as unknown;
+      rootRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

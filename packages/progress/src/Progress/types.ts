@@ -1,3 +1,4 @@
+import type { MotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
 
 export type ProgressContextValue = {
@@ -17,6 +18,7 @@ export type ProgressProps = {
 };
 
 export type ProgressIndicatorProps = {
+  transition?: MotionConfig;
   asChild?: boolean;
   children?: React.ReactElement;
 };

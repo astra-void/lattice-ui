@@ -1,4 +1,4 @@
-﻿import { React, Slot } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
 import { useOverlayMotion } from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogOverlayProps } from "./types";

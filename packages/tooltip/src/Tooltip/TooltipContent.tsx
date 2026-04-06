@@ -1,6 +1,6 @@
-﻿import { React, Slot } from "@lattice-ui/core";
-import { usePopperSurfaceMotion } from "@lattice-ui/motion";
+import { React, Slot } from "@lattice-ui/core";
 import { DismissableLayer } from "@lattice-ui/layer";
+import { usePopperSurfaceMotion } from "@lattice-ui/motion";
 import { usePopper } from "@lattice-ui/popper";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";

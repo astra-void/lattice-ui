@@ -1,7 +1,7 @@
-﻿import { React } from "@lattice-ui/core";
-import { useMotionPresence } from "../runtime/motion-presence";
+import { React } from "@lattice-ui/core";
+import { getToggleOffsetRecipe, getToggleRecipe } from "../recipes/toggle";
 import { useMotionController } from "../runtime/motion-controller";
-import { getToggleRecipe, getToggleOffsetRecipe } from "../recipes/toggle";
+import { useMotionPresence } from "../runtime/motion-presence";
 
 export function useToggleMotion(present: boolean, onColor: Color3, offColor: Color3, appear: boolean = true) {
   const { phase, isPresent, markPhaseComplete } = useMotionPresence({ present, appear });

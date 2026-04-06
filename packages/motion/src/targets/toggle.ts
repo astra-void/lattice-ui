@@ -1,4 +1,4 @@
-﻿export function getToggleTargetProps(color: Color3) {
+export function getToggleTargetProps(color: Color3) {
   return { BackgroundColor3: color };
 }
 

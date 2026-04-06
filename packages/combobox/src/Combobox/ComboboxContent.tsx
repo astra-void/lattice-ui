@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
-import { usePopperSurfaceMotion } from "@lattice-ui/motion";
 import { DismissableLayer } from "@lattice-ui/layer";
+import { usePopperSurfaceMotion } from "@lattice-ui/motion";
 import { usePopper } from "@lattice-ui/popper";
 import { useComboboxContext } from "./context";
 import type { ComboboxContentProps } from "./types";

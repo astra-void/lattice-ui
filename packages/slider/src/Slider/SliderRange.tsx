@@ -37,10 +37,10 @@ export function SliderRange(props: SliderRangeProps) {
     rangeRef.current = instance;
   }, []);
 
-  const __motionRef = useStateMotion(true, transition, false);
+  const __motionRef = useStateMotion<GuiObject>(true, transition, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && rangeRef.current !== __motionRef.current) {
-      rangeRef.current = __motionRef.current as unknown;
+      rangeRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

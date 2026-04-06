@@ -1,3 +1,3 @@
-﻿export function getOverlayTargetProps(transparency: number) {
+export function getOverlayTargetProps(transparency: number) {
   return { BackgroundTransparency: transparency };
 }

@@ -1,4 +1,4 @@
-﻿import { React, Slot, useControllableState } from "@lattice-ui/core";
+import { React, Slot, useControllableState } from "@lattice-ui/core";
 import { useToggleMotion } from "@lattice-ui/motion";
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";

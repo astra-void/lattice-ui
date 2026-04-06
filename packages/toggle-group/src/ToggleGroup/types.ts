@@ -1,3 +1,4 @@
+import type { MotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
 
 export type ToggleGroupType = "single" | "multiple";
@@ -33,6 +34,7 @@ export type ToggleGroupContextValue = {
 };
 
 export type ToggleGroupItemProps = {
+  transition?: MotionConfig;
   value: string;
   disabled?: boolean;
   asChild?: boolean;

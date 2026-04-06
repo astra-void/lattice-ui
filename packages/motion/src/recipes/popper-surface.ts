@@ -1,6 +1,6 @@
-import { MOTION_TIMINGS } from "./timings";
 import type { MotionConfig } from "../runtime/types";
 import { getOffsetTargetProps } from "../targets/offset";
+import { MOTION_TIMINGS } from "./timings";
 
 export function getPopperSurfaceRecipe(placement: string, offsetDistance: number = 6): MotionConfig {
   return {

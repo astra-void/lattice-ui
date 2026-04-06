@@ -16,7 +16,9 @@
     "prebuild": "node ./scripts/ensure-hoisted-links.mjs",
     "prewatch": "node ./scripts/ensure-hoisted-links.mjs",
     "typecheck": "tsc -p tsconfig.typecheck.json",
-    "watch": "rbxtsc -p tsconfig.json -w"
+    "watch": "rbxtsc -p tsconfig.json -w",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
     "@rbxts/react": "17.3.7-ts.1",

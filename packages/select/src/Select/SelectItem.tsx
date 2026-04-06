@@ -22,7 +22,7 @@ export function SelectItem(props: SelectItemProps) {
   const [active, setActive] = React.useState(false);
   const itemRef = React.useRef<GuiObject>();
 
-  const __motionRef = useStateMotion(active && !disabled, transition, false);
+  const __motionRef = useStateMotion<GuiObject>(active && !disabled, transition, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && itemRef.current !== __motionRef.current) {
       itemRef.current = __motionRef.current as GuiObject;

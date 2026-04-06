@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
-import { useStateMotion } from "@lattice-ui/motion";
 import { useFocusNode } from "@lattice-ui/focus";
+import { useStateMotion } from "@lattice-ui/motion";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
 
@@ -54,10 +54,10 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     itemRef.current = instance;
   }, []);
 
-  const __motionRef = useStateMotion(checked, {} as unknown, false);
+  const __motionRef = useStateMotion<GuiObject>(checked, {}, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && itemRef.current !== __motionRef.current) {
-      itemRef.current = __motionRef.current as unknown;
+      itemRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

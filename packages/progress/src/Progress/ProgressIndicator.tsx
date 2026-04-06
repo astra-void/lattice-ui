@@ -1,5 +1,6 @@
 import { React } from "@lattice-ui/core";
 import { useStateMotion } from "@lattice-ui/motion";
+import type { MotionConfig } from "@lattice-ui/motion";
 import { useProgressContext } from "./context";
 import type { ProgressIndicatorProps } from "./types";
 
@@ -16,7 +17,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
 
   const widthScale = progressContext.indeterminate ? 0.35 : progressContext.ratio;
 
-  const indicatorRef = useStateMotion(
+  const indicatorRef = useStateMotion<Frame>(
     true,
     {
       entering: {
@@ -27,9 +28,9 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
         tweenInfo: INDICATOR_TWEEN_INFO,
         goals: { Size: UDim2.fromScale(widthScale, 1) },
       },
-    } as unknown,
-    true,
-  ) as React.MutableRefObject<Frame>;
+    } as MotionConfig,
+    false,
+  );
 
   if (props.asChild) {
     const child = props.children;

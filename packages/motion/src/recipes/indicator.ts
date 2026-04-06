@@ -1,6 +1,6 @@
-﻿import { MOTION_TIMINGS } from "./timings";
-import { getIndicatorTargetProps } from "../targets/indicator";
 import type { MotionConfig } from "../runtime/types";
+import { getIndicatorTargetProps } from "../targets/indicator";
+import { MOTION_TIMINGS } from "./timings";
 
 export function getIndicatorRecipe(): MotionConfig {
   return {

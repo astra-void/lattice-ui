@@ -1,4 +1,5 @@
-﻿import type React from "@rbxts/react";
+import type { MotionConfig } from "@lattice-ui/motion";
+import type React from "@rbxts/react";
 import type { ToastRecord } from "./queue";
 
 export type ToastOptions = {
@@ -38,6 +39,7 @@ export type ToastViewportProps = {
 };
 
 export type ToastRootProps = {
+  transition?: MotionConfig;
   asChild?: boolean;
   visible?: boolean;
   children?: React.ReactNode;

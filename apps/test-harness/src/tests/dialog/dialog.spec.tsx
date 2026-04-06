@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
-import { type MotionConfig } from "@lattice-ui/motion";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
+import { type MotionConfig } from "@lattice-ui/motion";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

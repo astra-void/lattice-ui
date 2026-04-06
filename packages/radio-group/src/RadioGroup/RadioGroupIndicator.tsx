@@ -1,7 +1,7 @@
 import { React, Slot } from "@lattice-ui/core";
-import { MOTION_PRESETS, useStateMotion } from "@lattice-ui/motion";
-import type { MotionConfig } from "@lattice-ui/motion";
 import { Presence } from "@lattice-ui/layer";
+import type { MotionConfig } from "@lattice-ui/motion";
+import { MOTION_PRESETS, useStateMotion } from "@lattice-ui/motion";
 import { useRadioGroupItemContext } from "./context";
 import type { RadioGroupIndicatorProps } from "./types";
 
@@ -43,7 +43,7 @@ function RadioGroupIndicatorImpl(props: {
 }) {
   const indicatorRef = React.useRef<Frame>();
 
-  const __motionRef = useStateMotion(props.visible, props.transition || ({} as MotionConfig), false);
+  const __motionRef = useStateMotion<Frame>(props.visible, props.transition || ({} as MotionConfig), false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && indicatorRef.current !== __motionRef.current) {
       indicatorRef.current = __motionRef.current as Frame;

@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
 import { useFocusNode } from "@lattice-ui/focus";
+import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
@@ -63,10 +63,10 @@ export function TabsTrigger(props: TabsTriggerProps) {
     triggerRef.current = toGuiObject(instance);
   }, []);
 
-  const __motionRef = useStateMotion(selected, transition, false);
+  const __motionRef = useStateMotion<GuiObject>(selected, transition, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && triggerRef.current !== __motionRef.current) {
-      triggerRef.current = __motionRef.current as unknown;
+      triggerRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

@@ -1,7 +1,7 @@
-﻿import { React } from "@lattice-ui/core";
-import { useMotionPresence } from "../runtime/motion-presence";
-import { useMotionController } from "../runtime/motion-controller";
+import { React } from "@lattice-ui/core";
 import { getPopperSurfaceRecipe } from "../recipes/popper-surface";
+import { useMotionController } from "../runtime/motion-controller";
+import { useMotionPresence } from "../runtime/motion-presence";
 
 export function usePopperSurfaceMotion(
   present: boolean,

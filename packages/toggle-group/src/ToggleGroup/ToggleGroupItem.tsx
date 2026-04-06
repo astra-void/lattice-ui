@@ -14,10 +14,10 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
   const pressed = toggleGroupContext.isPressed(props.value);
   const itemRef = React.useRef<TextButton>();
 
-  const __motionRef = useStateMotion(pressed, transition, false);
+  const __motionRef = useStateMotion<TextButton>(pressed, transition, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && itemRef.current !== __motionRef.current) {
-      itemRef.current = __motionRef.current as unknown;
+      itemRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

@@ -1,6 +1,7 @@
-﻿import { React, Slot } from "@lattice-ui/core";
-import { useStateMotion } from "@lattice-ui/motion";
+import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
+import type { MotionConfig } from "@lattice-ui/motion";
+import { useStateMotion } from "@lattice-ui/motion";
 import { useAccordionItemContext } from "./context";
 import type { AccordionContentProps } from "./types";
 
@@ -8,20 +9,20 @@ const CONTENT_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.Easin
 const CONTENT_EXIT_TWEEN_INFO = new TweenInfo(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In);
 const CONTENT_OFFSET = 4;
 
-function buildAccordionContentTransition(): unknown {
+function buildAccordionContentTransition(): MotionConfig {
   return {
-    enter: {
+    entering: {
       tweenInfo: CONTENT_TWEEN_INFO,
-      from: {
+      initial: {
         Position: UDim2.fromOffset(0, CONTENT_OFFSET),
       },
-      to: {
+      goals: {
         Position: UDim2.fromOffset(0, 0),
       },
     },
-    exit: {
+    exiting: {
       tweenInfo: CONTENT_EXIT_TWEEN_INFO,
-      to: {
+      goals: {
         Position: UDim2.fromOffset(0, CONTENT_OFFSET),
       },
     },
@@ -30,17 +31,17 @@ function buildAccordionContentTransition(): unknown {
 
 function AccordionContentImpl(props: {
   visible: boolean;
-  transition?: unknown | false;
+  transition?: MotionConfig | false;
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
 }) {
   const contentRef = React.useRef<Frame>();
 
-  const __motionRef = useStateMotion(props.visible, props.transition as unknown, false);
+  const __motionRef = useStateMotion<Frame>(props.visible, props.transition || {}, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && contentRef.current !== __motionRef.current) {
-      contentRef.current = __motionRef.current as unknown;
+      contentRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

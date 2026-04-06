@@ -1,4 +1,4 @@
-﻿import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/core";
 import { type MotionPhase } from "./motion-phase";
 
 export interface MotionPresenceOptions {

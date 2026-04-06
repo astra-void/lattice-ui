@@ -1,4 +1,4 @@
-﻿import { React, Slot } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
 import { useToastContext } from "./context";
 import { ToastClose } from "./ToastClose";
 import { ToastDescription } from "./ToastDescription";

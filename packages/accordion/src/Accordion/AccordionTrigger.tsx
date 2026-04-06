@@ -10,10 +10,10 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
 
   const triggerRef = React.useRef<TextButton>();
 
-  const __motionRef = useStateMotion(itemContext.open, {} as unknown, false);
+  const __motionRef = useStateMotion<TextButton>(itemContext.open, {}, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && triggerRef.current !== __motionRef.current) {
-      triggerRef.current = __motionRef.current as unknown;
+      triggerRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": ["tsconfig.base.json", "rokit.toml"],
+  "globalDependencies": ["tsconfig.base.json", "tsconfig.eslint.json", "eslint.config.mjs", "rokit.toml"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -20,6 +20,38 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!README.md",
+        "!out/**",
+        "!dist/**",
+        "!include/**",
+        "!.turbo/**",
+        "!*.rbxl",
+        "!*.rbxlx",
+        "!*.rbxm",
+        "!*.rbxmx"
+      ],
+      "outputs": []
+    },
+    "lint": {
+      "cache": false,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!README.md",
+        "!out/**",
+        "!dist/**",
+        "!include/**",
+        "!.turbo/**",
+        "!*.rbxl",
+        "!*.rbxlx",
+        "!*.rbxm",
+        "!*.rbxmx"
+      ],
+      "outputs": []
+    },
+    "lint:fix": {
+      "cache": false,
       "inputs": [
         "$TURBO_DEFAULT$",
         "!README.md",

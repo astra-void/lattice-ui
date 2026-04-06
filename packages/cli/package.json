@@ -15,7 +15,9 @@
     "build": "tsc -p tsconfig.json",
     "prebuild": "node ./scripts/clean-dist.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "watch": "tsc -p tsconfig.json -w"
+    "watch": "tsc -p tsconfig.json -w",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "engines": {
     "node": ">=20"

@@ -1,4 +1,4 @@
-﻿import type React from "@rbxts/react";
+import type React from "@rbxts/react";
 
 export type SwitchSetChecked = (checked: boolean) => void;
 

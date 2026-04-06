@@ -1,6 +1,6 @@
-﻿import { MOTION_TIMINGS } from "./timings";
-import { getOverlayTargetProps } from "../targets/overlay";
 import type { MotionConfig } from "../runtime/types";
+import { getOverlayTargetProps } from "../targets/overlay";
+import { MOTION_TIMINGS } from "./timings";
 
 export function getOverlayRecipe(): MotionConfig {
   return {

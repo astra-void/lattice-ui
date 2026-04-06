@@ -1,36 +1,33 @@
-﻿// Runtime
-export * from "./runtime/motion-phase";
-export * from "./runtime/types";
-export * from "./runtime/motion-policy";
-export * from "./runtime/motion-presence";
-export * from "./runtime/motion-controller";
-
-// Targets
-export * from "./targets/apply";
-export * from "./targets/overlay";
-export * from "./targets/surface";
-export * from "./targets/offset";
-export * from "./targets/color";
-export * from "./targets/size";
-export * from "./targets/indicator";
-export * from "./targets/toggle";
-
-// Recipes
-export * from "./recipes/timings";
-export * from "./recipes/overlay";
-export * from "./recipes/surface";
-export * from "./recipes/popper-surface";
-export * from "./recipes/indicator";
-export * from "./recipes/toggle";
-export * from "./recipes/accordion";
-
+// Runtime
+export * from "./hooks/useIndicatorMotion";
 // Hooks
 export * from "./hooks/useOverlayMotion";
-export * from "./hooks/useSurfaceMotion";
 export * from "./hooks/usePopperSurfaceMotion";
-export * from "./hooks/useIndicatorMotion";
-export * from "./hooks/useToggleMotion";
 export * from "./hooks/useStateMotion";
+export * from "./hooks/useSurfaceMotion";
+export * from "./hooks/useToggleMotion";
+export * from "./recipes/accordion";
+export * from "./recipes/indicator";
+export * from "./recipes/overlay";
+export * from "./recipes/popper-surface";
+export * from "./recipes/surface";
+// Recipes
+export * from "./recipes/timings";
+export * from "./recipes/toggle";
+export * from "./runtime/motion-controller";
+export * from "./runtime/motion-phase";
+export * from "./runtime/motion-policy";
+export * from "./runtime/motion-presence";
+export * from "./runtime/types";
+// Targets
+export * from "./targets/apply";
+export * from "./targets/color";
+export * from "./targets/indicator";
+export * from "./targets/offset";
+export * from "./targets/overlay";
+export * from "./targets/size";
+export * from "./targets/surface";
+export * from "./targets/toggle";
 export function buildTweenTransition(
   enterTo: Record<string, unknown>,
   exitTo: Record<string, unknown>,

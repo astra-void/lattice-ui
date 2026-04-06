@@ -23,7 +23,7 @@ export function TextFieldInput(props: TextFieldInputProps) {
   const [focused, setFocused] = React.useState(false);
 
   const active = focused && !disabled && !readOnly;
-  const localRef = useStateMotion(active, transition as unknown, true) as React.MutableRefObject<TextBox | undefined>;
+  const localRef = useStateMotion<TextBox>(active, transition || {}, true);
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {

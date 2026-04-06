@@ -22,10 +22,10 @@ export function CheckboxRoot(props: CheckboxProps) {
   const required = props.required === true;
   const rootRef = React.useRef<TextButton>();
 
-  const __motionRef = useStateMotion(checked !== false, {} as unknown, false);
+  const __motionRef = useStateMotion<TextButton>(checked !== false, {}, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && rootRef.current !== __motionRef.current) {
-      rootRef.current = __motionRef.current as unknown;
+      rootRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

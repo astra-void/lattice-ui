@@ -4,13 +4,13 @@
 import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 vi.mock("@lattice-ui/core", () => ({
   React: require("react"),
 }));
-import { MotionPolicyProvider } from "@lattice-ui/motion";
-import { applyMotionProperties, getMotionTransitionExitFallbackMs, mergeMotionTransition } from "@lattice-ui/motion";
-import type { MotionTransition } from "@lattice-ui/motion";
-import { useMotionTween } from "@lattice-ui/motion";
+
+import type { MotionConfig, MotionPhase } from "@lattice-ui/motion";
+import { applyMotionProperties, MotionPolicyProvider, useStateMotion } from "@lattice-ui/motion";
 
 class MockTweenInfo {
   public Time: number;
@@ -111,22 +111,22 @@ function installTweenServiceMock() {
     },
   };
   (globalThis as Record<string, unknown>).TweenInfo = MockTweenInfo as unknown as typeof TweenInfo;
+  (globalThis as Record<string, unknown>).typeIs = (value: unknown, typeStr: string) => typeof value === typeStr;
+  (globalThis as Record<string, unknown>).pairs = (obj: Record<string, unknown>) => Object.entries(obj);
 
   return tweenService;
 }
 
 function MotionHarness(props: {
-  active: boolean;
-  transition: MotionTransition;
+  present: boolean;
+  config: MotionConfig;
   instance: Record<string, unknown>;
-  onExitComplete?: () => void;
+  appear?: boolean;
 }) {
-  const ref = React.useRef(props.instance as unknown as Instance);
-  useMotionTween(ref, {
-    active: props.active,
-    onExitComplete: props.onExitComplete,
-    transition: props.transition,
-  });
+  const ref = useStateMotion(props.present, props.config, props.appear);
+  React.useEffect(() => {
+    ref.current = props.instance as unknown as Instance;
+  }, [props.instance, ref]);
 
   return null;
 }
@@ -140,70 +140,6 @@ beforeEach(() => {
 });
 
 describe("core motion helpers", () => {
-  it("merges motion transitions and preserves exit duration", () => {
-    const base: MotionTransition = {
-      enter: {
-        tweenInfo: new MockTweenInfo(0.12, "Quad", "Out") as unknown as TweenInfo,
-        from: { Position: UDim2.fromOffset(0, 6) },
-        to: { Position: UDim2.fromOffset(0, 0) },
-      },
-      exit: {
-        tweenInfo: new MockTweenInfo(0.1, "Quad", "In") as unknown as TweenInfo,
-        to: { Position: UDim2.fromOffset(0, 6) },
-      },
-    };
-
-    const merged = mergeMotionTransition(base, {
-      enter: {
-        to: { Position: UDim2.fromOffset(0, 2) },
-      },
-    });
-
-    expect(merged).not.toBe(false);
-    if (!merged || merged === false) {
-      throw new Error("expected merged transition");
-    }
-
-    const mergedTransition: MotionTransition = merged;
-    expect(mergedTransition.enter?.from).toEqual({ Position: UDim2.fromOffset(0, 6) });
-    expect(mergedTransition.enter?.to).toEqual({ Position: UDim2.fromOffset(0, 2) });
-    expect(getMotionTransitionExitFallbackMs(mergedTransition)).toBe(100);
-  });
-
-  it("computes full exit duration including delay, repeats, and reverses", () => {
-    const complexTweenInfo = new MockTweenInfo(
-      0.1, // time
-      "Quad",
-      "Out",
-      2, // repeatCount (3 times total)
-      true, // reverses (x2)
-      0.05, // delay
-    ) as unknown as TweenInfo;
-
-    const transition: MotionTransition = {
-      exit: {
-        tweenInfo: complexTweenInfo,
-        to: {},
-      },
-    };
-
-    // delay(0.05) + (time(0.1) * (repeatCount(2) + 1) * reverses(2))
-    // 0.05 + 0.1 * 3 * 2 = 0.05 + 0.6 = 0.65 seconds = 650 ms
-    expect(getMotionTransitionExitFallbackMs(transition)).toBe(650);
-
-    const infiniteTweenInfo = new MockTweenInfo(0.1, "Quad", "Out", -1, false, 0) as unknown as TweenInfo;
-    const transitionInfinite: MotionTransition = {
-      exit: {
-        tweenInfo: infiniteTweenInfo,
-        to: {},
-      },
-    };
-
-    // for infinite repeats (-1), fallback is clamped to 1 repeat
-    // time(0.1) * 1 = 0.1 seconds = 100 ms
-    expect(getMotionTransitionExitFallbackMs(transitionInfinite)).toBe(100);
-  });
-
   it("applies motion properties directly", () => {
     const instance = { Position: UDim2.fromOffset(0, 0), BackgroundTransparency: 1 };
     applyMotionProperties(instance as unknown as Instance, {
@@ -215,20 +151,20 @@ describe("core motion helpers", () => {
     expect(instance.BackgroundTransparency).toBe(0.25);
   });
 
-  it("reuses the current live value when a tween is interrupted in the opposite direction", async () => {
+  it("transitions between phases and sets goals", () => {
     const instance = {
       Position: UDim2.fromOffset(0, 0),
     };
 
-    const transition: MotionTransition = {
-      enter: {
+    const config: MotionConfig = {
+      entering: {
         tweenInfo: new MockTweenInfo(0.12, "Quad", "Out") as unknown as TweenInfo,
-        from: { Position: UDim2.fromOffset(0, 12) },
-        to: { Position: UDim2.fromOffset(0, 0) },
+        initial: { Position: UDim2.fromOffset(0, 12) },
+        goals: { Position: UDim2.fromOffset(0, 0) },
       },
-      exit: {
+      exiting: {
         tweenInfo: new MockTweenInfo(0.1, "Quad", "In") as unknown as TweenInfo,
-        to: { Position: UDim2.fromOffset(0, 12) },
+        goals: { Position: UDim2.fromOffset(0, 12) },
       },
     };
 
@@ -236,30 +172,28 @@ describe("core motion helpers", () => {
       React.createElement(
         MotionPolicyProvider,
         { disableAllMotion: false },
-        React.createElement(MotionHarness, { active: true, instance, transition }),
+        React.createElement(MotionHarness, { present: true, instance, config, appear: true }),
       ),
     );
 
+    // Initial properties are applied immediately when entering
     expect(instance.Position).toEqual(UDim2.fromOffset(0, 12));
     expect(createdTweens).toHaveLength(1);
     expect(createdTweens[0]?.goals.Position).toEqual(UDim2.fromOffset(0, 0));
-
-    instance.Position = UDim2.fromOffset(0, 5);
 
     rerender(
       React.createElement(
         MotionPolicyProvider,
         { disableAllMotion: false },
-        React.createElement(MotionHarness, { active: false, instance, transition }),
+        React.createElement(MotionHarness, { present: false, instance, config, appear: true }),
       ),
     );
 
-    expect(instance.Position).toEqual(UDim2.fromOffset(0, 5));
     expect(createdTweens).toHaveLength(2);
     expect(createdTweens[1]?.goals.Position).toEqual(UDim2.fromOffset(0, 12));
   });
 
-  it("short-circuits tween creation when motion is disabled", () => {
+  it("short-circuits tween creation when motion is disabled and applies goals immediately", () => {
     const instance = {
       Position: UDim2.fromOffset(0, 0),
     };
@@ -269,17 +203,14 @@ describe("core motion helpers", () => {
         MotionPolicyProvider,
         { disableAllMotion: true },
         React.createElement(MotionHarness, {
-          active: true,
+          present: true,
           instance,
-          transition: {
-            enter: {
+          appear: true,
+          config: {
+            entering: {
               tweenInfo: new MockTweenInfo(0.12, "Quad", "Out") as unknown as TweenInfo,
-              from: { Position: UDim2.fromOffset(0, 12) },
-              to: { Position: UDim2.fromOffset(0, 0) },
-            },
-            exit: {
-              tweenInfo: new MockTweenInfo(0.1, "Quad", "In") as unknown as TweenInfo,
-              to: { Position: UDim2.fromOffset(0, 12) },
+              initial: { Position: UDim2.fromOffset(0, 12) },
+              goals: { Position: UDim2.fromOffset(0, 0) },
             },
           },
         }),
@@ -287,6 +218,7 @@ describe("core motion helpers", () => {
     );
 
     expect(createdTweens).toHaveLength(0);
+    // Goals are applied directly instead of animating
     expect(instance.Position).toEqual(UDim2.fromOffset(0, 0));
   });
 });

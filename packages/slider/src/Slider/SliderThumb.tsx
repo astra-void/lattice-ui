@@ -46,10 +46,10 @@ export function SliderThumb(props: SliderThumbProps) {
     [sliderContext],
   );
 
-  const __motionRef = useStateMotion(true, transition, false);
+  const __motionRef = useStateMotion<GuiObject>(true, transition, false);
   React.useLayoutEffect(() => {
     if (__motionRef.current && thumbRef.current !== __motionRef.current) {
-      thumbRef.current = __motionRef.current as unknown;
+      thumbRef.current = __motionRef.current;
     }
   }, [__motionRef]);
 

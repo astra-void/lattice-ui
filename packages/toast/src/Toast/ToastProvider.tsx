@@ -1,4 +1,4 @@
-﻿import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/core";
 import { ToastContextProvider, useToastContext } from "./context";
 import { enqueueToast, getVisibleToasts, pruneExpiredToasts, type ToastRecord } from "./queue";
 import type { ToastApi, ToastOptions, ToastProviderProps } from "./types";

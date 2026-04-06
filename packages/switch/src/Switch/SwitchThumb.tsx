@@ -1,4 +1,4 @@
-﻿import { React, Slot } from "@lattice-ui/core";
+import { React, Slot } from "@lattice-ui/core";
 import { useToggleOffsetMotion } from "@lattice-ui/motion";
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";

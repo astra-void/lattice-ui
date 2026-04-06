@@ -1,7 +1,7 @@
-﻿import { React, Slot } from "@lattice-ui/core";
-import { usePopperSurfaceMotion } from "@lattice-ui/motion";
+import { React, Slot } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer } from "@lattice-ui/layer";
+import { usePopperSurfaceMotion } from "@lattice-ui/motion";
 import { usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";

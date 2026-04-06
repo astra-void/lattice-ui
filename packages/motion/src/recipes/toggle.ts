@@ -1,6 +1,6 @@
-﻿import { MOTION_TIMINGS } from "./timings";
-import { getToggleTargetProps, getToggleOffsetTargetProps } from "../targets/toggle";
 import type { MotionConfig } from "../runtime/types";
+import { getToggleOffsetTargetProps, getToggleTargetProps } from "../targets/toggle";
+import { MOTION_TIMINGS } from "./timings";
 
 export function getToggleRecipe(onColor: Color3, offColor: Color3): MotionConfig {
   return {

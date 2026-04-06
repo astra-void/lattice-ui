@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { useFocusNode } from "@lattice-ui/focus";
-import { focusGuiObject } from "@lattice-ui/focus";
+import { focusGuiObject, useFocusNode } from "@lattice-ui/focus";
 import { useDialogContext } from "./context";
 import type { DialogTriggerProps } from "./types";
 

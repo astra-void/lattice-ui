@@ -1,4 +1,5 @@
-﻿import type React from "@rbxts/react";
+import type { MotionConfig } from "@lattice-ui/motion";
+import type React from "@rbxts/react";
 
 export type RadioGroupSetValue = (value: string) => void;
 export type RadioGroupOrientation = "horizontal" | "vertical";
@@ -37,6 +38,7 @@ export type RadioGroupProps = {
 };
 
 export type RadioGroupItemProps = {
+  transition?: MotionConfig;
   value: string;
   disabled?: boolean;
   asChild?: boolean;
@@ -44,6 +46,7 @@ export type RadioGroupItemProps = {
 };
 
 export type RadioGroupIndicatorProps = {
+  transition?: MotionConfig;
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;

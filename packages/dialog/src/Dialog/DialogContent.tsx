@@ -1,7 +1,7 @@
-﻿import { React, Slot } from "@lattice-ui/core";
-import { useSurfaceMotion } from "@lattice-ui/motion";
+import { React, Slot } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import { DismissableLayer } from "@lattice-ui/layer";
+import { useSurfaceMotion } from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
