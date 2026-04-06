@@ -13,10 +13,33 @@ export function useStateMotion<T extends Instance = Instance>(
   );
 
   const lastPresent = React.useRef(present);
-  if (present !== lastPresent.current) {
+
+  const syncPhaseToPresence = React.useCallback((nextPresent: boolean) => {
+    setPhase((currentPhase) => {
+      if (nextPresent) {
+        if (currentPhase === "entering" || currentPhase === "entered") {
+          return currentPhase;
+        }
+
+        return "entering";
+      }
+
+      if (currentPhase === "exiting") {
+        return currentPhase;
+      }
+
+      return "exiting";
+    });
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (present === lastPresent.current) {
+      return;
+    }
+
     lastPresent.current = present;
-    setPhase(present ? "entering" : "exiting");
-  }
+    syncPhaseToPresence(present);
+  }, [present, syncPhaseToPresence]);
 
   const markPhaseComplete = React.useCallback((completedPhase: MotionPhase) => {
     setPhase((currentPhase) => {

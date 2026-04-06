@@ -1,7 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import type { MotionConfig } from "@lattice-ui/motion";
-import { useStateMotion } from "@lattice-ui/motion";
+import { type MotionConfig, useMotionController, useMotionPresence } from "@lattice-ui/motion";
 import { useAccordionItemContext } from "./context";
 import type { AccordionContentProps } from "./types";
 
@@ -29,21 +28,61 @@ function buildAccordionContentTransition(): MotionConfig {
   };
 }
 
+function mergeMotionConfig(baseConfig: MotionConfig, overrideConfig?: MotionConfig): MotionConfig {
+  if (!overrideConfig) {
+    return baseConfig;
+  }
+
+  return {
+    entering: { ...baseConfig.entering, ...overrideConfig.entering },
+    entered: { ...baseConfig.entered, ...overrideConfig.entered },
+    exiting: { ...baseConfig.exiting, ...overrideConfig.exiting },
+  };
+}
+
+function usePresenceStateMotion<T extends Instance = Instance>(
+  present: boolean,
+  config: MotionConfig,
+  appear: boolean,
+  onExitComplete?: () => void,
+) {
+  const { phase, markPhaseComplete } = useMotionPresence({ present, appear });
+  const ref = React.useRef<T>();
+  const onExitCompleteRef = React.useRef(onExitComplete);
+
+  React.useEffect(() => {
+    onExitCompleteRef.current = onExitComplete;
+  }, [onExitComplete]);
+
+  const handlePhaseComplete = React.useCallback(
+    (completedPhase: "unmounted" | "entering" | "entered" | "exiting") => {
+      markPhaseComplete(completedPhase);
+      if (completedPhase === "exiting") {
+        onExitCompleteRef.current?.();
+      }
+    },
+    [markPhaseComplete],
+  );
+
+  useMotionController(ref as React.MutableRefObject<Instance | undefined>, config, phase, handlePhaseComplete);
+
+  return ref;
+}
+
 function AccordionContentImpl(props: {
+  motionPresent: boolean;
   visible: boolean;
   transition?: MotionConfig | false;
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
 }) {
-  const contentRef = React.useRef<Frame>();
-
-  const __motionRef = useStateMotion<Frame>(props.visible, props.transition || {}, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && contentRef.current !== __motionRef.current) {
-      contentRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = usePresenceStateMotion<Frame>(
+    props.motionPresent,
+    props.transition || {},
+    true,
+    props.onExitComplete,
+  );
 
   if (props.asChild) {
     const child = props.children;
@@ -52,7 +91,7 @@ function AccordionContentImpl(props: {
     }
 
     return (
-      <Slot Visible={props.visible} ref={contentRef}>
+      <Slot Visible={props.visible} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -64,7 +103,7 @@ function AccordionContentImpl(props: {
       BorderSizePixel={0}
       Size={UDim2.fromOffset(260, 44)}
       Visible={props.visible}
-      ref={contentRef}
+      ref={motionRef}
     >
       {props.children}
     </frame>
@@ -76,26 +115,29 @@ export function AccordionContent(props: AccordionContentProps) {
   const forceMount = props.forceMount === true;
 
   const transition = React.useMemo(() => {
-    return buildAccordionContentTransition();
+    return mergeMotionConfig(buildAccordionContentTransition(), props.transition);
   }, [props.transition]);
 
   if (forceMount) {
     return (
-      <AccordionContentImpl asChild={props.asChild} transition={transition} visible={itemContext.open}>
+      <AccordionContentImpl
+        asChild={props.asChild}
+        motionPresent={itemContext.open}
+        transition={transition}
+        visible={itemContext.open}
+      >
         {props.children}
       </AccordionContentImpl>
     );
   }
 
-  const exitFallbackMs = 0;
-
   return (
     <Presence
-      exitFallbackMs={exitFallbackMs}
       present={itemContext.open}
       render={(state) => (
         <AccordionContentImpl
           asChild={props.asChild}
+          motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
           transition={transition}
           visible={true}

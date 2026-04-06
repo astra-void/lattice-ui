@@ -26,23 +26,7 @@ export function SliderRange(props: SliderRangeProps) {
       },
     };
   }, [rangePosition, rangeSize, sliderContext.isDragging]);
-
-  const rangeRef = React.useRef<GuiObject>();
-
-  const setRangeRef = React.useCallback((instance: Instance | undefined) => {
-    if (!instance || !instance.IsA("GuiObject")) {
-      rangeRef.current = undefined;
-      return;
-    }
-    rangeRef.current = instance;
-  }, []);
-
-  const __motionRef = useStateMotion<GuiObject>(true, transition, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && rangeRef.current !== __motionRef.current) {
-      rangeRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<Frame>(true, transition, false);
 
   const staticPosition = sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 0) : UDim2.fromScale(0, 1);
   const staticSize = sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 1) : UDim2.fromScale(1, 0);
@@ -54,7 +38,7 @@ export function SliderRange(props: SliderRangeProps) {
     }
 
     return (
-      <Slot Name="SliderRange" Position={staticPosition} Size={staticSize} ref={setRangeRef}>
+      <Slot Name="SliderRange" Position={staticPosition} Size={staticSize} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -66,7 +50,7 @@ export function SliderRange(props: SliderRangeProps) {
       BorderSizePixel={0}
       Position={staticPosition}
       Size={staticSize}
-      ref={setRangeRef}
+      ref={motionRef}
     >
       {props.children}
     </frame>

@@ -20,14 +20,7 @@ export function SelectItem(props: SelectItemProps) {
   const textValueRef = React.useRef(textValue);
 
   const [active, setActive] = React.useState(false);
-  const itemRef = React.useRef<GuiObject>();
-
-  const __motionRef = useStateMotion<GuiObject>(active && !disabled, transition, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && itemRef.current !== __motionRef.current) {
-      itemRef.current = __motionRef.current as GuiObject;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<GuiObject>(active && !disabled, transition, false);
 
   React.useEffect(() => {
     disabledRef.current = disabled;
@@ -102,13 +95,16 @@ export function SelectItem(props: SelectItemProps) {
     [handleInputBegan, handleSelect, handlePointerEnter, handlePointerLeave],
   );
 
-  const setItemRef = React.useCallback((instance: Instance | undefined) => {
-    if (!instance || !instance.IsA("GuiObject")) {
-      itemRef.current = undefined;
-      return;
-    }
-    itemRef.current = instance;
-  }, []);
+  const setItemRef = React.useCallback(
+    (instance: Instance | undefined) => {
+      if (!instance || !instance.IsA("GuiObject")) {
+        motionRef.current = undefined;
+        return;
+      }
+      motionRef.current = instance;
+    },
+    [motionRef],
+  );
 
   if (props.asChild) {
     const child = props.children;

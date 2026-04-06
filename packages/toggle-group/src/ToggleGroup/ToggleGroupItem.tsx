@@ -12,14 +12,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
   const toggleGroupContext = useToggleGroupContext();
   const disabled = toggleGroupContext.disabled || props.disabled === true;
   const pressed = toggleGroupContext.isPressed(props.value);
-  const itemRef = React.useRef<TextButton>();
-
-  const __motionRef = useStateMotion<TextButton>(pressed, transition, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && itemRef.current !== __motionRef.current) {
-      itemRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<TextButton>(pressed, transition, false);
 
   const handleToggle = React.useCallback(() => {
     if (disabled) {
@@ -60,7 +53,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={itemRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -84,7 +77,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
             : Color3.fromRGB(236, 241, 249)
       }
       TextSize={15}
-      ref={itemRef}
+      ref={motionRef}
     >
       {props.children}
     </textbutton>

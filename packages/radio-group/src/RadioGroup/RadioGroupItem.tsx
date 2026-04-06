@@ -45,21 +45,15 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const setItemRef = React.useCallback((instance: Instance | undefined) => {
-    if (!instance || !instance.IsA("GuiObject")) {
-      itemRef.current = undefined;
-      return;
-    }
-
-    itemRef.current = instance;
-  }, []);
-
-  const __motionRef = useStateMotion<GuiObject>(checked, {}, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && itemRef.current !== __motionRef.current) {
-      itemRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<GuiObject>(checked, {}, false);
+  const setItemRef = React.useCallback(
+    (instance: Instance | undefined) => {
+      const nextItem = !instance || !instance.IsA("GuiObject") ? undefined : instance;
+      itemRef.current = nextItem;
+      motionRef.current = nextItem;
+    },
+    [motionRef],
+  );
 
   const handleSelect = React.useCallback(() => {
     if (disabled) {

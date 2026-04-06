@@ -1,7 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import type { MotionConfig } from "@lattice-ui/motion";
-import { MOTION_PRESETS, useStateMotion } from "@lattice-ui/motion";
+import { MOTION_PRESETS, type MotionConfig, useMotionController, useMotionPresence } from "@lattice-ui/motion";
 import { useRadioGroupItemContext } from "./context";
 import type { RadioGroupIndicatorProps } from "./types";
 
@@ -34,21 +33,49 @@ function buildRadioGroupIndicatorTransition(size: UDim2): MotionConfig {
   };
 }
 
+function usePresenceStateMotion<T extends Instance = Instance>(
+  present: boolean,
+  config: MotionConfig,
+  appear: boolean,
+  onExitComplete?: () => void,
+) {
+  const { phase, markPhaseComplete } = useMotionPresence({ present, appear });
+  const ref = React.useRef<T>();
+  const onExitCompleteRef = React.useRef(onExitComplete);
+
+  React.useEffect(() => {
+    onExitCompleteRef.current = onExitComplete;
+  }, [onExitComplete]);
+
+  const handlePhaseComplete = React.useCallback(
+    (completedPhase: "unmounted" | "entering" | "entered" | "exiting") => {
+      markPhaseComplete(completedPhase);
+      if (completedPhase === "exiting") {
+        onExitCompleteRef.current?.();
+      }
+    },
+    [markPhaseComplete],
+  );
+
+  useMotionController(ref as React.MutableRefObject<Instance | undefined>, config, phase, handlePhaseComplete);
+
+  return ref;
+}
+
 function RadioGroupIndicatorImpl(props: {
+  motionPresent: boolean;
   visible: boolean;
   transition?: MotionConfig;
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
 }) {
-  const indicatorRef = React.useRef<Frame>();
-
-  const __motionRef = useStateMotion<Frame>(props.visible, props.transition || ({} as MotionConfig), false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && indicatorRef.current !== __motionRef.current) {
-      indicatorRef.current = __motionRef.current as Frame;
-    }
-  }, [__motionRef]);
+  const motionRef = usePresenceStateMotion<Frame>(
+    props.motionPresent,
+    props.transition || ({} as MotionConfig),
+    true,
+    props.onExitComplete,
+  );
 
   if (props.asChild) {
     const child = props.children;
@@ -57,7 +84,7 @@ function RadioGroupIndicatorImpl(props: {
     }
 
     return (
-      <Slot Visible={props.visible} ref={indicatorRef}>
+      <Slot Visible={props.visible} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -69,7 +96,7 @@ function RadioGroupIndicatorImpl(props: {
       BorderSizePixel={0}
       Size={UDim2.fromOffset(10, 10)}
       Visible={props.visible}
-      ref={indicatorRef}
+      ref={motionRef}
     >
       {props.children}
     </frame>
@@ -90,21 +117,24 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
 
   if (forceMount) {
     return (
-      <RadioGroupIndicatorImpl asChild={props.asChild} transition={transition} visible={visible}>
+      <RadioGroupIndicatorImpl
+        asChild={props.asChild}
+        motionPresent={visible}
+        transition={transition}
+        visible={visible}
+      >
         {props.children}
       </RadioGroupIndicatorImpl>
     );
   }
 
-  const exitFallbackMs = 0;
-
   return (
     <Presence
-      exitFallbackMs={exitFallbackMs}
       present={visible}
       render={(state) => (
         <RadioGroupIndicatorImpl
           asChild={props.asChild}
+          motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
           transition={transition}
           visible={true}

@@ -59,16 +59,15 @@ export function TabsTrigger(props: TabsTriggerProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const setTriggerRef = React.useCallback((instance: Instance | undefined) => {
-    triggerRef.current = toGuiObject(instance);
-  }, []);
-
-  const __motionRef = useStateMotion<GuiObject>(selected, transition, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && triggerRef.current !== __motionRef.current) {
-      triggerRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<GuiObject>(selected, transition, false);
+  const setTriggerRef = React.useCallback(
+    (instance: Instance | undefined) => {
+      const nextTrigger = toGuiObject(instance);
+      triggerRef.current = nextTrigger;
+      motionRef.current = nextTrigger;
+    },
+    [motionRef],
+  );
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {

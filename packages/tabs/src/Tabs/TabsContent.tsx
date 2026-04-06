@@ -1,7 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import { useStateMotion } from "@lattice-ui/motion";
-import type { MotionConfig } from "@lattice-ui/motion";
+import { type MotionConfig, useMotionController, useMotionPresence } from "@lattice-ui/motion";
 import { useTabsContext } from "./context";
 import { createTabsContentName } from "./internals/ids";
 import type { TabsContentProps } from "./types";
@@ -30,7 +29,49 @@ function buildTabsContentTransition(): MotionConfig {
   };
 }
 
+function mergeMotionConfig(baseConfig: MotionConfig, overrideConfig?: MotionConfig): MotionConfig {
+  if (!overrideConfig) {
+    return baseConfig;
+  }
+
+  return {
+    entering: { ...baseConfig.entering, ...overrideConfig.entering },
+    entered: { ...baseConfig.entered, ...overrideConfig.entered },
+    exiting: { ...baseConfig.exiting, ...overrideConfig.exiting },
+  };
+}
+
+function usePresenceStateMotion<T extends Instance = Instance>(
+  present: boolean,
+  config: MotionConfig,
+  appear: boolean,
+  onExitComplete?: () => void,
+) {
+  const { phase, markPhaseComplete } = useMotionPresence({ present, appear });
+  const ref = React.useRef<T>();
+  const onExitCompleteRef = React.useRef(onExitComplete);
+
+  React.useEffect(() => {
+    onExitCompleteRef.current = onExitComplete;
+  }, [onExitComplete]);
+
+  const handlePhaseComplete = React.useCallback(
+    (completedPhase: "unmounted" | "entering" | "entered" | "exiting") => {
+      markPhaseComplete(completedPhase);
+      if (completedPhase === "exiting") {
+        onExitCompleteRef.current?.();
+      }
+    },
+    [markPhaseComplete],
+  );
+
+  useMotionController(ref as React.MutableRefObject<Instance | undefined>, config, phase, handlePhaseComplete);
+
+  return ref;
+}
+
 function TabsContentImpl(props: {
+  motionPresent: boolean;
   visible: boolean;
   transition?: MotionConfig | false;
   onExitComplete?: () => void;
@@ -39,14 +80,12 @@ function TabsContentImpl(props: {
   children?: React.ReactNode;
 }) {
   const contentName = createTabsContentName(props.value);
-  const contentRef = React.useRef<Frame>();
-
-  const __motionRef = useStateMotion<Frame>(props.visible, props.transition || {}, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && contentRef.current !== __motionRef.current) {
-      contentRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = usePresenceStateMotion<Frame>(
+    props.motionPresent,
+    props.transition || {},
+    true,
+    props.onExitComplete,
+  );
 
   if (props.asChild) {
     const child = props.children;
@@ -55,7 +94,7 @@ function TabsContentImpl(props: {
     }
 
     return (
-      <Slot Name={contentName} Visible={props.visible} ref={contentRef}>
+      <Slot Name={contentName} Visible={props.visible} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -67,7 +106,7 @@ function TabsContentImpl(props: {
       BorderSizePixel={0}
       Size={UDim2.fromOffset(0, 0)}
       Visible={props.visible}
-      ref={contentRef}
+      ref={motionRef}
     >
       {props.children}
     </frame>
@@ -80,26 +119,30 @@ export function TabsContent(props: TabsContentProps) {
   const forceMount = props.forceMount === true;
 
   const transition = React.useMemo(() => {
-    return buildTabsContentTransition();
+    return mergeMotionConfig(buildTabsContentTransition(), props.transition);
   }, [props.transition]);
 
   if (forceMount) {
     return (
-      <TabsContentImpl asChild={props.asChild} transition={transition} value={props.value} visible={selected}>
+      <TabsContentImpl
+        asChild={props.asChild}
+        motionPresent={selected}
+        transition={transition}
+        value={props.value}
+        visible={selected}
+      >
         {props.children}
       </TabsContentImpl>
     );
   }
 
-  const exitFallbackMs = 0;
-
   return (
     <Presence
-      exitFallbackMs={exitFallbackMs}
       present={selected}
       render={(state) => (
         <TabsContentImpl
           asChild={props.asChild}
+          motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
           transition={transition}
           value={props.value}

@@ -1,23 +1,40 @@
 import { React, Slot } from "@lattice-ui/core";
-import { useStateMotion } from "@lattice-ui/motion";
+import { type MotionConfig, useStateMotion } from "@lattice-ui/motion";
 import type { ToastRootProps } from "./types";
 
 const TOAST_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
 
-function buildToastTransition(): unknown {
+function mergeMotionConfig(baseConfig: MotionConfig, overrideConfig?: MotionConfig): MotionConfig {
+  if (!overrideConfig) {
+    return baseConfig;
+  }
+
   return {
-    enter: {
+    entering: { ...baseConfig.entering, ...overrideConfig.entering },
+    entered: { ...baseConfig.entered, ...overrideConfig.entered },
+    exiting: { ...baseConfig.exiting, ...overrideConfig.exiting },
+  };
+}
+
+function buildToastTransition(): MotionConfig {
+  return {
+    entering: {
       tweenInfo: TOAST_TWEEN_INFO,
-      from: {
+      initial: {
         BackgroundTransparency: 1,
       },
-      to: {
+      goals: {
         BackgroundTransparency: 0,
       },
     },
-    exit: {
+    entered: {
+      goals: {
+        BackgroundTransparency: 0,
+      },
+    },
+    exiting: {
       tweenInfo: TOAST_TWEEN_INFO,
-      to: {
+      goals: {
         BackgroundTransparency: 1,
       },
     },
@@ -26,17 +43,11 @@ function buildToastTransition(): unknown {
 
 export function ToastRoot(props: ToastRootProps) {
   const visible = props.visible ?? true;
-  const rootRef = React.useRef<Frame>();
   const motionTransition = React.useMemo(() => {
-    return buildToastTransition();
+    return mergeMotionConfig(buildToastTransition(), props.transition);
   }, [props.transition]);
 
-  const __motionRef = useStateMotion<Frame>(visible, motionTransition ?? {}, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && rootRef.current !== __motionRef.current) {
-      rootRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<Frame>(visible, motionTransition, false);
 
   if (props.asChild) {
     const child = props.children;
@@ -45,7 +56,7 @@ export function ToastRoot(props: ToastRootProps) {
     }
 
     return (
-      <Slot Visible={true} ref={rootRef}>
+      <Slot Visible={true} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -58,7 +69,7 @@ export function ToastRoot(props: ToastRootProps) {
       BorderSizePixel={0}
       Size={UDim2.fromOffset(320, 72)}
       Visible={true}
-      ref={rootRef}
+      ref={motionRef}
     >
       <uicorner CornerRadius={new UDim(0, 10)} />
       <uipadding

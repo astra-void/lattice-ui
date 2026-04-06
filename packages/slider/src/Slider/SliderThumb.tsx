@@ -32,26 +32,17 @@ export function SliderThumb(props: SliderThumbProps) {
   }, [position, sliderContext.isDragging]);
 
   const thumbRef = React.useRef<GuiObject>();
+  const motionRef = useStateMotion<GuiObject>(true, transition, false);
 
   const setNodeRef = React.useCallback(
     (instance: Instance | undefined) => {
-      if (!instance || !instance.IsA("GuiObject")) {
-        thumbRef.current = undefined;
-        sliderContext.setThumbNode(undefined);
-        return;
-      }
-      thumbRef.current = instance;
-      sliderContext.setThumbNode(instance);
+      const nextThumb = !instance || !instance.IsA("GuiObject") ? undefined : instance;
+      thumbRef.current = nextThumb;
+      motionRef.current = nextThumb;
+      sliderContext.setThumbNode(nextThumb);
     },
-    [sliderContext],
+    [motionRef, sliderContext],
   );
-
-  const __motionRef = useStateMotion<GuiObject>(true, transition, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && thumbRef.current !== __motionRef.current) {
-      thumbRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {

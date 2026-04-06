@@ -7,15 +7,7 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
   const accordionContext = useAccordionContext();
   const itemContext = useAccordionItemContext();
   const disabled = itemContext.disabled;
-
-  const triggerRef = React.useRef<TextButton>();
-
-  const __motionRef = useStateMotion<TextButton>(itemContext.open, {}, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && triggerRef.current !== __motionRef.current) {
-      triggerRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<TextButton>(itemContext.open, {}, false);
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {
@@ -54,7 +46,7 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={triggerRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -73,7 +65,7 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
       TextColor3={disabled ? Color3.fromRGB(143, 150, 165) : Color3.fromRGB(236, 241, 249)}
       TextSize={14}
       TextXAlignment={Enum.TextXAlignment.Left}
-      ref={triggerRef}
+      ref={motionRef}
     >
       <uipadding PaddingLeft={new UDim(0, 10)} />
       {props.children}

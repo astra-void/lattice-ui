@@ -20,14 +20,7 @@ export function CheckboxRoot(props: CheckboxProps) {
 
   const disabled = props.disabled === true;
   const required = props.required === true;
-  const rootRef = React.useRef<TextButton>();
-
-  const __motionRef = useStateMotion<TextButton>(checked !== false, {}, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && rootRef.current !== __motionRef.current) {
-      rootRef.current = __motionRef.current;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<TextButton>(checked !== false, {}, false);
 
   const setChecked = React.useCallback(
     (nextChecked: CheckedState) => {
@@ -69,7 +62,7 @@ export function CheckboxRoot(props: CheckboxProps) {
           }
 
           return (
-            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled} ref={rootRef}>
+            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled} ref={motionRef}>
               {child}
             </Slot>
           );
@@ -86,7 +79,7 @@ export function CheckboxRoot(props: CheckboxProps) {
           Text={checked === "indeterminate" ? "Indeterminate" : checked ? "Checked" : "Unchecked"}
           TextColor3={disabled ? Color3.fromRGB(145, 152, 168) : Color3.fromRGB(240, 244, 252)}
           TextSize={15}
-          ref={rootRef}
+          ref={motionRef}
         >
           {child}
         </textbutton>

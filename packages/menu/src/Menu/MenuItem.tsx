@@ -60,21 +60,16 @@ export function MenuItem(props: MenuItemProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const __motionRef = useStateMotion<GuiObject>(active && props.disabled !== true, transition, false);
-  React.useLayoutEffect(() => {
-    if (__motionRef.current && itemRef.current !== __motionRef.current) {
-      itemRef.current = __motionRef.current as GuiObject;
-    }
-  }, [__motionRef]);
+  const motionRef = useStateMotion<GuiObject>(active && props.disabled !== true, transition, false);
 
-  const setItemRef = React.useCallback((instance: Instance | undefined) => {
-    if (!instance || !instance.IsA("GuiObject")) {
-      itemRef.current = undefined;
-      return;
-    }
-
-    itemRef.current = instance;
-  }, []);
+  const setItemRef = React.useCallback(
+    (instance: Instance | undefined) => {
+      const nextItem = !instance || !instance.IsA("GuiObject") ? undefined : instance;
+      itemRef.current = nextItem;
+      motionRef.current = nextItem;
+    },
+    [motionRef],
+  );
 
   const handleActivated = React.useCallback(() => {
     if (props.disabled) {
