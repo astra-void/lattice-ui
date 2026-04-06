@@ -11,13 +11,17 @@
     "registry",
     "templates"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/astra-void/lattice-ui.git"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "prebuild": "node ./scripts/clean-dist.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "watch": "tsc -p tsconfig.json -w",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "watch": "tsc -p tsconfig.json -w"
   },
   "engines": {
     "node": ">=20"

@@ -51,6 +51,7 @@ interface PackageDefaultsPolicy {
   types?: string;
   source?: string;
   files?: string[];
+  repository?: string | Record<string, unknown>;
   scripts?: Record<string, string>;
 }
 
@@ -249,6 +250,7 @@ export function normalizePackageManifest(manifest: PackageManifest): PackageMani
     "types",
     "source",
     "files",
+    "repository",
     "scripts",
     "dependencies",
     "devDependencies",
@@ -257,7 +259,6 @@ export function normalizePackageManifest(manifest: PackageManifest): PackageMani
     "keywords",
     "author",
     "license",
-    "repository",
     "homepage",
     "bugs",
     "engines",

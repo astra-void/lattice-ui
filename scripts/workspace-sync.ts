@@ -108,6 +108,10 @@ for (const pkg of packages) {
     }
   }
 
+  if (defaults.repository) {
+    nextManifest.repository = defaults.repository;
+  }
+
   nextManifest.scripts = nextManifest.scripts ?? {};
   if (!toolingPackage) {
     for (const [scriptName, scriptCommand] of Object.entries(defaultScripts)) {

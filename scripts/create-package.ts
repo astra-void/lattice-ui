@@ -148,6 +148,7 @@ const packageManifest = normalizePackageManifest({
   types: policy.packageDefaults?.types ?? "out/index.d.ts",
   source: policy.packageDefaults?.source ?? "src/index.ts",
   files: policy.packageDefaults?.files ?? ["default.project.json", "out", "src", "README.md"],
+  repository: policy.packageDefaults?.repository,
   scripts: sortRecord({ ...defaultScripts }),
   dependencies:
     dependencyNames.length > 0

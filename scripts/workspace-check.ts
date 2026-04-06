@@ -126,6 +126,9 @@ for (const pkg of packages) {
     if (defaults.files && !jsonEqual(pkg.manifest.files, defaults.files)) {
       errors.push(`${pkg.manifest.name} has non-canonical files array. Run "pnpm workspace:sync".`);
     }
+    if (defaults.repository && !jsonEqual(pkg.manifest.repository, defaults.repository)) {
+      errors.push(`${pkg.manifest.name} has a non-canonical repository field. Run "pnpm workspace:sync".`);
+    }
 
     for (const [scriptName, scriptCommand] of Object.entries(requiredScripts)) {
       if (!pkg.manifest.scripts?.[scriptName]) {
