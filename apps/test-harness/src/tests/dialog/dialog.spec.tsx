@@ -2,8 +2,8 @@ import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
 import { type MotionConfig } from "@lattice-ui/motion";
-import { isOutsidePointerEvent } from "../../../../../packages/layer/src/dismissable/events";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
+import { isOutsidePointerEvent } from "../../test-utils/outsidePointer";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
 const GuiService = game.GetService("GuiService");

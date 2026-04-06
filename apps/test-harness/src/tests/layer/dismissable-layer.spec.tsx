@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { DismissableLayer, PortalProvider } from "@lattice-ui/layer";
-import { isOutsidePointerEvent } from "../../../../../packages/layer/src/dismissable/events";
 import { findFirstDescendant } from "../../test-utils/guiFind";
+import { isOutsidePointerEvent } from "../../test-utils/outsidePointer";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
 function findModalBlocker(root: Instance) {
