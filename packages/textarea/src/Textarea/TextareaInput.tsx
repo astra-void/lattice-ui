@@ -1,5 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
+import { createFieldResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { resolveTextareaHeight } from "./autoResize";
 import { useTextareaContext } from "./context";
 import type { TextareaInputProps } from "./types";
@@ -41,11 +41,6 @@ function resolveMeasuredRows(textBox: TextBox, lineHeight: number) {
   return math.max(1, math.ceil(textBoundsHeight / lineHeight));
 }
 
-const transition = buildTweenTransition(
-  { BackgroundColor3: Color3.fromRGB(47, 53, 68) }, // Focused
-  { BackgroundColor3: Color3.fromRGB(39, 46, 61) }, // Default
-);
-
 export function TextareaInput(props: TextareaInputProps) {
   const textareaContext = useTextareaContext();
   const disabled = textareaContext.disabled || props.disabled === true;
@@ -53,7 +48,14 @@ export function TextareaInput(props: TextareaInputProps) {
   const [focused, setFocused] = React.useState(false);
 
   const active = focused && !disabled && !readOnly;
-  const localRef = useStateMotion<TextBox>(active, transition || {}, true);
+  const localRef = useResponseMotion<TextBox>(
+    active,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(35, 41, 54) },
+      inactive: { BackgroundColor3: Color3.fromRGB(39, 46, 61) },
+    },
+    createFieldResponseRecipe(),
+  );
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
