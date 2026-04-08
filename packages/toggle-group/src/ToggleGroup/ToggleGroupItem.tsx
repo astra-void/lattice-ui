@@ -1,18 +1,20 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
+import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useToggleGroupContext } from "./context";
 import type { ToggleGroupItemProps } from "./types";
-
-const transition = buildTweenTransition(
-  { BackgroundColor3: Color3.fromRGB(88, 142, 255), TextColor3: Color3.fromRGB(236, 241, 249) },
-  { BackgroundColor3: Color3.fromRGB(47, 53, 68), TextColor3: Color3.fromRGB(139, 146, 160) },
-);
 
 export function ToggleGroupItem(props: ToggleGroupItemProps) {
   const toggleGroupContext = useToggleGroupContext();
   const disabled = toggleGroupContext.disabled || props.disabled === true;
   const pressed = toggleGroupContext.isPressed(props.value);
-  const motionRef = useStateMotion<TextButton>(pressed, transition, false);
+  const motionRef = useResponseMotion<TextButton>(
+    pressed,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(88, 142, 255), TextColor3: Color3.fromRGB(236, 241, 249) },
+      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68), TextColor3: Color3.fromRGB(139, 146, 160) },
+    },
+    createSelectionResponseRecipe(),
+  );
 
   const handleToggle = React.useCallback(() => {
     if (disabled) {
