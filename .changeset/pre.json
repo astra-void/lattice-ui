@@ -1,0 +1,39 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "@lattice-ui/loom-preview": "0.4.4",
+    "@lattice-ui/playground": "0.4.4",
+    "@lattice-ui/test-harness": "0.4.4",
+    "@lattice-ui/accordion": "0.4.4",
+    "@lattice-ui/avatar": "0.4.4",
+    "@lattice-ui/checkbox": "0.4.4",
+    "lattice-ui": "0.4.4",
+    "@lattice-ui/combobox": "0.4.4",
+    "@lattice-ui/core": "0.4.4",
+    "@lattice-ui/dialog": "0.4.4",
+    "@lattice-ui/focus": "0.4.4",
+    "@lattice-ui/layer": "0.4.4",
+    "@lattice-ui/menu": "0.4.4",
+    "@lattice-ui/motion": "0.4.4",
+    "@lattice-ui/popover": "0.4.4",
+    "@lattice-ui/popper": "0.4.4",
+    "@lattice-ui/progress": "0.4.4",
+    "@lattice-ui/radio-group": "0.4.4",
+    "@lattice-ui/scroll-area": "0.4.4",
+    "@lattice-ui/select": "0.4.4",
+    "@lattice-ui/slider": "0.4.4",
+    "@lattice-ui/style": "0.4.4",
+    "@lattice-ui/switch": "0.4.4",
+    "@lattice-ui/system": "0.4.4",
+    "@lattice-ui/tabs": "0.4.4",
+    "@lattice-ui/text-field": "0.4.4",
+    "@lattice-ui/textarea": "0.4.4",
+    "@lattice-ui/toast": "0.4.4",
+    "@lattice-ui/toggle-group": "0.4.4",
+    "@lattice-ui/tooltip": "0.4.4"
+  },
+  "changesets": [
+    "goofy-icons-tan"
+  ]
+}
