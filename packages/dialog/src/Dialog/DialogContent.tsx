@@ -2,7 +2,7 @@ import { React, Slot } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createSurfaceRevealRecipe, type PresenceMotionConfig, usePresenceMotion } from "@lattice-ui/motion";
+import { createCanvasGroupRevealRecipe, type PresenceMotionConfig, usePresenceMotion } from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
@@ -57,7 +57,7 @@ function DialogContentImpl(props: {
   const contentBoundaryRef = React.useRef<GuiObject>();
   const insideBoundaryRefsRef = React.useRef<Array<React.MutableRefObject<GuiObject | undefined>>>([]);
 
-  const defaultTransition = React.useMemo(() => createSurfaceRevealRecipe(), []);
+  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(), []);
   const config = props.transition ?? defaultTransition;
 
   const motionRef = usePresenceMotion<CanvasGroup>(props.motionPresent, config, props.onExitComplete);
