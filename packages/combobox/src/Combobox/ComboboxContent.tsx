@@ -1,6 +1,8 @@
 import { React, Slot } from "@lattice-ui/core";
-import { DismissableLayer } from "@lattice-ui/layer";
-import { usePopperSurfaceMotion } from "@lattice-ui/motion";
+import type { LayerInteractEvent } from "@lattice-ui/layer";
+import { DismissableLayer, Presence } from "@lattice-ui/layer";
+import { createPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { useComboboxContext } from "./context";
 import type { ComboboxContentProps } from "./types";
@@ -14,10 +16,21 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function ComboboxContent(props: ComboboxContentProps) {
+function ComboboxContentImpl(props: {
+  motionPresent: boolean;
+  onExitComplete?: () => void;
+  placement?: PopperPlacement;
+  offset?: Vector2;
+  padding?: number;
+  forceMount?: boolean;
+  onPointerDownOutside?: (event: LayerInteractEvent) => void;
+  onInteractOutside?: (event: LayerInteractEvent) => void;
+  asChild?: boolean;
+  transition?: ComboboxContentProps["transition"];
+  children?: React.ReactNode;
+}) {
   const comboboxContext = useComboboxContext();
   const open = comboboxContext.open;
-  const forceMount = props.forceMount === true;
 
   const popper = usePopper({
     anchorRef: comboboxContext.anchorRef,
@@ -28,15 +41,20 @@ export function ComboboxContent(props: ComboboxContentProps) {
     enabled: open,
   });
 
-  const motionPresent = open && popper.isPositioned;
-  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(motionPresent, popper.placement, CONTENT_OFFSET, true);
+  const defaultTransition = React.useMemo(
+    () => createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    [popper.placement],
+  );
+  const motionRef = usePresenceMotion<GuiObject>(
+    props.motionPresent && popper.isPositioned,
+    props.transition ?? defaultTransition,
+    props.onExitComplete,
+  );
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
       comboboxContext.contentRef.current = toGuiObject(instance);
-      if (motionRef) {
-        motionRef.current = instance;
-      }
+      motionRef.current = toGuiObject(instance);
     },
     [comboboxContext.contentRef, motionRef],
   );
@@ -44,14 +62,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
   const handleDismiss = React.useCallback(() => {
     comboboxContext.setOpen(false);
   }, [comboboxContext]);
-
-  const shouldMount = forceMount || open || isPresent;
-
-  if (!shouldMount) {
-    return undefined;
-  }
-
-  const isActuallyVisible = open || (isPresent && popper.isPositioned);
+  const isActuallyVisible = open || (props.motionPresent && popper.isPositioned);
 
   const contentNode = props.asChild ? (
     (() => {
@@ -98,5 +109,50 @@ export function ComboboxContent(props: ComboboxContentProps) {
         {contentNode}
       </frame>
     </DismissableLayer>
+  );
+}
+
+export function ComboboxContent(props: ComboboxContentProps) {
+  const comboboxContext = useComboboxContext();
+  const open = comboboxContext.open;
+
+  if (props.forceMount) {
+    return (
+      <ComboboxContentImpl
+        asChild={props.asChild}
+        forceMount={props.forceMount}
+        motionPresent={open}
+        offset={props.offset}
+        onInteractOutside={props.onInteractOutside}
+        onPointerDownOutside={props.onPointerDownOutside}
+        padding={props.padding}
+        placement={props.placement}
+        transition={props.transition}
+      >
+        {props.children}
+      </ComboboxContentImpl>
+    );
+  }
+
+  return (
+    <Presence
+      present={open}
+      render={(state) => (
+        <ComboboxContentImpl
+          asChild={props.asChild}
+          forceMount={props.forceMount}
+          motionPresent={state.isPresent}
+          offset={props.offset}
+          onExitComplete={state.onExitComplete}
+          onInteractOutside={props.onInteractOutside}
+          onPointerDownOutside={props.onPointerDownOutside}
+          padding={props.padding}
+          placement={props.placement}
+          transition={props.transition}
+        >
+          {props.children}
+        </ComboboxContentImpl>
+      )}
+    />
   );
 }
