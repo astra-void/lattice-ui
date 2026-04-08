@@ -5,11 +5,13 @@ import js from "@eslint/js";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import { defineConfig, globalIgnores } from "eslint/config";
+import type { ESLint } from "eslint";
 import prettier from "eslint-plugin-prettier";
 import robloxTs from "eslint-plugin-roblox-ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const typescriptEslintPlugin = typescriptEslint as unknown as ESLint.Plugin;
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
@@ -29,7 +31,7 @@ export default defineConfig([
     ),
 
     plugins: {
-      "@typescript-eslint": typescriptEslint,
+      "@typescript-eslint": typescriptEslintPlugin,
       robloxTs,
       prettier,
     },
@@ -65,7 +67,7 @@ export default defineConfig([
     ),
 
     plugins: {
-      "@typescript-eslint": typescriptEslint,
+      "@typescript-eslint": typescriptEslintPlugin,
       prettier,
     },
 
@@ -97,7 +99,7 @@ export default defineConfig([
     ),
 
     plugins: {
-      "@typescript-eslint": typescriptEslint,
+      "@typescript-eslint": typescriptEslintPlugin,
       prettier,
     },
 
