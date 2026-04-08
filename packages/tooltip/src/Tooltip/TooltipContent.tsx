@@ -1,6 +1,8 @@
 import { React, Slot } from "@lattice-ui/core";
-import { DismissableLayer } from "@lattice-ui/layer";
-import { usePopperSurfaceMotion } from "@lattice-ui/motion";
+import type { LayerInteractEvent } from "@lattice-ui/layer";
+import { DismissableLayer, Presence } from "@lattice-ui/layer";
+import { createPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
@@ -14,10 +16,21 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function TooltipContent(props: TooltipContentProps) {
+function TooltipContentImpl(props: {
+  motionPresent: boolean;
+  onExitComplete?: () => void;
+  transition?: TooltipContentProps["transition"];
+  placement?: PopperPlacement;
+  offset?: Vector2;
+  padding?: number;
+  forceMount?: boolean;
+  onInteractOutside?: (event: LayerInteractEvent) => void;
+  onPointerDownOutside?: (event: LayerInteractEvent) => void;
+  asChild?: boolean;
+  children?: React.ReactNode;
+}) {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
-  const forceMount = props.forceMount === true;
 
   const popper = usePopper({
     anchorRef: tooltipContext.triggerRef,
@@ -28,18 +41,23 @@ export function TooltipContent(props: TooltipContentProps) {
     enabled: open,
   });
 
-  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(
-    open && popper.isPositioned,
-    popper.placement,
-    CONTENT_OFFSET,
-    true,
+  const defaultTransition = React.useMemo(
+    () => createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    [popper.placement],
+  );
+  const recipe = props.transition ?? defaultTransition;
+
+  const motionRef = usePresenceMotion<GuiObject>(
+    props.motionPresent && popper.isPositioned,
+    recipe,
+    props.onExitComplete,
   );
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
       tooltipContext.contentRef.current = toGuiObject(instance);
       if (motionRef) {
-        motionRef.current = instance;
+        motionRef.current = toGuiObject(instance);
       }
     },
     [tooltipContext.contentRef, motionRef],
@@ -49,16 +67,12 @@ export function TooltipContent(props: TooltipContentProps) {
     tooltipContext.close();
   }, [tooltipContext]);
 
-  if (!isPresent && !forceMount) {
-    return undefined;
-  }
-
   const isActuallyVisible = popper.isPositioned;
 
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
-      error("[TooltipContent] `sChild` requires a child element.");
+      error("[TooltipContent] `asChild` requires a child element.");
     }
 
     return (
@@ -100,5 +114,50 @@ export function TooltipContent(props: TooltipContentProps) {
         </frame>
       </frame>
     </DismissableLayer>
+  );
+}
+
+export function TooltipContent(props: TooltipContentProps) {
+  const tooltipContext = useTooltipContext();
+  const open = tooltipContext.open;
+
+  if (props.forceMount) {
+    return (
+      <TooltipContentImpl
+        motionPresent={open}
+        transition={props.transition}
+        placement={props.placement}
+        offset={props.offset}
+        padding={props.padding}
+        forceMount={props.forceMount}
+        onInteractOutside={props.onInteractOutside}
+        onPointerDownOutside={props.onPointerDownOutside}
+        asChild={props.asChild}
+      >
+        {props.children}
+      </TooltipContentImpl>
+    );
+  }
+
+  return (
+    <Presence
+      present={open}
+      render={(state) => (
+        <TooltipContentImpl
+          motionPresent={state.isPresent}
+          onExitComplete={state.onExitComplete}
+          transition={props.transition}
+          placement={props.placement}
+          offset={props.offset}
+          padding={props.padding}
+          forceMount={props.forceMount}
+          onInteractOutside={props.onInteractOutside}
+          onPointerDownOutside={props.onPointerDownOutside}
+          asChild={props.asChild}
+        >
+          {props.children}
+        </TooltipContentImpl>
+      )}
+    />
   );
 }
