@@ -4,6 +4,10 @@
   max: (...values: number[]) => number;
   min: (...values: number[]) => number;
   round: (value: number) => number;
+  pow: (value: number, exponent: number) => number;
+  exp: (value: number) => number;
+  cos: (value: number) => number;
+  pi: number;
 };
 
 class MockVector2 {
@@ -68,6 +72,16 @@ const luauMath: LuauMath = {
   round(value) {
     return Math.round(value);
   },
+  pow(value, exponent) {
+    return Math.pow(value, exponent);
+  },
+  exp(value) {
+    return Math.exp(value);
+  },
+  cos(value) {
+    return Math.cos(value);
+  },
+  pi: Math.PI,
 };
 
 const luauString = {
@@ -145,17 +159,60 @@ Object.assign(globalThis as Record<string, unknown>, {
   UDim2: MockUDim2,
 });
 
+if (!globalThis.pcall) {
+  globalThis.pcall = <T>(callback: () => T) => {
+    try {
+      return [true, callback()] as const;
+    } catch (error) {
+      return [false, error] as const;
+    }
+  };
+}
+
+if (!globalThis.coroutine) {
+  globalThis.coroutine = {
+    running: () => undefined,
+    status: (value: { __codexStatus?: string } | undefined) => value?.__codexStatus ?? "suspended",
+  };
+}
+
+if (!globalThis.task) {
+  globalThis.task = {
+    defer: (callback: () => void) => {
+      queueMicrotask(callback);
+    },
+    delay: (seconds: number, callback: () => void) => {
+      const handle = {
+        __codexStatus: "suspended",
+        timeout: setTimeout(() => {
+          handle.__codexStatus = "dead";
+          callback();
+        }, seconds * 1000),
+      };
+      return handle;
+    },
+    cancel: (handle: { __codexStatus?: string; timeout?: ReturnType<typeof setTimeout> }) => {
+      if (handle.timeout !== undefined) {
+        clearTimeout(handle.timeout);
+      }
+      handle.__codexStatus = "dead";
+    },
+  };
+}
+
 // Popover testing shim for game
 if (!globalThis.game) {
+  const connectSignal = () => ({ Connect: () => ({ Disconnect: () => {} }) });
   const mockWorkspace = {
-    GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }),
+    GetPropertyChangedSignal: connectSignal,
     CurrentCamera: {
       ViewportSize: new MockVector2(1920, 1080),
-      GetPropertyChangedSignal: () => ({ Connect: () => ({ Disconnect: () => {} }) }),
+      GetPropertyChangedSignal: connectSignal,
     },
   };
   const mockRunService = {
-    Heartbeat: { Connect: () => ({ Disconnect: () => {} }) },
+    Heartbeat: connectSignal(),
+    RenderStepped: connectSignal(),
   };
   globalThis.game = {
     GetService: (service: string) => {
