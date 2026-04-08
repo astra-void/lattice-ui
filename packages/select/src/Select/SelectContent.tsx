@@ -1,7 +1,9 @@
 import { React, Slot } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
-import { DismissableLayer } from "@lattice-ui/layer";
-import { usePopperSurfaceMotion } from "@lattice-ui/motion";
+import type { LayerInteractEvent } from "@lattice-ui/layer";
+import { DismissableLayer, Presence } from "@lattice-ui/layer";
+import { createPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
@@ -15,10 +17,21 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function SelectContent(props: SelectContentProps) {
+function SelectContentImpl(props: {
+  motionPresent: boolean;
+  onExitComplete?: () => void;
+  transition?: SelectContentProps["transition"];
+  placement?: PopperPlacement;
+  offset?: Vector2;
+  padding?: number;
+  forceMount?: boolean;
+  onInteractOutside?: (event: LayerInteractEvent) => void;
+  onPointerDownOutside?: (event: LayerInteractEvent) => void;
+  asChild?: boolean;
+  children?: React.ReactNode;
+}) {
   const selectContext = useSelectContext();
   const open = selectContext.open;
-  const forceMount = props.forceMount === true;
 
   const popper = usePopper({
     anchorRef: selectContext.triggerRef,
@@ -29,14 +42,23 @@ export function SelectContent(props: SelectContentProps) {
     enabled: open,
   });
 
-  const motionPresent = open && popper.isPositioned;
-  const { ref: motionRef, isPresent } = usePopperSurfaceMotion(motionPresent, popper.placement, CONTENT_OFFSET, true);
+  const defaultTransition = React.useMemo(
+    () => createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    [popper.placement],
+  );
+  const recipe = props.transition ?? defaultTransition;
+
+  const motionRef = usePresenceMotion<GuiObject>(
+    props.motionPresent && popper.isPositioned,
+    recipe,
+    props.onExitComplete,
+  );
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
       selectContext.contentRef.current = toGuiObject(instance);
       if (motionRef) {
-        motionRef.current = instance;
+        motionRef.current = toGuiObject(instance);
       }
     },
     [selectContext.contentRef, motionRef],
@@ -46,13 +68,7 @@ export function SelectContent(props: SelectContentProps) {
     selectContext.setOpen(false);
   }, [selectContext.setOpen]);
 
-  const shouldMount = forceMount || open || isPresent;
-
-  if (!shouldMount) {
-    return undefined;
-  }
-
-  const isActuallyVisible = open || (isPresent && popper.isPositioned);
+  const isActuallyVisible = open || (props.motionPresent && popper.isPositioned);
 
   const contentNode = props.asChild ? (
     (() => {
@@ -100,5 +116,50 @@ export function SelectContent(props: SelectContentProps) {
         </frame>
       </FocusScope>
     </DismissableLayer>
+  );
+}
+
+export function SelectContent(props: SelectContentProps) {
+  const selectContext = useSelectContext();
+  const open = selectContext.open;
+
+  if (props.forceMount) {
+    return (
+      <SelectContentImpl
+        motionPresent={open}
+        transition={props.transition}
+        placement={props.placement}
+        offset={props.offset}
+        padding={props.padding}
+        forceMount={props.forceMount}
+        onInteractOutside={props.onInteractOutside}
+        onPointerDownOutside={props.onPointerDownOutside}
+        asChild={props.asChild}
+      >
+        {props.children}
+      </SelectContentImpl>
+    );
+  }
+
+  return (
+    <Presence
+      present={open}
+      render={(state) => (
+        <SelectContentImpl
+          motionPresent={state.isPresent}
+          onExitComplete={state.onExitComplete}
+          transition={props.transition}
+          placement={props.placement}
+          offset={props.offset}
+          padding={props.padding}
+          forceMount={props.forceMount}
+          onInteractOutside={props.onInteractOutside}
+          onPointerDownOutside={props.onPointerDownOutside}
+          asChild={props.asChild}
+        >
+          {props.children}
+        </SelectContentImpl>
+      )}
+    />
   );
 }

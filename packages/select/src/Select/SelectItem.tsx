@@ -1,15 +1,10 @@
 import { React, Slot } from "@lattice-ui/core";
-import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
+import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
 
 let nextItemId = 0;
 let nextItemOrder = 0;
-
-const transition = buildTweenTransition(
-  { BackgroundColor3: Color3.fromRGB(66, 73, 91) },
-  { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
-);
 
 export function SelectItem(props: SelectItemProps) {
   const selectContext = useSelectContext();
@@ -20,7 +15,14 @@ export function SelectItem(props: SelectItemProps) {
   const textValueRef = React.useRef(textValue);
 
   const [active, setActive] = React.useState(false);
-  const motionRef = useStateMotion<GuiObject>(active && !disabled, transition, false);
+  const motionRef = useResponseMotion<GuiObject>(
+    active && !disabled,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(39, 46, 61) },
+      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
+    },
+    createSelectionResponseRecipe(),
+  );
 
   React.useEffect(() => {
     disabledRef.current = disabled;
