@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { composeRefs, React } from "@lattice-ui/core";
 import { createProgressResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useProgressContext } from "./context";
 import type { ProgressIndicatorProps } from "./types";
@@ -14,7 +14,6 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
 
   const widthScale = progressContext.indeterminate ? 0.35 : progressContext.ratio;
 
-  // Always active for ProgressIndicator, it just animates Size when ratio changes
   const indicatorRef = useResponseMotion<Frame>(
     true,
     {
@@ -31,25 +30,38 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
     }
 
     const childProps = toGuiPropBag((child as { props?: unknown }).props);
-    const mergedProps: GuiPropBag = {
-      ...childProps,
-      Position: UDim2.fromScale(0, 0),
-      Size: UDim2.fromScale(0, 1), // Static, useResponseMotion handles dynamic size
-      ref: indicatorRef,
-    };
 
-    return React.cloneElement(child as React.ReactElement<GuiPropBag>, mergedProps);
+    return (
+      <frame
+        BackgroundTransparency={1}
+        BorderSizePixel={0}
+        ClipsDescendants={true}
+        Position={UDim2.fromScale(0, 0)}
+        Size={UDim2.fromScale(0, 1)}
+        ref={indicatorRef}
+      >
+        {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
+          ...childProps,
+          Position: UDim2.fromScale(0, 0),
+          Size: UDim2.fromScale(1, 1),
+          ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+        })}
+      </frame>
+    );
   }
 
   return (
     <frame
-      BackgroundColor3={Color3.fromRGB(102, 156, 255)}
+      BackgroundTransparency={1}
       BorderSizePixel={0}
+      ClipsDescendants={true}
       Position={UDim2.fromScale(0, 0)}
-      Size={UDim2.fromScale(0, 1)} // Static, useResponseMotion handles dynamic size
+      Size={UDim2.fromScale(0, 1)}
       ref={indicatorRef}
     >
-      {props.children}
+      <frame BackgroundColor3={Color3.fromRGB(102, 156, 255)} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)}>
+        {props.children}
+      </frame>
     </frame>
   );
 }
