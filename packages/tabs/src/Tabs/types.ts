@@ -1,4 +1,4 @@
-import type { MotionConfig } from "@lattice-ui/motion";
+import type { PresenceMotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
 
 export type TabsSetValue = (value: string) => void;
@@ -41,7 +41,7 @@ export type TabsTriggerProps = {
 };
 
 export type TabsContentProps = {
-  transition?: MotionConfig;
+  transition?: PresenceMotionConfig;
   value: string;
   asChild?: boolean;
   forceMount?: boolean;

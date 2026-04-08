@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { useFocusNode } from "@lattice-ui/focus";
-import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
+import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
@@ -15,11 +15,6 @@ function toGuiObject(instance: Instance | undefined) {
 
   return instance;
 }
-
-const transition = buildTweenTransition(
-  { BackgroundColor3: Color3.fromRGB(86, 137, 245), TextColor3: Color3.fromRGB(235, 240, 248) },
-  { BackgroundColor3: Color3.fromRGB(47, 53, 68), TextColor3: Color3.fromRGB(136, 144, 159) },
-);
 
 export function TabsTrigger(props: TabsTriggerProps) {
   const tabsContext = useTabsContext();
@@ -59,7 +54,14 @@ export function TabsTrigger(props: TabsTriggerProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const motionRef = useStateMotion<GuiObject>(selected, transition, false);
+  const motionRef = useResponseMotion<GuiObject>(
+    selected,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(86, 137, 245), TextColor3: Color3.fromRGB(235, 240, 248) },
+      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68), TextColor3: Color3.fromRGB(136, 144, 159) },
+    },
+    createSelectionResponseRecipe(),
+  );
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
       const nextTrigger = toGuiObject(instance);
