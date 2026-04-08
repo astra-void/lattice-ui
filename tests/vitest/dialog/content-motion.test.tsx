@@ -5,83 +5,44 @@ import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { tweenService, MockTweenInfo } = vi.hoisted(() => {
-  class MockTweenInfo {
-    public Time: number;
-    public EasingStyle: string;
-    public EasingDirection: string;
+const { runService } = vi.hoisted(() => {
+  const listeners = new Set<(dt: number) => void>();
+  const workspace = {};
 
-    constructor(time: number, easingStyle: string, easingDirection: string) {
-      this.Time = time;
-      this.EasingStyle = easingStyle;
-      this.EasingDirection = easingDirection;
-    }
-  }
-
-  type TweenRecord = {
-    instance: Record<string, unknown>;
-    goals: Record<string, unknown>;
-    listeners: Array<(state: unknown) => void>;
-    fireCompleted: (state?: unknown) => void;
-  };
-
-  const createdTweens: Array<TweenRecord> = [];
-
-  const tweenService = {
-    createdTweens,
-    Create: vi.fn((instance: Record<string, unknown>, _info: MockTweenInfo, goals: Record<string, unknown>) => {
-      const record: TweenRecord = {
-        instance,
-        goals,
-        listeners: [],
-        fireCompleted(state = "Completed") {
-          for (const listener of record.listeners) {
-            listener(state);
-          }
-        },
-      };
-
-      createdTweens.push(record);
-
-      return {
-        Completed: {
-          Connect(listener: (state: unknown) => void) {
-            record.listeners.push(listener);
-            return { Disconnect() {} };
+  const runService = {
+    RenderStepped: {
+      Connect(listener: (dt: number) => void) {
+        listeners.add(listener);
+        return {
+          Disconnect() {
+            listeners.delete(listener);
           },
-        },
-        Play() {},
-        Cancel() {},
-      } as unknown as Tween;
-    }),
+        };
+      },
+    },
+    step(dt: number) {
+      for (const listener of [...listeners]) {
+        listener(dt);
+      }
+    },
+    reset() {
+      listeners.clear();
+    },
   };
 
   (globalThis as Record<string, unknown>).game = {
-    GetService: vi.fn(() => tweenService),
+    GetService: vi.fn((serviceName: string) => {
+      if (serviceName === "RunService") {
+        return runService;
+      }
+      if (serviceName === "Workspace") {
+        return workspace;
+      }
+      return {};
+    }),
   } as unknown as DataModel;
-  (globalThis as Record<string, unknown>).Enum = {
-    PlaybackState: {
-      Completed: "Completed",
-    },
-    EasingStyle: {
-      Quad: "Quad",
-    },
-    EasingDirection: {
-      In: "In",
-      Out: "Out",
-    },
-    TextXAlignment: {
-      Left: "Left",
-    },
-    ZIndexBehavior: {
-      Sibling: "Sibling",
-    },
-  };
-  (globalThis as Record<string, unknown>).TweenInfo = MockTweenInfo as unknown as typeof TweenInfo;
-  (globalThis as Record<string, unknown>).typeIs = (value: unknown, typeStr: string) => typeof value === typeStr;
-  (globalThis as Record<string, unknown>).pairs = (obj: Record<string, unknown>) => Object.entries(obj);
 
-  return { tweenService, MockTweenInfo };
+  return { runService };
 });
 
 vi.mock("@lattice-ui/core", () => {
@@ -148,19 +109,49 @@ vi.mock("@lattice-ui/focus", () => ({
   FocusScope: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
 }));
 
-vi.mock("@lattice-ui/layer", () => ({
-  DismissableLayer: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
-}));
+vi.mock("@lattice-ui/layer", () => {
+  const React = require("react");
 
-import type { MotionConfig } from "@lattice-ui/motion";
+  function Presence(props: {
+    present: boolean;
+    render: (state: { isPresent: boolean; onExitComplete: () => void }) => React.ReactElement | null;
+  }) {
+    const [mounted, setMounted] = React.useState(props.present);
+    const [isPresent, setIsPresent] = React.useState(props.present);
+
+    React.useEffect(() => {
+      if (props.present) {
+        setMounted(true);
+        setIsPresent(true);
+        return;
+      }
+
+      if (mounted) {
+        setIsPresent(false);
+      }
+    }, [mounted, props.present]);
+
+    if (!mounted) {
+      return null;
+    }
+
+    return props.render({
+      isPresent,
+      onExitComplete: () => setMounted(false),
+    });
+  }
+
+  return {
+    DismissableLayer: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    Presence,
+  };
+});
+
 import { Dialog } from "@lattice-ui/dialog";
-
-function installTweenServiceMock() {
-  tweenService.createdTweens.length = 0;
-}
+import type { PresenceMotionConfig } from "@lattice-ui/motion";
 
 beforeEach(() => {
-  installTweenServiceMock();
+  runService.reset();
 });
 
 afterEach(() => {
@@ -169,12 +160,32 @@ afterEach(() => {
 });
 
 describe("Dialog.Content motion regressions", () => {
-  it("honors transition overrides on the dialog-owned motion host and waits for exit completion before unmounting", () => {
-    const customTransition: MotionConfig = {
-      exiting: {
-        tweenInfo: new MockTweenInfo(0.2, "Quad", "In") as unknown as TweenInfo,
-        goals: {
+  it("applies the provided presence transition to the dialog-owned motion host and waits for exit completion before unmounting", async () => {
+    const customTransition: PresenceMotionConfig = {
+      initial: {
+        BackgroundTransparency: 1,
+        Position: UDim2.fromOffset(0, 10),
+      },
+      reveal: {
+        values: {
+          BackgroundTransparency: 0.4,
+          Position: UDim2.fromOffset(0, 0),
+        },
+        intent: {
+          duration: 0.2,
+          tempo: "steady",
+          tone: "calm",
+        },
+      },
+      exit: {
+        values: {
           BackgroundTransparency: 0.85,
+          Position: UDim2.fromOffset(0, 12),
+        },
+        intent: {
+          duration: 0.16,
+          tempo: "swift",
+          tone: "calm",
         },
       },
     };
@@ -182,32 +193,38 @@ describe("Dialog.Content motion regressions", () => {
     const { getByTestId, queryByTestId, rerender } = render(
       <Dialog.Root open={true}>
         <Dialog.Content transition={customTransition}>
-          <frame data-testid="content" />
+          <div data-testid="content" />
         </Dialog.Content>
       </Dialog.Root>,
     );
 
     const content = getByTestId("content");
-    const motionHost = content.parentElement;
-    expect(motionHost?.tagName.toLowerCase()).toBe("canvasgroup");
-    expect(tweenService.createdTweens[0]?.instance).toBe(motionHost);
+    const motionHost = content.parentElement as HTMLElement & Record<string, unknown>;
+    expect(motionHost.tagName.toLowerCase()).toBe("canvasgroup");
+    expect(motionHost.BackgroundTransparency).toBe(1);
+
+    act(() => {
+      runService.step(1);
+    });
+
+    expect(motionHost.BackgroundTransparency).toBe(0.4);
 
     rerender(
       <Dialog.Root open={false}>
         <Dialog.Content transition={customTransition}>
-          <frame data-testid="content" />
+          <div data-testid="content" />
         </Dialog.Content>
       </Dialog.Root>,
     );
 
     expect(queryByTestId("content")).not.toBeNull();
-    expect(tweenService.createdTweens[1]?.instance).toBe(motionHost);
-    expect(tweenService.createdTweens[1]?.goals.BackgroundTransparency).toBe(0.85);
 
-    act(() => {
-      tweenService.createdTweens[1]?.fireCompleted();
+    await act(async () => {
+      runService.step(1);
+      await Promise.resolve();
     });
 
+    expect(motionHost.BackgroundTransparency).toBe(0.85);
     expect(queryByTestId("content")).toBeNull();
   });
 
@@ -215,7 +232,7 @@ describe("Dialog.Content motion regressions", () => {
     const { getByTestId } = render(
       <Dialog.Root open={false}>
         <Dialog.Content forceMount={true}>
-          <frame data-testid="content" />
+          <div data-testid="content" />
         </Dialog.Content>
       </Dialog.Root>,
     );

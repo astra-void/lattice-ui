@@ -1,7 +1,8 @@
 import { React, Slot } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
-import { DismissableLayer } from "@lattice-ui/layer";
-import { getSurfaceRecipe, type MotionConfig, useMotionController, useMotionPresence } from "@lattice-ui/motion";
+import type { LayerInteractEvent } from "@lattice-ui/layer";
+import { DismissableLayer, Presence } from "@lattice-ui/layer";
+import { createSurfaceRevealRecipe, type PresenceMotionConfig, usePresenceMotion } from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
@@ -10,20 +11,7 @@ function toGuiObject(instance: Instance | undefined) {
   if (!instance || !candidate.IsA || !candidate.IsA("GuiObject")) {
     return undefined;
   }
-
   return candidate;
-}
-
-function mergeMotionConfig(baseConfig: MotionConfig, overrideConfig?: MotionConfig): MotionConfig {
-  if (!overrideConfig) {
-    return baseConfig;
-  }
-
-  return {
-    entering: { ...baseConfig.entering, ...overrideConfig.entering },
-    entered: { ...baseConfig.entered, ...overrideConfig.entered },
-    exiting: { ...baseConfig.exiting, ...overrideConfig.exiting },
-  };
 }
 
 function renderChildrenWithBoundaryRefs(
@@ -52,32 +40,31 @@ function renderChildrenWithBoundaryRefs(
   });
 }
 
-export function DialogContent(props: DialogContentProps) {
+function DialogContentImpl(props: {
+  motionPresent: boolean;
+  onExitComplete?: () => void;
+  transition?: PresenceMotionConfig;
+  forceMount?: boolean;
+  trapFocus?: boolean;
+  restoreFocus?: boolean;
+  onInteractOutside?: (event: LayerInteractEvent) => void;
+  onPointerDownOutside?: (event: LayerInteractEvent) => void;
+  children?: React.ReactNode;
+}) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
-  const trapFocus = props.trapFocus ?? true;
-  const restoreFocus = props.restoreFocus ?? true;
 
-  const { phase, isPresent, markPhaseComplete } = useMotionPresence({ present: open, appear: true });
-  const motionRef = React.useRef<Instance>();
   const contentBoundaryRef = React.useRef<GuiObject>();
   const insideBoundaryRefsRef = React.useRef<Array<React.MutableRefObject<GuiObject | undefined>>>([]);
-  const motionConfig = React.useMemo(() => {
-    return mergeMotionConfig(getSurfaceRecipe(), props.transition);
-  }, [props.transition]);
 
-  useMotionController(motionRef, motionConfig, phase, markPhaseComplete);
+  const defaultTransition = React.useMemo(() => createSurfaceRevealRecipe(), []);
+  const config = props.transition ?? defaultTransition;
 
-  const setMotionRef = React.useCallback((instance: Instance | undefined) => {
-    motionRef.current = instance;
-  }, []);
+  const motionRef = usePresenceMotion<CanvasGroup>(props.motionPresent, config, props.onExitComplete);
 
   const ensureInsideBoundaryRef = React.useCallback((index: number) => {
     const existing = insideBoundaryRefsRef.current[index];
-    if (existing) {
-      return existing;
-    }
-
+    if (existing) return existing;
     const created = { current: undefined as GuiObject | undefined };
     insideBoundaryRefsRef.current[index] = created;
     return created;
@@ -97,11 +84,7 @@ export function DialogContent(props: DialogContentProps) {
   const renderedChildren = React.useMemo(() => {
     const nextBoundaryIndex = { current: 0 };
     const content = renderChildrenWithBoundaryRefs(props.children, nextBoundaryIndex, setBoundaryRef);
-
-    return {
-      content,
-      boundaryCount: nextBoundaryIndex.current,
-    };
+    return { content, boundaryCount: nextBoundaryIndex.current };
   }, [props.children, setBoundaryRef]);
 
   const insideBoundaryRefs = React.useMemo(() => {
@@ -109,13 +92,11 @@ export function DialogContent(props: DialogContentProps) {
     for (let index = 1; index < insideBoundaryRefsRef.current.size(); index++) {
       refs.push(insideBoundaryRefsRef.current[index]);
     }
-
     return refs;
   }, [renderedChildren.boundaryCount]);
 
   React.useLayoutEffect(() => {
     const boundaryRefs = insideBoundaryRefsRef.current;
-
     if (renderedChildren.boundaryCount === 0) {
       contentBoundaryRef.current = toGuiObject(motionRef.current);
       for (let index = boundaryRefs.size() - 1; index >= 0; index--) {
@@ -123,25 +104,18 @@ export function DialogContent(props: DialogContentProps) {
       }
       return;
     }
-
     for (let index = renderedChildren.boundaryCount; index < boundaryRefs.size(); index++) {
       boundaryRefs[index].current = undefined;
     }
-
     for (let index = boundaryRefs.size() - 1; index >= renderedChildren.boundaryCount; index--) {
       boundaryRefs.remove(index);
     }
-
     contentBoundaryRef.current = boundaryRefs[0]?.current;
   }, [renderedChildren.boundaryCount]);
 
   const handleDismiss = React.useCallback(() => {
     dialogContext.setOpen(false);
   }, [dialogContext.setOpen]);
-
-  if (!isPresent && !props.forceMount) {
-    return undefined;
-  }
 
   return (
     <DismissableLayer
@@ -153,7 +127,7 @@ export function DialogContent(props: DialogContentProps) {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
     >
-      <FocusScope active={open} restoreFocus={restoreFocus} trapped={trapFocus}>
+      <FocusScope active={open} restoreFocus={props.restoreFocus} trapped={props.trapFocus}>
         <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)} ZIndex={10}>
           <canvasgroup
             BackgroundTransparency={1}
@@ -161,13 +135,55 @@ export function DialogContent(props: DialogContentProps) {
             GroupTransparency={1}
             Position={UDim2.fromScale(0, 0)}
             Size={UDim2.fromScale(1, 1)}
-            Visible={open || isPresent}
-            ref={setMotionRef}
+            Visible={true}
+            ref={motionRef}
           >
             {renderedChildren.content}
           </canvasgroup>
         </frame>
       </FocusScope>
     </DismissableLayer>
+  );
+}
+
+export function DialogContent(props: DialogContentProps) {
+  const dialogContext = useDialogContext();
+  const open = dialogContext.open;
+  const trapFocus = props.trapFocus ?? true;
+  const restoreFocus = props.restoreFocus ?? true;
+
+  if (props.forceMount) {
+    return (
+      <DialogContentImpl
+        motionPresent={open}
+        forceMount={true}
+        trapFocus={trapFocus}
+        restoreFocus={restoreFocus}
+        onInteractOutside={props.onInteractOutside}
+        onPointerDownOutside={props.onPointerDownOutside}
+        transition={props.transition}
+      >
+        {props.children}
+      </DialogContentImpl>
+    );
+  }
+
+  return (
+    <Presence
+      present={open}
+      render={(state) => (
+        <DialogContentImpl
+          motionPresent={state.isPresent}
+          onExitComplete={state.onExitComplete}
+          trapFocus={trapFocus}
+          restoreFocus={restoreFocus}
+          onInteractOutside={props.onInteractOutside}
+          onPointerDownOutside={props.onPointerDownOutside}
+          transition={props.transition}
+        >
+          {props.children}
+        </DialogContentImpl>
+      )}
+    />
   );
 }

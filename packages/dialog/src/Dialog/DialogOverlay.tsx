@@ -1,21 +1,25 @@
 import { React, Slot } from "@lattice-ui/core";
-import { useOverlayMotion } from "@lattice-ui/motion";
+import { Presence } from "@lattice-ui/layer";
+import { createOverlayFadeRecipe, usePresenceMotion } from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogOverlayProps } from "./types";
 
-export function DialogOverlay(props: DialogOverlayProps) {
+function DialogOverlayImpl(props: {
+  motionPresent: boolean;
+  onExitComplete?: () => void;
+  forceMount?: boolean;
+  asChild?: boolean;
+  children?: React.ReactNode;
+}) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
 
-  const { ref: motionRef, isPresent } = useOverlayMotion(open, true);
+  const config = React.useMemo(() => createOverlayFadeRecipe(), []);
+  const motionRef = usePresenceMotion<GuiObject>(props.motionPresent, config, props.onExitComplete);
 
   const handleActivated = React.useCallback(() => {
     dialogContext.setOpen(false);
   }, [dialogContext.setOpen]);
-
-  if (!isPresent && !props.forceMount) {
-    return undefined;
-  }
 
   if (props.asChild) {
     const child = props.children;
@@ -44,6 +48,35 @@ export function DialogOverlay(props: DialogOverlayProps) {
       TextTransparency={1}
       ZIndex={5}
       ref={motionRef as React.MutableRefObject<TextButton>}
+    />
+  );
+}
+
+export function DialogOverlay(props: DialogOverlayProps) {
+  const dialogContext = useDialogContext();
+  const open = dialogContext.open;
+
+  if (props.forceMount) {
+    return (
+      <DialogOverlayImpl motionPresent={open} forceMount={props.forceMount} asChild={props.asChild}>
+        {props.children}
+      </DialogOverlayImpl>
+    );
+  }
+
+  return (
+    <Presence
+      present={open}
+      render={(state) => (
+        <DialogOverlayImpl
+          motionPresent={state.isPresent}
+          onExitComplete={state.onExitComplete}
+          forceMount={props.forceMount}
+          asChild={props.asChild}
+        >
+          {props.children}
+        </DialogOverlayImpl>
+      )}
     />
   );
 }

@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
-import { type MotionConfig } from "@lattice-ui/motion";
+import { type PresenceMotionConfig as MotionConfig } from "@lattice-ui/motion";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { isOutsidePointerEvent } from "../../test-utils/outsidePointer";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
@@ -45,23 +45,7 @@ function createPointerInput(x: number, y: number) {
 }
 
 function buildSlowDialogTransition(): MotionConfig {
-  return {
-    entering: {
-      tweenInfo: new TweenInfo(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-      initial: {
-        Position: UDim2.fromOffset(0, 24),
-      },
-      goals: {
-        Position: UDim2.fromOffset(0, 0),
-      },
-    },
-    exiting: {
-      tweenInfo: new TweenInfo(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-      goals: {
-        Position: UDim2.fromOffset(0, 24),
-      },
-    },
-  };
+  return { initial: {}, reveal: { values: {}, intent: {} }, exit: { values: {}, intent: {} } };
 }
 
 export = () => {

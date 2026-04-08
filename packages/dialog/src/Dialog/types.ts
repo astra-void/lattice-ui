@@ -1,5 +1,5 @@
-import type { MotionConfig } from "@lattice-ui/motion";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
+import type { PresenceMotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
 
 export type DialogSetOpen = (open: boolean) => void;
@@ -38,7 +38,7 @@ export type DialogOverlayProps = {
 };
 
 export type DialogContentProps = {
-  transition?: MotionConfig;
+  transition?: PresenceMotionConfig;
   forceMount?: boolean;
   trapFocus?: boolean;
   restoreFocus?: boolean;
