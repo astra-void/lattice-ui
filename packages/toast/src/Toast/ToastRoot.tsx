@@ -1,53 +1,19 @@
 import { React, Slot } from "@lattice-ui/core";
-import { type MotionConfig, useStateMotion } from "@lattice-ui/motion";
+import { createToastResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import type { ToastRootProps } from "./types";
-
-const TOAST_TWEEN_INFO = new TweenInfo(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-
-function mergeMotionConfig(baseConfig: MotionConfig, overrideConfig?: MotionConfig): MotionConfig {
-  if (!overrideConfig) {
-    return baseConfig;
-  }
-
-  return {
-    entering: { ...baseConfig.entering, ...overrideConfig.entering },
-    entered: { ...baseConfig.entered, ...overrideConfig.entered },
-    exiting: { ...baseConfig.exiting, ...overrideConfig.exiting },
-  };
-}
-
-function buildToastTransition(): MotionConfig {
-  return {
-    entering: {
-      tweenInfo: TOAST_TWEEN_INFO,
-      initial: {
-        BackgroundTransparency: 1,
-      },
-      goals: {
-        BackgroundTransparency: 0,
-      },
-    },
-    entered: {
-      goals: {
-        BackgroundTransparency: 0,
-      },
-    },
-    exiting: {
-      tweenInfo: TOAST_TWEEN_INFO,
-      goals: {
-        BackgroundTransparency: 1,
-      },
-    },
-  };
-}
 
 export function ToastRoot(props: ToastRootProps) {
   const visible = props.visible ?? true;
-  const motionTransition = React.useMemo(() => {
-    return mergeMotionConfig(buildToastTransition(), props.transition);
-  }, [props.transition]);
+  const transition = props.transition ?? createToastResponseRecipe();
 
-  const motionRef = useStateMotion<Frame>(visible, motionTransition, false);
+  const motionRef = useResponseMotion<Frame>(
+    visible,
+    {
+      active: { BackgroundTransparency: 0 },
+      inactive: { BackgroundTransparency: 1 },
+    },
+    transition,
+  );
 
   if (props.asChild) {
     const child = props.children;
