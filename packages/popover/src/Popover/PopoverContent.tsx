@@ -1,14 +1,20 @@
-import { React, Slot } from "@lattice-ui/core";
+import { composeRefs, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import { createCanvasGroupPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";
 
-const CONTENT_OFFSET = 6;
+const CONTENT_OFFSET = 10;
+
+type GuiPropBag = React.Attributes & Record<string, unknown>;
+
+function toGuiPropBag(value: unknown): GuiPropBag {
+  return typeIs(value, "table") ? (value as GuiPropBag) : {};
+}
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -32,6 +38,8 @@ function PopoverContentImpl(props: {
 }) {
   const popoverContext = usePopoverContext();
   const open = popoverContext.open;
+  const shouldRender = open || props.motionPresent;
+  const contentBoundaryRef = React.useRef<GuiObject>();
 
   const anchorRef = popoverContext.anchorRef.current ? popoverContext.anchorRef : popoverContext.triggerRef;
 
@@ -41,11 +49,11 @@ function PopoverContentImpl(props: {
     placement: props.placement,
     offset: props.offset,
     padding: props.padding,
-    enabled: open,
+    enabled: shouldRender,
   });
 
   const defaultTransition = React.useMemo(
-    () => createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    () => createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
     [popper.placement],
   );
   const recipe = props.transition ?? defaultTransition;
@@ -58,17 +66,21 @@ function PopoverContentImpl(props: {
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
-      popoverContext.contentRef.current = toGuiObject(instance);
+      const guiObject = toGuiObject(instance);
+      popoverContext.contentRef.current = guiObject;
+      contentBoundaryRef.current = guiObject;
       if (motionRef) {
-        motionRef.current = toGuiObject(instance);
+        motionRef.current = guiObject;
       }
     },
-    [popoverContext.contentRef, motionRef],
+    [motionRef, popoverContext.contentRef],
   );
 
   const handleDismiss = React.useCallback(() => {
     popoverContext.setOpen(false);
   }, [popoverContext.setOpen]);
+
+  const isActuallyVisible = shouldRender && popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -77,23 +89,40 @@ function PopoverContentImpl(props: {
         error("[PopoverContent] `asChild` requires a child element.");
       }
 
+      const childProps = toGuiPropBag((child as { props?: unknown }).props);
+
       return (
-        <Slot AnchorPoint={popper.anchorPoint} ref={setContentRef}>
-          {child}
-        </Slot>
+        <canvasgroup
+          AutomaticSize={Enum.AutomaticSize.XY}
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          GroupTransparency={1}
+          Position={UDim2.fromOffset(0, 0)}
+          Size={UDim2.fromOffset(0, 0)}
+          Visible={isActuallyVisible}
+          ref={setContentRef as React.Ref<CanvasGroup>}
+        >
+          {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
+            ...childProps,
+            Position: UDim2.fromOffset(0, 0),
+            ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+          })}
+        </canvasgroup>
       );
     })()
   ) : (
-    <frame
-      AnchorPoint={popper.anchorPoint}
+    <canvasgroup
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
+      GroupTransparency={1}
+      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
+      Visible={isActuallyVisible}
       ref={setContentRef}
     >
       {props.children}
-    </frame>
+    </canvasgroup>
   );
 
   return (
@@ -103,13 +132,16 @@ function PopoverContentImpl(props: {
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
+      contentBoundaryRef={contentBoundaryRef}
     >
       <FocusScope active={open} restoreFocus={true} trapped={popoverContext.modal}>
         <frame
+          AnchorPoint={popper.anchorPoint}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          Position={popper.isPositioned ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
           Size={UDim2.fromOffset(0, 0)}
+          Visible={shouldRender}
         >
           {contentNode}
         </frame>
