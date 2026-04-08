@@ -72,30 +72,22 @@ jobs:
       - name: Resolve release metadata
         id: release
         env:
-          RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         run: pnpm run release:resolve -- --tag "${RELEASE_TAG}" --github-output "${GITHUB_OUTPUT}"
 
       - name: Dry-run publish
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         env:
-          NPM_DIST_TAG: ${{ steps.release.outputs.npm_dist_tag }}
+          NPM_PUBLISH_TAG_ARGS: ${{ steps.release.outputs.npm_publish_tag_args }}
         run: |
-          publish_args=()
-          if [ -n "${NPM_DIST_TAG}" ]; then
-            publish_args+=(--tag "${NPM_DIST_TAG}")
-          fi
-          pnpm run release:publish:dry-run:ci -- "${publish_args[@]}"
+          pnpm run release:publish:dry-run:ci -- ${NPM_PUBLISH_TAG_ARGS}
 
       - name: Publish packages
         if: ${{ github.event_name == 'push' || !inputs.dry_run }}
         env:
-          NPM_DIST_TAG: ${{ steps.release.outputs.npm_dist_tag }}
+          NPM_PUBLISH_TAG_ARGS: ${{ steps.release.outputs.npm_publish_tag_args }}
         run: |
-          publish_args=()
-          if [ -n "${NPM_DIST_TAG}" ]; then
-            publish_args+=(--tag "${NPM_DIST_TAG}")
-          fi
-          pnpm run release:publish:ci -- "${publish_args[@]}"
+          pnpm run release:publish:ci -- ${NPM_PUBLISH_TAG_ARGS}
 
       - name: Upload publish summary
         if: ${{ always() && hashFiles('pnpm-publish-summary.json') != '' }}
