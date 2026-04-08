@@ -1,5 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { useToggleOffsetMotion } from "@lattice-ui/motion";
+import { createToggleResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";
 
@@ -9,11 +9,13 @@ const CHECKED_THUMB_POSITION = new UDim2(1, -18, 0, 2);
 export function SwitchThumb(props: SwitchThumbProps) {
   const switchContext = useSwitchContext();
 
-  const { ref: motionRef } = useToggleOffsetMotion(
+  const motionRef = useResponseMotion<GuiObject>(
     switchContext.checked,
-    CHECKED_THUMB_POSITION,
-    UNCHECKED_THUMB_POSITION,
-    false,
+    {
+      active: { Position: CHECKED_THUMB_POSITION },
+      inactive: { Position: UNCHECKED_THUMB_POSITION },
+    },
+    createToggleResponseRecipe(),
   );
 
   const child = props.children;
@@ -23,7 +25,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
       error("[SwitchThumb] `asChild` requires a child element.");
     }
 
-    return <Slot ref={motionRef as React.MutableRefObject<Instance | undefined>}>{child}</Slot>;
+    return <Slot ref={motionRef}>{child}</Slot>;
   }
 
   return (

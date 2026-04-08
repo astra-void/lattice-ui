@@ -1,5 +1,5 @@
 import { React, Slot, useControllableState } from "@lattice-ui/core";
-import { useToggleMotion } from "@lattice-ui/motion";
+import { createToggleResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";
 
@@ -15,7 +15,14 @@ export function SwitchRoot(props: SwitchProps) {
 
   const disabled = props.disabled === true;
 
-  const { ref: motionRef } = useToggleMotion(checked, TRACK_ON_COLOR, TRACK_OFF_COLOR, false);
+  const motionRef = useResponseMotion<GuiObject>(
+    checked,
+    {
+      active: { BackgroundColor3: TRACK_ON_COLOR },
+      inactive: { BackgroundColor3: TRACK_OFF_COLOR },
+    },
+    createToggleResponseRecipe(),
+  );
 
   const setChecked = React.useCallback(
     (nextChecked: boolean) => {
