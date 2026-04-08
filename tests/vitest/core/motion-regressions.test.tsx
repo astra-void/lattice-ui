@@ -3,105 +3,124 @@
 
 import { act, render } from "@testing-library/react";
 import React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@lattice-ui/core", () => ({
   React: require("react"),
+  createStrictContext: <T,>(_name: string) => {
+    const React = require("react");
+    const Context = React.createContext<T | undefined>(undefined);
+    const Provider = Context.Provider;
+    const useContext = () => {
+      const value = React.useContext(Context);
+      if (value === undefined) {
+        throw new Error("Missing context");
+      }
+      return value;
+    };
+    return [Provider, useContext] as const;
+  },
 }));
 
-import { useMotionPresence } from "@lattice-ui/motion";
+import { Presence } from "@lattice-ui/layer";
 
 function PresenceHarness(props: {
   present: boolean;
-  onSnapshot: (snapshot: ReturnType<typeof useMotionPresence>) => void;
+  onSnapshot: (snapshot: { isPresent: boolean; onExitComplete: () => void }) => void;
+  exitFallbackMs?: number;
 }) {
-  const snapshot = useMotionPresence({ present: props.present, appear: true });
-  props.onSnapshot(snapshot);
-  return snapshot.isPresent ? React.createElement("div", { "data-testid": "present" }) : null;
+  return (
+    <Presence
+      exitFallbackMs={props.exitFallbackMs}
+      present={props.present}
+      render={(snapshot) => {
+        props.onSnapshot(snapshot);
+        return React.createElement("div", {
+          "data-testid": "present",
+          "data-state": snapshot.isPresent ? "present" : "exiting",
+        });
+      }}
+    />
+  );
 }
 
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.clearAllMocks();
 });
 
-describe("motion regression coverage", () => {
-  it("keeps presence mounted through exit until the exit phase completes", () => {
-    let latestSnapshot: ReturnType<typeof useMotionPresence> | undefined;
+describe("presence regression coverage", () => {
+  it("keeps content mounted through exit until the exit completion callback runs", () => {
+    let latestSnapshot: { isPresent: boolean; onExitComplete: () => void } | undefined;
 
     const { queryByTestId, rerender } = render(
-      React.createElement(PresenceHarness, {
-        present: true,
-        onSnapshot: (snapshot) => {
+      <PresenceHarness
+        onSnapshot={(snapshot) => {
           latestSnapshot = snapshot;
-        },
-      }),
+        }}
+        present={true}
+      />,
     );
 
     expect(queryByTestId("present")).not.toBeNull();
-    expect(latestSnapshot?.phase).toBe("entering");
-
-    act(() => {
-      latestSnapshot?.markPhaseComplete("entering");
-    });
-
-    expect(latestSnapshot?.phase).toBe("entered");
+    expect(latestSnapshot?.isPresent).toBe(true);
+    expect(queryByTestId("present")?.getAttribute("data-state")).toBe("present");
 
     rerender(
-      React.createElement(PresenceHarness, {
-        present: false,
-        onSnapshot: (snapshot) => {
+      <PresenceHarness
+        onSnapshot={(snapshot) => {
           latestSnapshot = snapshot;
-        },
-      }),
+        }}
+        present={false}
+      />,
     );
 
-    expect(latestSnapshot?.phase).toBe("exiting");
+    expect(latestSnapshot?.isPresent).toBe(false);
     expect(queryByTestId("present")).not.toBeNull();
+    expect(queryByTestId("present")?.getAttribute("data-state")).toBe("exiting");
 
     act(() => {
-      latestSnapshot?.markPhaseComplete("exiting");
+      latestSnapshot?.onExitComplete();
     });
 
-    expect(latestSnapshot?.phase).toBe("unmounted");
     expect(queryByTestId("present")).toBeNull();
   });
 
-  it("re-enters safely if presence flips back on before exit completes", () => {
-    let latestSnapshot: ReturnType<typeof useMotionPresence> | undefined;
+  it("falls back to unmounting if exit completion never fires", () => {
+    let latestSnapshot: { isPresent: boolean; onExitComplete: () => void } | undefined;
 
-    const { rerender } = render(
-      React.createElement(PresenceHarness, {
-        present: true,
-        onSnapshot: (snapshot) => {
+    const { queryByTestId, rerender } = render(
+      <PresenceHarness
+        exitFallbackMs={25}
+        onSnapshot={(snapshot) => {
           latestSnapshot = snapshot;
-        },
-      }),
+        }}
+        present={true}
+      />,
     );
+
+    rerender(
+      <PresenceHarness
+        exitFallbackMs={25}
+        onSnapshot={(snapshot) => {
+          latestSnapshot = snapshot;
+        }}
+        present={false}
+      />,
+    );
+
+    expect(latestSnapshot?.isPresent).toBe(false);
+    expect(queryByTestId("present")).not.toBeNull();
+    expect(queryByTestId("present")?.getAttribute("data-state")).toBe("exiting");
 
     act(() => {
-      latestSnapshot?.markPhaseComplete("entering");
+      vi.advanceTimersByTime(25);
     });
 
-    rerender(
-      React.createElement(PresenceHarness, {
-        present: false,
-        onSnapshot: (snapshot) => {
-          latestSnapshot = snapshot;
-        },
-      }),
-    );
-
-    expect(latestSnapshot?.phase).toBe("exiting");
-
-    rerender(
-      React.createElement(PresenceHarness, {
-        present: true,
-        onSnapshot: (snapshot) => {
-          latestSnapshot = snapshot;
-        },
-      }),
-    );
-
-    expect(latestSnapshot?.phase).toBe("entering");
+    expect(queryByTestId("present")).toBeNull();
   });
 });
