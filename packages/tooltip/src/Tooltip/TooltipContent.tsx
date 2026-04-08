@@ -1,13 +1,19 @@
-import { React, Slot } from "@lattice-ui/core";
+import { composeRefs, React } from "@lattice-ui/core";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import { createCanvasGroupPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
 
-const CONTENT_OFFSET = 6;
+const CONTENT_OFFSET = 10;
+
+type GuiPropBag = React.Attributes & Record<string, unknown>;
+
+function toGuiPropBag(value: unknown): GuiPropBag {
+  return typeIs(value, "table") ? (value as GuiPropBag) : {};
+}
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -31,6 +37,8 @@ function TooltipContentImpl(props: {
 }) {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
+  const shouldRender = open || props.motionPresent;
+  const contentBoundaryRef = React.useRef<GuiObject>();
 
   const popper = usePopper({
     anchorRef: tooltipContext.triggerRef,
@@ -38,11 +46,11 @@ function TooltipContentImpl(props: {
     placement: props.placement,
     offset: props.offset,
     padding: props.padding,
-    enabled: open,
+    enabled: shouldRender,
   });
 
   const defaultTransition = React.useMemo(
-    () => createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    () => createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
     [popper.placement],
   );
   const recipe = props.transition ?? defaultTransition;
@@ -55,25 +63,29 @@ function TooltipContentImpl(props: {
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
-      tooltipContext.contentRef.current = toGuiObject(instance);
+      const guiObject = toGuiObject(instance);
+      tooltipContext.contentRef.current = guiObject;
+      contentBoundaryRef.current = guiObject;
       if (motionRef) {
-        motionRef.current = toGuiObject(instance);
+        motionRef.current = guiObject;
       }
     },
-    [tooltipContext.contentRef, motionRef],
+    [motionRef, tooltipContext.contentRef],
   );
 
   const handleDismiss = React.useCallback(() => {
     tooltipContext.close();
   }, [tooltipContext]);
 
-  const isActuallyVisible = popper.isPositioned;
+  const isActuallyVisible = shouldRender && popper.isPositioned;
 
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
       error("[TooltipContent] `asChild` requires a child element.");
     }
+
+    const childProps = toGuiPropBag((child as { props?: unknown }).props);
 
     return (
       <DismissableLayer
@@ -82,11 +94,32 @@ function TooltipContentImpl(props: {
         onDismiss={handleDismiss}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
+        contentBoundaryRef={contentBoundaryRef}
       >
-        <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
-          <Slot AnchorPoint={popper.anchorPoint} Visible={isActuallyVisible} ref={setContentRef}>
-            {child}
-          </Slot>
+        <frame
+          AnchorPoint={popper.anchorPoint}
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Size={UDim2.fromOffset(0, 0)}
+          Visible={shouldRender}
+        >
+          <canvasgroup
+            AutomaticSize={Enum.AutomaticSize.XY}
+            BackgroundTransparency={1}
+            BorderSizePixel={0}
+            GroupTransparency={1}
+            Position={UDim2.fromOffset(0, 0)}
+            Size={UDim2.fromOffset(0, 0)}
+            Visible={isActuallyVisible}
+            ref={setContentRef as React.Ref<CanvasGroup>}
+          >
+            {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
+              ...childProps,
+              Position: UDim2.fromOffset(0, 0),
+              ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+            })}
+          </canvasgroup>
         </frame>
       </DismissableLayer>
     );
@@ -99,19 +132,28 @@ function TooltipContentImpl(props: {
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
+      contentBoundaryRef={contentBoundaryRef}
     >
-      <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
-        <frame
-          AnchorPoint={popper.anchorPoint}
+      <frame
+        AnchorPoint={popper.anchorPoint}
+        BackgroundTransparency={1}
+        BorderSizePixel={0}
+        Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
+        Size={UDim2.fromOffset(0, 0)}
+        Visible={shouldRender}
+      >
+        <canvasgroup
           AutomaticSize={Enum.AutomaticSize.XY}
           BackgroundTransparency={1}
           BorderSizePixel={0}
+          GroupTransparency={1}
+          Position={UDim2.fromOffset(0, 0)}
           Size={UDim2.fromOffset(0, 0)}
           Visible={isActuallyVisible}
           ref={setContentRef}
         >
           {props.children}
-        </frame>
+        </canvasgroup>
       </frame>
     </DismissableLayer>
   );
