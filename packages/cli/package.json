@@ -19,7 +19,8 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prebuild": "node ./scripts/clean-dist.mjs",
+    "prebuild": "node ./scripts/clean-dist.mjs && node ../../scripts/ensure-hoisted-links.mjs",
+    "prewatch": "node ../../scripts/ensure-hoisted-links.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc -p tsconfig.json -w"
   },
