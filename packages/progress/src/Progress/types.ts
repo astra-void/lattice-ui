@@ -1,4 +1,4 @@
-import type { MotionConfig } from "@lattice-ui/motion";
+import type { ResponseMotionConfig as MotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
 
 export type ProgressContextValue = {
