@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { useFocusNode } from "@lattice-ui/focus";
-import { buildTweenTransition, useStateMotion } from "@lattice-ui/motion";
+import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useMenuContext } from "./context";
 import type { MenuItemProps, MenuSelectEvent } from "./types";
 
@@ -17,11 +17,6 @@ function createMenuSelectEvent(): MenuSelectEvent {
 
   return event;
 }
-
-const transition = buildTweenTransition(
-  { BackgroundColor3: Color3.fromRGB(66, 73, 91) },
-  { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
-);
 
 export function MenuItem(props: MenuItemProps) {
   const menuContext = useMenuContext();
@@ -60,7 +55,14 @@ export function MenuItem(props: MenuItemProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const motionRef = useStateMotion<GuiObject>(active && props.disabled !== true, transition, false);
+  const motionRef = useResponseMotion<GuiObject>(
+    active && props.disabled !== true,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(39, 46, 61) },
+      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
+    },
+    createSelectionResponseRecipe(),
+  );
 
   const setItemRef = React.useCallback(
     (instance: Instance | undefined) => {
