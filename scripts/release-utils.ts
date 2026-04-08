@@ -14,6 +14,10 @@ export interface ParsedReleaseTag {
   distTag: string | null;
 }
 
+export function getReleasePublishTagArgs(parsed: ParsedReleaseTag): string {
+  return parsed.distTag ? `--tag ${parsed.distTag}` : "";
+}
+
 export interface ReleasePackageVersionInfo {
   name: string;
   version?: string;

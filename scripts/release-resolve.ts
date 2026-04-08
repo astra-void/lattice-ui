@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as fs from "node:fs";
-import { validateReleasePackageVersions } from "./release-utils";
+import { getReleasePublishTagArgs, validateReleasePackageVersions } from "./release-utils";
 import { listPackages } from "./workspace-utils";
 
 interface CliOptions {
@@ -61,6 +61,7 @@ if (githubOutput) {
   appendGithubOutput(githubOutput, "release_tag", parsed.tag);
   appendGithubOutput(githubOutput, "release_version", parsed.version);
   appendGithubOutput(githubOutput, "npm_dist_tag", parsed.distTag ?? "");
+  appendGithubOutput(githubOutput, "npm_publish_tag_args", getReleasePublishTagArgs(parsed));
 }
 
 if (parsed.distTag) {
