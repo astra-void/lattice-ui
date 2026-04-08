@@ -1,6 +1,6 @@
 {
   "name": "@lattice-ui/accordion",
-  "version": "0.5.0",
+  "version": "0.5.0-next.0",
   "private": false,
   "main": "out/init.luau",
   "types": "out/index.d.ts",
