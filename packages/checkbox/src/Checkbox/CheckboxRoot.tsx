@@ -1,5 +1,5 @@
 import { React, Slot, useControllableState } from "@lattice-ui/core";
-import { useStateMotion } from "@lattice-ui/motion";
+import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { CheckboxContextProvider } from "./context";
 import type { CheckboxProps, CheckedState } from "./types";
 
@@ -20,7 +20,15 @@ export function CheckboxRoot(props: CheckboxProps) {
 
   const disabled = props.disabled === true;
   const required = props.required === true;
-  const motionRef = useStateMotion<TextButton>(checked !== false, {}, false);
+
+  const motionRef = useResponseMotion<TextButton>(
+    checked !== false,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(88, 142, 255) },
+      inactive: { BackgroundColor3: Color3.fromRGB(59, 66, 84) },
+    },
+    createSelectionResponseRecipe(),
+  );
 
   const setChecked = React.useCallback(
     (nextChecked: CheckedState) => {

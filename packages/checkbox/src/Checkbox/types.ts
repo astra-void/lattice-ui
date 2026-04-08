@@ -1,4 +1,4 @@
-import type { MotionConfig } from "@lattice-ui/motion";
+import type { PresenceMotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
 
 export type CheckedState = boolean | "indeterminate";
@@ -23,7 +23,7 @@ export type CheckboxProps = {
 };
 
 export type CheckboxIndicatorProps = {
-  transition?: MotionConfig;
+  transition?: PresenceMotionConfig;
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
