@@ -1,14 +1,20 @@
-import { React, Slot } from "@lattice-ui/core";
+import { composeRefs, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import { createCanvasGroupPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { useMenuContext } from "./context";
 import type { MenuContentProps } from "./types";
 
-const CONTENT_OFFSET = 6;
+const CONTENT_OFFSET = 10;
+
+type GuiPropBag = React.Attributes & Record<string, unknown>;
+
+function toGuiPropBag(value: unknown): GuiPropBag {
+  return typeIs(value, "table") ? (value as GuiPropBag) : {};
+}
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance || !instance.IsA("GuiObject")) {
@@ -32,6 +38,8 @@ function MenuContentImpl(props: {
 }) {
   const menuContext = useMenuContext();
   const open = menuContext.open;
+  const shouldRender = open || props.motionPresent;
+  const contentBoundaryRef = React.useRef<GuiObject>();
 
   const popper = usePopper({
     anchorRef: menuContext.triggerRef,
@@ -39,11 +47,11 @@ function MenuContentImpl(props: {
     placement: props.placement,
     offset: props.offset,
     padding: props.padding,
-    enabled: open,
+    enabled: shouldRender,
   });
 
   const defaultTransition = React.useMemo(
-    () => createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    () => createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
     [popper.placement],
   );
   const recipe = props.transition ?? defaultTransition;
@@ -56,9 +64,11 @@ function MenuContentImpl(props: {
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
-      menuContext.contentRef.current = toGuiObject(instance);
+      const guiObject = toGuiObject(instance);
+      menuContext.contentRef.current = guiObject;
+      contentBoundaryRef.current = guiObject;
       if (motionRef) {
-        motionRef.current = toGuiObject(instance);
+        motionRef.current = guiObject;
       }
     },
     [menuContext.contentRef, motionRef],
@@ -68,7 +78,7 @@ function MenuContentImpl(props: {
     menuContext.setOpen(false);
   }, [menuContext.setOpen]);
 
-  const isActuallyVisible = open || (props.motionPresent && popper.isPositioned);
+  const isActuallyVisible = shouldRender && popper.isPositioned;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -77,24 +87,40 @@ function MenuContentImpl(props: {
         error("[MenuContent] `asChild` requires a child element.");
       }
 
+      const childProps = toGuiPropBag((child as { props?: unknown }).props);
+
       return (
-        <Slot AnchorPoint={popper.anchorPoint} Visible={isActuallyVisible} ref={setContentRef}>
-          {child}
-        </Slot>
+        <canvasgroup
+          AutomaticSize={Enum.AutomaticSize.XY}
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          GroupTransparency={1}
+          Position={UDim2.fromOffset(0, 0)}
+          Size={UDim2.fromOffset(0, 0)}
+          Visible={isActuallyVisible}
+          ref={setContentRef as React.Ref<CanvasGroup>}
+        >
+          {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
+            ...childProps,
+            Position: UDim2.fromOffset(0, 0),
+            ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+          })}
+        </canvasgroup>
       );
     })()
   ) : (
-    <frame
-      AnchorPoint={popper.anchorPoint}
+    <canvasgroup
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
+      GroupTransparency={1}
+      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
       Visible={isActuallyVisible}
       ref={setContentRef}
     >
       {props.children}
-    </frame>
+    </canvasgroup>
   );
 
   return (
@@ -104,9 +130,17 @@ function MenuContentImpl(props: {
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
+      contentBoundaryRef={contentBoundaryRef}
     >
       <FocusScope active={open} restoreFocus={true} trapped={menuContext.modal}>
-        <frame BackgroundTransparency={1} BorderSizePixel={0} Position={popper.position} Size={UDim2.fromOffset(0, 0)}>
+        <frame
+          AnchorPoint={popper.anchorPoint}
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Size={UDim2.fromOffset(0, 0)}
+          Visible={shouldRender}
+        >
           {contentNode}
         </frame>
       </FocusScope>
