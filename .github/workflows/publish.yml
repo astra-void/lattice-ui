@@ -67,7 +67,7 @@ jobs:
         run: pnpm run check
 
       - name: Run build
-        run: pnpm run build=
+        run: pnpm run build
 
       - name: Resolve release metadata
         id: release
