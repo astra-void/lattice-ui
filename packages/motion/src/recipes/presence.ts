@@ -25,6 +25,29 @@ export function createSurfaceRevealRecipe(offsetY = 4, duration = 0.12): Presenc
   };
 }
 
+export function createCanvasGroupRevealRecipe(offsetY = 4, duration = 0.12): PresenceMotionConfig {
+  return {
+    initial: {
+      Position: UDim2.fromOffset(0, offsetY),
+      GroupTransparency: 1,
+    },
+    reveal: {
+      values: {
+        Position: UDim2.fromOffset(0, 0),
+        GroupTransparency: 0,
+      },
+      intent: { duration, tempo: "steady", tone: "calm" },
+    },
+    exit: {
+      values: {
+        Position: UDim2.fromOffset(0, offsetY),
+        GroupTransparency: 1,
+      },
+      intent: { duration: duration * 0.75, tempo: "swift", tone: "calm" },
+    },
+  };
+}
+
 export function createOverlayFadeRecipe(duration = 0.15): PresenceMotionConfig {
   return {
     initial: { BackgroundTransparency: 1 },
@@ -62,6 +85,35 @@ export function createPopperEntranceRecipe(
       values: {
         Position: offset,
         BackgroundTransparency: 1,
+      },
+      intent: { duration: duration * 0.8, tempo: "swift", tone: "calm" },
+    },
+  };
+}
+
+export function createCanvasGroupPopperEntranceRecipe(
+  placement?: MotionPlacement,
+  distance = 10,
+  duration = 0.12,
+): PresenceMotionConfig {
+  const offset = createPlacementOffset(placement, distance);
+
+  return {
+    initial: {
+      Position: offset,
+      GroupTransparency: 1,
+    },
+    reveal: {
+      values: {
+        Position: UDim2.fromOffset(0, 0),
+        GroupTransparency: 0,
+      },
+      intent: { duration, tempo: "swift", tone: "responsive" },
+    },
+    exit: {
+      values: {
+        Position: offset,
+        GroupTransparency: 1,
       },
       intent: { duration: duration * 0.8, tempo: "swift", tone: "calm" },
     },
