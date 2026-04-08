@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getReleasePublishTagArgs,
   parseReleaseTag,
   resolveReleaseTag,
   validatePackageVersionMatchesRelease,
@@ -36,6 +37,12 @@ describe("release tag validation", () => {
     expect(parseReleaseTag("v0.1.0-beta.2")?.distTag).toBe("beta");
     expect(parseReleaseTag("v0.1.0-rc.0")?.distTag).toBe("rc");
     expect(parseReleaseTag("v0.1.0")?.distTag).toBeNull();
+  });
+
+  it("derives publish tag args from parsed release metadata", () => {
+    expect(getReleasePublishTagArgs(resolveReleaseTag("v0.1.0"))).toBe("");
+    expect(getReleasePublishTagArgs(resolveReleaseTag("v0.1.0-alpha.1"))).toBe("--tag alpha");
+    expect(getReleasePublishTagArgs(resolveReleaseTag("v0.1.0-beta.2"))).toBe("--tag beta");
   });
 
   it("validates all publishable package versions against prerelease tags", () => {
