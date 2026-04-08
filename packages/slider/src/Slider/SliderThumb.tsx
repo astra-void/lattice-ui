@@ -1,6 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import type { MotionConfig } from "@lattice-ui/motion";
-import { useStateMotion } from "@lattice-ui/motion";
+import { createSliderThumbResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderThumbProps } from "./types";
@@ -12,8 +11,6 @@ function isPointerStartInput(inputObject: InputObject) {
   );
 }
 
-const THUMB_TWEEN_INFO = new TweenInfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
-
 export function SliderThumb(props: SliderThumbProps) {
   const sliderContext = useSliderContext();
   const percent = valueToPercent(sliderContext.value, sliderContext.min, sliderContext.max);
@@ -21,24 +18,11 @@ export function SliderThumb(props: SliderThumbProps) {
   const position =
     sliderContext.orientation === "horizontal" ? UDim2.fromScale(percent, 0.5) : UDim2.fromScale(0.5, 1 - percent);
 
-  const transition = React.useMemo(() => {
-    return {
-      entering: {
-        tweenInfo: sliderContext.isDragging ? undefined : THUMB_TWEEN_INFO,
-        goals: {
-          Position: position,
-        },
-      },
-      entered: {
-        tweenInfo: sliderContext.isDragging ? undefined : THUMB_TWEEN_INFO,
-        goals: {
-          Position: position,
-        },
-      },
-    } satisfies MotionConfig;
-  }, [position, sliderContext.isDragging]);
-
-  const motionRef = useStateMotion<GuiObject>(true, transition, false);
+  const motionRef = useResponseMotion<GuiObject>(
+    true,
+    { active: { Position: position }, inactive: { Position: position } },
+    createSliderThumbResponseRecipe(sliderContext.isDragging),
+  );
 
   const setNodeRef = React.useCallback(
     (instance: Instance | undefined) => {
