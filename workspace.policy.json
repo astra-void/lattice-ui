@@ -1,7 +1,7 @@
 {
   "internalScope": "@lattice-ui",
   "internalDependencyVersion": "workspace:*",
-  "lockedVersion": "0.4.4",
+  "lockedVersion": "0.5.0-next.0",
   "lockedstep": {
     "enforced": true,
     "major": 0
