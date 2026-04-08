@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { useFocusNode } from "@lattice-ui/focus";
-import { useStateMotion } from "@lattice-ui/motion";
+import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
 
@@ -45,7 +45,15 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const motionRef = useStateMotion<GuiObject>(checked, {}, false);
+  const motionRef = useResponseMotion<GuiObject>(
+    checked,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(88, 142, 255) },
+      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
+    },
+    props.transition ?? createSelectionResponseRecipe(),
+  );
+
   const setItemRef = React.useCallback(
     (instance: Instance | undefined) => {
       const nextItem = !instance || !instance.IsA("GuiObject") ? undefined : instance;
