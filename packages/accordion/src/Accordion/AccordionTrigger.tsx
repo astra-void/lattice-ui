@@ -1,5 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { useStateMotion } from "@lattice-ui/motion";
+import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useAccordionContext, useAccordionItemContext } from "./context";
 import type { AccordionTriggerProps } from "./types";
 
@@ -7,7 +7,15 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
   const accordionContext = useAccordionContext();
   const itemContext = useAccordionItemContext();
   const disabled = itemContext.disabled;
-  const motionRef = useStateMotion<TextButton>(itemContext.open, {}, false);
+
+  const motionRef = useResponseMotion<TextButton>(
+    itemContext.open,
+    {
+      active: { BackgroundColor3: Color3.fromRGB(59, 66, 84) },
+      inactive: { BackgroundColor3: Color3.fromRGB(41, 48, 63) },
+    },
+    createSelectionResponseRecipe(0.15),
+  );
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {

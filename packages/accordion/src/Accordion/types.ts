@@ -1,5 +1,5 @@
+import type { PresenceMotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
-import type { MotionConfig } from "@lattice-ui/motion";
 import type { AccordionType } from "./state";
 
 export type AccordionContextValue = {
@@ -43,6 +43,6 @@ export type AccordionTriggerProps = {
 export type AccordionContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
-  transition?: MotionConfig;
+  transition?: PresenceMotionConfig;
   children?: React.ReactNode;
 };
