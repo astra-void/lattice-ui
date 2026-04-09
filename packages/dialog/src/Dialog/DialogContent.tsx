@@ -18,6 +18,8 @@ function renderChildrenWithBoundaryRefs(
   children: React.ReactNode,
   nextBoundaryIndex: { current: number },
   setBoundaryRef: (index: number, instance: Instance | undefined) => void,
+  motionRef: React.MutableRefObject<CanvasGroup | undefined>,
+  shouldRender: boolean,
 ): React.ReactNode {
   return React.Children.map(children, (child) => {
     if (!React.isValidElement(child)) {
@@ -28,13 +30,33 @@ function renderChildrenWithBoundaryRefs(
       const fragmentProps = child.props as { children?: React.ReactNode };
       return (
         <React.Fragment>
-          {renderChildrenWithBoundaryRefs(fragmentProps.children, nextBoundaryIndex, setBoundaryRef)}
+          {renderChildrenWithBoundaryRefs(
+            fragmentProps.children,
+            nextBoundaryIndex,
+            setBoundaryRef,
+            motionRef,
+            shouldRender,
+          )}
         </React.Fragment>
       );
     }
 
     const boundaryIndex = nextBoundaryIndex.current;
     nextBoundaryIndex.current += 1;
+
+    if (boundaryIndex === 0) {
+      return (
+        <canvasgroup
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Size={UDim2.fromScale(1, 1)}
+          Visible={shouldRender}
+          ref={motionRef}
+        >
+          <Slot ref={(instance) => setBoundaryRef(boundaryIndex, instance)}>{child}</Slot>
+        </canvasgroup>
+      );
+    }
 
     return <Slot ref={(instance) => setBoundaryRef(boundaryIndex, instance)}>{child}</Slot>;
   });
@@ -53,11 +75,12 @@ function DialogContentImpl(props: {
 }) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
+  const shouldRender = open || props.motionPresent;
 
   const contentBoundaryRef = React.useRef<GuiObject>();
   const insideBoundaryRefsRef = React.useRef<Array<React.MutableRefObject<GuiObject | undefined>>>([]);
 
-  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(), []);
+  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(8), []);
   const config = props.transition ?? defaultTransition;
 
   const motionRef = usePresenceMotion<CanvasGroup>(props.motionPresent, config, props.onExitComplete);
@@ -83,9 +106,15 @@ function DialogContentImpl(props: {
 
   const renderedChildren = React.useMemo(() => {
     const nextBoundaryIndex = { current: 0 };
-    const content = renderChildrenWithBoundaryRefs(props.children, nextBoundaryIndex, setBoundaryRef);
+    const content = renderChildrenWithBoundaryRefs(
+      props.children,
+      nextBoundaryIndex,
+      setBoundaryRef,
+      motionRef,
+      shouldRender,
+    );
     return { content, boundaryCount: nextBoundaryIndex.current };
-  }, [props.children, setBoundaryRef]);
+  }, [motionRef, props.children, setBoundaryRef, shouldRender]);
 
   const insideBoundaryRefs = React.useMemo(() => {
     const refs = new Array<React.MutableRefObject<GuiObject | undefined>>();
@@ -98,7 +127,7 @@ function DialogContentImpl(props: {
   React.useLayoutEffect(() => {
     const boundaryRefs = insideBoundaryRefsRef.current;
     if (renderedChildren.boundaryCount === 0) {
-      contentBoundaryRef.current = toGuiObject(motionRef.current);
+      contentBoundaryRef.current = undefined;
       for (let index = boundaryRefs.size() - 1; index >= 0; index--) {
         boundaryRefs.remove(index);
       }
@@ -128,18 +157,14 @@ function DialogContentImpl(props: {
       onPointerDownOutside={props.onPointerDownOutside}
     >
       <FocusScope active={open} restoreFocus={props.restoreFocus} trapped={props.trapFocus}>
-        <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)} ZIndex={10}>
-          <canvasgroup
-            BackgroundTransparency={1}
-            BorderSizePixel={0}
-            GroupTransparency={1}
-            Position={UDim2.fromScale(0, 0)}
-            Size={UDim2.fromScale(1, 1)}
-            Visible={true}
-            ref={motionRef}
-          >
-            {renderedChildren.content}
-          </canvasgroup>
+        <frame
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Size={UDim2.fromScale(1, 1)}
+          Visible={shouldRender}
+          ZIndex={10}
+        >
+          {renderedChildren.content}
         </frame>
       </FocusScope>
     </DismissableLayer>

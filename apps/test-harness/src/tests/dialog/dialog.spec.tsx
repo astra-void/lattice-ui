@@ -34,6 +34,17 @@ function requireCanvasGroupParent(instance: Instance | undefined, message: strin
   return parent as CanvasGroup;
 }
 
+function getCanvasGroupAbsoluteRect(canvasGroup: CanvasGroup) {
+  const topLeft = canvasGroup.AbsolutePosition;
+  const size = canvasGroup.AbsoluteSize;
+  return {
+    minX: topLeft.X,
+    minY: topLeft.Y,
+    maxX: topLeft.X + size.X,
+    maxY: topLeft.Y + size.Y,
+  };
+}
+
 function assertWithinTolerance(actual: number, expected: number, tolerance: number, message: string) {
   assert(math.abs(actual - expected) <= tolerance, `${message} (expected ${expected}, got ${actual})`);
 }
@@ -90,7 +101,7 @@ export = () => {
       });
     });
 
-    it("renders normal Frame children inside a dialog-owned motion host without crashing", () => {
+    it("renders normal Frame children inside a panel-owned motion host without crashing", () => {
       withReactHarness("DialogFrameChildMotionHost", (harness) => {
         const panelRef = React.createRef<Frame>();
 
@@ -113,7 +124,7 @@ export = () => {
 
         const motionHost = requireCanvasGroupParent(
           panel,
-          "Dialog should wrap normal Frame content in a dialog-owned CanvasGroup motion host.",
+          "Dialog should wrap normal Frame content in a panel-owned CanvasGroup motion host.",
         );
         const layoutHost = requireGuiObjectParent(
           motionHost,
@@ -121,17 +132,9 @@ export = () => {
         );
         const viewportSize = getViewportSize();
 
-        assertWithinTolerance(
-          motionHost.AbsoluteSize.X,
-          viewportSize.X,
-          1,
-          "Dialog motion host should stay full-screen.",
-        );
-        assertWithinTolerance(
-          motionHost.AbsoluteSize.Y,
-          viewportSize.Y,
-          1,
-          "Dialog motion host should stay full-screen.",
+        assert(
+          motionHost.AbsoluteSize.X >= panel.AbsoluteSize.X && motionHost.AbsoluteSize.Y >= panel.AbsoluteSize.Y,
+          "Dialog motion host should be at least as large as the panel it owns.",
         );
         assertWithinTolerance(
           layoutHost.AbsoluteSize.X,
@@ -148,7 +151,7 @@ export = () => {
       });
     });
 
-    it("keeps outside hit testing scoped to the dialog surface instead of the full-screen layout host", () => {
+    it("keeps outside hit testing scoped to the dialog surface instead of the dialog motion host", () => {
       withReactHarness("DialogOutsideHitBoundary", (harness) => {
         const panelRef = React.createRef<Frame>();
 
@@ -174,24 +177,24 @@ export = () => {
 
         const motionHost = requireCanvasGroupParent(
           panel,
-          "Dialog panel should render inside the dialog-owned CanvasGroup motion host.",
+          "Dialog panel should render inside the panel-owned CanvasGroup motion host.",
         );
-        const layoutHost = requireGuiObjectParent(
-          motionHost,
-          "Dialog motion host should remain under the full-screen layout host for layout and motion.",
-        );
+        const motionHostRect = getCanvasGroupAbsoluteRect(motionHost);
         const outsidePoint = createPointerInput(
           panel.AbsolutePosition.X + panel.AbsoluteSize.X + 24,
           panel.AbsolutePosition.Y + 12,
         );
 
-        assert(
-          !isOutsidePointerEvent(outsidePoint, harness.playerGui, layoutHost, { layerIgnoresGuiInset: true }),
-          "The full-screen layout host reproduces the regression by swallowing outside hits as inside.",
-        );
+        const motionHostContainsOutsidePoint =
+          outsidePoint.Position.X >= motionHostRect.minX &&
+          outsidePoint.Position.X <= motionHostRect.maxX &&
+          outsidePoint.Position.Y >= motionHostRect.minY &&
+          outsidePoint.Position.Y <= motionHostRect.maxY;
+
+        assert(motionHostContainsOutsidePoint, "Motion host should cover the panel bounds for composed children.");
         assert(
           !isOutsidePointerEvent(outsidePoint, harness.playerGui, motionHost, { layerIgnoresGuiInset: true }),
-          "The dialog-owned full-screen motion host should also not be used as the outside-hit boundary.",
+          "Using the motion host as the outside-hit boundary would incorrectly swallow near-panel outside hits.",
         );
         assert(
           isOutsidePointerEvent(outsidePoint, harness.playerGui, panel, { layerIgnoresGuiInset: true }),
@@ -288,7 +291,7 @@ export = () => {
         assert(openPanel !== undefined, "Force-mounted dialog panel should mount while open.");
         const openMotionHost = requireCanvasGroupParent(
           openPanel,
-          "Force-mounted dialog panel should stay inside the dialog-owned motion host while open.",
+          "Force-mounted dialog panel should stay inside the panel-owned motion host while open.",
         );
         assert(openPanel.Position.Y.Offset === 32, "Dialog panel layout should preserve the child's base position.");
         assert(openMotionHost.Position.Y.Offset === 0, "Dialog motion host should settle back to its base position.");
@@ -476,7 +479,7 @@ export = () => {
 
         const motionHost = requireCanvasGroupParent(
           panel,
-          "Fragment-wrapped dialog panel should render inside the dialog-owned CanvasGroup motion host.",
+          "Fragment-wrapped dialog panel should render inside the panel-owned CanvasGroup motion host.",
         );
         const layoutHost = requireGuiObjectParent(
           motionHost,
@@ -486,8 +489,8 @@ export = () => {
         assertWithinTolerance(layoutHost.AbsoluteSize.X, viewportSize.X, 1, "Layout host should remain full-screen.");
         assertWithinTolerance(layoutHost.AbsoluteSize.Y, viewportSize.Y, 1, "Layout host should remain full-screen.");
         assert(
-          motionHost.AbsoluteSize.X === viewportSize.X && motionHost.AbsoluteSize.Y === viewportSize.Y,
-          "Dialog-owned motion host should preserve the full-screen layout space for child positioning.",
+          motionHost.AbsoluteSize.X >= panel.AbsoluteSize.X && motionHost.AbsoluteSize.Y >= panel.AbsoluteSize.Y,
+          "Panel-owned motion host should preserve enough space for panel layout and motion.",
         );
         assert(
           panel.AbsoluteSize.X < viewportSize.X && panel.AbsoluteSize.Y < viewportSize.Y,
