@@ -69,7 +69,24 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
 
     const anchor = readGuiRef(options.anchorRef);
     const content = readGuiRef(options.contentRef);
-    if (!anchor || !content) {
+    if (!anchor) {
+      setIsPositioned(false);
+      return;
+    }
+
+    if (!content) {
+      const viewportRect = getViewportRect(anchor);
+      const nextResult = computePopper({
+        anchorPosition: anchor.AbsolutePosition,
+        anchorSize: anchor.AbsoluteSize,
+        contentSize: new Vector2(0, 0),
+        offset: options.offset,
+        padding: options.padding,
+        placement: options.placement,
+        viewportRect,
+      });
+
+      setComputedResult((currentResult) => (areResultsEqual(currentResult, nextResult) ? currentResult : nextResult));
       setIsPositioned(false);
       return;
     }
