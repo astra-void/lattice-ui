@@ -56,11 +56,7 @@ function SelectContentImpl(props: {
   );
   const recipe = props.transition ?? defaultTransition;
 
-  const motionRef = usePresenceMotion<GuiObject>(
-    props.motionPresent && popper.isPositioned,
-    recipe,
-    props.onExitComplete,
-  );
+  const motionRef = usePresenceMotion<GuiObject>(props.motionPresent, recipe, props.onExitComplete);
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -78,7 +74,7 @@ function SelectContentImpl(props: {
     selectContext.setOpen(false);
   }, [selectContext.setOpen]);
 
-  const isActuallyVisible = shouldRender && popper.isPositioned;
+  const isActuallyVisible = shouldRender;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -94,8 +90,6 @@ function SelectContentImpl(props: {
           AutomaticSize={Enum.AutomaticSize.XY}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          GroupTransparency={1}
-          Position={UDim2.fromOffset(0, 0)}
           Size={UDim2.fromOffset(0, 0)}
           Visible={isActuallyVisible}
           ref={setContentRef as React.Ref<CanvasGroup>}
@@ -113,8 +107,6 @@ function SelectContentImpl(props: {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      GroupTransparency={1}
-      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
       Visible={isActuallyVisible}
       ref={setContentRef}
@@ -137,7 +129,7 @@ function SelectContentImpl(props: {
           AnchorPoint={popper.anchorPoint}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Position={popper.position}
           Size={UDim2.fromOffset(0, 0)}
           Visible={shouldRender}
         >
