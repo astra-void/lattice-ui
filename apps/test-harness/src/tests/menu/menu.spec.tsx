@@ -72,6 +72,52 @@ function ControlledMenuSelectionHarness(props: { commitSelection: boolean; playe
 
 export = () => {
   describe("menu", () => {
+    it("keeps forced content mounted while toggling visibility with open state", () => {
+      withReactHarness("MenuForceMountVisibility", (harness) => {
+        const renderTree = (open: boolean) => (
+          <PortalProvider container={harness.playerGui}>
+            <Menu.Root open={open}>
+              <Menu.Trigger asChild>
+                <textbutton Text="menu-trigger-force" />
+              </Menu.Trigger>
+
+              <Menu.Portal>
+                <Menu.Content asChild forceMount>
+                  <frame>
+                    <textlabel Text="menu-marker-force" />
+                  </frame>
+                </Menu.Content>
+              </Menu.Portal>
+            </Menu.Root>
+          </PortalProvider>
+        );
+
+        harness.render(renderTree(false));
+        waitForEffects(3);
+
+        const hiddenMarker = findTextLabelByText(harness.playerGui, "menu-marker-force");
+        assert(hiddenMarker !== undefined, "Forced menu content should stay mounted while closed.");
+        const hiddenHost = hiddenMarker.Parent;
+        assert(
+          hiddenHost !== undefined && hiddenHost.IsA("GuiObject"),
+          "Forced menu marker parent should be a GuiObject.",
+        );
+        assert(hiddenHost.Visible === false, "Forced menu content should be hidden while closed.");
+
+        harness.render(renderTree(true));
+        waitForEffects(4);
+
+        const visibleMarker = findTextLabelByText(harness.playerGui, "menu-marker-force");
+        assert(visibleMarker !== undefined, "Forced menu content should remain mounted when opened.");
+        const visibleHost = visibleMarker.Parent;
+        assert(
+          visibleHost !== undefined && visibleHost.IsA("GuiObject"),
+          "Opened forced menu marker parent should be a GuiObject.",
+        );
+        assert(visibleHost.Visible === true, "Forced menu content should become visible when opened.");
+      });
+    });
+
     it("moves selection to the first enabled item when opened", () => {
       withReactHarness("MenuOpenFocus", (harness) => {
         harness.render(renderMenuTree(harness.playerGui, true, true));
