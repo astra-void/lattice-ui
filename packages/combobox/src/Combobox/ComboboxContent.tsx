@@ -31,6 +31,7 @@ function ComboboxContentImpl(props: {
 }) {
   const comboboxContext = useComboboxContext();
   const open = comboboxContext.open;
+  const shouldRender = open || props.motionPresent;
 
   const popper = usePopper({
     anchorRef: comboboxContext.anchorRef,
@@ -38,7 +39,7 @@ function ComboboxContentImpl(props: {
     placement: props.placement,
     offset: props.offset,
     padding: props.padding,
-    enabled: open,
+    enabled: shouldRender,
   });
 
   const defaultTransition = React.useMemo(
@@ -46,7 +47,7 @@ function ComboboxContentImpl(props: {
     [popper.placement],
   );
   const motionRef = usePresenceMotion<GuiObject>(
-    props.motionPresent && popper.isPositioned,
+    props.motionPresent,
     props.transition ?? defaultTransition,
     props.onExitComplete,
   );
@@ -62,7 +63,7 @@ function ComboboxContentImpl(props: {
   const handleDismiss = React.useCallback(() => {
     comboboxContext.setOpen(false);
   }, [comboboxContext]);
-  const isActuallyVisible = open || (props.motionPresent && popper.isPositioned);
+  const isActuallyVisible = shouldRender;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -103,8 +104,9 @@ function ComboboxContentImpl(props: {
       <frame
         BackgroundTransparency={1}
         BorderSizePixel={0}
-        Position={popper.isPositioned ? popper.position : UDim2.fromOffset(-9999, -9999)}
+        Position={popper.position}
         Size={UDim2.fromOffset(0, 0)}
+        Visible={shouldRender}
       >
         {contentNode}
       </frame>
