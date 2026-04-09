@@ -58,11 +58,7 @@ function PopoverContentImpl(props: {
   );
   const recipe = props.transition ?? defaultTransition;
 
-  const motionRef = usePresenceMotion<GuiObject>(
-    props.motionPresent && popper.isPositioned,
-    recipe,
-    props.onExitComplete,
-  );
+  const motionRef = usePresenceMotion<GuiObject>(props.motionPresent, recipe, props.onExitComplete);
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -80,7 +76,7 @@ function PopoverContentImpl(props: {
     popoverContext.setOpen(false);
   }, [popoverContext.setOpen]);
 
-  const isActuallyVisible = shouldRender && popper.isPositioned;
+  const isActuallyVisible = shouldRender;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -96,8 +92,6 @@ function PopoverContentImpl(props: {
           AutomaticSize={Enum.AutomaticSize.XY}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          GroupTransparency={1}
-          Position={UDim2.fromOffset(0, 0)}
           Size={UDim2.fromOffset(0, 0)}
           Visible={isActuallyVisible}
           ref={setContentRef as React.Ref<CanvasGroup>}
@@ -115,8 +109,6 @@ function PopoverContentImpl(props: {
       AutomaticSize={Enum.AutomaticSize.XY}
       BackgroundTransparency={1}
       BorderSizePixel={0}
-      GroupTransparency={1}
-      Position={UDim2.fromOffset(0, 0)}
       Size={UDim2.fromOffset(0, 0)}
       Visible={isActuallyVisible}
       ref={setContentRef}
@@ -139,7 +131,7 @@ function PopoverContentImpl(props: {
           AnchorPoint={popper.anchorPoint}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Position={popper.position}
           Size={UDim2.fromOffset(0, 0)}
           Visible={shouldRender}
         >
