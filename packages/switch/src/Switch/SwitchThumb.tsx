@@ -14,7 +14,6 @@ function toGuiPropBag(value: unknown): GuiPropBag {
 
 export function SwitchThumb(props: SwitchThumbProps) {
   const switchContext = useSwitchContext();
-  const initialPosition = React.useRef(switchContext.checked ? CHECKED_THUMB_POSITION : UNCHECKED_THUMB_POSITION);
 
   const motionRef = useResponseMotion<Frame>(
     switchContext.checked,
@@ -36,13 +35,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
     const childSize = (childProps as { Size?: UDim2 }).Size ?? UDim2.fromOffset(16, 16);
 
     return (
-      <frame
-        BackgroundTransparency={1}
-        BorderSizePixel={0}
-        Position={initialPosition.current}
-        Size={childSize}
-        ref={motionRef}
-      >
+      <frame BackgroundTransparency={1} BorderSizePixel={0} Size={childSize} ref={motionRef}>
         {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
           ...childProps,
           Position: UDim2.fromOffset(0, 0),
@@ -56,7 +49,6 @@ export function SwitchThumb(props: SwitchThumbProps) {
     <frame
       BackgroundColor3={Color3.fromRGB(240, 244, 252)}
       BorderSizePixel={0}
-      Position={initialPosition.current}
       Size={UDim2.fromOffset(16, 16)}
       ref={motionRef as React.MutableRefObject<Frame>}
     >

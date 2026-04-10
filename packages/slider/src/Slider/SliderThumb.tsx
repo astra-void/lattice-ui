@@ -81,7 +81,6 @@ export function SliderThumb(props: SliderThumbProps) {
     Active: !sliderContext.disabled,
     AnchorPoint: new Vector2(0.5, 0.5),
     Name: "SliderThumb",
-    Position: sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 0.5) : UDim2.fromScale(0.5, 1),
     Selectable: !sliderContext.disabled,
     Event: {
       InputBegan: handleInputBegan,
