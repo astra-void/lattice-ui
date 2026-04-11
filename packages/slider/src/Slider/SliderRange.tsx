@@ -4,6 +4,8 @@ import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderRangeProps } from "./types";
 
+type GuiPropBag = React.Attributes & Record<string, unknown>;
+
 export function SliderRange(props: SliderRangeProps) {
   const sliderContext = useSliderContext();
   const percent = valueToPercent(sliderContext.value, sliderContext.min, sliderContext.max);
@@ -29,15 +31,16 @@ export function SliderRange(props: SliderRangeProps) {
     }
 
     const childProps = (child as { props?: Record<string, unknown> }).props ?? {};
+    const mergedChildProps: GuiPropBag = {
+      ...childProps,
+      Position: rangePosition,
+      Size: rangeSize,
+      ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+    };
 
     return (
       <frame BackgroundTransparency={1} BorderSizePixel={0} ref={motionRef}>
-        {React.cloneElement(child, {
-          ...childProps,
-          Position: UDim2.fromScale(0, 0),
-          Size: UDim2.fromScale(1, 1),
-          ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
-        })}
+        {React.cloneElement(child, mergedChildProps)}
       </frame>
     );
   }

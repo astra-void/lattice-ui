@@ -46,6 +46,7 @@ function renderSlider(
               AutoButtonColor={false}
               BackgroundColor3={Color3.fromRGB(241, 246, 253)}
               BorderSizePixel={0}
+              Selectable={true}
               Text={thumbMarkerText}
               TextTransparency={1}
             />
