@@ -105,6 +105,14 @@ function isRawGuiObjectFocusable(guiObject: GuiObject | undefined) {
   return isLiveGuiObject(guiObject) && isEffectivelyVisible(guiObject) && guiObject.Selectable;
 }
 
+function toSafeSelectedObject(guiObject: GuiObject | undefined) {
+  return isRawGuiObjectFocusable(guiObject) ? guiObject : undefined;
+}
+
+function setGuiServiceSelectedObject(guiObject: GuiObject | undefined) {
+  GuiService.SelectedObject = toSafeSelectedObject(guiObject);
+}
+
 function findFocusNodeIndex(nodeId: number) {
   return focusNodes.findIndex((entry) => entry.id === nodeId);
 }
@@ -252,14 +260,15 @@ function withBridgeWrite<T>(callback: () => T) {
 function syncRobloxSelection() {
   const resolvedFocusedNode =
     currentFocusedNodeId !== undefined ? getResolvedFocusNode(currentFocusedNodeId) : undefined;
-  const nextSelectedObject =
-    resolvedFocusedNode && canSyncNodeToRoblox(resolvedFocusedNode) ? resolvedFocusedNode.guiObject : undefined;
+  const nextSelectedObject = toSafeSelectedObject(
+    resolvedFocusedNode && canSyncNodeToRoblox(resolvedFocusedNode) ? resolvedFocusedNode.guiObject : undefined,
+  );
   if (GuiService.SelectedObject === nextSelectedObject) {
     return;
   }
 
   withBridgeWrite(() => {
-    GuiService.SelectedObject = nextSelectedObject;
+    setGuiServiceSelectedObject(nextSelectedObject);
   });
 }
 

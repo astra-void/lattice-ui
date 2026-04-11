@@ -17,10 +17,10 @@ export = () => {
       withReactHarness("FocusScopeTrapRedirect", (harness) => {
         harness.render(
           <frame>
-            <textbutton Text="focus-scope-outside-trap" />
+            <textbutton Selectable={true} Text="focus-scope-outside-trap" />
             <FocusScope asChild trapped={true}>
               <frame>
-                <textbutton Text="focus-scope-inside-trap" />
+                <textbutton Selectable={true} Text="focus-scope-inside-trap" />
               </frame>
             </FocusScope>
           </frame>,
@@ -46,10 +46,10 @@ export = () => {
       withReactHarness("FocusScopeInactive", (harness) => {
         harness.render(
           <frame>
-            <textbutton Text="focus-scope-outside-inactive" />
+            <textbutton Selectable={true} Text="focus-scope-outside-inactive" />
             <FocusScope active={false} asChild trapped={true}>
               <frame>
-                <textbutton Text="focus-scope-inside-inactive" />
+                <textbutton Selectable={true} Text="focus-scope-inside-inactive" />
               </frame>
             </FocusScope>
           </frame>,
@@ -76,8 +76,8 @@ export = () => {
           <frame>
             <FocusScope active={active} asChild trapped={true}>
               <frame>
-                <textbutton Text="focus-scope-tree-first" />
-                <textbutton Text="focus-scope-tree-second" />
+                <textbutton Selectable={true} Text="focus-scope-tree-first" />
+                <textbutton Selectable={true} Text="focus-scope-tree-second" />
               </frame>
             </FocusScope>
           </frame>
@@ -103,11 +103,11 @@ export = () => {
       withReactHarness("FocusScopeRestore", (harness) => {
         const renderTree = (open: boolean) => (
           <frame>
-            <textbutton Text="focus-scope-outside-restore" />
+            <textbutton Selectable={true} Text="focus-scope-outside-restore" />
             {open ? (
               <FocusScope asChild restoreFocus={true} trapped={true}>
                 <frame>
-                  <textbutton Text="focus-scope-inside-restore" />
+                  <textbutton Selectable={true} Text="focus-scope-inside-restore" />
                 </frame>
               </FocusScope>
             ) : undefined}
@@ -147,11 +147,11 @@ export = () => {
       withReactHarness("FocusScopeUnmountCleanup", (harness) => {
         const renderTree = (open: boolean) => (
           <frame>
-            <textbutton Text="focus-scope-outside-unmount" />
+            <textbutton Selectable={true} Text="focus-scope-outside-unmount" />
             {open ? (
               <FocusScope asChild restoreFocus={true} trapped={true}>
                 <frame>
-                  <textbutton Text="focus-scope-inside-unmount" />
+                  <textbutton Selectable={true} Text="focus-scope-inside-unmount" />
                 </frame>
               </FocusScope>
             ) : undefined}
@@ -192,14 +192,14 @@ export = () => {
       withReactHarness("FocusScopeNested", (harness) => {
         const renderTree = (innerOpen: boolean) => (
           <frame>
-            <textbutton Text="focus-scope-outside-nested" />
+            <textbutton Selectable={true} Text="focus-scope-outside-nested" />
             <FocusScope asChild trapped={true}>
               <frame>
-                <textbutton Text="focus-scope-outer-nested" />
+                <textbutton Selectable={true} Text="focus-scope-outer-nested" />
                 {innerOpen ? (
                   <FocusScope asChild trapped={true}>
                     <frame>
-                      <textbutton Text="focus-scope-inner-nested" />
+                      <textbutton Selectable={true} Text="focus-scope-inner-nested" />
                     </frame>
                   </FocusScope>
                 ) : undefined}
