@@ -22,7 +22,7 @@ export function ToastRoot(props: ToastRootProps) {
     }
 
     return (
-      <Slot Visible={true} ref={motionRef}>
+      <Slot Visible={visible} ref={motionRef}>
         {child}
       </Slot>
     );
@@ -34,7 +34,7 @@ export function ToastRoot(props: ToastRootProps) {
       BackgroundTransparency={0}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(320, 72)}
-      Visible={true}
+      Visible={visible}
       ref={motionRef}
     >
       <uicorner CornerRadius={new UDim(0, 10)} />
