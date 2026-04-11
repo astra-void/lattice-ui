@@ -75,7 +75,9 @@ Environment-specific expectations:
 
 - `apps/playground` is the primary manual Roblox verification surface.
 - `apps/loom-preview` is a preview / approximation surface and should not be treated as the final source of truth for Roblox runtime correctness.
-- `apps/test-harness` exists for Roblox-oriented tests, but `test:rbx*` commands are currently not approved for agent validation use.
+- `apps/test-harness` exists for Roblox-oriented tests. Agents must confirm `Roblox_Studio` MCP server connectivity before using any `test:rbx*` command for validation.
+- If the `Roblox_Studio` MCP server is unavailable or unconfirmed, use static reasoning, code inspection, and non-Roblox validation commands instead of Roblox harness execution.
+- Before running `test:rbx:headless` or `test:rbx:run`, close any existing Roblox Studio windows so `run-in-roblox` can open the generated place cleanly.
 
 When working on Roblox-facing packages:
 
@@ -117,7 +119,7 @@ When fixing a bug:
 
 1. Identify the narrowest package or app surface responsible.
 2. Change the package first unless the problem is clearly scene-only or harness-only.
-3. Avoid “fixing” package bugs only in playground scenes unless the issue is truly local to the scene.
+3. Avoid â€œfixingâ€ package bugs only in playground scenes unless the issue is truly local to the scene.
 4. Preserve existing APIs unless the task explicitly allows API changes.
 5. If behavior depends on focus, layer stacking, portals, presence, motion, or popper positioning, inspect neighboring packages before patching around the symptom.
 
@@ -135,11 +137,15 @@ Current allowed validation commands:
 - `pnpm run typecheck`
 - `pnpm run test:unit`
 
-Do not use any `test:rbx*` commands for routine task validation at this time.
+Do not use `test:rbx*` commands for routine task validation unless `Roblox_Studio` MCP server connectivity has been confirmed first.
 
-This includes:
+Before running `test:rbx:headless` or `test:rbx:run`, close any existing Roblox Studio windows so `run-in-roblox` can open `apps/test-harness/test-harness.rbxlx` cleanly.
+
+If `Roblox_Studio` MCP server connectivity is confirmed, the following root commands are also allowed:
 
 - `pnpm run test:rbx`
+- `pnpm run test:rbx:build`
+- `pnpm run test:rbx:typecheck`
 - `pnpm run test:rbx:prepare`
 - `pnpm run test:rbx:place`
 - `pnpm run test:rbx:headless`
@@ -147,14 +153,17 @@ This includes:
 
 Reason:
 
-- the Roblox harness workflow exists in the repository, but it is not part of the currently approved agent validation flow
-- these commands may depend on environment-specific Roblox tooling and external execution behavior
-- agent task completion should not be blocked on Roblox harness availability
+- the Roblox harness workflow is environment-dependent and requires confirmed MCP-backed Studio access
+- agent task completion should not be blocked on Roblox harness availability when MCP access is unavailable
+- confirmed MCP access provides an approved path for Roblox runtime validation when the task benefits from it
 
 When reporting validation:
 
-- do not claim Roblox runtime or harness verification
 - explicitly report only the commands that were actually run
+- claim Roblox runtime or harness verification only when MCP-backed Studio observation or headless execution was actually performed
+- report `test:rbx:place` as preparation unless a runtime execution step also ran
+- treat `test:rbx:headless` as the automated `run-in-roblox` validation path because it waits for harness status and returns failure through the CLI
+- treat `test:rbx:run` as Studio-assisted because it opens the generated place and starts Play mode, but does not by itself prove test results unless MCP-backed Studio observation or another runtime result was captured
 
 ## Build and test commands
 
@@ -169,6 +178,12 @@ Common approved root commands:
 - `pnpm run format:check`
 - `pnpm run check`
 - `pnpm run check:fast`
+
+Additional approved root commands when `Roblox_Studio` MCP server connectivity has been confirmed:
+
+- prep: `pnpm run test:rbx`, `pnpm run test:rbx:typecheck`, `pnpm run test:rbx:build`, `pnpm run test:rbx:prepare`, `pnpm run test:rbx:place`
+- automated runtime: `pnpm run test:rbx:headless`
+- Studio-assisted/manual handoff: `pnpm run test:rbx:run`
 
 Prefer root workspace commands unless the task is explicitly package-local.
 
@@ -199,7 +214,7 @@ When reporting work:
 - state what changed
 - state why that package / file was the right place
 - state what validation was run
-- clearly distinguish “verified” from “not run”
+- clearly distinguish â€œverifiedâ€ from â€œnot runâ€
 
 When validation was not run:
 
