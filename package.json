@@ -21,7 +21,7 @@
     "test:rbx:place": "rojo build apps/test-harness/default.project.json -o apps/test-harness/test-harness.rbxlx",
     "test:rbx": "pnpm run test:rbx:prepare",
     "test:rbx:headless": "pnpm run test:rbx:prepare && pnpm run test:rbx:place && run-in-roblox --place apps/test-harness/test-harness.rbxlx --script apps/test-harness/scripts/headless.lua",
-    "test:rbx:run": "pnpm run test:rbx:prepare && pnpm run test:rbx:place && echo \"Open apps/test-harness/test-harness.rbxlx in Roblox Studio and press Play to run TestEZ suites.\"",
+    "test:rbx:run": "pnpm run test:rbx:prepare && pnpm run test:rbx:place && run-in-roblox --place apps/test-harness/test-harness.rbxlx --script apps/test-harness/scripts/run.lua",
     "lint": "turbo run lint && pnpm -w eslint scripts",
     "lint:fix": "turbo run lint:fix && pnpm -w eslint scripts --fix",
     "format": "pnpm -w prettier . --write",
