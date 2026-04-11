@@ -30,6 +30,12 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
     }
 
     const childProps = toGuiPropBag((child as { props?: unknown }).props);
+    const mergedChildProps: GuiPropBag = {
+      ...childProps,
+      Position: UDim2.fromScale(0, 0),
+      Size: UDim2.fromScale(widthScale, 1),
+      ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+    };
 
     return (
       <frame
@@ -40,12 +46,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
         Size={UDim2.fromScale(0, 1)}
         ref={indicatorRef}
       >
-        {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
-          ...childProps,
-          Position: UDim2.fromScale(0, 0),
-          Size: UDim2.fromScale(1, 1),
-          ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
-        })}
+        {React.cloneElement(child as React.ReactElement<GuiPropBag>, mergedChildProps)}
       </frame>
     );
   }
