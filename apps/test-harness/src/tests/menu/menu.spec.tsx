@@ -11,17 +11,17 @@ function renderMenuTree(playerGui: PlayerGui, defaultOpen = true, disableAlpha =
     <PortalProvider container={playerGui}>
       <Menu.Root defaultOpen={defaultOpen}>
         <Menu.Trigger asChild>
-          <textbutton Text="menu-trigger" />
+          <textbutton Selectable={true} Text="menu-trigger" />
         </Menu.Trigger>
 
         <Menu.Portal>
           <Menu.Content asChild>
             <frame>
               <Menu.Item asChild disabled={disableAlpha}>
-                <textbutton Text="menu-item-alpha" />
+                <textbutton Selectable={true} Text="menu-item-alpha" />
               </Menu.Item>
               <Menu.Item asChild>
-                <textbutton Text="menu-item-beta" />
+                <textbutton Selectable={true} Text="menu-item-beta" />
               </Menu.Item>
               <textlabel Text="menu-marker" />
             </frame>
@@ -49,17 +49,17 @@ function ControlledMenuSelectionHarness(props: { commitSelection: boolean; playe
     <PortalProvider container={props.playerGui}>
       <Menu.Root onOpenChange={setOpen} open={open}>
         <Menu.Trigger asChild>
-          <textbutton Text="menu-trigger-controlled" />
+          <textbutton Selectable={true} Text="menu-trigger-controlled" />
         </Menu.Trigger>
 
         <Menu.Portal>
           <Menu.Content asChild forceMount>
             <frame>
               <Menu.Item asChild>
-                <textbutton Text="menu-item-alpha-controlled" />
+                <textbutton Selectable={true} Text="menu-item-alpha-controlled" />
               </Menu.Item>
               <Menu.Item asChild>
-                <textbutton Text="menu-item-beta-controlled" />
+                <textbutton Selectable={true} Text="menu-item-beta-controlled" />
               </Menu.Item>
               <textlabel Text="menu-marker-controlled" />
             </frame>
@@ -78,7 +78,7 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Menu.Root open={open}>
               <Menu.Trigger asChild>
-                <textbutton Text="menu-trigger-force" />
+                <textbutton Selectable={true} Text="menu-trigger-force" />
               </Menu.Trigger>
 
               <Menu.Portal>

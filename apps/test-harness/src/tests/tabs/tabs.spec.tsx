@@ -13,10 +13,10 @@ export = () => {
           <Tabs.Root>
             <Tabs.List>
               <Tabs.Trigger asChild value="alpha">
-                <textbutton Text="tabs-trigger-alpha-default" />
+                <textbutton Selectable={true} Text="tabs-trigger-alpha-default" />
               </Tabs.Trigger>
               <Tabs.Trigger asChild value="beta">
-                <textbutton Text="tabs-trigger-beta-default" />
+                <textbutton Selectable={true} Text="tabs-trigger-beta-default" />
               </Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content asChild value="alpha">
@@ -46,10 +46,10 @@ export = () => {
           <Tabs.Root defaultValue="beta">
             <Tabs.List>
               <Tabs.Trigger asChild value="alpha">
-                <textbutton Text="tabs-trigger-alpha-fallback" />
+                <textbutton Selectable={true} Text="tabs-trigger-alpha-fallback" />
               </Tabs.Trigger>
               <Tabs.Trigger asChild disabled={disableBeta} value="beta">
-                <textbutton Text="tabs-trigger-beta-fallback" />
+                <textbutton Selectable={true} Text="tabs-trigger-beta-fallback" />
               </Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content asChild value="alpha">
@@ -82,10 +82,10 @@ export = () => {
           <Tabs.Root value={value}>
             <Tabs.List>
               <Tabs.Trigger asChild value="left">
-                <textbutton Text="tabs-trigger-left-controlled" />
+                <textbutton Selectable={true} Text="tabs-trigger-left-controlled" />
               </Tabs.Trigger>
               <Tabs.Trigger asChild value="right">
-                <textbutton Text="tabs-trigger-right-controlled" />
+                <textbutton Selectable={true} Text="tabs-trigger-right-controlled" />
               </Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content asChild value="left">
@@ -127,10 +127,10 @@ export = () => {
           <Tabs.Root defaultValue="left">
             <Tabs.List>
               <Tabs.Trigger asChild value="left">
-                <textbutton Text="tabs-trigger-left-selection" />
+                <textbutton Selectable={true} Text="tabs-trigger-left-selection" />
               </Tabs.Trigger>
               <Tabs.Trigger asChild value="right">
-                <textbutton Text="tabs-trigger-right-selection" />
+                <textbutton Selectable={true} Text="tabs-trigger-right-selection" />
               </Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content asChild value="left">
@@ -169,10 +169,10 @@ export = () => {
             <Tabs.List asChild>
               <frame>
                 <Tabs.Trigger asChild value="alpha">
-                  <textbutton Text="tabs-trigger-alpha-vertical" />
+                  <textbutton Selectable={true} Text="tabs-trigger-alpha-vertical" />
                 </Tabs.Trigger>
                 <Tabs.Trigger asChild value="beta">
-                  <textbutton Text="tabs-trigger-beta-vertical" />
+                  <textbutton Selectable={true} Text="tabs-trigger-beta-vertical" />
                 </Tabs.Trigger>
               </frame>
             </Tabs.List>
@@ -207,10 +207,10 @@ export = () => {
           <Tabs.Root value={value}>
             <Tabs.List>
               <Tabs.Trigger asChild value="left">
-                <textbutton Text="tabs-trigger-left" />
+                <textbutton Selectable={true} Text="tabs-trigger-left" />
               </Tabs.Trigger>
               <Tabs.Trigger asChild value="right">
-                <textbutton Text="tabs-trigger-right" />
+                <textbutton Selectable={true} Text="tabs-trigger-right" />
               </Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content asChild value="left">

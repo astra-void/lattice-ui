@@ -16,8 +16,11 @@ export function getLocalPlayerGui() {
 
 export function createTestContainer(name: string) {
   const playerGui = getLocalPlayerGui();
-  const container = new Instance("Folder");
+  const container = new Instance("ScreenGui");
   container.Name = name;
+  container.ResetOnSpawn = false;
+  container.IgnoreGuiInset = true;
+  container.ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
   container.Parent = playerGui;
   return container;
 }

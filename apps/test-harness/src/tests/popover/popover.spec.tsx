@@ -79,6 +79,7 @@ export = () => {
               <Popover.Root open={true}>
                 <Popover.Anchor asChild>
                   <textbutton
+                    Selectable={true}
                     Position={UDim2.fromOffset(160, 96)}
                     Size={UDim2.fromOffset(80, 32)}
                     Text="popover-anchor-motion"
@@ -144,7 +145,7 @@ export = () => {
         harness.render(
           <PortalProvider container={harness.playerGui}>
             <frame>
-              <textbutton Text="popover-outside-button" />
+              <textbutton Selectable={true} Text="popover-outside-button" />
               <Popover.Root defaultOpen={true} modal={true}>
                 <Popover.Anchor asChild>
                   <frame />
@@ -152,7 +153,7 @@ export = () => {
                 <Popover.Portal>
                   <Popover.Content asChild>
                     <frame>
-                      <textbutton Text="popover-inside-button" />
+                      <textbutton Selectable={true} Text="popover-inside-button" />
                     </frame>
                   </Popover.Content>
                 </Popover.Portal>
@@ -183,7 +184,7 @@ export = () => {
         harness.render(
           <PortalProvider container={harness.playerGui}>
             <frame>
-              <textbutton Text="popover-outside-button-non-modal" />
+              <textbutton Selectable={true} Text="popover-outside-button-non-modal" />
               <Popover.Root defaultOpen={true} modal={false}>
                 <Popover.Anchor asChild>
                   <frame />
@@ -191,7 +192,7 @@ export = () => {
                 <Popover.Portal>
                   <Popover.Content asChild>
                     <frame>
-                      <textbutton Text="popover-inside-button-non-modal" />
+                      <textbutton Selectable={true} Text="popover-inside-button-non-modal" />
                     </frame>
                   </Popover.Content>
                 </Popover.Portal>

@@ -13,10 +13,10 @@ function RadioGroupHarness(props: { orientation?: "horizontal" | "vertical" }) {
       <textlabel Text={`radio-value-${value}`} />
       <RadioGroup.Root onValueChange={setValue} orientation={props.orientation} value={value}>
         <RadioGroup.Item asChild value="alpha">
-          <textbutton Text="radio-item-alpha" />
+          <textbutton Selectable={true} Text="radio-item-alpha" />
         </RadioGroup.Item>
         <RadioGroup.Item asChild value="beta">
-          <textbutton Text="radio-item-beta" />
+          <textbutton Selectable={true} Text="radio-item-beta" />
         </RadioGroup.Item>
         <RadioGroup.Item asChild disabled value="gamma">
           <textbutton Text="radio-item-gamma" />
@@ -76,14 +76,14 @@ export = () => {
         const renderRadioGroup = (value: string) => (
           <RadioGroup.Root value={value}>
             <RadioGroup.Item asChild value="alpha">
-              <textbutton Text="radio-item-alpha">
+              <textbutton Selectable={true} Text="radio-item-alpha">
                 <RadioGroup.Indicator asChild>
                   <textlabel Text="indicator-alpha" />
                 </RadioGroup.Indicator>
               </textbutton>
             </RadioGroup.Item>
             <RadioGroup.Item asChild value="beta">
-              <textbutton Text="radio-item-beta">
+              <textbutton Selectable={true} Text="radio-item-beta">
                 <RadioGroup.Indicator asChild>
                   <textlabel Text="indicator-beta" />
                 </RadioGroup.Indicator>

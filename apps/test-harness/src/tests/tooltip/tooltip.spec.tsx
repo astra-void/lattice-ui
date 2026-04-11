@@ -13,10 +13,10 @@ export = () => {
         harness.render(
           <PortalProvider container={harness.playerGui}>
             <frame>
-              <textbutton Text="tooltip-outside" />
+              <textbutton Selectable={true} Text="tooltip-outside" />
               <Tooltip.Root>
                 <Tooltip.Trigger asChild>
-                  <textbutton Text="tooltip-trigger" />
+                  <textbutton Selectable={true} Text="tooltip-trigger" />
                 </Tooltip.Trigger>
 
                 <Tooltip.Portal>

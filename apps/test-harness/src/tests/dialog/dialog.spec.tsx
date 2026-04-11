@@ -263,6 +263,7 @@ export = () => {
                   <textbutton
                     BackgroundTransparency={1}
                     Position={UDim2.fromScale(0, 0)}
+                    Selectable={true}
                     Size={UDim2.fromScale(1, 1)}
                     Text="dialog-overlay-marker"
                     TextTransparency={1}
@@ -413,7 +414,7 @@ export = () => {
               <Dialog.Portal>
                 <Dialog.Content>
                   <frame>
-                    <textbutton Text="dialog-focus-target" />
+                    <textbutton Selectable={true} Text="dialog-focus-target" />
                   </frame>
                 </Dialog.Content>
               </Dialog.Portal>
@@ -447,6 +448,7 @@ export = () => {
                   <textbutton
                     BackgroundTransparency={1}
                     Position={UDim2.fromScale(0, 0)}
+                    Selectable={true}
                     Size={UDim2.fromScale(1, 1)}
                     Text="dialog-overlay-marker"
                     TextTransparency={1}

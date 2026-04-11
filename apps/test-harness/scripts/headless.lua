@@ -1,31 +1,28 @@
 local LogService = game:GetService("LogService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local PASS_MARKER = "[test-harness] TestEZ passed."
-local FAIL_MARKER = "[test-harness] Failing run because"
-local HARNESS_MARKER = "[test-harness]"
+local STATUS_ATTRIBUTE = "TestHarnessStatus"
+local FAILURE_ATTRIBUTE = "TestHarnessFailure"
 local TIMEOUT_SECONDS = 120
 
 local status = "running"
-local failureMessage = nil
+local failureMessage = ""
 
-local function hasMarker(message, marker)
-	return string.find(message, marker, 1, true) ~= nil
+local function readStatusFromAttributes()
+	local nextStatus = ReplicatedStorage:GetAttribute(STATUS_ATTRIBUTE)
+	if type(nextStatus) == "string" and nextStatus ~= "" then
+		status = nextStatus
+	end
+
+	local nextFailure = ReplicatedStorage:GetAttribute(FAILURE_ATTRIBUTE)
+	if type(nextFailure) == "string" then
+		failureMessage = nextFailure
+	end
 end
 
 local messageConnection = LogService.MessageOut:Connect(function(message, messageType)
-	if hasMarker(message, PASS_MARKER) then
-		status = "passed"
-		return
-	end
-
-	if hasMarker(message, FAIL_MARKER) then
-		status = "failed"
-		failureMessage = message
-		return
-	end
-
-	if messageType == Enum.MessageType.MessageError and hasMarker(message, HARNESS_MARKER) then
+	if messageType == Enum.MessageType.MessageError and string.find(message, "[test-harness]", 1, true) ~= nil then
 		status = "failed"
 		failureMessage = message
 	end
@@ -35,9 +32,11 @@ RunService:Run()
 
 local startedAt = os.clock()
 while status == "running" and os.clock() - startedAt < TIMEOUT_SECONDS do
+	readStatusFromAttributes()
 	task.wait(0.1)
 end
 
+readStatusFromAttributes()
 RunService:Stop()
 messageConnection:Disconnect()
 
@@ -46,7 +45,11 @@ if status == "passed" then
 end
 
 if status == "failed" then
-	error(string.format("[test-harness-headless] %s", failureMessage or "Unknown failure"))
+	error(string.format("[test-harness-headless] %s", failureMessage ~= "" and failureMessage or "Unknown failure"))
+end
+
+if failureMessage == "" then
+	return
 end
 
 error(string.format("[test-harness-headless] Timed out after %d seconds waiting for TestEZ markers.", TIMEOUT_SECONDS))

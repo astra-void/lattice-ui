@@ -32,7 +32,7 @@ function renderSelectTree(options: SelectRenderOptions, playerGui: PlayerGui) {
         value={options.value}
       >
         <Select.Trigger asChild>
-          <textbutton Text="select-trigger" />
+          <textbutton Selectable={true} Text="select-trigger" />
         </Select.Trigger>
         <Select.Value asChild placeholder="Pick one">
           <textlabel />
@@ -71,7 +71,7 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Select.Root defaultOpen={true}>
               <Select.Trigger asChild>
-                <textbutton Text="select-trigger" />
+                <textbutton Selectable={true} Text="select-trigger" />
               </Select.Trigger>
               <Select.Portal>
                 <Select.Content>
@@ -287,6 +287,7 @@ export = () => {
               <Select.Root open={true}>
                 <Select.Trigger asChild>
                   <textbutton
+                    Selectable={true}
                     Position={UDim2.fromOffset(viewportSize.X - 52, viewportSize.Y - 34)}
                     Size={UDim2.fromOffset(44, 24)}
                     Text="select-motion-trigger"

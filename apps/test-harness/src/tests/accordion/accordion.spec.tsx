@@ -9,7 +9,7 @@ function renderAccordion(value?: string) {
       <Accordion.Item value="alpha">
         <Accordion.Header>
           <Accordion.Trigger asChild>
-            <textbutton Text="accordion-trigger-alpha" />
+            <textbutton Selectable={true} Text="accordion-trigger-alpha" />
           </Accordion.Trigger>
         </Accordion.Header>
         <Accordion.Content asChild>
@@ -20,7 +20,7 @@ function renderAccordion(value?: string) {
       <Accordion.Item value="beta">
         <Accordion.Header>
           <Accordion.Trigger asChild>
-            <textbutton Text="accordion-trigger-beta" />
+            <textbutton Selectable={true} Text="accordion-trigger-beta" />
           </Accordion.Trigger>
         </Accordion.Header>
         <Accordion.Content asChild>

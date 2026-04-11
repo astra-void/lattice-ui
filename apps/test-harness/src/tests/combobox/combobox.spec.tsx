@@ -34,7 +34,7 @@ function renderComboboxTree(options: ComboboxRenderOptions, playerGui: PlayerGui
         value={options.value}
       >
         <Combobox.Trigger asChild>
-          <textbutton Text="combobox-trigger" />
+          <textbutton Selectable={true} Text="combobox-trigger" />
         </Combobox.Trigger>
         <Combobox.Input asChild>
           <textbox />
@@ -47,10 +47,10 @@ function renderComboboxTree(options: ComboboxRenderOptions, playerGui: PlayerGui
           <Combobox.Content asChild forceMount={options.forceMount === true}>
             <frame>
               <Combobox.Item asChild textValue="Alpha Option" value="alpha">
-                <textbutton Text="combobox-item-alpha" />
+                <textbutton Selectable={true} Text="combobox-item-alpha" />
               </Combobox.Item>
               <Combobox.Item asChild textValue="Beta Option" value="beta">
-                <textbutton Text="combobox-item-beta" />
+                <textbutton Selectable={true} Text="combobox-item-beta" />
               </Combobox.Item>
               <textlabel Text={options.markerText} />
             </frame>
@@ -103,7 +103,7 @@ function ControlledComboboxSelectionHarness(props: ControlledComboboxSelectionHa
     <PortalProvider container={props.playerGui}>
       <Combobox.Root onOpenChange={applyOpenChange} onValueChange={applyValueChange} open={open} value={value}>
         <Combobox.Trigger asChild>
-          <textbutton Text="combobox-trigger-flicker" />
+          <textbutton Selectable={true} Text="combobox-trigger-flicker" />
         </Combobox.Trigger>
         <Combobox.Input asChild>
           <textbox />
@@ -116,10 +116,10 @@ function ControlledComboboxSelectionHarness(props: ControlledComboboxSelectionHa
           <Combobox.Content asChild forceMount>
             <frame>
               <Combobox.Item asChild textValue="Alpha Option" value="alpha">
-                <textbutton Text="combobox-item-alpha-flicker" />
+                <textbutton Selectable={true} Text="combobox-item-alpha-flicker" />
               </Combobox.Item>
               <Combobox.Item asChild textValue="Beta Option" value="beta">
-                <textbutton Text="combobox-item-beta-flicker" />
+                <textbutton Selectable={true} Text="combobox-item-beta-flicker" />
               </Combobox.Item>
               <textlabel Text="combobox-marker-flicker" />
             </frame>
@@ -145,7 +145,7 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Combobox.Root defaultOpen={true}>
               <Combobox.Trigger asChild>
-                <textbutton Text="combobox-trigger" />
+                <textbutton Selectable={true} Text="combobox-trigger" />
               </Combobox.Trigger>
               <Combobox.Input asChild>
                 <textbox />
@@ -173,7 +173,7 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Combobox.Root defaultInputValue="zzz" defaultValue="beta" open={false}>
               <Combobox.Trigger asChild>
-                <textbutton Text="combobox-trigger" />
+                <textbutton Selectable={true} Text="combobox-trigger" />
               </Combobox.Trigger>
               <Combobox.Input asChild>
                 <textbox />
@@ -186,10 +186,10 @@ export = () => {
                 <Combobox.Content asChild forceMount>
                   <frame>
                     <Combobox.Item asChild textValue="Alpha Option" value="alpha">
-                      <textbutton Text="combobox-item-alpha-sync" />
+                      <textbutton Selectable={true} Text="combobox-item-alpha-sync" />
                     </Combobox.Item>
                     <Combobox.Item asChild textValue="Beta Option" value="beta">
-                      <textbutton Text="combobox-item-beta-sync" />
+                      <textbutton Selectable={true} Text="combobox-item-beta-sync" />
                     </Combobox.Item>
                   </frame>
                 </Combobox.Content>
@@ -280,7 +280,7 @@ export = () => {
           <PortalProvider container={harness.playerGui}>
             <Combobox.Root defaultInputValue="al" defaultValue="alpha" open>
               <Combobox.Trigger asChild>
-                <textbutton Text="combobox-trigger-filter" />
+                <textbutton Selectable={true} Text="combobox-trigger-filter" />
               </Combobox.Trigger>
               <Combobox.Input asChild>
                 <textbox />
@@ -290,10 +290,10 @@ export = () => {
                 <Combobox.Content asChild>
                   <frame>
                     <Combobox.Item asChild textValue="alpha" value="alpha">
-                      <textbutton Text="combobox-item-alpha-filter" />
+                      <textbutton Selectable={true} Text="combobox-item-alpha-filter" />
                     </Combobox.Item>
                     <Combobox.Item asChild textValue="beta" value="beta">
-                      <textbutton Text="combobox-item-beta-filter" />
+                      <textbutton Selectable={true} Text="combobox-item-beta-filter" />
                     </Combobox.Item>
                   </frame>
                 </Combobox.Content>
@@ -320,6 +320,7 @@ export = () => {
               <frame BackgroundTransparency={1} Size={UDim2.fromOffset(420, 260)}>
                 <Combobox.Trigger asChild>
                   <textbutton
+                    Selectable={true}
                     Position={UDim2.fromOffset(40, 24)}
                     Size={UDim2.fromOffset(220, 32)}
                     Text="combobox-trigger-anchor"
@@ -334,7 +335,7 @@ export = () => {
                   <Combobox.Content asChild forceMount offset={new Vector2(0, 6)} placement="bottom">
                     <frame Size={UDim2.fromOffset(180, 72)}>
                       <Combobox.Item asChild textValue="alpha" value="alpha">
-                        <textbutton Text="combobox-item-alpha-anchor" />
+                        <textbutton Selectable={true} Text="combobox-item-alpha-anchor" />
                       </Combobox.Item>
                     </frame>
                   </Combobox.Content>
