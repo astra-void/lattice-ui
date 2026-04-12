@@ -21,7 +21,7 @@ export function SliderRange(props: SliderRangeProps) {
       active: { Position: rangePosition, Size: rangeSize },
       inactive: { Position: rangePosition, Size: rangeSize },
     },
-    createProgressResponseRecipe(sliderContext.isDragging ? 0.05 : 0.12),
+    createProgressResponseRecipe(sliderContext.isDragging ? 0.03 : 0.04),
   );
 
   if (props.asChild) {
