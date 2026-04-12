@@ -1,11 +1,14 @@
-import type { MotionDomain, MotionProperties } from "../core/types";
+import type { MotionDomain, MotionProperties, MotionTargetContract } from "../core/types";
+import { reportMotionDiagnostic } from "./diagnostics";
 import { applyMotionCurve, type FollowDriverConfig, type TimedDriverConfig, type TimedStepName } from "./spec";
 import { scheduleHost, unscheduleHost } from "./scheduler";
 import {
   areMotionValuesEqual,
+  canInterpolateMotionValue,
   interpolateMotionValue,
   isMotionValueSettled,
   readMotionProperty,
+  type MotionPropertyContext,
   writeMotionProperty,
 } from "../targets/instance";
 
@@ -14,6 +17,8 @@ type MotionTrack =
       mode: "timed";
       key: string;
       domain: MotionDomain;
+      phase: string;
+      targetContract?: MotionTargetContract;
       from: unknown;
       target: unknown;
       current: unknown;
@@ -26,6 +31,8 @@ type MotionTrack =
       mode: "follow";
       key: string;
       domain: MotionDomain;
+      phase: string;
+      targetContract?: MotionTargetContract;
       target: unknown;
       current: unknown;
       applied: unknown;
@@ -40,15 +47,27 @@ function isCollectionEmpty(collection: Map<unknown, unknown>) {
 export class MotionHost {
   private readonly tracks = new Map<string, MotionTrack>();
 
-  public constructor(public readonly instance: Instance) {}
+  public constructor(
+    public readonly instance: Instance,
+    private targetContract?: MotionTargetContract,
+  ) {}
 
-  public sync(values?: MotionProperties) {
+  public setTargetContract(targetContract: MotionTargetContract | undefined) {
+    this.targetContract = targetContract;
+  }
+
+  public sync(
+    values?: MotionProperties,
+    domain: MotionDomain = "presence",
+    phase = "snapshot",
+    targetContract?: MotionTargetContract,
+  ) {
     if (!values) {
       return;
     }
 
     for (const [key, value] of pairs(values)) {
-      this.setImmediate(key, value);
+      this.setImmediate(domain, phase, key, value, targetContract);
     }
   }
 
@@ -58,6 +77,7 @@ export class MotionHost {
     values: MotionProperties | undefined,
     config: TimedDriverConfig,
     onComplete?: () => void,
+    targetContract?: MotionTargetContract,
   ) {
     if (!values) {
       onComplete?.();
@@ -76,8 +96,9 @@ export class MotionHost {
     };
 
     for (const [key, value] of pairs(values)) {
-      pending += 1;
-      this.setTimedTrack(domain, step, key, value, config, notifyComplete);
+      if (this.setTimedTrack(domain, step, key, value, config, notifyComplete, targetContract)) {
+        pending += 1;
+      }
     }
 
     if (pending === 0) {
@@ -85,13 +106,18 @@ export class MotionHost {
     }
   }
 
-  public runFollow(domain: MotionDomain, values: MotionProperties | undefined, config: FollowDriverConfig) {
+  public runFollow(
+    domain: MotionDomain,
+    values: MotionProperties | undefined,
+    config: FollowDriverConfig,
+    targetContract?: MotionTargetContract,
+  ) {
     if (!values) {
       return;
     }
 
     for (const [key, value] of pairs(values)) {
-      this.setFollowTrack(domain, key, value, config);
+      this.setFollowTrack(domain, key, value, config, targetContract);
     }
   }
 
@@ -115,7 +141,7 @@ export class MotionHost {
         const alpha = track.config.duration <= 0 ? 1 : math.clamp(track.elapsed / track.config.duration, 0, 1);
         const curved = applyMotionCurve(track.config.curve, alpha);
 
-        nextValue = interpolateMotionValue(track.from, track.target, curved);
+        nextValue = interpolateMotionValue(track.from, track.target, curved, this.createContext(track, track.key));
         if (alpha >= 1 || areMotionValuesEqual(nextValue, track.target)) {
           nextValue = track.target;
           finished = true;
@@ -123,7 +149,7 @@ export class MotionHost {
       } else {
         const alpha = track.config.halfLife <= 0 ? 1 : 1 - math.pow(2, -dt / track.config.halfLife);
 
-        nextValue = interpolateMotionValue(track.current, track.target, alpha);
+        nextValue = interpolateMotionValue(track.current, track.target, alpha, this.createContext(track, track.key));
         if (isMotionValueSettled(nextValue, track.target, track.config.precision)) {
           nextValue = track.target;
           finished = true;
@@ -131,7 +157,7 @@ export class MotionHost {
       }
 
       if (!areMotionValuesEqual(nextValue, track.applied)) {
-        const wrote = writeMotionProperty(this.instance, key, nextValue);
+        const wrote = writeMotionProperty(this.instance, key, nextValue, this.createContext(track, key));
         if (!wrote) {
           finished = true;
         }
@@ -157,11 +183,68 @@ export class MotionHost {
     return active;
   }
 
-  private setImmediate(key: string, value: unknown) {
-    const current = this.tracks.get(key)?.applied ?? readMotionProperty(this.instance, key);
+  private createContext(
+    track: Pick<MotionTrack, "domain" | "phase" | "targetContract">,
+    propertyKey: string,
+  ): MotionPropertyContext & { propertyKey: string } {
+    return {
+      domain: track.domain,
+      phase: track.phase,
+      instance: this.instance,
+      propertyKey,
+      target: track.targetContract ?? this.targetContract,
+    };
+  }
+
+  private createOperationContext(
+    domain: MotionDomain,
+    phase: string,
+    propertyKey: string,
+    targetContract?: MotionTargetContract,
+  ): MotionPropertyContext & { propertyKey: string } {
+    return {
+      domain,
+      phase,
+      instance: this.instance,
+      propertyKey,
+      target: targetContract ?? this.targetContract,
+    };
+  }
+
+  private reportConflict(
+    existing: MotionTrack | undefined,
+    domain: MotionDomain,
+    phase: string,
+    key: string,
+    targetContract?: MotionTargetContract,
+  ) {
+    if (!existing || existing.domain === domain) {
+      return;
+    }
+
+    reportMotionDiagnostic({
+      domain,
+      phase,
+      stage: "conflict",
+      propertyKey: key,
+      instance: this.instance,
+      target: targetContract ?? this.targetContract,
+      detail: `property is already controlled by ${existing.domain}/${existing.phase}`,
+    });
+  }
+
+  private setImmediate(
+    domain: MotionDomain,
+    phase: string,
+    key: string,
+    value: unknown,
+    targetContract?: MotionTargetContract,
+  ) {
+    const context = this.createOperationContext(domain, phase, key, targetContract);
+    const current = this.tracks.get(key)?.applied ?? readMotionProperty(this.instance, key, context);
 
     if (!areMotionValuesEqual(current, value)) {
-      writeMotionProperty(this.instance, key, value);
+      writeMotionProperty(this.instance, key, value, context);
     }
 
     this.tracks.delete(key);
@@ -178,20 +261,35 @@ export class MotionHost {
     target: unknown,
     config: TimedDriverConfig,
     onComplete?: () => void,
+    targetContract?: MotionTargetContract,
   ) {
     const existing = this.tracks.get(key);
-    const current = existing?.current ?? readMotionProperty(this.instance, key);
+    this.reportConflict(existing, domain, step, key, targetContract);
+
+    const context = this.createOperationContext(domain, step, key, targetContract);
+    const current = existing?.current ?? readMotionProperty(this.instance, key, context);
+
+    if (current === undefined) {
+      return false;
+    }
 
     if (areMotionValuesEqual(current, target)) {
-      this.setImmediate(key, target);
-      onComplete?.();
-      return;
+      this.setImmediate(domain, step, key, target, targetContract);
+      return false;
+    }
+
+    if (!canInterpolateMotionValue(current, target)) {
+      interpolateMotionValue(current, target, 0.5, context);
+      this.setImmediate(domain, step, key, target, targetContract);
+      return false;
     }
 
     this.tracks.set(key, {
       mode: "timed",
       key,
       domain,
+      phase: step,
+      targetContract: targetContract ?? this.targetContract,
       from: current,
       target,
       current,
@@ -201,21 +299,40 @@ export class MotionHost {
       onComplete,
     });
 
-    if (step === "exit" && config.duration <= 0) {
-      this.setImmediate(key, target);
-      onComplete?.();
-      return;
+    if (config.duration <= 0) {
+      this.setImmediate(domain, step, key, target, targetContract);
+      return false;
     }
 
     scheduleHost(this);
+    return true;
   }
 
-  private setFollowTrack(domain: MotionDomain, key: string, target: unknown, config: FollowDriverConfig) {
+  private setFollowTrack(
+    domain: MotionDomain,
+    key: string,
+    target: unknown,
+    config: FollowDriverConfig,
+    targetContract?: MotionTargetContract,
+  ) {
     const existing = this.tracks.get(key);
-    const current = existing?.current ?? readMotionProperty(this.instance, key);
+    this.reportConflict(existing, domain, "settle", key, targetContract);
+
+    const context = this.createOperationContext(domain, "settle", key, targetContract);
+    const current = existing?.current ?? readMotionProperty(this.instance, key, context);
+
+    if (current === undefined) {
+      return;
+    }
 
     if (areMotionValuesEqual(current, target)) {
-      this.setImmediate(key, target);
+      this.setImmediate(domain, "settle", key, target, targetContract);
+      return;
+    }
+
+    if (!canInterpolateMotionValue(current, target)) {
+      interpolateMotionValue(current, target, 0.5, context);
+      this.setImmediate(domain, "settle", key, target, targetContract);
       return;
     }
 
@@ -223,6 +340,8 @@ export class MotionHost {
       mode: "follow",
       key,
       domain,
+      phase: "settle",
+      targetContract: targetContract ?? this.targetContract,
       target,
       current,
       applied: current,

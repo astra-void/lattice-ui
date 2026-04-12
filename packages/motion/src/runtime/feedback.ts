@@ -1,4 +1,4 @@
-import type { MotionIntent, MotionProperties } from "../core/types";
+import type { MotionIntent, MotionProperties, MotionTargetContract } from "../core/types";
 import { MotionHost } from "./host";
 import { resolveFeedbackDriver } from "./spec";
 
@@ -7,6 +7,7 @@ export function applyFeedbackEffect(
   phase: "accent" | "recover",
   values: MotionProperties | undefined,
   intent?: MotionIntent,
+  target?: MotionTargetContract,
 ) {
-  host.runTimed("feedback", phase, values, resolveFeedbackDriver(phase, intent));
+  host.runTimed("feedback", phase, values, resolveFeedbackDriver(phase, intent), undefined, target);
 }

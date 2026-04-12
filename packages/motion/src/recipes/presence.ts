@@ -1,9 +1,10 @@
-import type { PresenceMotionConfig } from "../core/types";
+import { motionTargets, type PresenceMotionConfig } from "../core/types";
 import type { MotionPlacement } from "../targets/offset";
 import { createPlacementOffset } from "../targets/offset";
 
 export function createSurfaceRevealRecipe(offsetY = 4, duration = 0.12): PresenceMotionConfig {
   return {
+    target: motionTargets.offsetWrapper("surface reveal"),
     initial: {
       Position: UDim2.fromOffset(0, offsetY),
       BackgroundTransparency: 1,
@@ -27,6 +28,7 @@ export function createSurfaceRevealRecipe(offsetY = 4, duration = 0.12): Presenc
 
 export function createCanvasGroupRevealRecipe(offsetY = 4, duration = 0.12): PresenceMotionConfig {
   return {
+    target: motionTargets.offsetWrapper("canvas group reveal"),
     initial: {
       Position: UDim2.fromOffset(0, offsetY),
       GroupTransparency: 1,
@@ -50,6 +52,7 @@ export function createCanvasGroupRevealRecipe(offsetY = 4, duration = 0.12): Pre
 
 export function createOverlayFadeRecipe(duration = 0.15): PresenceMotionConfig {
   return {
+    target: motionTargets.appearance("overlay fade"),
     initial: { BackgroundTransparency: 1 },
     reveal: {
       values: { BackgroundTransparency: 0.5 },
@@ -70,6 +73,7 @@ export function createPopperEntranceRecipe(
   const offset = createPlacementOffset(placement, distance);
 
   return {
+    target: motionTargets.offsetWrapper("popper entrance"),
     initial: {
       Position: offset,
       BackgroundTransparency: 1,
@@ -99,6 +103,7 @@ export function createCanvasGroupPopperEntranceRecipe(
   const offset = createPlacementOffset(placement, distance);
 
   return {
+    target: motionTargets.offsetWrapper("canvas group popper entrance"),
     initial: {
       Position: offset,
       GroupTransparency: 1,
@@ -122,6 +127,7 @@ export function createCanvasGroupPopperEntranceRecipe(
 
 export function createIndicatorRevealRecipe(size: UDim2, duration = 0.1): PresenceMotionConfig {
   return {
+    target: motionTargets.sizeWrapper("indicator reveal"),
     initial: {
       Size: UDim2.fromOffset(0, 0),
       BackgroundTransparency: 1,

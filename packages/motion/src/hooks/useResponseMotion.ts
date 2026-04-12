@@ -39,8 +39,10 @@ export function useResponseMotion<T extends Instance = Instance>(
 
       if (!motionHostRef.current || motionHostRef.current.instance !== instance) {
         motionHostRef.current?.stop();
-        motionHostRef.current = new MotionHost(instance);
+        motionHostRef.current = new MotionHost(instance, config?.target);
         isFirstMount.current = true;
+      } else {
+        motionHostRef.current.setTargetContract(config?.target);
       }
 
       const motion = motionHostRef.current;
@@ -48,16 +50,16 @@ export function useResponseMotion<T extends Instance = Instance>(
 
       if (isFirstMount.current) {
         isFirstMount.current = false;
-        motion.sync(goals);
+        motion.sync(goals, "response", "initial", config?.target);
         return;
       }
 
       if (policy.disableAllMotion) {
-        motion.sync(goals);
+        motion.sync(goals, "response", "settle", config?.target);
         return;
       }
 
-      settleResponse(motion, goals, config?.settle);
+      settleResponse(motion, goals, config?.settle, config?.target);
     };
 
     applyMotion();

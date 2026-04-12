@@ -1,4 +1,5 @@
-import type { MotionProperties } from "../core/types";
+import type { MotionDomain, MotionProperties, MotionTargetContract, MotionTargetRole } from "../core/types";
+import { reportMotionDiagnostic, type MotionDiagnosticStage } from "../runtime/diagnostics";
 
 type Vector2Like = { X: number; Y: number };
 type Vector3Like = { X: number; Y: number; Z: number };
@@ -6,6 +7,45 @@ type UDimLike = { Scale: number; Offset: number };
 type UDim2Like = { X: UDimLike; Y: UDimLike };
 type Color3Like = { R?: number; G?: number; B?: number; Lerp?: (value: unknown, alpha: number) => unknown };
 type CFrameLike = { Lerp?: (value: unknown, alpha: number) => unknown };
+
+export type MotionPropertyContext = {
+  domain: MotionDomain;
+  phase?: string;
+  instance?: Instance;
+  target?: MotionTargetContract;
+};
+
+const appearanceProperties = new Set<string>([
+  "BackgroundColor3",
+  "BackgroundTransparency",
+  "BorderColor3",
+  "GroupTransparency",
+  "ImageColor3",
+  "ImageTransparency",
+  "PlaceholderColor3",
+  "ScrollBarImageColor3",
+  "ScrollBarImageTransparency",
+  "TextColor3",
+  "TextStrokeColor3",
+  "TextStrokeTransparency",
+  "TextTransparency",
+]);
+
+const transformProperties = new Set<string>(["Rotation"]);
+const offsetWrapperProperties = new Set<string>(["Position"]);
+const sizeWrapperProperties = new Set<string>(["Size"]);
+const layoutProperties = new Set<string>(["AnchorPoint", "Position", "Size"]);
+
+const reservedProperties = new Set<string>([
+  "AbsolutePosition",
+  "AbsoluteRotation",
+  "AbsoluteSize",
+  "AutomaticSize",
+  "LayoutOrder",
+  "Parent",
+  "Visible",
+  "ZIndex",
+]);
 
 function asRecord(value: unknown) {
   return value as Record<string, unknown>;
@@ -84,6 +124,94 @@ function lerpVector3(from: Vector3Like, to: Vector3Like, alpha: number) {
   return new Vector3(lerpNumber(from.X, to.X, alpha), lerpNumber(from.Y, to.Y, alpha), lerpNumber(from.Z, to.Z, alpha));
 }
 
+function hasExplicitProperty(properties: Array<string> | undefined, key: string) {
+  if (!properties) {
+    return false;
+  }
+
+  for (const property of properties) {
+    if (property === key) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function getTargetRole(target: MotionTargetContract | undefined): MotionTargetRole {
+  return target?.role ?? "appearance";
+}
+
+function isAppearanceProperty(key: string) {
+  return appearanceProperties.has(key) || transformProperties.has(key);
+}
+
+function isPropertyAllowedForRole(role: MotionTargetRole, key: string) {
+  if (isAppearanceProperty(key)) {
+    return true;
+  }
+
+  if (role === "offset-wrapper") {
+    return offsetWrapperProperties.has(key);
+  }
+
+  if (role === "size-wrapper") {
+    return sizeWrapperProperties.has(key);
+  }
+
+  if (role === "layout") {
+    return layoutProperties.has(key);
+  }
+
+  return false;
+}
+
+function reportPropertyFailure(
+  stage: MotionDiagnosticStage,
+  instance: Instance,
+  key: string,
+  context: MotionPropertyContext | undefined,
+  detail: string,
+) {
+  reportMotionDiagnostic({
+    domain: context?.domain ?? "presence",
+    stage,
+    phase: context?.phase,
+    propertyKey: key,
+    instance,
+    target: context?.target,
+    detail,
+  });
+}
+
+function getMotionValueKind(value: unknown) {
+  if (typeIs(value, "number")) {
+    return "number";
+  }
+
+  if (isUDimLike(value)) {
+    return "UDim";
+  }
+
+  if (isUDim2Like(value)) {
+    return "UDim2";
+  }
+
+  if (isVector2Like(value)) {
+    return "Vector2";
+  }
+
+  if (isVector3Like(value)) {
+    return "Vector3";
+  }
+
+  if (hasLerp(value)) {
+    return "lerpable";
+  }
+
+  return "unsupported";
+}
+
 function measureDistance(a: unknown, b: unknown): number | undefined {
   if (typeIs(a, "number") && typeIs(b, "number")) {
     return absNumber(a - b);
@@ -113,26 +241,81 @@ function measureDistance(a: unknown, b: unknown): number | undefined {
   return undefined;
 }
 
-export function readMotionProperty(instance: Instance, key: string) {
-  return (instance as unknown as Record<string, unknown>)[key];
+export function validateMotionProperty(instance: Instance, key: string, context?: MotionPropertyContext) {
+  const target = context?.target;
+
+  if (reservedProperties.has(key)) {
+    reportPropertyFailure("capability", instance, key, context, "property is reserved for Roblox/layout ownership");
+    return false;
+  }
+
+  if (hasExplicitProperty(target?.denyProperties, key)) {
+    reportPropertyFailure("capability", instance, key, context, "property is explicitly denied by the target contract");
+    return false;
+  }
+
+  if (hasExplicitProperty(target?.allowProperties, key)) {
+    return true;
+  }
+
+  const role = getTargetRole(target);
+  if (role === "custom") {
+    reportPropertyFailure("capability", instance, key, context, "custom targets must list this property in allowProperties");
+    return false;
+  }
+
+  if (!isPropertyAllowedForRole(role, key)) {
+    reportPropertyFailure(
+      "capability",
+      instance,
+      key,
+      context,
+      `property is not owned by ${role} targets; use an offset/size wrapper or a layout target when motion owns geometry`,
+    );
+    return false;
+  }
+
+  return true;
 }
 
-export function writeMotionProperty(instance: Instance, key: string, value: unknown) {
+export function readMotionProperty(instance: Instance, key: string, context?: MotionPropertyContext) {
+  if (!validateMotionProperty(instance, key, context)) {
+    return undefined;
+  }
+
+  try {
+    const value = (instance as unknown as Record<string, unknown>)[key];
+    if (value === undefined) {
+      reportPropertyFailure("read", instance, key, context, "property read returned undefined");
+    }
+    return value;
+  } catch (err) {
+    reportPropertyFailure("read", instance, key, context, tostring(err));
+    return undefined;
+  }
+}
+
+export function writeMotionProperty(instance: Instance, key: string, value: unknown, context?: MotionPropertyContext) {
+  if (!validateMotionProperty(instance, key, context)) {
+    return false;
+  }
+
   try {
     (instance as unknown as Record<string, unknown>)[key] = value;
     return true;
-  } catch {
+  } catch (err) {
+    reportPropertyFailure("write", instance, key, context, tostring(err));
     return false;
   }
 }
 
-export function applyMotionProperties(instance: Instance, values?: MotionProperties) {
+export function applyMotionProperties(instance: Instance, values?: MotionProperties, context?: MotionPropertyContext) {
   if (!values) {
     return;
   }
 
   for (const [key, value] of pairs(values)) {
-    writeMotionProperty(instance, key, value);
+    writeMotionProperty(instance, key, value, context);
   }
 }
 
@@ -149,7 +332,40 @@ export function areMotionValuesEqual(a: unknown, b: unknown, precision = 0.0005)
   return false;
 }
 
-export function interpolateMotionValue(from: unknown, to: unknown, alpha: number): unknown {
+export function canInterpolateMotionValue(from: unknown, to: unknown) {
+  if (from === to) {
+    return true;
+  }
+
+  if (typeIs(from, "number") && typeIs(to, "number")) {
+    return true;
+  }
+
+  if (isUDimLike(from) && isUDimLike(to)) {
+    return true;
+  }
+
+  if (isUDim2Like(from) && isUDim2Like(to)) {
+    return true;
+  }
+
+  if (isVector2Like(from) && isVector2Like(to)) {
+    return true;
+  }
+
+  if (isVector3Like(from) && isVector3Like(to)) {
+    return true;
+  }
+
+  return hasLerp(from);
+}
+
+export function interpolateMotionValue(
+  from: unknown,
+  to: unknown,
+  alpha: number,
+  context?: MotionPropertyContext & { propertyKey?: string },
+): unknown {
   if (alpha <= 0) {
     return from;
   }
@@ -181,8 +397,25 @@ export function interpolateMotionValue(from: unknown, to: unknown, alpha: number
   if (hasLerp(from)) {
     const lerp = from.Lerp;
     if (lerp) {
-      return lerp(to, alpha);
+      try {
+        return lerp(to, alpha);
+      } catch (err) {
+        if (context?.instance && context.propertyKey) {
+          reportPropertyFailure("interpolation", context.instance, context.propertyKey, context, tostring(err));
+        }
+        return alpha >= 1 ? to : from;
+      }
     }
+  }
+
+  if (context?.instance && context.propertyKey) {
+    reportPropertyFailure(
+      "interpolation",
+      context.instance,
+      context.propertyKey,
+      context,
+      `unsupported value types (${getMotionValueKind(from)} -> ${getMotionValueKind(to)})`,
+    );
   }
 
   return alpha >= 1 ? to : from;

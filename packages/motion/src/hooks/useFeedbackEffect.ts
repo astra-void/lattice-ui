@@ -28,18 +28,26 @@ export function useFeedbackEffect<T extends Instance = Instance>(
 
     if (!motionHostRef.current || motionHostRef.current.instance !== instance) {
       motionHostRef.current?.stop();
-      motionHostRef.current = new MotionHost(instance);
+      motionHostRef.current = new MotionHost(instance, config?.target);
+    } else {
+      motionHostRef.current.setTargetContract(config?.target);
     }
     const motion = motionHostRef.current;
 
     const goals = active ? properties.active : properties.inactive;
 
     if (policy.disableAllMotion) {
-      motion.sync(goals);
+      motion.sync(goals, "feedback", active ? "accent" : "recover", config?.target);
       return;
     }
 
-    applyFeedbackEffect(motion, active ? "accent" : "recover", goals, active ? config?.accent : config?.recover);
+    applyFeedbackEffect(
+      motion,
+      active ? "accent" : "recover",
+      goals,
+      active ? config?.accent : config?.recover,
+      config?.target,
+    );
   }, [active, properties, config, policy.disableAllMotion]);
 
   return ref;

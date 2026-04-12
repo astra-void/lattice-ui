@@ -7,9 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep Select, Popover, Menu, and Combobox content mounted while motion is active so exit animations finish cleanly.
+- Keep Dialog motion scoped to the panel and make Popper placement resilient when refs are temporarily unavailable.
+- Normalize slider and switch thumb anchors so wrapped layouts keep animated thumbs aligned.
+
+## [0.5.0] - 2026-04-07
+
+This release extracts shared focus and motion helpers into dedicated packages, expands the CLI's project scaffolding, and standardizes motion behavior across layered primitives.
+
+Migration notes:
+
+- Update any imports that used focus or motion helpers from `@lattice-ui/core` to `@lattice-ui/focus` and `@lattice-ui/motion`.
+- If you regenerate projects with the CLI, review the updated pnpm hoisting and theme provider setup before shipping the scaffold.
+
 ### Added
 
-- Add an interactive `init` CLI command that bootstraps Lattice into existing projects with safe template merging, dry-run planning, and JSONC-aware config updates.
+- Add a shared `@lattice-ui/motion` package for tween and presence helpers.
+- Add a shared `@lattice-ui/focus` package for focus management helpers.
+- Add an interactive `init` CLI command for existing projects with safe template merging and JSONC-aware config updates.
+- Add scaffold support for `create` and `init` so generated projects can start from the maintained package templates.
+- Add `default.project.json` support to package scaffolds so generated projects boot consistently.
+
+### Changed
+
+- Move shared focus and motion helpers out of `@lattice-ui/core` into dedicated package entrypoints.
+- Update layered components to use the shared motion and focus packages for more consistent interaction and exit behavior.
+- Refresh the CLI-generated project scaffold to handle pnpm hoisting and theme provider setup more reliably.
+- Make transitions feel consistent across components by sharing the same motion recipes everywhere.
+- Keep package metadata, scripts, and published entrypoints aligned with the new package split.
+
+### Fixed
+
+- Keep layered content mounted through motion transitions so exit animations complete instead of flashing or unmounting early.
+- Improve Dialog bounds handling and Popper placement so overlays stay aligned when refs or viewport data change.
+- Prevent Select and Combobox interaction regressions by restoring focus and avoiding first-frame content flashes.
+- Normalize slider and switch thumb anchors, then smooth out the remaining motion timing in Tooltip, Tabs, Checkbox, Radio Group, Progress, Accordion, and Textarea.
 
 ## [0.4.4] - 2026-03-22
 
