@@ -24,7 +24,9 @@ end
 local messageConnection = LogService.MessageOut:Connect(function(message, messageType)
 	if messageType == Enum.MessageType.MessageError and string.find(message, "[test-harness]", 1, true) ~= nil then
 		status = "failed"
-		failureMessage = message
+		if failureMessage == "" then
+			failureMessage = message
+		end
 	end
 end)
 
