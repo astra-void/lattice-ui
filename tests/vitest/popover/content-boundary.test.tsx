@@ -113,7 +113,11 @@ vi.mock("@lattice-ui/motion", () => ({
     reveal: { values: {}, intent: {} },
     exit: { values: {}, intent: {} },
   }),
-  usePresenceMotion: () => ({ current: undefined }),
+  usePresenceMotionController: () => ({
+    ref: { current: undefined },
+    phase: "visible",
+    mounted: true,
+  }),
 }));
 
 vi.mock("@lattice-ui/popper", () => ({

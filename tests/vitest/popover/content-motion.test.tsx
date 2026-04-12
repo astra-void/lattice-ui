@@ -20,6 +20,9 @@ const { runService } = vi.hoisted(() => {
         };
       },
     },
+    IsStudio() {
+      return false;
+    },
     step(dt: number) {
       for (const listener of [...listeners]) {
         listener(dt);
@@ -52,6 +55,18 @@ const { runService } = vi.hoisted(() => {
 };
 
 (HTMLElement.prototype as Record<string, unknown>).IsA = (className: string) => className === "GuiObject";
+
+function setGuiDefaults() {
+  const prototype = HTMLElement.prototype as Record<string, unknown>;
+  prototype.Position = UDim2.fromOffset(0, 0);
+  prototype.GroupTransparency = 0;
+}
+
+function clearGuiDefaults() {
+  const prototype = HTMLElement.prototype as Record<string, unknown>;
+  delete prototype.Position;
+  delete prototype.GroupTransparency;
+}
 
 vi.mock("@lattice-ui/core", () => {
   const React = require("react");
@@ -176,10 +191,12 @@ import { Popover } from "@lattice-ui/popover";
 
 beforeEach(() => {
   runService.reset();
+  setGuiDefaults();
 });
 
 afterEach(() => {
   cleanup();
+  clearGuiDefaults();
   vi.clearAllMocks();
 });
 

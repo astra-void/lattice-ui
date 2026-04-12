@@ -2,13 +2,14 @@ import { composeRefs, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createCanvasGroupPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";
 
 const CONTENT_OFFSET = 10;
+const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -38,7 +39,7 @@ function PopoverContentImpl(props: {
 }) {
   const popoverContext = usePopoverContext();
   const open = popoverContext.open;
-  const shouldRender = open || props.motionPresent;
+  const shouldMeasure = open || props.motionPresent || props.onExitComplete !== undefined;
   const contentBoundaryRef = React.useRef<GuiObject>();
 
   const anchorRef = popoverContext.anchorRef.current ? popoverContext.anchorRef : popoverContext.triggerRef;
@@ -49,7 +50,7 @@ function PopoverContentImpl(props: {
     placement: props.placement,
     offset: props.offset,
     padding: props.padding,
-    enabled: shouldRender,
+    enabled: shouldMeasure,
   });
 
   const defaultTransition = React.useMemo(
@@ -58,25 +59,31 @@ function PopoverContentImpl(props: {
   );
   const recipe = props.transition ?? defaultTransition;
 
-  const motionRef = usePresenceMotion<GuiObject>(props.motionPresent, recipe, props.onExitComplete);
+  const motion = usePresenceMotionController<GuiObject>({
+    present: props.motionPresent,
+    ready: popper.isPositioned,
+    forceMount: props.forceMount,
+    config: recipe,
+    onExitComplete: props.onExitComplete,
+  });
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
       const guiObject = toGuiObject(instance);
       popoverContext.contentRef.current = guiObject;
       contentBoundaryRef.current = guiObject;
-      if (motionRef) {
-        motionRef.current = guiObject;
-      }
+      motion.ref.current = guiObject;
     },
-    [motionRef, popoverContext.contentRef],
+    [motion.ref, popoverContext.contentRef],
   );
 
   const handleDismiss = React.useCallback(() => {
     popoverContext.setOpen(false);
   }, [popoverContext.setOpen]);
 
-  const isActuallyVisible = shouldRender;
+  const shouldRender = motion.mounted;
+  const isActuallyVisible = shouldRender && motion.phase !== "exited";
+  const popperPosition = popper.isPositioned ? popper.position : HIDDEN_POSITION;
 
   const contentNode = props.asChild ? (
     (() => {
@@ -131,7 +138,7 @@ function PopoverContentImpl(props: {
           AnchorPoint={popper.anchorPoint}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          Position={popper.position}
+          Position={popperPosition}
           Size={UDim2.fromOffset(0, 0)}
           Visible={shouldRender}
         >
