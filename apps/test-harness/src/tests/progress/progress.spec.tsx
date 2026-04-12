@@ -17,6 +17,12 @@ function findFrameByMarker(root: Instance, markerText: string) {
   return parent;
 }
 
+function requireGuiObjectParent(instance: Instance | undefined, message: string) {
+  const parent = instance?.Parent;
+  assert(parent !== undefined && parent.IsA("GuiObject"), message);
+  return parent as GuiObject;
+}
+
 function findSpinnerFrame(root: Instance) {
   const marker = findTextLabelByText(root, "spinner-marker");
   if (!marker) {
@@ -48,7 +54,16 @@ export = () => {
         waitForEffects(2);
         const indicator = findFrameByMarker(harness.container, "progress-indicator-marker");
         assert(indicator !== undefined, "ProgressIndicator frame should mount.");
-        assert(indicator.Size.X.Scale === 0.25, "Indicator width scale should equal value/max ratio.");
+        const motionHost = requireGuiObjectParent(
+          indicator,
+          "ProgressIndicator should render inside the motion-owned geometry host.",
+        );
+        assert(indicator.Size.X.Scale === 1, "Indicator child should fill the motion-owned host.");
+        assert(motionHost.Size.X.Scale === 0.25, "Indicator width scale should equal value/max ratio.");
+        assert(
+          math.abs(indicator.AbsoluteSize.X - motionHost.AbsoluteSize.X) <= 1,
+          "ProgressIndicator should not double-apply the value ratio.",
+        );
       });
     });
 

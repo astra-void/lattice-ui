@@ -25,7 +25,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!child) {
+    if (!React.isValidElement(child)) {
       error("[ProgressIndicator] `asChild` requires a child element.");
     }
 
@@ -33,7 +33,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
     const mergedChildProps: GuiPropBag = {
       ...childProps,
       Position: UDim2.fromScale(0, 0),
-      Size: UDim2.fromScale(widthScale, 1),
+      Size: UDim2.fromScale(1, 1),
       ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
     };
 
