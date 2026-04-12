@@ -150,16 +150,17 @@ try {
     );
   }
 
-  const reporterSuccess = pcall(() => {
+  const [reporterSuccess, reporterError] = pcall(() => {
     TestEZ.Reporters.TextReporter.report(results);
   });
-  if (!reporterSuccess[0]) {
-    warn(`[test-harness] TextReporter failed: ${tostring(reporterSuccess[1])}`);
+  if (!reporterSuccess) {
+    warn(`[test-harness] TextReporter failed: ${tostring(reporterError)}`);
   }
   const totalCount = results.failureCount + results.successCount + results.skippedCount;
   if (totalCount === 0) {
     finalStatus = "failed";
-    finalFailureMessage = "[test-harness] No tests were discovered. Expected at least one .spec ModuleScript under script.Parent.tests.";
+    finalFailureMessage =
+      "[test-harness] No tests were discovered. Expected at least one .spec ModuleScript under script.Parent.tests.";
   } else if (results.failureCount > 0) {
     finalStatus = "failed";
     finalFailureMessage = `[test-harness] Failing run because ${results.failureCount} test(s) failed.`;
