@@ -64,7 +64,19 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
       error("[ScrollAreaViewport] `asChild` requires a child element.");
     }
 
-    return <Slot ref={setViewportRef}>{child}</Slot>;
+    return (
+      <Slot
+        Active
+        AutomaticCanvasSize={Enum.AutomaticSize.XY}
+        CanvasSize={UDim2.fromScale(0, 0)}
+        ScrollBarImageTransparency={1}
+        ScrollBarThickness={0}
+        ScrollingDirection={Enum.ScrollingDirection.XY}
+        ref={setViewportRef}
+      >
+        {child}
+      </Slot>
+    );
   }
 
   return (
