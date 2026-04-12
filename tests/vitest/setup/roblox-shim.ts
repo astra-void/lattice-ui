@@ -104,6 +104,22 @@ function typeIs(value: unknown, typeName: TypeName) {
   return typeof value === typeName;
 }
 
+function typeOf(value: unknown) {
+  if (value instanceof MockUDim2) {
+    return "UDim2";
+  }
+
+  if (value instanceof MockVector2) {
+    return "Vector2";
+  }
+
+  return typeof value;
+}
+
+function tostring(value: unknown) {
+  return String(value);
+}
+
 function* ipairs<T>(value: Array<T>) {
   for (let index = 0; index < value.length; index++) {
     yield [index + 1, value[index]] as const;
@@ -155,6 +171,8 @@ Object.assign(globalThis as Record<string, unknown>, {
   math: luauMath,
   string: luauString,
   typeIs,
+  typeOf,
+  tostring,
   Vector2: MockVector2,
   UDim2: MockUDim2,
 });
@@ -213,6 +231,7 @@ if (!globalThis.game) {
   const mockRunService = {
     Heartbeat: connectSignal(),
     RenderStepped: connectSignal(),
+    IsStudio: () => false,
   };
   globalThis.game = {
     GetService: (service: string) => {
