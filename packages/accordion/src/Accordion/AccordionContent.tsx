@@ -1,12 +1,12 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import { createSurfaceRevealRecipe, type PresenceMotionConfig, usePresenceMotion } from "@lattice-ui/motion";
+import { createSurfaceRevealRecipe, type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/motion";
 import { useAccordionItemContext } from "./context";
 import type { AccordionContentProps } from "./types";
 
 function AccordionContentImpl(props: {
-  motionPresent: boolean;
-  visible: boolean;
+  present: boolean;
+  forceMount?: boolean;
   transition?: PresenceMotionConfig;
   onExitComplete?: () => void;
   asChild?: boolean;
@@ -15,7 +15,20 @@ function AccordionContentImpl(props: {
   const defaultTransition = React.useMemo(() => createSurfaceRevealRecipe(), []);
   const config = props.transition ?? defaultTransition;
 
-  const motionRef = usePresenceMotion<Frame>(props.motionPresent, config, props.onExitComplete);
+  const motion = usePresenceMotionController<Frame>({
+    present: props.present,
+    forceMount: props.forceMount,
+    config,
+    onExitComplete: props.onExitComplete,
+  });
+
+  const mounted = motion.mounted;
+  const exiting = motion.isExiting || (!props.present && motion.phase !== "exited");
+  const visible = props.forceMount === true ? props.present : mounted && (props.present || exiting);
+
+  if (!mounted) {
+    return undefined;
+  }
 
   if (props.asChild) {
     const child = props.children;
@@ -24,7 +37,7 @@ function AccordionContentImpl(props: {
     }
 
     return (
-      <Slot Visible={props.visible} ref={motionRef}>
+      <Slot Visible={visible} ref={motion.ref}>
         {child}
       </Slot>
     );
@@ -35,8 +48,8 @@ function AccordionContentImpl(props: {
       BackgroundColor3={Color3.fromRGB(35, 41, 54)}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(260, 44)}
-      Visible={props.visible}
-      ref={motionRef}
+      Visible={visible}
+      ref={motion.ref}
     >
       {props.children}
     </frame>
@@ -51,9 +64,9 @@ export function AccordionContent(props: AccordionContentProps) {
     return (
       <AccordionContentImpl
         asChild={props.asChild}
-        motionPresent={itemContext.open}
+        forceMount={true}
+        present={itemContext.open}
         transition={props.transition}
-        visible={itemContext.open}
       >
         {props.children}
       </AccordionContentImpl>
@@ -66,10 +79,9 @@ export function AccordionContent(props: AccordionContentProps) {
       render={(state) => (
         <AccordionContentImpl
           asChild={props.asChild}
-          motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
+          present={state.isPresent}
           transition={props.transition}
-          visible={true}
         >
           {props.children}
         </AccordionContentImpl>
