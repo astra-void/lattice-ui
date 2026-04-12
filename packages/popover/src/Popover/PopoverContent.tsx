@@ -1,4 +1,4 @@
-import { composeRefs, React } from "@lattice-ui/core";
+import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
@@ -41,11 +41,14 @@ function PopoverContentImpl(props: {
   const open = popoverContext.open;
   const shouldMeasure = open || props.motionPresent || props.onExitComplete !== undefined;
   const contentBoundaryRef = React.useRef<GuiObject>();
+  const resolvedAnchorRef = React.useRef<GuiObject>();
 
-  const anchorRef = popoverContext.anchorRef.current ? popoverContext.anchorRef : popoverContext.triggerRef;
+  React.useLayoutEffect(() => {
+    resolvedAnchorRef.current = popoverContext.anchorRef.current ?? popoverContext.triggerRef.current;
+  });
 
   const popper = usePopper({
-    anchorRef,
+    anchorRef: resolvedAnchorRef,
     contentRef: popoverContext.contentRef,
     placement: props.placement,
     offset: props.offset,
@@ -93,6 +96,7 @@ function PopoverContentImpl(props: {
       }
 
       const childProps = toGuiPropBag((child as { props?: unknown }).props);
+      const childRef = getElementRef<Instance>(child);
 
       return (
         <canvasgroup
@@ -107,7 +111,7 @@ function PopoverContentImpl(props: {
             ...childProps,
             Position: UDim2.fromOffset(0, 0),
             Visible: contentVisible,
-            ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+            ref: composeRefs(childRef),
           })}
         </canvasgroup>
       );
