@@ -1,4 +1,4 @@
-import { composeRefs, React } from "@lattice-ui/core";
+import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import { createToggleResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";
@@ -23,15 +23,16 @@ export function SwitchThumb(props: SwitchThumbProps) {
   const childProps =
     props.asChild && React.isValidElement(child) ? toGuiPropBag((child as { props?: unknown }).props) : undefined;
   const thumbSize = (childProps as { Size?: UDim2 } | undefined)?.Size ?? DEFAULT_THUMB_SIZE;
-
-  const motionRef = useResponseMotion<Frame>(
-    switchContext.checked,
-    {
+  const motionTargets = React.useMemo(
+    () => ({
       active: { Position: getCheckedThumbPosition(thumbSize) },
       inactive: { Position: UNCHECKED_THUMB_POSITION },
-    },
-    createToggleResponseRecipe(0.05),
+    }),
+    [thumbSize],
   );
+  const motionConfig = React.useMemo(() => createToggleResponseRecipe(0.04), []);
+
+  const motionRef = useResponseMotion<Frame>(switchContext.checked, motionTargets, motionConfig);
 
   if (props.asChild) {
     if (!React.isValidElement(child)) {
@@ -39,13 +40,14 @@ export function SwitchThumb(props: SwitchThumbProps) {
     }
 
     const resolvedChildProps = childProps ?? {};
+    const childRef = getElementRef<Instance>(child);
 
     return (
       <frame BackgroundTransparency={1} BorderSizePixel={0} Size={thumbSize} ref={motionRef}>
         {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
           ...resolvedChildProps,
           Position: UDim2.fromOffset(0, 0),
-          ref: composeRefs((resolvedChildProps as { ref?: React.Ref<Instance> }).ref),
+          ref: composeRefs(childRef),
         })}
       </frame>
     );

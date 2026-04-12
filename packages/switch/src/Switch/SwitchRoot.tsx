@@ -14,15 +14,16 @@ export function SwitchRoot(props: SwitchProps) {
   });
 
   const disabled = props.disabled === true;
-
-  const motionRef = useResponseMotion<GuiObject>(
-    checked,
-    {
+  const motionTargets = React.useMemo(
+    () => ({
       active: { BackgroundColor3: TRACK_ON_COLOR },
       inactive: { BackgroundColor3: TRACK_OFF_COLOR },
-    },
-    createToggleResponseRecipe(0.05),
+    }),
+    [],
   );
+  const motionConfig = React.useMemo(() => createToggleResponseRecipe(0.04), []);
+
+  const motionRef = useResponseMotion<GuiObject>(checked, motionTargets, motionConfig);
 
   const setChecked = React.useCallback(
     (nextChecked: boolean) => {
