@@ -1,22 +1,38 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import { createIndicatorRevealRecipe, type PresenceMotionConfig, usePresenceMotion } from "@lattice-ui/motion";
+import {
+  createIndicatorRevealRecipe,
+  type PresenceMotionConfig,
+  usePresenceMotionController,
+} from "@lattice-ui/motion";
 import { useCheckboxContext } from "./context";
 import type { CheckboxIndicatorProps } from "./types";
 
 function CheckboxIndicatorImpl(props: {
-  motionPresent: boolean;
-  visible: boolean;
+  present: boolean;
+  forceMount?: boolean;
   transition?: PresenceMotionConfig;
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
 }) {
-  const motionRef = usePresenceMotion<Frame>(
-    props.motionPresent,
-    props.transition ?? createIndicatorRevealRecipe(UDim2.fromOffset(12, 12)),
-    props.onExitComplete,
-  );
+  const defaultTransition = React.useMemo(() => createIndicatorRevealRecipe(UDim2.fromOffset(12, 12)), []);
+  const config = props.transition ?? defaultTransition;
+
+  const motion = usePresenceMotionController<Frame>({
+    present: props.present,
+    forceMount: props.forceMount,
+    config,
+    onExitComplete: props.onExitComplete,
+  });
+
+  const mounted = motion.mounted;
+  const exiting = motion.isExiting || (!props.present && motion.phase !== "exited");
+  const visible = props.forceMount === true ? props.present : mounted && (props.present || exiting);
+
+  if (!mounted) {
+    return undefined;
+  }
 
   if (props.asChild) {
     const child = props.children;
@@ -25,7 +41,7 @@ function CheckboxIndicatorImpl(props: {
     }
 
     return (
-      <Slot Visible={props.visible} ref={motionRef}>
+      <Slot Visible={visible} ref={motion.ref}>
         {child}
       </Slot>
     );
@@ -36,8 +52,8 @@ function CheckboxIndicatorImpl(props: {
       BackgroundColor3={Color3.fromRGB(240, 244, 252)}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(12, 12)}
-      Visible={props.visible}
-      ref={motionRef}
+      Visible={visible}
+      ref={motion.ref}
     >
       {props.children}
     </frame>
@@ -49,14 +65,9 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
   const visible = checkboxContext.checked !== false;
   const forceMount = props.forceMount === true;
 
-  const transition = React.useMemo(
-    () => props.transition ?? createIndicatorRevealRecipe(UDim2.fromOffset(12, 12)),
-    [props.transition],
-  );
-
   if (forceMount) {
     return (
-      <CheckboxIndicatorImpl asChild={props.asChild} motionPresent={visible} transition={transition} visible={visible}>
+      <CheckboxIndicatorImpl asChild={props.asChild} forceMount={true} present={visible} transition={props.transition}>
         {props.children}
       </CheckboxIndicatorImpl>
     );
@@ -68,10 +79,9 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
       render={(state) => (
         <CheckboxIndicatorImpl
           asChild={props.asChild}
-          motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
-          transition={transition}
-          visible={true}
+          present={state.isPresent}
+          transition={props.transition}
         >
           {props.children}
         </CheckboxIndicatorImpl>
