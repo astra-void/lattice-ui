@@ -77,7 +77,7 @@ function ComboboxContentImpl(props: {
   }, [comboboxContext]);
 
   const shouldRender = motion.mounted;
-  const isActuallyVisible = shouldRender && motion.phase !== "exited";
+  const contentVisible = shouldRender && (motion.present || motion.phase !== "exited");
   const popperPosition = popper.isPositioned ? popper.position : HIDDEN_POSITION;
 
   const contentNode = props.asChild ? (
@@ -95,12 +95,13 @@ function ComboboxContentImpl(props: {
           BackgroundTransparency={1}
           BorderSizePixel={0}
           Size={UDim2.fromOffset(0, 0)}
-          Visible={isActuallyVisible}
+          Visible={contentVisible}
           ref={setContentRef as React.Ref<CanvasGroup>}
         >
           {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
             ...childProps,
             Position: UDim2.fromOffset(0, 0),
+            Visible: contentVisible,
             ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
           })}
         </canvasgroup>
@@ -112,7 +113,7 @@ function ComboboxContentImpl(props: {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(0, 0)}
-      Visible={isActuallyVisible}
+      Visible={contentVisible}
       ref={setContentRef}
     >
       {props.children}
