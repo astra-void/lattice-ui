@@ -39,7 +39,7 @@ function isWithinInsideRoots(hitObject: GuiObject, insideRoots: Array<GuiObject 
 }
 
 function isWithinContentBoundary(hitObject: GuiObject, contentWrapper: GuiObject) {
-  return hitObject.IsDescendantOf(contentWrapper);
+  return hitObject === contentWrapper || hitObject.IsDescendantOf(contentWrapper);
 }
 
 function addUniqueSample(samples: Array<Vector2>, sampleKeys: Record<string, true>, x: number, y: number) {

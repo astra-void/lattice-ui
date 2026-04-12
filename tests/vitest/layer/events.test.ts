@@ -47,7 +47,7 @@ beforeEach(() => {
 });
 
 describe("dismissable layer outside pointer detection", () => {
-  it("treats the fullscreen content wrapper itself as outside", async () => {
+  it("treats the content boundary itself as an inside hit", async () => {
     const layerEvents = await loadLayerEvents();
 
     const contentWrapper = createGuiNode("ContentWrapper");
@@ -68,7 +68,7 @@ describe("dismissable layer outside pointer detection", () => {
       },
     );
 
-    expect(outside).toBe(true);
+    expect(outside).toBe(false);
   });
 
   it("treats descendants of the content wrapper as inside hits", async () => {
