@@ -103,7 +103,15 @@ export = () => {
         const initialThumb = findTextButtonByText(harness.container, "slider-thumb-h-sync");
         assert(initialRange !== undefined, "Horizontal sync test should mount the range.");
         assert(initialThumb !== undefined, "Horizontal sync test should mount the thumb.");
-        assert(approx(initialRange.Size.X.Scale, 0.1), "Horizontal slider range should start at 10% width.");
+        const initialRangeMotionHost = requireGuiObjectParent(
+          initialRange,
+          "Horizontal slider range should start inside the motion-owned host.",
+        );
+        assert(
+          approx(initialRange.Size.X.Scale, 1),
+          "Horizontal slider range child should start by filling the motion-owned host.",
+        );
+        assert(approx(initialRangeMotionHost.Size.X.Scale, 0.1), "Horizontal slider range should start at 10% width.");
         assert(approx(initialThumb.Position.X.Scale, 0.1), "Horizontal slider thumb should start at 10%.");
 
         harness.render(renderSlider("horizontal", 85, "slider-range-h-sync", "slider-thumb-h-sync"));
@@ -179,9 +187,17 @@ export = () => {
         const initialThumb = findTextButtonByText(harness.container, "slider-thumb-v-sync");
         assert(initialRange !== undefined, "Vertical sync test should mount the range.");
         assert(initialThumb !== undefined, "Vertical sync test should mount the thumb.");
-        assert(approx(initialRange.Size.Y.Scale, 0.2), "Vertical slider range should start at 20% height.");
+        const initialRangeMotionHost = requireGuiObjectParent(
+          initialRange,
+          "Vertical slider range should start inside the motion-owned host.",
+        );
         assert(
-          approx(initialRange.Position.Y.Scale, 0.8),
+          approx(initialRange.Size.Y.Scale, 1),
+          "Vertical slider range child should start by filling the motion-owned host.",
+        );
+        assert(approx(initialRangeMotionHost.Size.Y.Scale, 0.2), "Vertical slider range should start at 20% height.");
+        assert(
+          approx(initialRangeMotionHost.Position.Y.Scale, 0.8),
           "Vertical slider range should start at the 20% value offset.",
         );
         assert(
