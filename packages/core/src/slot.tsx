@@ -1,11 +1,10 @@
 import React from "@rbxts/react";
-import { composeRefs } from "./refs";
+import { composeRefs, getElementRef, toRef } from "./refs";
 
 type Fn = (...args: unknown[]) => void;
 type HandlerTable = Partial<Record<string, Fn>>;
 type SlotRef = React.ForwardedRef<Instance>;
 type SlotPropBag = React.Attributes & Record<string, unknown>;
-type InstanceRefCallback = (instance: Instance | undefined) => void;
 type ReactRuntimeWithEvents = {
   Event: Record<string, string>;
   Change: Record<string, string>;
@@ -40,30 +39,6 @@ function toHandlerTable(value: unknown): HandlerTable | undefined {
   }
 
   return next(out)[0] !== undefined ? out : undefined;
-}
-
-function toForwardedRef(value: unknown): SlotRef | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (isInstanceRefCallback(value)) {
-    return value;
-  }
-
-  if (isInstanceMutableRefObject(value)) {
-    return value;
-  }
-
-  return undefined;
-}
-
-function isInstanceRefCallback(value: unknown): value is InstanceRefCallback {
-  return typeIs(value, "function");
-}
-
-function isInstanceMutableRefObject(value: unknown): value is React.MutableRefObject<Instance | undefined> {
-  return typeIs(value, "table") && "current" in value;
 }
 
 function mergeHandlerTable(a?: HandlerTable, b?: HandlerTable) {
@@ -137,8 +112,8 @@ export const Slot = React.forwardRef<Instance, SlotProps>((props, forwardedRef) 
   if (Event) mergedProps.Event = Event;
   if (Change) mergedProps.Change = Change;
 
-  const slotRef = toForwardedRef(props.ref);
-  const childRef = toForwardedRef(childProps.ref);
+  const slotRef = toRef<Instance>(props.ref);
+  const childRef = getElementRef<Instance>(child);
   const mergedRef = composeRefs(childRef, forwardedRef, slotRef);
   mergedProps.ref = mergedRef;
 

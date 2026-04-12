@@ -121,11 +121,16 @@ vi.mock("@lattice-ui/core", () => {
     };
   }
 
+  function getElementRef(child: React.ReactElement) {
+    return child.props.ref ?? child.ref;
+  }
+
   return {
     React,
     Slot,
     composeRefs,
     createStrictContext,
+    getElementRef,
     useControllableState,
   };
 });
