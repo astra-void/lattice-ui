@@ -124,7 +124,7 @@ export const Slot = React.forwardRef<Instance, SlotProps>((props, forwardedRef) 
   const child = props.children;
   const childProps = toSlotPropBag((child as { props?: unknown }).props);
 
-  const mergedProps: SlotPropBag = { ...props, ...childProps };
+  const mergedProps: SlotPropBag = { ...childProps, ...props };
   mergedProps.children = childProps.children;
 
   const slotEvent = toHandlerTable(props.Event);

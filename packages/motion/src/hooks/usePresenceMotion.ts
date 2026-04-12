@@ -14,6 +14,7 @@ export function usePresenceMotion<T extends Instance = Instance>(
   const onExitCompleteRef = React.useRef(onExitComplete);
   const isFirstMount = React.useRef(true);
   const motionHostRef = React.useRef<MotionHost>();
+  const setupGenerationRef = React.useRef(0);
 
   React.useEffect(() => {
     onExitCompleteRef.current = onExitComplete;
@@ -27,56 +28,68 @@ export function usePresenceMotion<T extends Instance = Instance>(
   }, []);
 
   React.useLayoutEffect(() => {
-    const instance = ref.current;
-    if (!instance) {
-      return;
-    }
+    setupGenerationRef.current += 1;
+    const generation = setupGenerationRef.current;
 
-    if (!motionHostRef.current || motionHostRef.current.instance !== instance) {
-      motionHostRef.current?.stop();
-      motionHostRef.current = new MotionHost(instance);
-      isFirstMount.current = true;
-    }
-    const motion = motionHostRef.current;
-
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-
-      applyPresenceSnapshot(motion, config.initial);
-
-      if (present && config.reveal) {
-        if (policy.disableAllMotion) {
-          applyPresenceSnapshot(motion, config.reveal.values);
-        } else {
-          revealPresence(motion, config.reveal.values, config.reveal.intent);
-        }
-      } else if (!present) {
-        applyPresenceSnapshot(motion, config.exit?.values ?? config.initial);
+    const applyMotion = () => {
+      if (setupGenerationRef.current !== generation) {
+        return;
       }
 
-      return;
-    }
-
-    if (present) {
-      if (config.reveal) {
-        if (policy.disableAllMotion) {
-          applyPresenceSnapshot(motion, config.reveal.values);
-        } else {
-          revealPresence(motion, config.reveal.values, config.reveal.intent);
-        }
+      const instance = ref.current;
+      if (!instance) {
+        task.delay(0, applyMotion);
+        return;
       }
-    } else {
-      if (config.exit) {
-        if (policy.disableAllMotion) {
-          applyPresenceSnapshot(motion, config.exit.values);
-          onExitCompleteRef.current?.();
-        } else {
-          exitPresence(motion, config.exit.values, config.exit.intent, () => onExitCompleteRef.current?.());
+
+      if (!motionHostRef.current || motionHostRef.current.instance !== instance) {
+        motionHostRef.current?.stop();
+        motionHostRef.current = new MotionHost(instance);
+        isFirstMount.current = true;
+      }
+      const motion = motionHostRef.current;
+
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+
+        applyPresenceSnapshot(motion, config.initial);
+
+        if (present && config.reveal) {
+          if (policy.disableAllMotion) {
+            applyPresenceSnapshot(motion, config.reveal.values);
+          } else {
+            revealPresence(motion, config.reveal.values, config.reveal.intent);
+          }
+        } else if (!present) {
+          applyPresenceSnapshot(motion, config.exit?.values ?? config.initial);
+        }
+
+        return;
+      }
+
+      if (present) {
+        if (config.reveal) {
+          if (policy.disableAllMotion) {
+            applyPresenceSnapshot(motion, config.reveal.values);
+          } else {
+            revealPresence(motion, config.reveal.values, config.reveal.intent);
+          }
         }
       } else {
-        onExitCompleteRef.current?.();
+        if (config.exit) {
+          if (policy.disableAllMotion) {
+            applyPresenceSnapshot(motion, config.exit.values);
+            onExitCompleteRef.current?.();
+          } else {
+            exitPresence(motion, config.exit.values, config.exit.intent, () => onExitCompleteRef.current?.());
+          }
+        } else {
+          onExitCompleteRef.current?.();
+        }
       }
-    }
+    };
+
+    applyMotion();
   }, [present, config, policy.disableAllMotion]);
 
   return ref;

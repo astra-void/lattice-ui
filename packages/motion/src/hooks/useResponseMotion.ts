@@ -11,7 +11,9 @@ export function useResponseMotion<T extends Instance = Instance>(
 ): React.MutableRefObject<T | undefined> {
   const ref = React.useRef<T>();
   const policy = useMotionPolicy();
+  const isFirstMount = React.useRef(true);
   const motionHostRef = React.useRef<MotionHost>();
+  const setupGenerationRef = React.useRef(0);
 
   React.useEffect(() => {
     return () => {
@@ -21,25 +23,44 @@ export function useResponseMotion<T extends Instance = Instance>(
   }, []);
 
   React.useLayoutEffect(() => {
-    const instance = ref.current;
-    if (!instance) {
-      return;
-    }
+    setupGenerationRef.current += 1;
+    const generation = setupGenerationRef.current;
 
-    if (!motionHostRef.current || motionHostRef.current.instance !== instance) {
-      motionHostRef.current?.stop();
-      motionHostRef.current = new MotionHost(instance);
-    }
-    const motion = motionHostRef.current;
+    const applyMotion = () => {
+      if (setupGenerationRef.current !== generation) {
+        return;
+      }
 
-    const goals = active ? properties.active : properties.inactive;
+      const instance = ref.current;
+      if (!instance) {
+        task.delay(0, applyMotion);
+        return;
+      }
 
-    if (policy.disableAllMotion) {
-      motion.sync(goals);
-      return;
-    }
+      if (!motionHostRef.current || motionHostRef.current.instance !== instance) {
+        motionHostRef.current?.stop();
+        motionHostRef.current = new MotionHost(instance);
+        isFirstMount.current = true;
+      }
 
-    settleResponse(motion, goals, config?.settle);
+      const motion = motionHostRef.current;
+      const goals = active ? properties.active : properties.inactive;
+
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+        motion.sync(goals);
+        return;
+      }
+
+      if (policy.disableAllMotion) {
+        motion.sync(goals);
+        return;
+      }
+
+      settleResponse(motion, goals, config?.settle);
+    };
+
+    applyMotion();
   }, [active, properties, config, policy.disableAllMotion]);
 
   return ref;
