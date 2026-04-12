@@ -1,4 +1,4 @@
-import { composeRefs, React } from "@lattice-ui/core";
+import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import { createProgressResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useProgressContext } from "./context";
 import type { ProgressIndicatorProps } from "./types";
@@ -30,11 +30,12 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
     }
 
     const childProps = toGuiPropBag((child as { props?: unknown }).props);
+    const childRef = getElementRef<Instance>(child);
     const mergedChildProps: GuiPropBag = {
       ...childProps,
       Position: UDim2.fromScale(0, 0),
       Size: UDim2.fromScale(1, 1),
-      ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+      ref: composeRefs(childRef),
     };
 
     return (

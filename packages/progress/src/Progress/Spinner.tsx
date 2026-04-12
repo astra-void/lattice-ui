@@ -1,5 +1,4 @@
-import { composeRefs, React } from "@lattice-ui/core";
-import type ReactTypes from "@rbxts/react";
+import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import type { SpinnerProps } from "./types";
 
 const RunService = game.GetService("RunService");
@@ -16,22 +15,6 @@ function toGuiObject(instance: Instance | undefined) {
 
 function toGuiPropBag(value: unknown): GuiPropBag {
   return typeIs(value, "table") ? (value as GuiPropBag) : {};
-}
-
-function toInstanceRef(value: unknown): ReactTypes.Ref<Instance> | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (typeIs(value, "function")) {
-    return value as (instance: Instance | undefined) => void;
-  }
-
-  if (typeIs(value, "table")) {
-    return value as ReactTypes.MutableRefObject<Instance | undefined>;
-  }
-
-  return undefined;
 }
 
 export function Spinner(props: SpinnerProps) {
@@ -65,15 +48,16 @@ export function Spinner(props: SpinnerProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!child) {
+    if (!React.isValidElement(child)) {
       error("[Spinner] `asChild` requires a child element.");
     }
 
     const childProps = toGuiPropBag((child as { props?: unknown }).props);
+    const childRef = getElementRef<Instance>(child);
     const mergedProps: GuiPropBag = {
       ...childProps,
       Visible: spinning,
-      ref: composeRefs(toInstanceRef((childProps as { ref?: unknown }).ref), setSpinnerRef),
+      ref: composeRefs(childRef, setSpinnerRef),
     };
 
     return React.cloneElement(child as React.ReactElement<GuiPropBag>, mergedProps);
