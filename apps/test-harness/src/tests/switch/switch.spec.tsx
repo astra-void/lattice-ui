@@ -34,6 +34,31 @@ function findSwitchThumb(root: Instance) {
   return matched;
 }
 
+function findCustomSwitchRoot(root: Instance) {
+  const matched = findFirstDescendant(
+    root,
+    (instance) => instance.IsA("TextButton") && instance.AbsoluteSize.X === 46 && instance.AbsoluteSize.Y === 24,
+  );
+  if (!matched || !matched.IsA("TextButton")) {
+    return undefined;
+  }
+
+  return matched;
+}
+
+function findCustomSwitchThumb(root: Instance) {
+  const marker = findFirstDescendant(
+    root,
+    (instance) => instance.IsA("TextLabel") && instance.Text === "custom-switch-thumb-marker",
+  );
+  const parent = marker?.Parent;
+  if (!parent || !parent.IsA("Frame")) {
+    return undefined;
+  }
+
+  return parent;
+}
+
 function renderSwitch(checked: boolean, disabled = false) {
   return (
     <Switch.Root checked={checked} disabled={disabled}>
@@ -42,8 +67,26 @@ function renderSwitch(checked: boolean, disabled = false) {
   );
 }
 
+function renderCustomSwitch(checked: boolean) {
+  return (
+    <Switch.Root asChild checked={checked}>
+      <textbutton AutoButtonColor={false} BorderSizePixel={0} Size={UDim2.fromOffset(46, 24)} Text="">
+        <Switch.Thumb asChild>
+          <frame BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
+            <textlabel BackgroundTransparency={1} Text="custom-switch-thumb-marker" TextTransparency={1} />
+          </frame>
+        </Switch.Thumb>
+      </textbutton>
+    </Switch.Root>
+  );
+}
+
 function getThumbTargetX(root: TextButton, checked: boolean) {
   return root.AbsolutePosition.X + (checked ? root.AbsoluteSize.X - 18 : 2);
+}
+
+function getCustomThumbTargetX(root: TextButton, checked: boolean) {
+  return root.AbsolutePosition.X + (checked ? root.AbsoluteSize.X - 22 : 2);
 }
 
 export = () => {
@@ -171,6 +214,25 @@ export = () => {
         assert(
           root.BackgroundColor3 === TRACK_ON_COLOR,
           "Rapid toggles should converge on the final checked track color.",
+        );
+      });
+    });
+
+    it("aligns custom asChild thumb sizes with the checked edge", () => {
+      withReactHarness("SwitchCustomThumbSize", (harness) => {
+        harness.render(renderCustomSwitch(true));
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const root = findCustomSwitchRoot(harness.container);
+        const thumb = findCustomSwitchThumb(harness.container);
+        assert(root !== undefined && thumb !== undefined, "Custom switch should mount the root and thumb.");
+        assertWithinTolerance(
+          thumb.AbsolutePosition.X,
+          getCustomThumbTargetX(root, true),
+          1,
+          "Custom switch thumb should align to the checked edge without using the default thumb width.",
         );
       });
     });
