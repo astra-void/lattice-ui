@@ -22,6 +22,22 @@ export function createReactHarness(name = "LatticeUiTestHarnessRoot"): ReactHarn
   const container = createTestContainer(name);
   const root = ReactRoblox.createRoot(container);
 
+  const clearHarnessSelectedObject = () => {
+    const selectedObject = GuiService.SelectedObject;
+    if (!selectedObject || !selectedObject.IsA("GuiObject")) {
+      return;
+    }
+
+    // Only clear selection when it targets harness-owned GUI or a stale object.
+    if (
+      selectedObject.IsDescendantOf(container) ||
+      selectedObject.IsDescendantOf(playerGui) ||
+      selectedObject.Parent === undefined
+    ) {
+      GuiService.SelectedObject = undefined;
+    }
+  };
+
   return {
     playerGui,
     container,
@@ -30,13 +46,11 @@ export function createReactHarness(name = "LatticeUiTestHarnessRoot"): ReactHarn
       waitForEffects();
     },
     cleanup: () => {
-      const selectedObject = GuiService.SelectedObject;
-      if (selectedObject && selectedObject.IsDescendantOf(container)) {
-        GuiService.SelectedObject = undefined;
-      }
+      clearHarnessSelectedObject();
 
       root.unmount();
       waitForEffects(1);
+      clearHarnessSelectedObject();
       container.Destroy();
     },
   };

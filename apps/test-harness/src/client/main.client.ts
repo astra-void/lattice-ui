@@ -37,10 +37,82 @@ type TestEZModule = {
   };
 };
 
+const VERBOSE = false;
+
 type TestEZModuleRecord = {
   method: Callback;
   path: Array<string>;
   pathStringForSorting: string;
+};
+
+const getFirstLine = (message: string): string => {
+  const lines = message.split("\n");
+  return lines[0] ?? "";
+};
+
+const trimWhitespace = (value: string): string => {
+  const [trimmedLeft] = value.gsub("^%s+", "");
+  const [trimmed] = (trimmedLeft as string).gsub("%s+$", "");
+  return trimmed as string;
+};
+
+const stripInternalPrefixes = (value: string): string => {
+  const [withoutPlayerPrefix] = value.gsub("^Players%.[^%.]+%.PlayerScripts%.TestHarness%.", "");
+  const [withoutPlayerScriptsPrefix] = (withoutPlayerPrefix as string).gsub("^PlayerScripts%.TestHarness%.", "");
+  const [withoutHarnessPrefix] = (withoutPlayerScriptsPrefix as string).gsub("^TestHarness%.", "");
+
+  return withoutHarnessPrefix as string;
+};
+
+const normalizePathLikeSegment = (value: string): string => {
+  const stripped = stripInternalPrefixes(value);
+  const [testsPath] = stripped.gsub("^tests%.", "tests/");
+  const [slashPath] = (testsPath as string).gsub("%.", "/");
+
+  return slashPath as string;
+};
+
+const parseFailureSummary = (errorMessage: string): string => {
+  const firstLine = trimWhitespace(getFirstLine(errorMessage));
+  const strippedLine = stripInternalPrefixes(firstLine);
+
+  const [firstColonIndex] = string.find(strippedLine, ":", 1, true);
+  const secondColonResult =
+    firstColonIndex !== undefined ? string.find(strippedLine, ":", firstColonIndex + 1, true) : undefined;
+  const [secondColonIndex] = secondColonResult ?? [];
+
+  if (
+    firstColonIndex !== undefined &&
+    secondColonIndex !== undefined &&
+    firstColonIndex > 1 &&
+    secondColonIndex > firstColonIndex + 1
+  ) {
+    const rawPath = trimWhitespace(string.sub(strippedLine, 1, firstColonIndex - 1));
+    const lineCandidate = trimWhitespace(string.sub(strippedLine, firstColonIndex + 1, secondColonIndex - 1));
+    const message = trimWhitespace(string.sub(strippedLine, secondColonIndex + 1));
+    const lineNumber = tonumber(lineCandidate);
+
+    if (rawPath !== "" && lineNumber !== undefined && message !== "") {
+      return `${normalizePathLikeSegment(rawPath)}:${lineCandidate}: ${message}`;
+    }
+  }
+
+  return normalizePathLikeSegment(strippedLine);
+};
+
+const getFailureSummaries = (errors: ReadonlyArray<string>): Array<string> => {
+  const summaries: Array<string> = [];
+  const seen = new Set<string>();
+
+  for (const errorMsg of errors) {
+    const normalized = parseFailureSummary(errorMsg);
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      summaries.push(normalized);
+    }
+  }
+
+  return summaries;
 };
 
 const ReplicatedStorage = game.GetService("ReplicatedStorage");
@@ -64,7 +136,6 @@ const waitForRuntimeReady = () => {
     RunService.Heartbeat.Wait();
   }
 
-  // Allow one extra frame for initial GUI layout pass.
   RunService.Heartbeat.Wait();
 };
 
@@ -126,7 +197,8 @@ let finalFailureMessage = "";
 
 try {
   const modules = TestEZ.TestBootstrap.getModules(TestEZ.TestBootstrap, testsRoot) as Array<TestEZModuleRecord>;
-  warn(`[test-harness] Discovered ${modules.size()} TestEZ modules.`);
+
+  warn(`[test-harness] Running ${modules.size()} TestEZ module(s).`);
 
   let results: RunResults = {
     errors: [],
@@ -136,7 +208,10 @@ try {
   };
 
   for (const moduleRecord of modules) {
-    warn(`[test-harness] Running module ${moduleRecord.pathStringForSorting}`);
+    if (VERBOSE) {
+      warn(`[test-harness] Running module ${moduleRecord.pathStringForSorting}`);
+    }
+
     const plan = TestEZ.TestPlanner.createPlan([moduleRecord]);
     const nextResults = TestEZ.TestRunner.runPlan(plan);
     results = {
@@ -145,17 +220,23 @@ try {
       skippedCount: results.skippedCount + nextResults.skippedCount,
       successCount: results.successCount + nextResults.successCount,
     };
-    warn(
-      `[test-harness] Finished module ${moduleRecord.pathStringForSorting}. failed=${nextResults.failureCount}, passed=${nextResults.successCount}, skipped=${nextResults.skippedCount}`,
-    );
+
+    if (VERBOSE) {
+      warn(
+        `[test-harness] Finished module ${moduleRecord.pathStringForSorting}. failed=${nextResults.failureCount}, passed=${nextResults.successCount}, skipped=${nextResults.skippedCount}`,
+      );
+    }
   }
 
-  const [reporterSuccess, reporterError] = pcall(() => {
-    TestEZ.Reporters.TextReporter.report(results);
-  });
-  if (!reporterSuccess) {
-    warn(`[test-harness] TextReporter failed: ${tostring(reporterError)}`);
+  if (VERBOSE) {
+    const [reporterSuccess, reporterError] = pcall(() => {
+      TestEZ.Reporters.TextReporter.report(results);
+    });
+    if (!reporterSuccess) {
+      warn(`[test-harness] TextReporter failed: ${tostring(reporterError)}`);
+    }
   }
+
   const totalCount = results.failureCount + results.successCount + results.skippedCount;
   if (totalCount === 0) {
     finalStatus = "failed";
@@ -163,17 +244,27 @@ try {
       "[test-harness] No tests were discovered. Expected at least one .spec ModuleScript under script.Parent.tests.";
   } else if (results.failureCount > 0) {
     finalStatus = "failed";
-    finalFailureMessage = `[test-harness] Failing run because ${results.failureCount} test(s) failed.`;
 
-    warn(
-      `[test-harness] TestEZ failures detected. failed=${results.failureCount}, passed=${results.successCount}, skipped=${results.skippedCount}`,
-    );
+    const summaries = getFailureSummaries(results.errors);
+    const failureLines = [
+      `[test-harness] FAIL failed=${results.failureCount}, passed=${results.successCount}, skipped=${results.skippedCount}`,
+    ];
 
-    for (const message of results.errors) {
-      warn(message);
+    for (const summary of summaries) {
+      failureLines.push(`[test-harness] ${summary}`);
+    }
+
+    finalFailureMessage = failureLines.join("\n");
+
+    warn(finalFailureMessage);
+
+    if (VERBOSE) {
+      for (const message of results.errors) {
+        warn(`[test-harness] Raw error: ${message}`);
+      }
     }
   } else {
-    warn(`[test-harness] TestEZ passed. passed=${results.successCount}, skipped=${results.skippedCount}`);
+    warn(`[test-harness] PASS passed=${results.successCount}, skipped=${results.skippedCount}`);
   }
 } catch (errorObject) {
   finalStatus = "failed";
