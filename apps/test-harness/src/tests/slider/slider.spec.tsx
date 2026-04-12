@@ -21,6 +21,12 @@ function findRangeFrame(root: Instance, markerText: string) {
   return parent;
 }
 
+function requireGuiObjectParent(instance: Instance | undefined, message: string) {
+  const parent = instance?.Parent;
+  assert(parent !== undefined && parent.IsA("GuiObject"), message);
+  return parent as GuiObject;
+}
+
 function renderSlider(
   orientation: "horizontal" | "vertical",
   value: number,
@@ -68,9 +74,18 @@ export = () => {
         const thumb = findTextButtonByText(harness.container, "slider-thumb-h");
         assert(rangeFrame !== undefined, "SliderRange frame should mount in horizontal slider.");
         assert(thumb !== undefined, "SliderThumb should mount in horizontal slider.");
+        const rangeMotionHost = requireGuiObjectParent(
+          rangeFrame,
+          "Horizontal slider range should render inside the motion-owned geometry host.",
+        );
+        assert(approx(rangeFrame.Size.X.Scale, 1), "Horizontal slider range child should fill the motion-owned host.");
         assert(
-          approx(rangeFrame.Size.X.Scale, 0.5),
+          approx(rangeMotionHost.Size.X.Scale, 0.5),
           "Horizontal slider range should represent 50% width for value=50.",
+        );
+        assert(
+          approx(rangeFrame.AbsoluteSize.X, rangeMotionHost.AbsoluteSize.X, 1),
+          "Horizontal slider range should not double-apply the value ratio.",
         );
         assert(approx(thumb.Position.X.Scale, 0.5), "Horizontal slider thumb should be positioned at 50%.");
       });
@@ -103,8 +118,16 @@ export = () => {
         assert(updatedThumb !== undefined, "Horizontal sync test should keep the thumb mounted after rerender.");
         assert(updatedRange === initialRange, "Horizontal slider range should update on the mounted instance.");
         assert(updatedThumb === initialThumb, "Horizontal slider thumb should update on the mounted instance.");
+        const updatedRangeMotionHost = requireGuiObjectParent(
+          updatedRange,
+          "Horizontal slider range should keep its motion-owned host after updates.",
+        );
         assert(
-          approx(updatedRange.Size.X.Scale, 0.85),
+          approx(updatedRange.Size.X.Scale, 1),
+          "Horizontal slider range child should continue filling the motion-owned host.",
+        );
+        assert(
+          approx(updatedRangeMotionHost.Size.X.Scale, 0.85),
           "Horizontal slider range should follow repeated controlled updates.",
         );
         assert(
@@ -123,13 +146,22 @@ export = () => {
         const thumb = findTextButtonByText(harness.container, "slider-thumb-v");
         assert(rangeFrame !== undefined, "SliderRange frame should mount in vertical slider.");
         assert(thumb !== undefined, "SliderThumb should mount in vertical slider.");
+        const rangeMotionHost = requireGuiObjectParent(
+          rangeFrame,
+          "Vertical slider range should render inside the motion-owned geometry host.",
+        );
+        assert(approx(rangeFrame.Size.Y.Scale, 1), "Vertical slider range child should fill the motion-owned host.");
         assert(
-          approx(rangeFrame.Size.Y.Scale, 0.25),
+          approx(rangeMotionHost.Size.Y.Scale, 0.25),
           "Vertical slider range should represent 25% height for value=25.",
         );
         assert(
-          approx(rangeFrame.Position.Y.Scale, 0.75),
+          approx(rangeMotionHost.Position.Y.Scale, 0.75),
           "Vertical slider range should start at 75% (fill from bottom).",
+        );
+        assert(
+          approx(rangeFrame.AbsoluteSize.Y, rangeMotionHost.AbsoluteSize.Y, 1),
+          "Vertical slider range should not double-apply the value ratio.",
         );
         assert(approx(thumb.Position.Y.Scale, 0.75), "Vertical slider thumb should be positioned at 75% for value=25.");
       });
@@ -169,12 +201,20 @@ export = () => {
         assert(updatedThumb !== undefined, "Vertical sync test should keep the thumb mounted after rerender.");
         assert(updatedRange === initialRange, "Vertical slider range should update on the mounted instance.");
         assert(updatedThumb === initialThumb, "Vertical slider thumb should update on the mounted instance.");
+        const updatedRangeMotionHost = requireGuiObjectParent(
+          updatedRange,
+          "Vertical slider range should keep its motion-owned host after updates.",
+        );
         assert(
-          approx(updatedRange.Size.Y.Scale, 0.7),
+          approx(updatedRange.Size.Y.Scale, 1),
+          "Vertical slider range child should continue filling the motion-owned host.",
+        );
+        assert(
+          approx(updatedRangeMotionHost.Size.Y.Scale, 0.7),
           "Vertical slider range should follow repeated controlled updates.",
         );
         assert(
-          approx(updatedRange.Position.Y.Scale, 0.3),
+          approx(updatedRangeMotionHost.Position.Y.Scale, 0.3),
           "Vertical slider range should keep filling from the bottom.",
         );
         assert(
@@ -193,7 +233,11 @@ export = () => {
         const thumb = findTextButtonByText(harness.container, "slider-thumb-clamp");
         assert(rangeFrame !== undefined, "Clamped slider range should mount.");
         assert(thumb !== undefined, "Clamped slider thumb should mount.");
-        assert(approx(rangeFrame.Size.X.Scale, 1), "Slider range should clamp to 100% for value above max.");
+        const rangeMotionHost = requireGuiObjectParent(
+          rangeFrame,
+          "Clamped slider range should render inside the motion-owned geometry host.",
+        );
+        assert(approx(rangeMotionHost.Size.X.Scale, 1), "Slider range should clamp to 100% for value above max.");
         assert(approx(thumb.Position.X.Scale, 1), "Slider thumb should clamp to the max endpoint.");
         assert(thumb.Active === false, "Disabled slider thumb should not be active.");
       });
