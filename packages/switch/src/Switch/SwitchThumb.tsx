@@ -3,8 +3,9 @@ import { createToggleResponseRecipe, useResponseMotion } from "@lattice-ui/motio
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";
 
-const UNCHECKED_THUMB_POSITION = UDim2.fromOffset(2, 2);
-const CHECKED_THUMB_POSITION = new UDim2(1, -18, 0, 2);
+const THUMB_INSET = 2;
+const DEFAULT_THUMB_SIZE = UDim2.fromOffset(16, 16);
+const UNCHECKED_THUMB_POSITION = UDim2.fromOffset(THUMB_INSET, THUMB_INSET);
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -12,34 +13,39 @@ function toGuiPropBag(value: unknown): GuiPropBag {
   return typeIs(value, "table") ? (value as GuiPropBag) : {};
 }
 
+function getCheckedThumbPosition(size: UDim2) {
+  return new UDim2(1 - size.X.Scale, -(size.X.Offset + THUMB_INSET), 0, THUMB_INSET);
+}
+
 export function SwitchThumb(props: SwitchThumbProps) {
   const switchContext = useSwitchContext();
+  const child = props.children;
+  const childProps =
+    props.asChild && React.isValidElement(child) ? toGuiPropBag((child as { props?: unknown }).props) : undefined;
+  const thumbSize = (childProps as { Size?: UDim2 } | undefined)?.Size ?? DEFAULT_THUMB_SIZE;
 
   const motionRef = useResponseMotion<Frame>(
     switchContext.checked,
     {
-      active: { Position: CHECKED_THUMB_POSITION },
+      active: { Position: getCheckedThumbPosition(thumbSize) },
       inactive: { Position: UNCHECKED_THUMB_POSITION },
     },
     createToggleResponseRecipe(),
   );
-
-  const child = props.children;
 
   if (props.asChild) {
     if (!React.isValidElement(child)) {
       error("[SwitchThumb] `asChild` requires a child element.");
     }
 
-    const childProps = toGuiPropBag((child as { props?: unknown }).props);
-    const childSize = (childProps as { Size?: UDim2 }).Size ?? UDim2.fromOffset(16, 16);
+    const resolvedChildProps = childProps ?? {};
 
     return (
-      <frame BackgroundTransparency={1} BorderSizePixel={0} Size={childSize} ref={motionRef}>
+      <frame BackgroundTransparency={1} BorderSizePixel={0} Size={thumbSize} ref={motionRef}>
         {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
-          ...childProps,
+          ...resolvedChildProps,
           Position: UDim2.fromOffset(0, 0),
-          ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+          ref: composeRefs((resolvedChildProps as { ref?: React.Ref<Instance> }).ref),
         })}
       </frame>
     );
@@ -49,7 +55,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
     <frame
       BackgroundColor3={Color3.fromRGB(240, 244, 252)}
       BorderSizePixel={0}
-      Size={UDim2.fromOffset(16, 16)}
+      Size={DEFAULT_THUMB_SIZE}
       ref={motionRef as React.MutableRefObject<Frame>}
     >
       {child}
