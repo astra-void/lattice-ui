@@ -11,9 +11,10 @@ import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
 type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
+type ElementWithInstanceRef = React.ReactElement & { ref?: InstanceRef };
 
 function isMutableInstanceRef(ref: InstanceRef | undefined): ref is React.MutableRefObject<Instance | undefined> {
-  return typeIs(ref, "table") && "current" in ref;
+  return typeIs(ref, "table");
 }
 
 function setInstanceRef(ref: InstanceRef | undefined, value: Instance | undefined) {
@@ -47,6 +48,10 @@ function isHostElement(child: React.ReactElement) {
   return typeIs((child as { type?: unknown }).type, "string");
 }
 
+function getElementRef(child: React.ReactElement): InstanceRef | undefined {
+  return (child as ElementWithInstanceRef).ref;
+}
+
 function cloneChildrenWithBoundaryRefs(
   children: React.ReactNode,
   nextBoundaryIndex: { current: number },
@@ -74,7 +79,7 @@ function cloneChildrenWithBoundaryRefs(
     const boundaryIndex = nextBoundaryIndex.current;
     nextBoundaryIndex.current += 1;
     ensureBoundaryRef(boundaryIndex);
-    const childRef = ((child as { props?: { ref?: React.Ref<Instance> } }).props ?? {}).ref;
+    const childRef = getElementRef(child);
 
     return React.cloneElement(child as React.ReactElement, {
       ref: composeInstanceRefs(childRef, (instance) => setBoundaryRef(boundaryIndex, instance)),
