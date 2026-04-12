@@ -10,11 +10,11 @@ import {
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
+type GuiPropBag = React.Attributes & Record<string, unknown>;
 type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
-type ElementWithInstanceRef = React.ReactElement & { ref?: InstanceRef };
 
 function isMutableInstanceRef(ref: InstanceRef | undefined): ref is React.MutableRefObject<Instance | undefined> {
-  return typeIs(ref, "table");
+  return typeIs(ref, "table") && "current" in ref;
 }
 
 function setInstanceRef(ref: InstanceRef | undefined, value: Instance | undefined) {
@@ -36,6 +36,10 @@ function composeInstanceRefs(...refs: Array<InstanceRef | undefined>) {
   };
 }
 
+function toGuiPropBag(value: unknown): GuiPropBag {
+  return typeIs(value, "table") ? (value as GuiPropBag) : {};
+}
+
 function toGuiObject(instance: Instance | undefined) {
   const candidate = instance as Instance & { IsA?: (className: string) => boolean };
   if (!instance || !candidate.IsA || !candidate.IsA("GuiObject")) {
@@ -49,7 +53,7 @@ function isHostElement(child: React.ReactElement) {
 }
 
 function getElementRef(child: React.ReactElement): InstanceRef | undefined {
-  return (child as ElementWithInstanceRef).ref;
+  return (toGuiPropBag((child as { props?: unknown }).props) as { ref?: React.Ref<Instance> }).ref;
 }
 
 function cloneChildrenWithBoundaryRefs(
@@ -149,7 +153,7 @@ function DialogContentImpl(props: {
 
   const insideBoundaryRefs = React.useMemo(() => {
     const refs = new Array<React.MutableRefObject<GuiObject | undefined>>();
-    for (let index = 1; index < insideBoundaryRefsRef.current.size(); index++) {
+    for (let index = 1; index < renderedChildren.boundaryCount; index++) {
       refs.push(insideBoundaryRefsRef.current[index]);
     }
     return refs;

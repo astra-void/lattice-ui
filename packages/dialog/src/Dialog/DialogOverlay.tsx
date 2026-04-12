@@ -4,6 +4,41 @@ import { createOverlayFadeRecipe, usePresenceMotionController } from "@lattice-u
 import { useDialogContext } from "./context";
 import type { DialogOverlayProps } from "./types";
 
+function resolveOverlayChild(child: React.ReactNode): React.ReactElement | undefined {
+  if (!React.isValidElement(child)) {
+    return undefined;
+  }
+
+  if (child.type !== React.Fragment) {
+    return child;
+  }
+
+  let resolvedChild: React.ReactElement | undefined;
+  let foundExtraChild = false;
+  const fragmentProps = child.props as { children?: React.ReactNode };
+
+  React.Children.map(fragmentProps.children, (fragmentChild) => {
+    const candidate = resolveOverlayChild(fragmentChild);
+    if (!candidate) {
+      return fragmentChild;
+    }
+
+    if (resolvedChild) {
+      foundExtraChild = true;
+      return fragmentChild;
+    }
+
+    resolvedChild = candidate;
+    return fragmentChild;
+  });
+
+  if (foundExtraChild) {
+    error("[DialogOverlay] `asChild` with a fragment requires exactly one child element.");
+  }
+
+  return resolvedChild;
+}
+
 function DialogOverlayImpl(props: {
   motionPresent: boolean;
   onExitComplete?: () => void;
@@ -29,8 +64,8 @@ function DialogOverlayImpl(props: {
   }, [dialogContext.setOpen]);
 
   if (props.asChild) {
-    const child = props.children;
-    if (!React.isValidElement(child)) {
+    const child = resolveOverlayChild(props.children);
+    if (!child) {
       error("[DialogOverlay] `asChild` requires a child element.");
     }
 
