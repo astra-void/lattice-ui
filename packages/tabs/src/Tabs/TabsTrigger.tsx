@@ -22,10 +22,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
   const selected = tabsContext.value === props.value;
   const disabled = props.disabled === true;
   const disabledRef = React.useRef(disabled);
-
-  React.useEffect(() => {
-    disabledRef.current = disabled;
-  }, [disabled]);
+  disabledRef.current = disabled;
 
   const triggerIdRef = React.useRef(0);
   if (triggerIdRef.current === 0) {
@@ -47,7 +44,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
       order: triggerOrderRef.current,
       getDisabled: () => disabledRef.current,
     });
-  }, [props.value, tabsContext]);
+  }, [disabled, props.value, tabsContext]);
 
   useFocusNode({
     ref: triggerRef,
