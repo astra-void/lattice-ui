@@ -30,8 +30,7 @@ function TabsContentImpl(props: {
   });
 
   const mounted = motion.mounted;
-  const exiting = motion.isExiting || (!props.present && motion.phase !== "exited");
-  const visible = props.forceMount === true ? props.present : mounted && (props.present || exiting);
+  const visible = mounted && (motion.present || motion.phase !== "exited");
 
   if (!mounted) {
     return undefined;
