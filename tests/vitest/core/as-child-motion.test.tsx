@@ -20,6 +20,9 @@ const { runService } = vi.hoisted(() => {
         };
       },
     },
+    IsStudio() {
+      return false;
+    },
     step(dt: number) {
       for (const listener of [...renderSteppedListeners]) {
         listener(dt);
