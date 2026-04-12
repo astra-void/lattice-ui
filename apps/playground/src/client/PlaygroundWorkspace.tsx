@@ -15,6 +15,7 @@ import { GridShowcaseScene } from "./scenes/GridShowcaseScene";
 import { InsetHitTestScene } from "./scenes/InsetHitTestScene";
 import { LayerDismissScene } from "./scenes/LayerDismissScene";
 import { ModalBlockScene } from "./scenes/ModalBlockScene";
+import { MenuBasicScene } from "./scenes/MenuBasicScene";
 import { NestedStackScene } from "./scenes/NestedStackScene";
 import { PopoverBasicScene } from "./scenes/PopoverBasicScene";
 import { PopoverFlipClampScene } from "./scenes/PopoverFlipClampScene";
@@ -57,6 +58,7 @@ export type SceneKey =
   | "dialog-basic"
   | "dialog-nested"
   | "dialog-modal"
+  | "menu-basic"
   | "popover-basic"
   | "popover-flip"
   | "popover-nested"
@@ -131,6 +133,13 @@ const sceneOptions = [
     key: "dialog-modal",
     label: "Dialog Modal Block",
     description: "Modal dialog that locks external interaction.",
+    category: "Layering",
+    hasMotion: true,
+  },
+  {
+    key: "menu-basic",
+    label: "Menu Basic",
+    description: "Grouped menu items with selection and dismissal.",
     category: "Layering",
     hasMotion: true,
   },
@@ -327,6 +336,7 @@ const sceneComponents = {
   "dialog-basic": DialogBasicScene,
   "dialog-nested": DialogNestedScene,
   "dialog-modal": DialogModalBlockScene,
+  "menu-basic": MenuBasicScene,
   "popover-basic": PopoverBasicScene,
   "popover-flip": PopoverFlipClampScene,
   "popover-nested": PopoverNestedScene,
