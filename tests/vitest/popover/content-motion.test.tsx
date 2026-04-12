@@ -71,11 +71,7 @@ function clearGuiDefaults() {
 vi.mock("@lattice-ui/core", () => {
   const React = require("react");
 
-  function useControllableState<T>(options: {
-    value?: T;
-    defaultValue?: T;
-    onChange?: (value: T) => void;
-  }) {
+  function useControllableState<T>(options: { value?: T; defaultValue?: T; onChange?: (value: T) => void }) {
     const [uncontrolledValue, setUncontrolledValue] = React.useState(options.defaultValue);
     const value = options.value !== undefined ? options.value : uncontrolledValue;
 
@@ -172,7 +168,8 @@ vi.mock("@lattice-ui/layer", () => {
   }
 
   return {
-    DismissableLayer: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    DismissableLayer: ({ children }: { children?: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
     Presence,
   };
 });

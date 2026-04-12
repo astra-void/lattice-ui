@@ -69,11 +69,7 @@ vi.mock("@lattice-ui/core", () => {
     });
   }
 
-  function useControllableState<T>(options: {
-    value?: T;
-    defaultValue?: T;
-    onChange?: (value: T) => void;
-  }) {
+  function useControllableState<T>(options: { value?: T; defaultValue?: T; onChange?: (value: T) => void }) {
     const [uncontrolledValue, setUncontrolledValue] = React.useState(options.defaultValue);
     const value = options.value !== undefined ? options.value : uncontrolledValue;
 
