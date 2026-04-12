@@ -112,6 +112,12 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
 
   React.useLayoutEffect(() => {
     if (!enabled) {
+      setIsPositioned(false);
+    }
+  }, [enabled]);
+
+  React.useLayoutEffect(() => {
+    if (!enabled) {
       return;
     }
 

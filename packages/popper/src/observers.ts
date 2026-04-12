@@ -16,12 +16,24 @@ function subscribeGuiObjectLayout(guiObject: GuiObject, onChange: () => void): O
   };
 }
 
+function subscribeGuiObjectSize(guiObject: GuiObject, onChange: () => void): ObserverUnsubscribe {
+  const sizeConnection = guiObject.GetPropertyChangedSignal("AbsoluteSize").Connect(() => {
+    onChange();
+  });
+
+  return () => {
+    sizeConnection.Disconnect();
+  };
+}
+
 export function subscribeAnchor(anchor: GuiObject, onChange: () => void): ObserverUnsubscribe {
   return subscribeGuiObjectLayout(anchor, onChange);
 }
 
 export function subscribeContent(content: GuiObject, onChange: () => void): ObserverUnsubscribe {
-  return subscribeGuiObjectLayout(content, onChange);
+  // Popper computes from content size, while the positioned ancestor owns placement.
+  // Relative content movement can be motion-owned and should not invalidate placement.
+  return subscribeGuiObjectSize(content, onChange);
 }
 
 export function subscribeViewport(anchor: GuiObject | undefined, onChange: () => void): ObserverUnsubscribe {
