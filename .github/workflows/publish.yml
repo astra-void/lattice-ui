@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Release tag to publish, for example v0.4.4 or v0.4.4-alpha.1
-        required: true
+        description: Optional release tag to publish (auto-infers when omitted), for example v0.4.4 or v0.4.4-alpha.1
+        required: false
         type: string
       dry_run:
         description: Run a dry-run publish instead of publishing to npm
@@ -37,6 +37,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -72,8 +74,25 @@ jobs:
       - name: Resolve release metadata
         id: release
         env:
-          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-        run: pnpm run release:resolve -- --tag "${RELEASE_TAG}" --github-output "${GITHUB_OUTPUT}"
+          INPUT_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || '' }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -n "${INPUT_RELEASE_TAG}" ]; then
+            RELEASE_TAG="${INPUT_RELEASE_TAG}"
+          elif [ "${REF_TYPE}" = "tag" ] && [[ "${REF_NAME}" == v* ]]; then
+            RELEASE_TAG="${REF_NAME}"
+          else
+            RELEASE_TAG="$(git tag --list 'v*' --sort=-v:refname | head -n 1)"
+          fi
+
+          if [ -z "${RELEASE_TAG}" ]; then
+            echo "Unable to infer release tag. Provide workflow_dispatch input 'release_tag'." >&2
+            exit 1
+          fi
+
+          echo "Using release tag: ${RELEASE_TAG}"
+          pnpm run release:resolve -- --tag "${RELEASE_TAG}" --github-output "${GITHUB_OUTPUT}"
 
       - name: Dry-run publish
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
