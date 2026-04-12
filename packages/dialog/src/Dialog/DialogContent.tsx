@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/core";
+import { React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
@@ -10,6 +10,31 @@ import {
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
+type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
+
+function isMutableInstanceRef(ref: InstanceRef | undefined): ref is React.MutableRefObject<Instance | undefined> {
+  return typeIs(ref, "table") && "current" in ref;
+}
+
+function setInstanceRef(ref: InstanceRef | undefined, value: Instance | undefined) {
+  if (typeIs(ref, "function")) {
+    ref(value);
+    return;
+  }
+
+  if (isMutableInstanceRef(ref)) {
+    ref.current = value;
+  }
+}
+
+function composeInstanceRefs(...refs: Array<InstanceRef | undefined>) {
+  return (instance: Instance | undefined) => {
+    for (const ref of refs) {
+      setInstanceRef(ref, instance);
+    }
+  };
+}
+
 function toGuiObject(instance: Instance | undefined) {
   const candidate = instance as Instance & { IsA?: (className: string) => boolean };
   if (!instance || !candidate.IsA || !candidate.IsA("GuiObject")) {
@@ -18,12 +43,15 @@ function toGuiObject(instance: Instance | undefined) {
   return candidate;
 }
 
-function renderChildrenWithBoundaryRefs(
+function isHostElement(child: React.ReactElement) {
+  return typeIs((child as { type?: unknown }).type, "string");
+}
+
+function cloneChildrenWithBoundaryRefs(
   children: React.ReactNode,
   nextBoundaryIndex: { current: number },
+  ensureBoundaryRef: (index: number) => React.MutableRefObject<GuiObject | undefined>,
   setBoundaryRef: (index: number, instance: Instance | undefined) => void,
-  motionRef: React.MutableRefObject<CanvasGroup | undefined>,
-  motionVisible: boolean,
 ): React.ReactNode {
   return React.Children.map(children, (child) => {
     if (!React.isValidElement(child)) {
@@ -34,35 +62,23 @@ function renderChildrenWithBoundaryRefs(
       const fragmentProps = child.props as { children?: React.ReactNode };
       return (
         <React.Fragment>
-          {renderChildrenWithBoundaryRefs(
-            fragmentProps.children,
-            nextBoundaryIndex,
-            setBoundaryRef,
-            motionRef,
-            motionVisible,
-          )}
+          {cloneChildrenWithBoundaryRefs(fragmentProps.children, nextBoundaryIndex, ensureBoundaryRef, setBoundaryRef)}
         </React.Fragment>
       );
     }
 
-    const boundaryIndex = nextBoundaryIndex.current;
-    nextBoundaryIndex.current += 1;
-
-    if (boundaryIndex === 0) {
-      return (
-        <canvasgroup
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Size={UDim2.fromScale(1, 1)}
-          Visible={motionVisible}
-          ref={motionRef}
-        >
-          <Slot ref={(instance) => setBoundaryRef(boundaryIndex, instance)}>{child}</Slot>
-        </canvasgroup>
-      );
+    if (!isHostElement(child)) {
+      return child;
     }
 
-    return <Slot ref={(instance) => setBoundaryRef(boundaryIndex, instance)}>{child}</Slot>;
+    const boundaryIndex = nextBoundaryIndex.current;
+    nextBoundaryIndex.current += 1;
+    ensureBoundaryRef(boundaryIndex);
+    const childRef = ((child as { props?: { ref?: React.Ref<Instance> } }).props ?? {}).ref;
+
+    return React.cloneElement(child as React.ReactElement, {
+      ref: composeInstanceRefs(childRef, (instance) => setBoundaryRef(boundaryIndex, instance)),
+    });
   });
 }
 
@@ -117,15 +133,14 @@ function DialogContentImpl(props: {
 
   const renderedChildren = React.useMemo(() => {
     const nextBoundaryIndex = { current: 0 };
-    const content = renderChildrenWithBoundaryRefs(
+    const content = cloneChildrenWithBoundaryRefs(
       props.children,
       nextBoundaryIndex,
+      ensureInsideBoundaryRef,
       setBoundaryRef,
-      motion.ref,
-      motionVisible,
     );
     return { content, boundaryCount: nextBoundaryIndex.current };
-  }, [motion.ref, motionVisible, props.children, setBoundaryRef]);
+  }, [ensureInsideBoundaryRef, props.children, setBoundaryRef]);
 
   const insideBoundaryRefs = React.useMemo(() => {
     const refs = new Array<React.MutableRefObject<GuiObject | undefined>>();
@@ -175,7 +190,15 @@ function DialogContentImpl(props: {
           Visible={shouldRender}
           ZIndex={10}
         >
-          {renderedChildren.content}
+          <canvasgroup
+            BackgroundTransparency={1}
+            BorderSizePixel={0}
+            Size={UDim2.fromScale(1, 1)}
+            Visible={motionVisible}
+            ref={motion.ref}
+          >
+            {renderedChildren.content}
+          </canvasgroup>
         </frame>
       </FocusScope>
     </DismissableLayer>
