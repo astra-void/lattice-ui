@@ -1,13 +1,14 @@
 import { composeRefs, React } from "@lattice-ui/core";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createCanvasGroupPopperEntranceRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
 
 const CONTENT_OFFSET = 10;
+const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -37,7 +38,7 @@ function TooltipContentImpl(props: {
 }) {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
-  const shouldRender = open || props.motionPresent;
+  const shouldMeasure = open || props.motionPresent || props.onExitComplete !== undefined;
   const contentBoundaryRef = React.useRef<GuiObject>();
 
   const popper = usePopper({
@@ -46,7 +47,7 @@ function TooltipContentImpl(props: {
     placement: props.placement,
     offset: props.offset,
     padding: props.padding,
-    enabled: shouldRender,
+    enabled: shouldMeasure,
   });
 
   const defaultTransition = React.useMemo(
@@ -55,29 +56,31 @@ function TooltipContentImpl(props: {
   );
   const recipe = props.transition ?? defaultTransition;
 
-  const motionRef = usePresenceMotion<GuiObject>(
-    props.motionPresent && popper.isPositioned,
-    recipe,
-    props.onExitComplete,
-  );
+  const motion = usePresenceMotionController<GuiObject>({
+    present: props.motionPresent,
+    ready: popper.isPositioned,
+    forceMount: props.forceMount,
+    config: recipe,
+    onExitComplete: props.onExitComplete,
+  });
 
   const setContentRef = React.useCallback(
     (instance: Instance | undefined) => {
       const guiObject = toGuiObject(instance);
       tooltipContext.contentRef.current = guiObject;
       contentBoundaryRef.current = guiObject;
-      if (motionRef) {
-        motionRef.current = guiObject;
-      }
+      motion.ref.current = guiObject;
     },
-    [motionRef, tooltipContext.contentRef],
+    [motion.ref, tooltipContext.contentRef],
   );
 
   const handleDismiss = React.useCallback(() => {
     tooltipContext.close();
   }, [tooltipContext]);
 
-  const isActuallyVisible = shouldRender && popper.isPositioned;
+  const shouldRender = motion.mounted;
+  const isActuallyVisible = shouldRender && motion.phase !== "exited";
+  const popperPosition = popper.isPositioned ? popper.position : HIDDEN_POSITION;
 
   if (props.asChild) {
     const child = props.children;
@@ -100,7 +103,7 @@ function TooltipContentImpl(props: {
           AnchorPoint={popper.anchorPoint}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
+          Position={popperPosition}
           Size={UDim2.fromOffset(0, 0)}
           Visible={shouldRender}
         >
@@ -108,8 +111,6 @@ function TooltipContentImpl(props: {
             AutomaticSize={Enum.AutomaticSize.XY}
             BackgroundTransparency={1}
             BorderSizePixel={0}
-            GroupTransparency={1}
-            Position={UDim2.fromOffset(0, 0)}
             Size={UDim2.fromOffset(0, 0)}
             Visible={isActuallyVisible}
             ref={setContentRef as React.Ref<CanvasGroup>}
@@ -138,7 +139,7 @@ function TooltipContentImpl(props: {
         AnchorPoint={popper.anchorPoint}
         BackgroundTransparency={1}
         BorderSizePixel={0}
-        Position={isActuallyVisible ? popper.position : UDim2.fromOffset(-9999, -9999)}
+        Position={popperPosition}
         Size={UDim2.fromOffset(0, 0)}
         Visible={shouldRender}
       >
@@ -146,8 +147,6 @@ function TooltipContentImpl(props: {
           AutomaticSize={Enum.AutomaticSize.XY}
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          GroupTransparency={1}
-          Position={UDim2.fromOffset(0, 0)}
           Size={UDim2.fromOffset(0, 0)}
           Visible={isActuallyVisible}
           ref={setContentRef}
