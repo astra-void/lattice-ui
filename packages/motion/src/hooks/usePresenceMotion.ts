@@ -116,8 +116,7 @@ export function usePresenceMotionController<T extends Instance = Instance>(
       const motion = motionHostRef.current;
 
       if (options.present) {
-        const entering =
-          !hasEnteredRef.current || phaseRef.current === "exited" || phaseRef.current === "exiting";
+        const entering = !hasEnteredRef.current || phaseRef.current === "exited" || phaseRef.current === "exiting";
 
         if (entering) {
           setPhase("mounted");
