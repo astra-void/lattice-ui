@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { getElementRef, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
@@ -10,7 +10,6 @@ import {
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
-type GuiPropBag = React.Attributes & Record<string, unknown>;
 type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
 
 function isMutableInstanceRef(ref: InstanceRef | undefined): ref is React.MutableRefObject<Instance | undefined> {
@@ -36,10 +35,6 @@ function composeInstanceRefs(...refs: Array<InstanceRef | undefined>) {
   };
 }
 
-function toGuiPropBag(value: unknown): GuiPropBag {
-  return typeIs(value, "table") ? (value as GuiPropBag) : {};
-}
-
 function toGuiObject(instance: Instance | undefined) {
   const candidate = instance as Instance & { IsA?: (className: string) => boolean };
   if (!instance || !candidate.IsA || !candidate.IsA("GuiObject")) {
@@ -50,10 +45,6 @@ function toGuiObject(instance: Instance | undefined) {
 
 function isHostElement(child: React.ReactElement) {
   return typeIs((child as { type?: unknown }).type, "string");
-}
-
-function getElementRef(child: React.ReactElement): InstanceRef | undefined {
-  return (toGuiPropBag((child as { props?: unknown }).props) as { ref?: React.Ref<Instance> }).ref;
 }
 
 function cloneChildrenWithBoundaryRefs(
@@ -83,7 +74,7 @@ function cloneChildrenWithBoundaryRefs(
     const boundaryIndex = nextBoundaryIndex.current;
     nextBoundaryIndex.current += 1;
     ensureBoundaryRef(boundaryIndex);
-    const childRef = getElementRef(child);
+    const childRef = getElementRef<Instance>(child);
 
     return React.cloneElement(child as React.ReactElement, {
       ref: composeInstanceRefs(childRef, (instance) => setBoundaryRef(boundaryIndex, instance)),
