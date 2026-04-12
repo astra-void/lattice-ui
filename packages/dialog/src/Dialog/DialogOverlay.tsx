@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import { createOverlayFadeRecipe, usePresenceMotion } from "@lattice-ui/motion";
+import { createOverlayFadeRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogOverlayProps } from "./types";
 
@@ -15,7 +15,14 @@ function DialogOverlayImpl(props: {
   const open = dialogContext.open;
 
   const config = React.useMemo(() => createOverlayFadeRecipe(), []);
-  const motionRef = usePresenceMotion<GuiObject>(props.motionPresent, config, props.onExitComplete);
+  const motion = usePresenceMotionController<GuiObject>({
+    present: props.motionPresent,
+    forceMount: props.forceMount,
+    config,
+    onExitComplete: props.onExitComplete,
+  });
+  const shouldRender = motion.mounted;
+  const overlayVisible = shouldRender && motion.phase !== "exited";
 
   const handleActivated = React.useCallback(() => {
     dialogContext.setOpen(false);
@@ -28,7 +35,7 @@ function DialogOverlayImpl(props: {
     }
 
     return (
-      <Slot Active={open} Event={{ Activated: handleActivated }} ref={motionRef}>
+      <Slot Active={open} Event={{ Activated: handleActivated }} Visible={overlayVisible} ref={motion.ref}>
         {child}
       </Slot>
     );
@@ -46,8 +53,9 @@ function DialogOverlayImpl(props: {
       Size={UDim2.fromScale(1, 1)}
       Text=""
       TextTransparency={1}
+      Visible={overlayVisible}
       ZIndex={5}
-      ref={motionRef as React.MutableRefObject<TextButton>}
+      ref={motion.ref as React.MutableRefObject<TextButton>}
     />
   );
 }

@@ -2,7 +2,11 @@ import { React, Slot } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createCanvasGroupRevealRecipe, type PresenceMotionConfig, usePresenceMotion } from "@lattice-ui/motion";
+import {
+  createCanvasGroupRevealRecipe,
+  type PresenceMotionConfig,
+  usePresenceMotionController,
+} from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
@@ -19,7 +23,7 @@ function renderChildrenWithBoundaryRefs(
   nextBoundaryIndex: { current: number },
   setBoundaryRef: (index: number, instance: Instance | undefined) => void,
   motionRef: React.MutableRefObject<CanvasGroup | undefined>,
-  shouldRender: boolean,
+  motionVisible: boolean,
 ): React.ReactNode {
   return React.Children.map(children, (child) => {
     if (!React.isValidElement(child)) {
@@ -35,7 +39,7 @@ function renderChildrenWithBoundaryRefs(
             nextBoundaryIndex,
             setBoundaryRef,
             motionRef,
-            shouldRender,
+            motionVisible,
           )}
         </React.Fragment>
       );
@@ -50,7 +54,7 @@ function renderChildrenWithBoundaryRefs(
           BackgroundTransparency={1}
           BorderSizePixel={0}
           Size={UDim2.fromScale(1, 1)}
-          Visible={shouldRender}
+          Visible={motionVisible}
           ref={motionRef}
         >
           <Slot ref={(instance) => setBoundaryRef(boundaryIndex, instance)}>{child}</Slot>
@@ -75,7 +79,6 @@ function DialogContentImpl(props: {
 }) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
-  const shouldRender = open || props.motionPresent;
 
   const contentBoundaryRef = React.useRef<GuiObject>();
   const insideBoundaryRefsRef = React.useRef<Array<React.MutableRefObject<GuiObject | undefined>>>([]);
@@ -83,7 +86,15 @@ function DialogContentImpl(props: {
   const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(8), []);
   const config = props.transition ?? defaultTransition;
 
-  const motionRef = usePresenceMotion<CanvasGroup>(props.motionPresent, config, props.onExitComplete);
+  const motion = usePresenceMotionController<CanvasGroup>({
+    present: props.motionPresent,
+    forceMount: props.forceMount,
+    config,
+    onExitComplete: props.onExitComplete,
+  });
+
+  const shouldRender = motion.mounted;
+  const motionVisible = shouldRender && motion.phase !== "exited";
 
   const ensureInsideBoundaryRef = React.useCallback((index: number) => {
     const existing = insideBoundaryRefsRef.current[index];
@@ -110,11 +121,11 @@ function DialogContentImpl(props: {
       props.children,
       nextBoundaryIndex,
       setBoundaryRef,
-      motionRef,
-      shouldRender,
+      motion.ref,
+      motionVisible,
     );
     return { content, boundaryCount: nextBoundaryIndex.current };
-  }, [motionRef, props.children, setBoundaryRef, shouldRender]);
+  }, [motion.ref, motionVisible, props.children, setBoundaryRef]);
 
   const insideBoundaryRefs = React.useMemo(() => {
     const refs = new Array<React.MutableRefObject<GuiObject | undefined>>();
