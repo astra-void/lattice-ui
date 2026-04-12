@@ -1,4 +1,4 @@
-import { composeRefs, React } from "@lattice-ui/core";
+import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
 import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
@@ -88,6 +88,7 @@ function ComboboxContentImpl(props: {
       }
 
       const childProps = toGuiPropBag((child as { props?: unknown }).props);
+      const childRef = getElementRef<Instance>(child);
 
       return (
         <canvasgroup
@@ -102,7 +103,7 @@ function ComboboxContentImpl(props: {
             ...childProps,
             Position: UDim2.fromOffset(0, 0),
             Visible: contentVisible,
-            ref: composeRefs((childProps as { ref?: React.Ref<Instance> }).ref),
+            ref: composeRefs(childRef),
           })}
         </canvasgroup>
       );
