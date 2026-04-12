@@ -1,5 +1,5 @@
-local RunService = game:GetService("RunService")
+print("[test-harness-run] Open the place in Studio, then press Play to run TestEZ.")
 
-print("[test-harness-run] Starting Play mode for TestEZ harness.")
-
-RunService:Run()
+while true do
+	task.wait(1)
+end

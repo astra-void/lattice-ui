@@ -150,7 +150,12 @@ try {
     );
   }
 
-  TestEZ.Reporters.TextReporter.report(results);
+  const reporterSuccess = pcall(() => {
+    TestEZ.Reporters.TextReporter.report(results);
+  });
+  if (!reporterSuccess[0]) {
+    warn(`[test-harness] TextReporter failed: ${tostring(reporterSuccess[1])}`);
+  }
   const totalCount = results.failureCount + results.successCount + results.skippedCount;
   if (totalCount === 0) {
     finalStatus = "failed";
