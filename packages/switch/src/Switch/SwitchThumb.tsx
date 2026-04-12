@@ -30,7 +30,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
       active: { Position: getCheckedThumbPosition(thumbSize) },
       inactive: { Position: UNCHECKED_THUMB_POSITION },
     },
-    createToggleResponseRecipe(),
+    createToggleResponseRecipe(0.05),
   );
 
   if (props.asChild) {

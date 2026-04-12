@@ -21,7 +21,7 @@ export function SwitchRoot(props: SwitchProps) {
       active: { BackgroundColor3: TRACK_ON_COLOR },
       inactive: { BackgroundColor3: TRACK_OFF_COLOR },
     },
-    createToggleResponseRecipe(),
+    createToggleResponseRecipe(0.05),
   );
 
   const setChecked = React.useCallback(
