@@ -1,13 +1,13 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import { createSurfaceRevealRecipe, type PresenceMotionConfig, usePresenceMotion } from "@lattice-ui/motion";
+import { createSurfaceRevealRecipe, type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/motion";
 import { useTabsContext } from "./context";
 import { createTabsContentName } from "./internals/ids";
 import type { TabsContentProps } from "./types";
 
 function TabsContentImpl(props: {
-  motionPresent: boolean;
-  visible: boolean;
+  present: boolean;
+  forceMount?: boolean;
   transition?: PresenceMotionConfig;
   onExitComplete?: () => void;
   value: string;
@@ -22,7 +22,20 @@ function TabsContentImpl(props: {
     return props.transition;
   }, [defaultTransition, props.transition]);
 
-  const motionRef = usePresenceMotion<Frame>(props.motionPresent, config, props.onExitComplete);
+  const motion = usePresenceMotionController<Frame>({
+    present: props.present,
+    forceMount: props.forceMount,
+    config,
+    onExitComplete: props.onExitComplete,
+  });
+
+  const mounted = motion.mounted;
+  const exiting = motion.isExiting || (!props.present && motion.phase !== "exited");
+  const visible = props.forceMount === true ? props.present : mounted && (props.present || exiting);
+
+  if (!mounted) {
+    return undefined;
+  }
 
   if (props.asChild) {
     const child = props.children;
@@ -31,7 +44,7 @@ function TabsContentImpl(props: {
     }
 
     return (
-      <Slot Name={contentName} Visible={props.visible} ref={motionRef}>
+      <Slot Name={contentName} Visible={visible} ref={motion.ref}>
         {child}
       </Slot>
     );
@@ -42,8 +55,8 @@ function TabsContentImpl(props: {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(0, 0)}
-      Visible={props.visible}
-      ref={motionRef}
+      Visible={visible}
+      ref={motion.ref}
     >
       {props.children}
     </frame>
@@ -59,10 +72,10 @@ export function TabsContent(props: TabsContentProps) {
     return (
       <TabsContentImpl
         asChild={props.asChild}
-        motionPresent={selected}
+        forceMount={true}
+        present={selected}
         transition={props.transition}
         value={props.value}
-        visible={selected}
       >
         {props.children}
       </TabsContentImpl>
@@ -75,11 +88,10 @@ export function TabsContent(props: TabsContentProps) {
       render={(state) => (
         <TabsContentImpl
           asChild={props.asChild}
-          motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
+          present={state.isPresent}
           transition={props.transition}
           value={props.value}
-          visible={true}
         >
           {props.children}
         </TabsContentImpl>
