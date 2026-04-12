@@ -92,26 +92,24 @@ Import and module safety:
 - Do not introduce direct runtime imports from arbitrary `node_modules` paths in package code.
 - Prefer package entrypoints and repository-established patterns for shared code access.
 
-## Motion and Tween guidance
+## Motion guidance
 
-This repository uses React for state and composition, but motion should not be modeled as high-frequency React state.
+This repository uses React for state and composition, but animation and motion behavior should flow through `@lattice-ui/motion`.
 
 Agent guidance for motion-related changes:
 
-- Do not drive `TweenService` progress through React state updates.
-- Do not introduce per-frame or tween-step `setState` flows for visual interpolation.
-- Use React state for semantic UI state such as open/closed, checked/unchecked, active/inactive, or mounted/present.
-- Use imperative tweening and local instance updates for high-frequency visual motion.
-- Avoid creating render loops just to mirror animated values back into React.
-- Do not store transient tween progress in component state unless there is a strong architectural reason.
+- Use `@lattice-ui/motion` for animation, presence, feedback, and response motion in package and app components.
+- Prefer existing motion recipes and hooks such as `usePresenceMotion`, `useResponseMotion`, and `useFeedbackEffect`.
+- Do not add direct Roblox animation service usage, custom schedulers, per-frame interpolation, or render-loop animation logic in consuming packages.
+- Use React state for semantic UI state such as open/closed, active/inactive, checked/unchecked, or present/absent.
+- Do not mirror animation progress back into React state.
 
 Practical expectations:
 
-- React should decide when motion starts or stops.
-- Tweened instance properties should be updated by the motion layer, not continuously re-derived through React renders.
-- Prefer minimal motion coordination that preserves responsiveness and avoids frame-stutter.
-- When motion bugs happen, check for conflicts between static props and tween-owned props.
-- Be especially careful with position, size, transparency, and color props that may be simultaneously controlled by React renders and tween logic.
+- `packages/motion` owns the motion runtime, scheduler, instance property interpolation, and motion policy behavior.
+- Motion disabling or reduced-motion behavior should be handled through `@lattice-ui/motion` policy and APIs.
+- If a primitive needs new motion behavior, extend `packages/motion` recipes, hooks, or public APIs instead of adding one-off animation logic in the primitive.
+- Be especially careful with position, size, transparency, and color props that may be controlled by motion APIs.
 
 ## Change strategy
 
