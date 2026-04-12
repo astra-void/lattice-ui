@@ -16,15 +16,15 @@ export type MotionDiagnosticContext = {
 const emittedDiagnostics = new Set<string>();
 
 function getTargetLabel(target: MotionTargetContract | undefined) {
-  if (!target) {
+  if (target === undefined) {
     return "appearance(default)";
   }
 
-  return target.label ? `${target.role}:${target.label}` : target.role;
+  return target.label !== undefined ? `${target.role}:${target.label}` : target.role;
 }
 
 function getInstanceLabel(instance: Instance | undefined) {
-  if (!instance) {
+  if (instance === undefined) {
     return "unknown instance";
   }
 
@@ -48,7 +48,7 @@ export function reportMotionDiagnostic(context: MotionDiagnosticContext) {
 
   warn(
     `[Motion] ${context.stage} failure while handling ${context.domain}${
-      context.phase ? `/${context.phase}` : ""
+      context.phase !== undefined ? `/${context.phase}` : ""
     } for ${context.propertyKey} on ${getInstanceLabel(context.instance)} using ${getTargetLabel(context.target)}: ${
       context.detail
     }`,

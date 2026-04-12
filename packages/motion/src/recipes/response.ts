@@ -7,12 +7,15 @@ export function createIndicatorSettleRecipe(duration = 0.12): ResponseMotionConf
   };
 }
 
-export function createSliderThumbResponseRecipe(isDragging: boolean): ResponseMotionConfig {
+export function createSliderThumbResponseRecipe(
+  isDragging: boolean,
+  duration = isDragging ? 0.05 : 0.12,
+): ResponseMotionConfig {
   return {
     target: motionTargets.layout("slider thumb"),
     settle: isDragging
-      ? { duration: 0.05, tempo: "instant", tone: "responsive" }
-      : { duration: 0.12, tempo: "swift", tone: "responsive" },
+      ? { duration, tempo: "instant", tone: "responsive" }
+      : { duration, tempo: "swift", tone: "responsive" },
   };
 }
 
