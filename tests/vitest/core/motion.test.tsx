@@ -55,7 +55,7 @@ vi.mock("@lattice-ui/core", () => ({
   React: require("react"),
 }));
 
-import { MotionProvider, createSurfaceRevealRecipe, usePresenceMotion, useResponseMotion } from "@lattice-ui/motion";
+import { createSurfaceRevealRecipe, MotionProvider, usePresenceMotion, useResponseMotion } from "@lattice-ui/motion";
 
 function PresenceHarness(props: {
   present: boolean;
