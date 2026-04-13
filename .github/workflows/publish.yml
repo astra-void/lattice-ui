@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Optional release tag to publish (auto-infers when omitted), for example v0.4.4 or v0.4.4-alpha.1
-        required: false
+        description: Release tag to publish, for example v0.4.4 or v0.4.4-alpha.1
+        required: true
         type: string
       dry_run:
         description: Run a dry-run publish instead of publishing to npm
@@ -17,11 +17,12 @@ on:
         type: boolean
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 env:
   NODE_VERSION: 24
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -74,20 +75,10 @@ jobs:
       - name: Resolve release metadata
         id: release
         env:
-          INPUT_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || '' }}
-          REF_TYPE: ${{ github.ref_type }}
-          REF_NAME: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
-          if [ -n "${INPUT_RELEASE_TAG}" ]; then
-            RELEASE_TAG="${INPUT_RELEASE_TAG}"
-          elif [ "${REF_TYPE}" = "tag" ] && [[ "${REF_NAME}" == v* ]]; then
-            RELEASE_TAG="${REF_NAME}"
-          else
-            RELEASE_TAG="$(git tag --list 'v*' --sort=-v:refname | head -n 1)"
-          fi
-
           if [ -z "${RELEASE_TAG}" ]; then
-            echo "Unable to infer release tag. Provide workflow_dispatch input 'release_tag'." >&2
+            echo "RELEASE_TAG is required." >&2
             exit 1
           fi
 
