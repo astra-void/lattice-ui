@@ -1,5 +1,5 @@
 import type { MotionDomain, MotionProperties, MotionTargetContract, MotionTargetRole } from "../core/types";
-import { reportMotionDiagnostic, type MotionDiagnosticStage } from "../runtime/diagnostics";
+import { type MotionDiagnosticStage, reportMotionDiagnostic } from "../runtime/diagnostics";
 
 type MotionValueKind = "number" | "UDim" | "UDim2" | "Vector2" | "Vector3" | "Color3" | "CFrame" | "unknown";
 

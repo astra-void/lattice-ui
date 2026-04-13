@@ -1,8 +1,8 @@
 import { React } from "@lattice-ui/core";
 import { useMotionPolicy } from "../core/policy";
 import type { FeedbackEffectConfig, MotionStateTargets } from "../core/types";
-import { MotionHost } from "../runtime/host";
 import { applyFeedbackEffect } from "../runtime/feedback";
+import { MotionHost } from "../runtime/host";
 
 export function useFeedbackEffect<T extends Instance = Instance>(
   active: boolean,

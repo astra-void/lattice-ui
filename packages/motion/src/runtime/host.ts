@@ -1,16 +1,16 @@
 import type { MotionDomain, MotionProperties, MotionTargetContract } from "../core/types";
-import { reportMotionDiagnostic } from "./diagnostics";
-import { applyMotionCurve, type FollowDriverConfig, type TimedDriverConfig, type TimedStepName } from "./spec";
-import { scheduleHost, unscheduleHost } from "./scheduler";
 import {
   areMotionValuesEqual,
   canInterpolateMotionValue,
   interpolateMotionValue,
   isMotionValueSettled,
-  readMotionProperty,
   type MotionPropertyContext,
+  readMotionProperty,
   writeMotionProperty,
 } from "../targets/instance";
+import { reportMotionDiagnostic } from "./diagnostics";
+import { scheduleHost, unscheduleHost } from "./scheduler";
+import { applyMotionCurve, type FollowDriverConfig, type TimedDriverConfig, type TimedStepName } from "./spec";
 
 type MotionTrack =
   | {

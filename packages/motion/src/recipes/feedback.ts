@@ -1,4 +1,4 @@
-import { motionTargets, type FeedbackEffectConfig } from "../core/types";
+import { type FeedbackEffectConfig, motionTargets } from "../core/types";
 
 export function createPressFeedbackEffect(duration = 0.1): FeedbackEffectConfig {
   return {
