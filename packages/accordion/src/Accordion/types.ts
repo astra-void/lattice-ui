@@ -40,9 +40,11 @@ export type AccordionTriggerProps = {
   children?: React.ReactElement;
 };
 
+type AccordionContentGuiProps = React.Attributes & Record<string, unknown>;
+
 export type AccordionContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
   transition?: PresenceMotionConfig;
   children?: React.ReactNode;
-};
+} & AccordionContentGuiProps;

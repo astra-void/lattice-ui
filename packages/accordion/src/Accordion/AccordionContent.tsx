@@ -1,25 +1,76 @@
 import { React, Slot } from "@lattice-ui/core";
 import { Presence } from "@lattice-ui/layer";
-import { createSurfaceRevealRecipe, type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/motion";
+import { createSurfaceRevealRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import { useAccordionItemContext } from "./context";
 import type { AccordionContentProps } from "./types";
 
-function AccordionContentImpl(props: {
+type GuiPropBag = React.Attributes & Record<string, unknown>;
+
+type AccordionContentImplProps = AccordionContentProps & {
   present: boolean;
-  forceMount?: boolean;
-  transition?: PresenceMotionConfig;
   onExitComplete?: () => void;
-  asChild?: boolean;
-  children?: React.ReactNode;
-}) {
+};
+
+function getImplRestProps(props: AccordionContentImplProps): GuiPropBag {
+  const restProps: GuiPropBag = {};
+
+  for (const [rawKey, value] of pairs(props as Record<string, unknown>)) {
+    if (!typeIs(rawKey, "string")) {
+      continue;
+    }
+
+    if (
+      rawKey === "present" ||
+      rawKey === "forceMount" ||
+      rawKey === "transition" ||
+      rawKey === "onExitComplete" ||
+      rawKey === "asChild" ||
+      rawKey === "children"
+    ) {
+      continue;
+    }
+
+    restProps[rawKey] = value;
+  }
+
+  return restProps;
+}
+
+function getContentRestProps(props: AccordionContentProps): GuiPropBag {
+  const restProps: GuiPropBag = {};
+
+  for (const [rawKey, value] of pairs(props as Record<string, unknown>)) {
+    if (!typeIs(rawKey, "string")) {
+      continue;
+    }
+
+    if (rawKey === "asChild" || rawKey === "forceMount" || rawKey === "transition" || rawKey === "children") {
+      continue;
+    }
+
+    restProps[rawKey] = value;
+  }
+
+  return restProps;
+}
+
+function AccordionContentImpl(props: AccordionContentImplProps) {
+  const present = props.present;
+  const forceMount = props.forceMount;
+  const transition = props.transition;
+  const onExitComplete = props.onExitComplete;
+  const asChild = props.asChild;
+  const children = props.children;
+  const restProps = getImplRestProps(props);
+
   const defaultTransition = React.useMemo(() => createSurfaceRevealRecipe(), []);
-  const config = props.transition ?? defaultTransition;
+  const config = transition ?? defaultTransition;
 
   const motion = usePresenceMotionController<Frame>({
-    present: props.present,
-    forceMount: props.forceMount,
+    present,
+    forceMount,
     config,
-    onExitComplete: props.onExitComplete,
+    onExitComplete,
   });
 
   const mounted = motion.mounted;
@@ -29,14 +80,14 @@ function AccordionContentImpl(props: {
     return undefined;
   }
 
-  if (props.asChild) {
-    const child = props.children;
-    if (!React.isValidElement(child)) {
-      error("[AccordionContent] `asChild` requires a child element.");
+  if (asChild) {
+    const child = children;
+    if (React.Children.count(children) !== 1 || !React.isValidElement(child)) {
+      error("[AccordionContent] `asChild` requires a single child element.");
     }
 
     return (
-      <Slot Visible={visible} ref={motion.ref}>
+      <Slot {...restProps} Visible={visible} ref={motion.ref}>
         {child}
       </Slot>
     );
@@ -46,28 +97,35 @@ function AccordionContentImpl(props: {
     <frame
       BackgroundColor3={Color3.fromRGB(35, 41, 54)}
       BorderSizePixel={0}
-      Size={UDim2.fromOffset(260, 44)}
+      {...restProps}
       Visible={visible}
       ref={motion.ref}
     >
-      {props.children}
+      {children}
     </frame>
   );
 }
 
 export function AccordionContent(props: AccordionContentProps) {
   const itemContext = useAccordionItemContext();
-  const forceMount = props.forceMount === true;
+  const asChild = props.asChild;
+  const forceMount = props.forceMount;
+  const transition = props.transition;
+  const children = props.children;
+  const restProps = getContentRestProps(props);
 
-  if (forceMount) {
+  const shouldForceMount = forceMount === true;
+
+  if (shouldForceMount) {
     return (
       <AccordionContentImpl
-        asChild={props.asChild}
+        {...restProps}
+        asChild={asChild}
         forceMount={true}
         present={itemContext.open}
-        transition={props.transition}
+        transition={transition}
       >
-        {props.children}
+        {children}
       </AccordionContentImpl>
     );
   }
@@ -77,12 +135,13 @@ export function AccordionContent(props: AccordionContentProps) {
       present={itemContext.open}
       render={(state) => (
         <AccordionContentImpl
-          asChild={props.asChild}
+          {...restProps}
+          asChild={asChild}
           onExitComplete={state.onExitComplete}
           present={state.isPresent}
-          transition={props.transition}
+          transition={transition}
         >
-          {props.children}
+          {children}
         </AccordionContentImpl>
       )}
     />
