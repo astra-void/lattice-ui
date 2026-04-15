@@ -1,8 +1,0 @@
-pnpm-lock.yaml
-pnpm-workspace.yaml
-node_modules
-.gitignore
-.npmrc
-rokit.toml
-selene.toml
-**/target
