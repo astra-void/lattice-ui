@@ -17,7 +17,7 @@ function toGuiPropBag(value: unknown): GuiPropBag {
 }
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
   return instance;

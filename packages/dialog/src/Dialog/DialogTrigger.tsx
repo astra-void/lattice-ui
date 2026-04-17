@@ -4,7 +4,7 @@ import { useDialogContext } from "./context";
 import type { DialogTriggerProps } from "./types";
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

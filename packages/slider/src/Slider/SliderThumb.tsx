@@ -26,7 +26,7 @@ export function SliderThumb(props: SliderThumbProps) {
 
   const setNodeRef = React.useCallback(
     (instance: Instance | undefined) => {
-      const nextThumb = !instance || !instance.IsA("GuiObject") ? undefined : instance;
+      const nextThumb = !instance?.IsA("GuiObject") ? undefined : instance;
       motionRef.current = nextThumb;
       sliderContext.setThumbNode(nextThumb);
     },

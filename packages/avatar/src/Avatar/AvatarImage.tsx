@@ -3,7 +3,7 @@ import { useAvatarContext } from "./context";
 import type { AvatarImageProps } from "./types";
 
 function toImageLabel(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("ImageLabel")) {
+  if (!instance?.IsA("ImageLabel")) {
     return undefined;
   }
 

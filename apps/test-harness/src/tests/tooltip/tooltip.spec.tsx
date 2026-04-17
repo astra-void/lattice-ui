@@ -44,9 +44,7 @@ export = () => {
         const markerParentWhileOpen = markerWhileOpen?.Parent;
         assert(markerWhileOpen !== undefined, "Forced tooltip content should mount its marker.");
         assert(
-          markerParentWhileOpen !== undefined &&
-            markerParentWhileOpen.IsA("GuiObject") &&
-            markerParentWhileOpen.Visible === true,
+          markerParentWhileOpen?.IsA("GuiObject") && markerParentWhileOpen.Visible === true,
           "Selection focus on the trigger should make tooltip content visible.",
         );
 
@@ -56,9 +54,7 @@ export = () => {
         const markerAfterBlur = findTextLabelByText(harness.playerGui, "tooltip-marker");
         const markerParentAfterBlur = markerAfterBlur?.Parent;
         assert(
-          markerParentAfterBlur !== undefined &&
-            markerParentAfterBlur.IsA("GuiObject") &&
-            markerParentAfterBlur.Visible === false,
+          markerParentAfterBlur?.IsA("GuiObject") && markerParentAfterBlur.Visible === false,
           "Moving selection away from the trigger should hide forced tooltip content.",
         );
 

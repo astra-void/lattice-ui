@@ -56,7 +56,7 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
 
   const setItemRef = React.useCallback(
     (instance: Instance | undefined) => {
-      const nextItem = !instance || !instance.IsA("GuiObject") ? undefined : instance;
+      const nextItem = !instance?.IsA("GuiObject") ? undefined : instance;
       itemRef.current = nextItem;
       motionRef.current = nextItem;
     },

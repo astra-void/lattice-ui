@@ -10,7 +10,7 @@ export = () => {
   describe("use-controllable-state", () => {
     it("applies multiple updater calls cumulatively in uncontrolled mode", () => {
       withReactHarness("UseControllableStateUncontrolled", (harness) => {
-        const emissions = new Array<number>();
+        const emissions: number[] = [];
 
         function TestNode() {
           const [value, setValue] = useControllableState<number>({
@@ -42,7 +42,7 @@ export = () => {
 
     it("computes controlled updater next value from current controlled state", () => {
       withReactHarness("UseControllableStateControlled", (harness) => {
-        const emissions = new Array<number>();
+        const emissions: number[] = [];
 
         function TestNode() {
           const [externalValue, setExternalValue] = React.useState(5);
@@ -76,7 +76,7 @@ export = () => {
 
     it("does not emit duplicate onChange for same value updates", () => {
       withReactHarness("UseControllableStateSameValue", (harness) => {
-        const emissions = new Array<number>();
+        const emissions: number[] = [];
 
         function TestNode() {
           const [value, setValue] = useControllableState<number>({
@@ -108,7 +108,7 @@ export = () => {
 
     it("does not leak controlled writes into uncontrolled state across mode transitions", () => {
       withReactHarness("UseControllableStateModeTransition", (harness) => {
-        const emissions = new Array<number>();
+        const emissions: number[] = [];
 
         function TestNode() {
           const [phase, setPhase] = React.useState(0);

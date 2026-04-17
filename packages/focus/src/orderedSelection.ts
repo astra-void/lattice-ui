@@ -1,4 +1,4 @@
-import { type React } from "@lattice-ui/core";
+import type { React } from "@lattice-ui/core";
 import { focusGuiObject as focusManagedGuiObject, getFocusedGuiObject } from "./focusManager";
 
 export type OrderedSelectionDirection = -1 | 1;

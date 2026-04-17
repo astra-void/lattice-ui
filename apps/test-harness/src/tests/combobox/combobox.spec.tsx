@@ -6,7 +6,7 @@ import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness"
 
 function findTextBox(root: Instance) {
   const matched = findFirstDescendant(root, (instance) => instance.IsA("TextBox"));
-  if (!matched || !matched.IsA("TextBox")) {
+  if (!matched?.IsA("TextBox")) {
     return undefined;
   }
 
@@ -226,7 +226,7 @@ export = () => {
         assert(marker !== undefined, "Combobox content should mount when open is true.");
 
         const contentFrame = marker.Parent;
-        assert(contentFrame !== undefined && contentFrame.IsA("GuiObject"), "Marker parent should be a GuiObject.");
+        assert(contentFrame?.IsA("GuiObject"), "Marker parent should be a GuiObject.");
         assert(contentFrame.Visible === true, "ComboboxContent should be visible when open is true.");
       });
     });
@@ -266,10 +266,7 @@ export = () => {
         assert(marker !== undefined, "Combobox content should mount after open becomes true.");
 
         const contentFrame = marker.Parent;
-        assert(
-          contentFrame !== undefined && contentFrame.IsA("GuiObject"),
-          "Transitioned ComboboxContent marker parent should be a GuiObject.",
-        );
+        assert(contentFrame?.IsA("GuiObject"), "Transitioned ComboboxContent marker parent should be a GuiObject.");
         assert(contentFrame.Visible === true, "Transitioned ComboboxContent should become visible after opening.");
       });
     });
@@ -351,7 +348,7 @@ export = () => {
         const input = findTextBox(harness.container);
         const contentButton = findTextButtonByText(harness.playerGui, "combobox-item-alpha-anchor");
         const contentParent = contentButton?.Parent;
-        const content = contentParent && contentParent.IsA("Frame") ? contentParent : undefined;
+        const content = contentParent?.IsA("Frame") ? contentParent : undefined;
 
         assert(trigger !== undefined, "Trigger should mount for anchor regression coverage.");
         assert(input !== undefined, "Input should mount for anchor regression coverage.");
@@ -369,8 +366,8 @@ export = () => {
 
     it("does not reopen after selection-driven input sync", () => {
       withReactHarness("ComboboxSelectionFlicker", (harness) => {
-        const openChanges = new Array<boolean>();
-        const valueChanges = new Array<string>();
+        const openChanges: boolean[] = [];
+        const valueChanges: string[] = [];
 
         const renderTree = (commitSelection: boolean) => (
           <ControlledComboboxSelectionHarness
@@ -401,10 +398,7 @@ export = () => {
 
         const contentButton = findTextButtonByText(harness.playerGui, "combobox-item-beta-flicker");
         const contentParent = contentButton?.Parent;
-        assert(
-          contentParent !== undefined && contentParent.IsA("GuiObject"),
-          "Forced content frame should stay mounted.",
-        );
+        assert(contentParent?.IsA("GuiObject"), "Forced content frame should stay mounted.");
         assert(contentParent.Visible === false, "Combobox content should stay closed after selection commits.");
 
         assert(valueChanges.size() === 1, "Selection should emit a single value change.");

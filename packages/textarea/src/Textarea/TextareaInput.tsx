@@ -5,7 +5,7 @@ import { useTextareaContext } from "./context";
 import type { TextareaInputProps } from "./types";
 
 function toTextBox(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("TextBox")) {
+  if (!instance?.IsA("TextBox")) {
     return undefined;
   }
 

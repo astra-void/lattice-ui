@@ -6,7 +6,7 @@ const RunService = game.GetService("RunService");
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

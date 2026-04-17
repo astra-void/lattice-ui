@@ -11,7 +11,6 @@ function toHorizontalAlignment(value: StackAlign | StackJustify) {
       return Enum.HorizontalAlignment.Center;
     case "end":
       return Enum.HorizontalAlignment.Right;
-    case "start":
     default:
       return Enum.HorizontalAlignment.Left;
   }
@@ -23,7 +22,6 @@ function toVerticalAlignment(value: StackAlign | StackJustify) {
       return Enum.VerticalAlignment.Center;
     case "end":
       return Enum.VerticalAlignment.Bottom;
-    case "start":
     default:
       return Enum.VerticalAlignment.Top;
   }

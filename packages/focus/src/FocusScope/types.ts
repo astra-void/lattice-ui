@@ -1,4 +1,4 @@
-import { type React } from "@lattice-ui/core";
+import type { React } from "@lattice-ui/core";
 
 export type FocusScopeProps = {
   active?: boolean;

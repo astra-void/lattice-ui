@@ -41,7 +41,7 @@ export = () => {
         assert(marker !== undefined, "Marker should mount inside hidden toast root.");
 
         const markerParent = marker.Parent;
-        assert(markerParent !== undefined && markerParent.IsA("GuiObject"), "Marker parent should be a GuiObject.");
+        assert(markerParent?.IsA("GuiObject"), "Marker parent should be a GuiObject.");
         assert(markerParent.Visible === false, "ToastRoot should apply visible=false to composed root.");
       });
     });

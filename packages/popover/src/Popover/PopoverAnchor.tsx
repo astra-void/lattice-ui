@@ -3,7 +3,7 @@ import { usePopoverContext } from "./context";
 import type { PopoverAnchorProps } from "./types";
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

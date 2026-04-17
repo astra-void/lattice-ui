@@ -5,7 +5,7 @@ import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness"
 
 function findTextBox(root: Instance) {
   const matched = findFirstDescendant(root, (instance) => instance.IsA("TextBox"));
-  if (!matched || !matched.IsA("TextBox")) {
+  if (!matched?.IsA("TextBox")) {
     return undefined;
   }
 

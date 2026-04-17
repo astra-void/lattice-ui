@@ -99,7 +99,7 @@ export function SelectItem(props: SelectItemProps) {
 
   const setItemRef = React.useCallback(
     (instance: Instance | undefined) => {
-      if (!instance || !instance.IsA("GuiObject")) {
+      if (!instance?.IsA("GuiObject")) {
         motionRef.current = undefined;
         return;
       }

@@ -11,7 +11,7 @@ function isPointerInput(inputObject: InputObject) {
 }
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

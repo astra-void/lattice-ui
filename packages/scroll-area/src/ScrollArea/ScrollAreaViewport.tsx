@@ -3,7 +3,7 @@ import { useScrollAreaContext } from "./context";
 import type { ScrollAreaViewportProps } from "./types";
 
 function toScrollingFrame(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("ScrollingFrame")) {
+  if (!instance?.IsA("ScrollingFrame")) {
     return undefined;
   }
 

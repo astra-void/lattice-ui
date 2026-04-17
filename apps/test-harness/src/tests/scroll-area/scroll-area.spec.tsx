@@ -13,7 +13,7 @@ function findFrameByName(root: Instance, name: string) {
   }
 
   const parent = marker.Parent;
-  if (!parent || !parent.IsA("Frame")) {
+  if (!parent?.IsA("Frame")) {
     return undefined;
   }
 

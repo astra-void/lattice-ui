@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { Dialog } from "@lattice-ui/dialog";
 import { PortalProvider } from "@lattice-ui/layer";
-import { type PresenceMotionConfig as MotionConfig } from "@lattice-ui/motion";
+import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/motion";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { isOutsidePointerEvent } from "../../test-utils/outsidePointer";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
@@ -24,13 +24,13 @@ function getViewportSize() {
 
 function requireGuiObjectParent(instance: Instance | undefined, message: string) {
   const parent = instance?.Parent;
-  assert(parent !== undefined && parent.IsA("GuiObject"), message);
+  assert(parent?.IsA("GuiObject"), message);
   return parent as GuiObject;
 }
 
 function requireCanvasGroupParent(instance: Instance | undefined, message: string) {
   const parent = instance?.Parent;
-  assert(parent !== undefined && parent.IsA("CanvasGroup"), message);
+  assert(parent?.IsA("CanvasGroup"), message);
   return parent as CanvasGroup;
 }
 
@@ -456,14 +456,12 @@ export = () => {
                   />
                 </Dialog.Overlay>
                 <Dialog.Content transition={transition}>
-                  <>
-                    <frame
-                      BackgroundTransparency={1}
-                      Position={UDim2.fromOffset(40, 40)}
-                      Size={UDim2.fromOffset(40, 40)}
-                      ref={panelRef}
-                    />
-                  </>
+                  <frame
+                    BackgroundTransparency={1}
+                    Position={UDim2.fromOffset(40, 40)}
+                    Size={UDim2.fromOffset(40, 40)}
+                    ref={panelRef}
+                  />
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>

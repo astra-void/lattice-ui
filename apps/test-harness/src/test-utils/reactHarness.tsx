@@ -24,7 +24,7 @@ export function createReactHarness(name = "LatticeUiTestHarnessRoot"): ReactHarn
 
   const clearHarnessSelectedObject = () => {
     const selectedObject = GuiService.SelectedObject;
-    if (!selectedObject || !selectedObject.IsA("GuiObject")) {
+    if (!selectedObject?.IsA("GuiObject")) {
       return;
     }
 

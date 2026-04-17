@@ -73,7 +73,7 @@ export function Grid(props: GridProps) {
   const frameRef = React.useRef<Frame>();
 
   const setFrameRef = React.useCallback((instance: Instance | undefined) => {
-    if (!instance || !instance.IsA("Frame")) {
+    if (!instance?.IsA("Frame")) {
       frameRef.current = undefined;
       return;
     }

@@ -4,7 +4,7 @@ import { useTextFieldContext } from "./context";
 import type { TextFieldInputProps } from "./types";
 
 function toTextBox(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("TextBox")) {
+  if (!instance?.IsA("TextBox")) {
     return undefined;
   }
 

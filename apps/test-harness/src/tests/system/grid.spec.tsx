@@ -5,7 +5,7 @@ import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness"
 
 function findGridLayout(root: Instance) {
   const matched = findFirstDescendant(root, (instance) => instance.IsA("UIGridLayout"));
-  if (!matched || !matched.IsA("UIGridLayout")) {
+  if (!matched?.IsA("UIGridLayout")) {
     return undefined;
   }
 

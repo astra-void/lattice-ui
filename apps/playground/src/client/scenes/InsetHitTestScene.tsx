@@ -14,7 +14,7 @@ function isPointerInput(inputObject: InputObject) {
 function getNormalizedPointerSamples(pointerPosition: Vector2, ignoreGuiInset: boolean) {
   const [insetTopLeft] = GuiService.GetGuiInset();
 
-  const samples = new Array<Vector2>();
+  const samples: Vector2[] = [];
   const sampleKeys: Record<string, true> = {};
 
   const addSample = (x: number, y: number) => {
@@ -54,7 +54,7 @@ export function InsetHitTestScene() {
     }
 
     const playerGuiInstance = localPlayer.FindFirstChild("PlayerGui");
-    if (!playerGuiInstance || !playerGuiInstance.IsA("PlayerGui")) {
+    if (!playerGuiInstance?.IsA("PlayerGui")) {
       return;
     }
     const playerGui = playerGuiInstance;

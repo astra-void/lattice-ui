@@ -6,7 +6,7 @@ import type { SliderProps } from "./types";
 const UserInputService = game.GetService("UserInputService");
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

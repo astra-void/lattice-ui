@@ -105,10 +105,7 @@ export = () => {
         const wrapper = content?.Parent;
         assert(anchor !== undefined, "Popover anchor should mount for motion coverage.");
         assert(content !== undefined, "Popover content should mount for motion coverage.");
-        assert(
-          wrapper !== undefined && wrapper.IsA("GuiObject"),
-          "Popover content should render inside a positioned wrapper.",
-        );
+        assert(wrapper?.IsA("GuiObject"), "Popover content should render inside a positioned wrapper.");
         assert(
           wrapper.AbsolutePosition.X > 0 || wrapper.AbsolutePosition.Y > 0,
           "Popover wrapper should not render at the origin while opening.",

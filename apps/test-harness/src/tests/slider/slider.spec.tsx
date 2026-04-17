@@ -14,7 +14,7 @@ function findRangeFrame(root: Instance, markerText: string) {
   }
 
   const parent = marker.Parent;
-  if (!parent || !parent.IsA("Frame")) {
+  if (!parent?.IsA("Frame")) {
     return undefined;
   }
 
@@ -23,7 +23,7 @@ function findRangeFrame(root: Instance, markerText: string) {
 
 function requireGuiObjectParent(instance: Instance | undefined, message: string) {
   const parent = instance?.Parent;
-  assert(parent !== undefined && parent.IsA("GuiObject"), message);
+  assert(parent?.IsA("GuiObject"), message);
   return parent as GuiObject;
 }
 

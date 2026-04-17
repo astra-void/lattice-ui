@@ -19,7 +19,7 @@ export type LayerRegistration = {
   mountOrder: number;
 };
 
-const layerEntries = new Array<LayerEntry>();
+const layerEntries: LayerEntry[] = [];
 let nextLayerId = 0;
 let nextMountOrder = 0;
 let inputConnection: RBXScriptConnection | undefined;

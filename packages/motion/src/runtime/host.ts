@@ -130,7 +130,7 @@ export class MotionHost {
 
   public step(dt: number) {
     let active = false;
-    const completedTracks = new Array<MotionTrack>();
+    const completedTracks: MotionTrack[] = [];
 
     for (const [key, track] of this.tracks) {
       let nextValue: unknown;

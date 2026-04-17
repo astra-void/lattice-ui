@@ -4,7 +4,7 @@ import { usePopoverContext } from "./context";
 import type { PopoverTriggerProps } from "./types";
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

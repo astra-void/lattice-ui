@@ -1,7 +1,7 @@
-const trappedScopeStack = new Array<number>();
+const trappedScopeStack: number[] = [];
 
 function findScopeIndex(scopeId: number) {
-  return trappedScopeStack.findIndex((entry) => entry === scopeId);
+  return trappedScopeStack.indexOf(scopeId);
 }
 
 export function registerTrappedScope(scopeId: number) {

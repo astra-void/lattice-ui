@@ -108,7 +108,7 @@ export = () => {
         assert(marker !== undefined, "Select content should mount when open is true.");
 
         const contentFrame = marker.Parent;
-        assert(contentFrame !== undefined && contentFrame.IsA("GuiObject"), "Marker parent should be a GuiObject.");
+        assert(contentFrame?.IsA("GuiObject"), "Marker parent should be a GuiObject.");
         assert(contentFrame.Visible === true, "SelectContent should be visible when open is true.");
       });
     });
@@ -148,10 +148,7 @@ export = () => {
         assert(marker !== undefined, "Select content should mount after open becomes true.");
 
         const contentFrame = marker.Parent;
-        assert(
-          contentFrame !== undefined && contentFrame.IsA("GuiObject"),
-          "Transitioned SelectContent marker parent should be a GuiObject.",
-        );
+        assert(contentFrame?.IsA("GuiObject"), "Transitioned SelectContent marker parent should be a GuiObject.");
         assert(contentFrame.Visible === true, "Transitioned SelectContent should become visible after opening.");
       });
     });
@@ -193,7 +190,7 @@ export = () => {
         assert(marker !== undefined, "Forced SelectContent should mount marker while closed.");
 
         const markerParent = marker.Parent;
-        assert(markerParent !== undefined && markerParent.IsA("GuiObject"), "Marker parent should be a GuiObject.");
+        assert(markerParent?.IsA("GuiObject"), "Marker parent should be a GuiObject.");
         assert(markerParent.Visible === false, "Forced SelectContent should be hidden while open=false.");
       });
     });
@@ -316,10 +313,7 @@ export = () => {
         const wrapper = content?.Parent;
         assert(trigger !== undefined, "Select trigger should mount for motion placement coverage.");
         assert(content !== undefined, "Select content should mount for motion placement coverage.");
-        assert(
-          wrapper !== undefined && wrapper.IsA("GuiObject"),
-          "Select content should render inside a positioned wrapper.",
-        );
+        assert(wrapper?.IsA("GuiObject"), "Select content should render inside a positioned wrapper.");
         assert(
           wrapper.AbsolutePosition.Y <= trigger.AbsolutePosition.Y + 1,
           "Bottom-requested select content should flip upward when there is not enough room below.",

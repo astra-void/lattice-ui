@@ -9,7 +9,7 @@ let nextTriggerId = 0;
 let nextTriggerOrder = 0;
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

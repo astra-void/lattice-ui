@@ -77,7 +77,7 @@ export function SelectRoot(props: SelectProps) {
       }
 
       const selected = resolveOrderedItems().find((item) => item.value === nextValue);
-      if (selected && selected.getDisabled()) {
+      if (selected?.getDisabled()) {
         return;
       }
 

@@ -15,7 +15,7 @@ function findSwitchRoot(root: Instance) {
     root,
     (instance) => instance.IsA("TextButton") && instance.AbsoluteSize.X === 160 && instance.AbsoluteSize.Y === 36,
   );
-  if (!matched || !matched.IsA("TextButton")) {
+  if (!matched?.IsA("TextButton")) {
     return undefined;
   }
 
@@ -27,7 +27,7 @@ function findSwitchThumb(root: Instance) {
     root,
     (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === 16 && instance.AbsoluteSize.Y === 16,
   );
-  if (!matched || !matched.IsA("Frame")) {
+  if (!matched?.IsA("Frame")) {
     return undefined;
   }
 
@@ -39,7 +39,7 @@ function findCustomSwitchRoot(root: Instance) {
     root,
     (instance) => instance.IsA("TextButton") && instance.AbsoluteSize.X === 46 && instance.AbsoluteSize.Y === 24,
   );
-  if (!matched || !matched.IsA("TextButton")) {
+  if (!matched?.IsA("TextButton")) {
     return undefined;
   }
 
@@ -52,7 +52,7 @@ function findCustomSwitchThumb(root: Instance) {
     (instance) => instance.IsA("TextLabel") && instance.Text === "custom-switch-thumb-marker",
   );
   const parent = marker?.Parent;
-  if (!parent || !parent.IsA("Frame")) {
+  if (!parent?.IsA("Frame")) {
     return undefined;
   }
 

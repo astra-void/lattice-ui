@@ -14,7 +14,7 @@ export function findFirstDescendant(root: Instance, predicate: (instance: Instan
 
 export function findGuiObjectByName(root: Instance, name: string) {
   const matched = findFirstDescendant(root, (instance) => instance.Name === name && instance.IsA("GuiObject"));
-  if (!matched || !matched.IsA("GuiObject")) {
+  if (!matched?.IsA("GuiObject")) {
     return undefined;
   }
 
@@ -23,7 +23,7 @@ export function findGuiObjectByName(root: Instance, name: string) {
 
 export function findTextButtonByText(root: Instance, text: string) {
   const matched = findFirstDescendant(root, (instance) => instance.IsA("TextButton") && instance.Text === text);
-  if (!matched || !matched.IsA("TextButton")) {
+  if (!matched?.IsA("TextButton")) {
     return undefined;
   }
 
@@ -32,7 +32,7 @@ export function findTextButtonByText(root: Instance, text: string) {
 
 export function findTextLabelByText(root: Instance, text: string) {
   const matched = findFirstDescendant(root, (instance) => instance.IsA("TextLabel") && instance.Text === text);
-  if (!matched || !matched.IsA("TextLabel")) {
+  if (!matched?.IsA("TextLabel")) {
     return undefined;
   }
 

@@ -24,7 +24,7 @@ function isThumbDragStart(inputObject: InputObject) {
 }
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 
@@ -58,7 +58,7 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
   const getTrack = React.useCallback(() => {
     const thumb = thumbRef.current;
     const parent = thumb?.Parent;
-    if (!parent || !parent.IsA("GuiObject")) {
+    if (!parent?.IsA("GuiObject")) {
       return undefined;
     }
 

@@ -3,7 +3,7 @@ import { useComboboxContext } from "./context";
 import type { ComboboxInputProps } from "./types";
 
 function toTextBox(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("TextBox")) {
+  if (!instance?.IsA("TextBox")) {
     return undefined;
   }
 

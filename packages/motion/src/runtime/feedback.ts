@@ -1,5 +1,5 @@
 import type { MotionIntent, MotionProperties, MotionTargetContract } from "../core/types";
-import { MotionHost } from "./host";
+import type { MotionHost } from "./host";
 import { resolveFeedbackDriver } from "./spec";
 
 export function applyFeedbackEffect(

@@ -37,7 +37,7 @@ function composeInstanceRefs(...refs: Array<InstanceRef | undefined>) {
 
 function toGuiObject(instance: Instance | undefined) {
   const candidate = instance as Instance & { IsA?: (className: string) => boolean };
-  if (!instance || !candidate.IsA || !candidate.IsA("GuiObject")) {
+  if (!instance || !candidate.IsA?.("GuiObject")) {
     return undefined;
   }
   return candidate;
@@ -143,7 +143,7 @@ function DialogContentImpl(props: {
   }, [ensureInsideBoundaryRef, props.children, setBoundaryRef]);
 
   const insideBoundaryRefs = React.useMemo(() => {
-    const refs = new Array<React.MutableRefObject<GuiObject | undefined>>();
+    const refs: React.MutableRefObject<GuiObject | undefined>[] = [];
     for (let index = 1; index < renderedChildren.boundaryCount; index++) {
       refs.push(insideBoundaryRefsRef.current[index]);
     }

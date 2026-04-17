@@ -57,8 +57,8 @@ type ResolveNodeOptions = {
   trapScopeOverride?: FocusScopeRecord;
 };
 
-const focusNodes = new Array<FocusNodeRecord>();
-const focusScopes = new Array<FocusScopeRecord>();
+const focusNodes: FocusNodeRecord[] = [];
+const focusScopes: FocusScopeRecord[] = [];
 
 let nextFocusNodeId = 0;
 let nextFocusScopeId = 0;

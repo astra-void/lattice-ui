@@ -3,7 +3,7 @@ import { useComboboxContext } from "./context";
 import type { ComboboxTriggerProps } from "./types";
 
 function toGuiObject(instance: Instance | undefined) {
-  if (!instance || !instance.IsA("GuiObject")) {
+  if (!instance?.IsA("GuiObject")) {
     return undefined;
   }
 

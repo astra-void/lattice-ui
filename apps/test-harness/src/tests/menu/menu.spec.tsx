@@ -98,10 +98,7 @@ export = () => {
         const hiddenMarker = findTextLabelByText(harness.playerGui, "menu-marker-force");
         assert(hiddenMarker !== undefined, "Forced menu content should stay mounted while closed.");
         const hiddenHost = hiddenMarker.Parent;
-        assert(
-          hiddenHost !== undefined && hiddenHost.IsA("GuiObject"),
-          "Forced menu marker parent should be a GuiObject.",
-        );
+        assert(hiddenHost?.IsA("GuiObject"), "Forced menu marker parent should be a GuiObject.");
         assert(hiddenHost.Visible === false, "Forced menu content should be hidden while closed.");
 
         harness.render(renderTree(true));
@@ -110,10 +107,7 @@ export = () => {
         const visibleMarker = findTextLabelByText(harness.playerGui, "menu-marker-force");
         assert(visibleMarker !== undefined, "Forced menu content should remain mounted when opened.");
         const visibleHost = visibleMarker.Parent;
-        assert(
-          visibleHost !== undefined && visibleHost.IsA("GuiObject"),
-          "Opened forced menu marker parent should be a GuiObject.",
-        );
+        assert(visibleHost?.IsA("GuiObject"), "Opened forced menu marker parent should be a GuiObject.");
         assert(visibleHost.Visible === true, "Forced menu content should become visible when opened.");
       });
     });
@@ -152,9 +146,7 @@ export = () => {
         const markerAfterClose = findTextLabelByText(harness.playerGui, "menu-marker-controlled");
         const markerParentAfterClose = markerAfterClose?.Parent;
         assert(
-          markerParentAfterClose !== undefined &&
-            markerParentAfterClose.IsA("GuiObject") &&
-            markerParentAfterClose.Visible === false,
+          markerParentAfterClose?.IsA("GuiObject") && markerParentAfterClose.Visible === false,
           "Forced menu content should be hidden after selection closes it.",
         );
         assert(

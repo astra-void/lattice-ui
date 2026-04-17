@@ -57,7 +57,7 @@ function addUniqueSample(samples: Array<Vector2>, sampleKeys: Record<string, tru
 function getPointerSamples(pointerPosition: Vector2, options: OutsidePointerOptions) {
   const insetTopLeft = getGuiInsetTopLeft();
 
-  const samples = new Array<Vector2>();
+  const samples: Vector2[] = [];
   const sampleKeys: Record<string, true> = {};
 
   addUniqueSample(samples, sampleKeys, pointerPosition.X, pointerPosition.Y);
