@@ -3,8 +3,19 @@ import { createToggleResponseRecipe, useResponseMotion } from "@lattice-ui/motio
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";
 
-const TRACK_ON_COLOR = Color3.fromRGB(86, 141, 255);
-const TRACK_OFF_COLOR = Color3.fromRGB(66, 73, 91);
+const DEFAULT_TRACK_ON_COLOR = Color3.fromRGB(86, 141, 255);
+const DEFAULT_TRACK_OFF_COLOR = Color3.fromRGB(66, 73, 91);
+const DEFAULT_DISABLED_TRACK_COLOR = Color3.fromRGB(103, 110, 128);
+
+function shouldOwnTrackColor(props: SwitchProps) {
+  if (!props.asChild) {
+    return true;
+  }
+
+  return (
+    props.trackOnColor !== undefined || props.trackOffColor !== undefined || props.disabledTrackColor !== undefined
+  );
+}
 
 export function SwitchRoot(props: SwitchProps) {
   const [checked, setCheckedState] = useControllableState<boolean>({
@@ -14,13 +25,28 @@ export function SwitchRoot(props: SwitchProps) {
   });
 
   const disabled = props.disabled === true;
-  const motionTargets = React.useMemo(
-    () => ({
-      active: { BackgroundColor3: TRACK_ON_COLOR },
-      inactive: { BackgroundColor3: TRACK_OFF_COLOR },
-    }),
-    [],
-  );
+  const ownTrackColor = shouldOwnTrackColor(props);
+  const motionTargets = React.useMemo(() => {
+    if (!ownTrackColor) {
+      return { active: {}, inactive: {} };
+    }
+
+    const trackOnColor = props.trackOnColor ?? DEFAULT_TRACK_ON_COLOR;
+    const trackOffColor = props.trackOffColor ?? DEFAULT_TRACK_OFF_COLOR;
+    const disabledTrackColor = props.disabledTrackColor ?? DEFAULT_DISABLED_TRACK_COLOR;
+
+    if (disabled) {
+      return {
+        active: { BackgroundColor3: disabledTrackColor },
+        inactive: { BackgroundColor3: disabledTrackColor },
+      };
+    }
+
+    return {
+      active: { BackgroundColor3: trackOnColor },
+      inactive: { BackgroundColor3: trackOffColor },
+    };
+  }, [disabled, ownTrackColor, props.disabledTrackColor, props.trackOffColor, props.trackOnColor]);
   const motionConfig = React.useMemo(() => createToggleResponseRecipe(0.04), []);
 
   const motionRef = useResponseMotion<GuiObject>(checked, motionTargets, motionConfig);

@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!packages/cli/templates/init-lint/**"]
+    "includes": ["**", "!packages/cli/templates/init-lint"]
   },
   "formatter": {
     "enabled": true,
@@ -43,6 +43,9 @@
         "rules": {
           "correctness": {
             "noUnusedImports": "off"
+          },
+          "style": {
+            "useImportType": "off"
           }
         }
       }

@@ -13,6 +13,9 @@ export type SwitchProps = {
   defaultChecked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
   disabled?: boolean;
+  trackOnColor?: Color3;
+  trackOffColor?: Color3;
+  disabledTrackColor?: Color3;
   asChild?: boolean;
   children?: React.ReactNode;
 };
