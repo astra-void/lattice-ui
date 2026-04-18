@@ -12,9 +12,7 @@ function shouldOwnTrackColor(props: SwitchProps) {
     return true;
   }
 
-  return (
-    props.trackOnColor !== undefined || props.trackOffColor !== undefined || props.disabledTrackColor !== undefined
-  );
+  return props.trackOnColor !== undefined || props.trackOffColor !== undefined || props.disabledTrackColor !== undefined;
 }
 
 export function SwitchRoot(props: SwitchProps) {
@@ -26,27 +24,30 @@ export function SwitchRoot(props: SwitchProps) {
 
   const disabled = props.disabled === true;
   const ownTrackColor = shouldOwnTrackColor(props);
-  const motionTargets = React.useMemo(() => {
-    if (!ownTrackColor) {
-      return { active: {}, inactive: {} };
-    }
+  const motionTargets = React.useMemo(
+    () => {
+      if (!ownTrackColor) {
+        return { active: {}, inactive: {} };
+      }
 
-    const trackOnColor = props.trackOnColor ?? DEFAULT_TRACK_ON_COLOR;
-    const trackOffColor = props.trackOffColor ?? DEFAULT_TRACK_OFF_COLOR;
-    const disabledTrackColor = props.disabledTrackColor ?? DEFAULT_DISABLED_TRACK_COLOR;
+      const trackOnColor = props.trackOnColor ?? DEFAULT_TRACK_ON_COLOR;
+      const trackOffColor = props.trackOffColor ?? DEFAULT_TRACK_OFF_COLOR;
+      const disabledTrackColor = props.disabledTrackColor ?? DEFAULT_DISABLED_TRACK_COLOR;
 
-    if (disabled) {
+      if (disabled) {
+        return {
+          active: { BackgroundColor3: disabledTrackColor },
+          inactive: { BackgroundColor3: disabledTrackColor },
+        };
+      }
+
       return {
-        active: { BackgroundColor3: disabledTrackColor },
-        inactive: { BackgroundColor3: disabledTrackColor },
+        active: { BackgroundColor3: trackOnColor },
+        inactive: { BackgroundColor3: trackOffColor },
       };
-    }
-
-    return {
-      active: { BackgroundColor3: trackOnColor },
-      inactive: { BackgroundColor3: trackOffColor },
-    };
-  }, [disabled, ownTrackColor, props.disabledTrackColor, props.trackOffColor, props.trackOnColor]);
+    },
+    [disabled, ownTrackColor, props.disabledTrackColor, props.trackOffColor, props.trackOnColor],
+  );
   const motionConfig = React.useMemo(() => createToggleResponseRecipe(0.04), []);
 
   const motionRef = useResponseMotion<GuiObject>(checked, motionTargets, motionConfig);
