@@ -9,7 +9,9 @@ function isRefCallback<T>(ref: unknown): ref is RefCallback<T> {
 }
 
 function isMutableRefObject<T>(ref: unknown): ref is MutableRefObject<T> {
-  return typeIs(ref, "table") && "current" in ref;
+  // In Luau, refs created from useRef() may start with current=nil, which means
+  // the key is not present in the table yet. Accept any table ref object.
+  return typeIs(ref, "table");
 }
 
 export function toRef<T>(value: unknown): AnyRef<T> | undefined {
