@@ -6,4 +6,4 @@ export const Switch = {
   Thumb: SwitchThumb,
 } as const;
 
-export type { SwitchContextValue, SwitchProps, SwitchThumbProps } from "./Switch/types";
+export type { SwitchContextValue, SwitchProps, SwitchThumbProps, SwitchTrackColorMode } from "./Switch/types";
