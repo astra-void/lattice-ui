@@ -2,7 +2,7 @@ import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
+import { createCanvasGroupPopperEntranceRecipe, createPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
@@ -54,8 +54,11 @@ function SelectContentImpl(props: {
   });
 
   const defaultTransition = React.useMemo(
-    () => createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
-    [popper.placement],
+    () =>
+      props.asChild
+        ? createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET, 0.16)
+        : createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    [popper.placement, props.asChild],
   );
   const recipe = props.transition ?? defaultTransition;
 
@@ -99,23 +102,11 @@ function SelectContentImpl(props: {
       const childProps = toGuiPropBag((child as { props?: unknown }).props);
       const childRef = getElementRef<Instance>(child);
 
-      return (
-        <canvasgroup
-          AutomaticSize={Enum.AutomaticSize.XY}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Size={UDim2.fromOffset(0, 0)}
-          Visible={contentVisible}
-          ref={setContentRef as React.Ref<CanvasGroup>}
-        >
-          {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
-            ...childProps,
-            Position: UDim2.fromOffset(0, 0),
-            Visible: contentVisible,
-            ref: composeRefs(childRef),
-          })}
-        </canvasgroup>
-      );
+      return React.cloneElement(child as React.ReactElement<GuiPropBag>, {
+        ...childProps,
+        Visible: contentVisible,
+        ref: composeRefs(childRef, setContentRef),
+      });
     })()
   ) : (
     <canvasgroup

@@ -7,6 +7,8 @@ import { isOutsidePointerEvent } from "./events";
 import { registerLayer, unregisterLayer } from "./layerStack";
 import type { DismissableLayerProps, LayerInteractEvent } from "./types";
 
+const GuiService = game.GetService("GuiService");
+
 function useLatest<T>(value: T) {
   const ref = React.useRef(value);
   React.useEffect(() => {
@@ -19,6 +21,10 @@ export function DismissableLayer(props: DismissableLayerProps) {
   const enabled = props.enabled ?? true;
   const shouldBlockOutsidePointer = enabled && (props.modal === true || props.disableOutsidePointerEvents === true);
   const layerIgnoresGuiInset = DEFAULT_LAYER_IGNORE_GUI_INSET;
+  const [layerInsetTopLeft] = GuiService.GetGuiInset();
+  const contentWrapperPosition = layerIgnoresGuiInset
+    ? UDim2.fromOffset(layerInsetTopLeft.X, layerInsetTopLeft.Y)
+    : UDim2.fromScale(0, 0);
 
   const portalContext = usePortalContext();
   const contentWrapperRef = React.useRef<Frame>();
@@ -87,6 +93,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
         DisplayOrder={portalContext.displayOrderBase + stackOrder}
         IgnoreGuiInset={layerIgnoresGuiInset}
         ResetOnSpawn={false}
+        ScreenInsets={layerIgnoresGuiInset ? Enum.ScreenInsets.None : Enum.ScreenInsets.CoreUISafeInsets}
         ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
       >
         {shouldBlockOutsidePointer ? (
@@ -107,7 +114,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
         <frame
           BackgroundTransparency={1}
           BorderSizePixel={0}
-          Position={UDim2.fromScale(0, 0)}
+          Position={contentWrapperPosition}
           Size={UDim2.fromScale(1, 1)}
           ref={contentWrapperRef}
           ZIndex={1}

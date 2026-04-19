@@ -37,7 +37,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
   const motionConfig = React.useMemo<ResponseMotionConfig>(
     () => ({
       target: motionTargetContracts.offsetWrapper("switch thumb response"),
-      settle: { duration: 0.1, tempo: "steady", tone: "responsive" },
+      settle: { duration: 0.08, tempo: "swift", tone: "responsive" },
     }),
     [],
   );

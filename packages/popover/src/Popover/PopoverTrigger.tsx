@@ -17,9 +17,16 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
 
   const setTriggerRef = React.useCallback(
     (instance: Instance | undefined) => {
-      triggerRef.current = toGuiObject(instance);
+      const previousTrigger = triggerRef.current;
+      const nextTrigger = toGuiObject(instance);
+
+      triggerRef.current = nextTrigger;
+
+      if (popoverContext.anchorRef.current === undefined || popoverContext.anchorRef.current === previousTrigger) {
+        popoverContext.anchorRef.current = nextTrigger;
+      }
     },
-    [triggerRef],
+    [popoverContext.anchorRef, triggerRef],
   );
 
   useFocusNode({

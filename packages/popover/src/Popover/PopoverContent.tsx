@@ -2,7 +2,7 @@ import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
+import { createCanvasGroupPopperEntranceRecipe, createPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
@@ -42,14 +42,9 @@ function PopoverContentImpl(props: {
   const open = popoverContext.open;
   const shouldMeasure = open || props.motionPresent || props.onExitComplete !== undefined;
   const contentBoundaryRef = React.useRef<GuiObject>();
-  const resolvedAnchorRef = React.useRef<GuiObject>();
-
-  React.useLayoutEffect(() => {
-    resolvedAnchorRef.current = popoverContext.anchorRef.current ?? popoverContext.triggerRef.current;
-  });
 
   const popper = usePopper({
-    anchorRef: resolvedAnchorRef,
+    anchorRef: popoverContext.anchorRef,
     contentRef: popoverContext.contentRef,
     alignOffset: props.alignOffset,
     collisionPadding: props.collisionPadding,
@@ -59,8 +54,11 @@ function PopoverContentImpl(props: {
   });
 
   const defaultTransition = React.useMemo(
-    () => createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
-    [popper.placement],
+    () =>
+      props.asChild
+        ? createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET, 0.16)
+        : createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    [popper.placement, props.asChild],
   );
   const recipe = props.transition ?? defaultTransition;
 
@@ -104,23 +102,11 @@ function PopoverContentImpl(props: {
       const childProps = toGuiPropBag((child as { props?: unknown }).props);
       const childRef = getElementRef<Instance>(child);
 
-      return (
-        <canvasgroup
-          AutomaticSize={Enum.AutomaticSize.XY}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Size={UDim2.fromOffset(0, 0)}
-          Visible={contentVisible}
-          ref={setContentRef as React.Ref<CanvasGroup>}
-        >
-          {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
-            ...childProps,
-            Position: UDim2.fromOffset(0, 0),
-            Visible: contentVisible,
-            ref: composeRefs(childRef),
-          })}
-        </canvasgroup>
-      );
+      return React.cloneElement(child as React.ReactElement<GuiPropBag>, {
+        ...childProps,
+        Visible: contentVisible,
+        ref: composeRefs(childRef, setContentRef),
+      });
     })()
   ) : (
     <canvasgroup

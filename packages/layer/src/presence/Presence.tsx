@@ -24,7 +24,9 @@ export function Presence(props: PresenceProps) {
   const [mounted, setMounted] = React.useState(props.present);
   const [isPresent, setIsPresent] = React.useState(props.present);
   const mountedRef = React.useRef(mounted);
+  const presentRef = React.useRef(props.present);
   const fallbackTaskRef = React.useRef<thread>();
+  const exitRequestRef = React.useRef(0);
   const onExitCompleteRef = React.useRef(props.onExitComplete);
 
   React.useEffect(() => {
@@ -35,7 +37,19 @@ export function Presence(props: PresenceProps) {
     mountedRef.current = mounted;
   }, [mounted]);
 
-  const completeExit = React.useCallback(() => {
+  React.useEffect(() => {
+    presentRef.current = props.present;
+  }, [props.present]);
+
+  const completeExit = React.useCallback((exitRequest?: number) => {
+    if (exitRequest !== undefined && exitRequest !== exitRequestRef.current) {
+      return;
+    }
+
+    if (presentRef.current) {
+      return;
+    }
+
     if (!mountedRef.current) {
       return;
     }
@@ -50,6 +64,7 @@ export function Presence(props: PresenceProps) {
   React.useEffect(() => {
     if (props.present) {
       cancelFallbackTask(fallbackTaskRef, coroutine.running());
+      exitRequestRef.current += 1;
 
       if (!mountedRef.current) {
         mountedRef.current = true;
@@ -67,8 +82,10 @@ export function Presence(props: PresenceProps) {
     cancelFallbackTask(fallbackTaskRef, coroutine.running());
 
     const timeoutMs = props.exitFallbackMs ?? DEFAULT_PRESENCE_EXIT_FALLBACK_MS;
+    const exitRequest = exitRequestRef.current + 1;
+    exitRequestRef.current = exitRequest;
     fallbackTaskRef.current = task.delay(timeoutMs / 1000, () => {
-      completeExit();
+      completeExit(exitRequest);
     });
   }, [completeExit, props.exitFallbackMs, props.present]);
 

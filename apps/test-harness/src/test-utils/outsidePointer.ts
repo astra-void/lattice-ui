@@ -57,7 +57,7 @@ function isWithinInsideRoots(hitObject: GuiObject, insideRoots: Array<GuiObject 
 }
 
 function isWithinContentBoundary(hitObject: GuiObject, contentWrapper: GuiObject) {
-  return hitObject.IsDescendantOf(contentWrapper);
+  return hitObject === contentWrapper || hitObject.IsDescendantOf(contentWrapper);
 }
 
 export function isOutsidePointerEvent(

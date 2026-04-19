@@ -29,6 +29,18 @@ function hasMeasuredContentSize(contentSize: Vector2) {
   return contentSize.X > 0 || contentSize.Y > 0;
 }
 
+function findNearestScreenGui(node: GuiObject | undefined) {
+  let current: Instance | undefined = node;
+  while (current) {
+    if (current.IsA("ScreenGui")) {
+      return current;
+    }
+    current = current.Parent;
+  }
+
+  return undefined;
+}
+
 function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {
   return (
     a.placement === b.placement &&

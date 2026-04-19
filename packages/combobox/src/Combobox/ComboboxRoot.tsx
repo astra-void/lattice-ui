@@ -52,6 +52,7 @@ export function ComboboxRoot(props: ComboboxProps) {
 
   const itemEntriesRef = React.useRef<Array<ComboboxItemRegistration>>([]);
   const itemTextCacheRef = React.useRef<Record<string, string>>({});
+  const programmaticInputValueRef = React.useRef<string | undefined>();
   const [registryRevision, setRegistryRevision] = React.useState(0);
 
   const registerItem = React.useCallback((item: ComboboxItemRegistration) => {
@@ -90,6 +91,7 @@ export function ComboboxRoot(props: ComboboxProps) {
 
   const syncInputFromValue = React.useCallback(() => {
     const nextInputValue = value !== undefined ? (getItemText(value) ?? "") : "";
+    programmaticInputValueRef.current = nextInputValue;
     setInputValueState(nextInputValue);
   }, [getItemText, setInputValueState, value]);
 
@@ -117,6 +119,7 @@ export function ComboboxRoot(props: ComboboxProps) {
 
       setValueState(nextValue);
       const nextInputValue = getItemText(nextValue) ?? nextValue;
+      programmaticInputValueRef.current = nextInputValue;
       setInputValueState(nextInputValue);
     },
     [disabled, getItemText, resolveOrderedItems, setInputValueState, setValueState],
@@ -127,6 +130,16 @@ export function ComboboxRoot(props: ComboboxProps) {
       if (disabled || readOnly) {
         return;
       }
+
+      if (
+        programmaticInputValueRef.current !== undefined &&
+        nextInputValue === programmaticInputValueRef.current
+      ) {
+        programmaticInputValueRef.current = undefined;
+        return;
+      }
+
+      programmaticInputValueRef.current = undefined;
 
       if (nextInputValue === inputValue) {
         return;

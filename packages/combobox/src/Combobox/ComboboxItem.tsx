@@ -7,10 +7,13 @@ let nextItemOrder = 0;
 
 export function ComboboxItem(props: ComboboxItemProps) {
   const comboboxContext = useComboboxContext();
-  const itemQueryMatch = comboboxContext.filterFn(props.textValue ?? props.value, comboboxContext.inputValue);
+  const textValue = props.textValue ?? props.value;
+  const visibleQuery = comboboxContext.open
+    ? (comboboxContext.inputRef.current?.Text ?? comboboxContext.inputValue)
+    : comboboxContext.inputValue;
+  const itemQueryMatch = comboboxContext.filterFn(textValue, visibleQuery);
   const disabled = comboboxContext.disabled || props.disabled === true;
   const interactionDisabled = disabled || !itemQueryMatch;
-  const textValue = props.textValue ?? props.value;
 
   const disabledRef = React.useRef(disabled);
   const textValueRef = React.useRef(textValue);

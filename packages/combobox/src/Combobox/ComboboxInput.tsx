@@ -2,6 +2,8 @@ import { React, Slot } from "@lattice-ui/core";
 import { useComboboxContext } from "./context";
 import type { ComboboxInputProps } from "./types";
 
+const UserInputService = game.GetService("UserInputService");
+
 function toTextBox(instance: Instance | undefined) {
   if (!instance?.IsA("TextBox")) {
     return undefined;
@@ -40,6 +42,14 @@ export function ComboboxInput(props: ComboboxInputProps) {
   const handleTextChanged = React.useCallback(
     (textBox: TextBox) => {
       if (textBox.Text === lastInputValueRef.current) {
+        return;
+      }
+
+      if (UserInputService.GetFocusedTextBox() !== textBox) {
+        return;
+      }
+
+      if (comboboxContext.open && comboboxContext.value !== undefined && lastInputValueRef.current !== "" && textBox.Text === "") {
         return;
       }
 

@@ -12,8 +12,71 @@ import type { DialogContentProps } from "./types";
 
 type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
 
+function mergeRecord(
+  base: Record<string, unknown> | undefined,
+  override: Record<string, unknown> | undefined,
+) {
+  return {
+    ...(base ?? {}),
+    ...(override ?? {}),
+  };
+}
+
+function mergeMotionStep(
+  base: PresenceMotionConfig["reveal"] | undefined,
+  override: PresenceMotionConfig["reveal"] | undefined,
+) {
+  if (!base && !override) {
+    return undefined;
+  }
+
+  if (!base) {
+    return override;
+  }
+
+  if (!override) {
+    return base;
+  }
+
+  return {
+    target: override.target ?? base.target,
+    values: mergeRecord(base.values as Record<string, unknown> | undefined, override.values as Record<string, unknown>),
+    intent: {
+      ...(base.intent ?? {}),
+      ...(override.intent ?? {}),
+    },
+  };
+}
+
+function mergePresenceMotionConfig(base: PresenceMotionConfig, override?: PresenceMotionConfig): PresenceMotionConfig {
+  if (!override) {
+    return base;
+  }
+
+  return {
+    target: override.target ?? base.target,
+    initial: mergeRecord(
+      base.initial as Record<string, unknown> | undefined,
+      override.initial as Record<string, unknown> | undefined,
+    ),
+    reveal: mergeMotionStep(base.reveal, override.reveal),
+    exit: mergeMotionStep(base.exit, override.exit),
+  };
+}
+
 function isMutableInstanceRef(ref: InstanceRef | undefined): ref is React.MutableRefObject<Instance | undefined> {
-  return typeIs(ref, "table");
+  if (!typeIs(ref, "table")) {
+    return false;
+  }
+
+  const tableRef = ref as unknown as Record<string, unknown>;
+
+  // Ref tables from useRef/createRef may omit the `current` key while nil.
+  if ("current" in tableRef) {
+    return true;
+  }
+
+  return next(tableRef)[0] === undefined;
 }
 
 function setInstanceRef(ref: InstanceRef | undefined, value: Instance | undefined) {
@@ -99,8 +162,11 @@ function DialogContentImpl(props: {
   const contentBoundaryRef = React.useRef<GuiObject>();
   const insideBoundaryRefsRef = React.useRef<Array<React.MutableRefObject<GuiObject | undefined>>>([]);
 
-  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(8), []);
-  const config = props.transition ?? defaultTransition;
+  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(8, 0.3), []);
+  const config = React.useMemo(
+    () => mergePresenceMotionConfig(defaultTransition, props.transition),
+    [defaultTransition, props.transition],
+  );
 
   const motion = usePresenceMotionController<CanvasGroup>({
     present: props.motionPresent,

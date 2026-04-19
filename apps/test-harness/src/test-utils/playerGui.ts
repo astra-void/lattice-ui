@@ -20,6 +20,7 @@ export function createTestContainer(name: string) {
   container.Name = name;
   container.ResetOnSpawn = false;
   container.IgnoreGuiInset = true;
+  container.ScreenInsets = Enum.ScreenInsets.None;
   container.ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
   container.Parent = playerGui;
   return container;
