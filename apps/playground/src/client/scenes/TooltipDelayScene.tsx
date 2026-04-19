@@ -41,7 +41,7 @@ export function TooltipDelayScene() {
           </Tooltip.Trigger>
 
           <Tooltip.Portal>
-            <Tooltip.Content asChild offset={new Vector2(0, 8)} placement="bottom">
+            <Tooltip.Content asChild sideOffset={8} placement="bottom">
               <frame BackgroundColor3={Color3.fromRGB(28, 33, 48)} BorderSizePixel={0} Size={UDim2.fromOffset(250, 80)}>
                 <uicorner CornerRadius={new UDim(0, 8)} />
                 <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} PaddingTop={new UDim(0, 8)} />

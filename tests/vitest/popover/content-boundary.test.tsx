@@ -16,18 +16,6 @@ let capturedLayerProps: Record<string, unknown> | undefined;
 vi.mock("@lattice-ui/core", () => {
   const React = require("react");
 
-  function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
-    const { children, ...slotProps } = props;
-    if (!React.isValidElement(children)) {
-      return null;
-    }
-
-    return React.cloneElement(children, {
-      ...children.props,
-      ...slotProps,
-    });
-  }
-
   function useControllableState<T>(options: { value?: T; defaultValue?: T; onChange?: (value: T) => void }) {
     const [uncontrolledValue, setUncontrolledValue] = React.useState(options.defaultValue);
     const value = options.value !== undefined ? options.value : uncontrolledValue;
@@ -124,6 +112,7 @@ vi.mock("@lattice-ui/motion", () => ({
 vi.mock("@lattice-ui/popper", () => ({
   usePopper: () => ({
     anchorPoint: new Vector2(0, 0),
+    contentSize: new Vector2(0, 0),
     placement: "bottom",
     position: UDim2.fromOffset(24, 36),
     isPositioned: true,

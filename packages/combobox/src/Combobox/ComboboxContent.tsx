@@ -27,8 +27,9 @@ function ComboboxContentImpl(props: {
   motionPresent: boolean;
   onExitComplete?: () => void;
   placement?: PopperPlacement;
-  offset?: Vector2;
-  padding?: number;
+  sideOffset?: number;
+  alignOffset?: number;
+  collisionPadding?: number;
   forceMount?: boolean;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
@@ -43,9 +44,10 @@ function ComboboxContentImpl(props: {
   const popper = usePopper({
     anchorRef: comboboxContext.anchorRef,
     contentRef: comboboxContext.contentRef,
+    alignOffset: props.alignOffset,
+    collisionPadding: props.collisionPadding,
+    sideOffset: props.sideOffset,
     placement: props.placement,
-    offset: props.offset,
-    padding: props.padding,
     enabled: shouldMeasure,
   });
 
@@ -79,6 +81,10 @@ function ComboboxContentImpl(props: {
   const shouldRender = motion.mounted;
   const contentVisible = shouldRender && (motion.present || motion.phase !== "exited");
   const popperPosition = popper.isPositioned ? popper.position : HIDDEN_POSITION;
+  const popperContentSize = (popper as { contentSize?: Vector2 }).contentSize ?? new Vector2(0, 0);
+  const popperWrapperSize = popper.isPositioned
+    ? UDim2.fromOffset(popperContentSize.X, popperContentSize.Y)
+    : UDim2.fromOffset(0, 0);
 
   const contentNode = props.asChild ? (
     (() => {
@@ -135,7 +141,7 @@ function ComboboxContentImpl(props: {
         BackgroundTransparency={1}
         BorderSizePixel={0}
         Position={popperPosition}
-        Size={UDim2.fromOffset(0, 0)}
+        Size={popperWrapperSize}
         Visible={shouldRender}
       >
         {contentNode}
@@ -152,13 +158,14 @@ export function ComboboxContent(props: ComboboxContentProps) {
     return (
       <ComboboxContentImpl
         asChild={props.asChild}
+        alignOffset={props.alignOffset}
+        collisionPadding={props.collisionPadding}
         forceMount={props.forceMount}
         motionPresent={open}
-        offset={props.offset}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
-        padding={props.padding}
         placement={props.placement}
+        sideOffset={props.sideOffset}
         transition={props.transition}
       >
         {props.children}
@@ -172,14 +179,15 @@ export function ComboboxContent(props: ComboboxContentProps) {
       render={(state) => (
         <ComboboxContentImpl
           asChild={props.asChild}
+          alignOffset={props.alignOffset}
+          collisionPadding={props.collisionPadding}
           forceMount={props.forceMount}
           motionPresent={state.isPresent}
-          offset={props.offset}
           onExitComplete={state.onExitComplete}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
-          padding={props.padding}
           placement={props.placement}
+          sideOffset={props.sideOffset}
           transition={props.transition}
         >
           {props.children}

@@ -81,7 +81,7 @@ export function PopoverFlipClampScene() {
         </Popover.Anchor>
 
         <Popover.Portal>
-          <Popover.Content asChild offset={new Vector2(0, 8)} padding={10} placement="bottom">
+          <Popover.Content asChild sideOffset={8} collisionPadding={10} placement="bottom">
             <frame BackgroundColor3={Color3.fromRGB(32, 41, 56)} BorderSizePixel={0} Size={UDim2.fromOffset(230, 120)}>
               <uicorner CornerRadius={new UDim(0, 8)} />
               <uipadding PaddingLeft={new UDim(0, 12)} PaddingRight={new UDim(0, 12)} PaddingTop={new UDim(0, 10)} />

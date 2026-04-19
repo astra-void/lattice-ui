@@ -1,3 +1,4 @@
+import { normalizePopperPositioningOptions } from "./options";
 import type { ComputePopperInput, ComputePopperResult, PopperPlacement } from "./types";
 
 type XY = {
@@ -5,34 +6,73 @@ type XY = {
   y: number;
 };
 
+const ORTHOGONAL_PLACEMENT_PENALTY = 12;
+
+function getBasePositionForPlacement(
+  placement: PopperPlacement,
+  anchorPosition: Vector2,
+  anchorSize: Vector2,
+  contentSize: Vector2,
+  out: XY,
+): XY {
+  if (placement === "top") {
+    out.x = anchorPosition.X + anchorSize.X / 2 - contentSize.X / 2;
+    out.y = anchorPosition.Y - contentSize.Y;
+    return out;
+  }
+
+  if (placement === "left") {
+    out.x = anchorPosition.X - contentSize.X;
+    out.y = anchorPosition.Y + anchorSize.Y / 2 - contentSize.Y / 2;
+    return out;
+  }
+
+  if (placement === "right") {
+    out.x = anchorPosition.X + anchorSize.X;
+    out.y = anchorPosition.Y + anchorSize.Y / 2 - contentSize.Y / 2;
+    return out;
+  }
+
+  out.x = anchorPosition.X + anchorSize.X / 2 - contentSize.X / 2;
+  out.y = anchorPosition.Y + anchorSize.Y;
+  return out;
+}
+
+function applyPlacementOffsets(placement: PopperPlacement, sideOffset: number, alignOffset: number, out: XY): XY {
+  if (placement === "top") {
+    out.x += alignOffset;
+    out.y -= sideOffset;
+    return out;
+  }
+
+  if (placement === "left") {
+    out.x -= sideOffset;
+    out.y += alignOffset;
+    return out;
+  }
+
+  if (placement === "right") {
+    out.x += sideOffset;
+    out.y += alignOffset;
+    return out;
+  }
+
+  out.x += alignOffset;
+  out.y += sideOffset;
+  return out;
+}
+
 function getPositionForPlacement(
   placement: PopperPlacement,
   anchorPosition: Vector2,
   anchorSize: Vector2,
   contentSize: Vector2,
-  offset: Vector2,
+  sideOffset: number,
+  alignOffset: number,
   out: XY,
 ): XY {
-  if (placement === "top") {
-    out.x = anchorPosition.X + anchorSize.X / 2 - contentSize.X / 2 + offset.X;
-    out.y = anchorPosition.Y - contentSize.Y + offset.Y;
-    return out;
-  }
-
-  if (placement === "left") {
-    out.x = anchorPosition.X - contentSize.X + offset.X;
-    out.y = anchorPosition.Y + anchorSize.Y / 2 - contentSize.Y / 2 + offset.Y;
-    return out;
-  }
-
-  if (placement === "right") {
-    out.x = anchorPosition.X + anchorSize.X + offset.X;
-    out.y = anchorPosition.Y + anchorSize.Y / 2 - contentSize.Y / 2 + offset.Y;
-    return out;
-  }
-
-  out.x = anchorPosition.X + anchorSize.X / 2 - contentSize.X / 2 + offset.X;
-  out.y = anchorPosition.Y + anchorSize.Y + offset.Y;
+  const basePosition = getBasePositionForPlacement(placement, anchorPosition, anchorSize, contentSize, out);
+  applyPlacementOffsets(placement, sideOffset, alignOffset, basePosition);
   return out;
 }
 
@@ -107,6 +147,14 @@ function getPlacementOrder(requested: PopperPlacement): PopperPlacement[] {
   ];
 }
 
+function getPlacementPenalty(requested: PopperPlacement, placement: PopperPlacement) {
+  if (placement === requested || placement === OPPOSITE_PLACEMENTS[requested]) {
+    return 0;
+  }
+
+  return ORTHOGONAL_PLACEMENT_PENALTY;
+}
+
 function getAnchorPointForPlacement(placement: PopperPlacement): Vector2 {
   if (placement === "top") return new Vector2(0.5, 1);
   if (placement === "bottom") return new Vector2(0.5, 0);
@@ -115,39 +163,63 @@ function getAnchorPointForPlacement(placement: PopperPlacement): Vector2 {
 }
 
 export function computePopper(input: ComputePopperInput): ComputePopperResult {
-  const requested = input.placement ?? "bottom";
-  const offset = input.offset ?? new Vector2(0, 0);
-  const padding = input.padding ?? 8;
+  const normalized = normalizePopperPositioningOptions(input);
+  const requested = normalized.placement;
 
   let bestPlacement = requested;
   let bestPos = { x: 0, y: 0 };
   let bestScore = -1; // -1 indicates unset
+  let bestOverflow = math.huge;
 
   const order = getPlacementOrder(requested);
 
   for (const placement of order) {
-    const pos = getPositionForPlacement(placement, input.anchorPosition, input.anchorSize, input.contentSize, offset, {
-      x: 0,
-      y: 0,
-    });
+    const pos = getPositionForPlacement(
+      placement,
+      input.anchorPosition,
+      input.anchorSize,
+      input.contentSize,
+      normalized.sideOffset,
+      normalized.alignOffset,
+      {
+        x: 0,
+        y: 0,
+      },
+    );
 
-    const score = getOverflowDistance(pos.x, pos.y, input.contentSize, input.viewportRect, padding);
+    const overflow = getOverflowDistance(
+      pos.x,
+      pos.y,
+      input.contentSize,
+      input.viewportRect,
+      normalized.collisionPadding,
+    );
+    const score = overflow + getPlacementPenalty(requested, placement);
 
     if (score === 0) {
       bestPlacement = placement;
       bestPos = pos;
+      bestOverflow = overflow;
       break; // Perfect fit, use immediately
     }
 
-    if (bestScore === -1 || score < bestScore) {
+    if (bestScore === -1 || score < bestScore || (score === bestScore && overflow < bestOverflow)) {
       bestPlacement = placement;
       bestPos = pos;
       bestScore = score;
+      bestOverflow = overflow;
     }
   }
 
   // Clamp the least-bad candidate
-  const clamped = clampToViewport(bestPos.x, bestPos.y, input.contentSize, input.viewportRect, padding, { x: 0, y: 0 });
+  const clamped = clampToViewport(
+    bestPos.x,
+    bestPos.y,
+    input.contentSize,
+    input.viewportRect,
+    normalized.collisionPadding,
+    { x: 0, y: 0 },
+  );
 
   // Derive meaningful attachment metadata
   const anchorPoint = getAnchorPointForPlacement(bestPlacement);

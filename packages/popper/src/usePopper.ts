@@ -1,11 +1,13 @@
 import React from "@rbxts/react";
 import { computePopper } from "./compute";
 import { subscribeAnchor, subscribeContent, subscribeViewport } from "./observers";
+import { normalizePopperPositioningOptions } from "./options";
 import type { ComputePopperResult, UsePopperOptions, UsePopperResult } from "./types";
 
 const WorkspaceService = game.GetService("Workspace");
 const RunService = game.GetService("RunService");
 const GuiService = game.GetService("GuiService");
+const ZERO_VECTOR2 = new Vector2(0, 0);
 
 function readGuiRef(ref: UsePopperOptions["anchorRef"] | UsePopperOptions["contentRef"]): GuiObject | undefined {
   return ref.current;
@@ -17,6 +19,10 @@ function getDefaultComputedResult(placement: UsePopperOptions["placement"]): Com
     placement: placement ?? "bottom",
     position: UDim2.fromOffset(0, 0),
   };
+}
+
+function areVector2Equal(a: Vector2, b: Vector2) {
+  return a.X === b.X && a.Y === b.Y;
 }
 
 function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {
@@ -57,9 +63,14 @@ function getViewportRect(node: GuiObject | undefined): Rect {
 
 export function usePopper(options: UsePopperOptions): UsePopperResult {
   const enabled = options.enabled ?? true;
-  const [computedResult, setComputedResult] = React.useState<ComputePopperResult>(() =>
-    getDefaultComputedResult(options.placement),
+  const normalizedOptions = React.useMemo(
+    () => normalizePopperPositioningOptions(options),
+    [options.alignOffset, options.collisionPadding, options.placement, options.sideOffset],
   );
+  const [computedResult, setComputedResult] = React.useState<ComputePopperResult>(() =>
+    getDefaultComputedResult(normalizedOptions.placement),
+  );
+  const [contentSize, setContentSize] = React.useState<Vector2>(ZERO_VECTOR2);
   const [isPositioned, setIsPositioned] = React.useState(false);
 
   const update = React.useCallback(() => {
@@ -70,19 +81,22 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
     const anchor = readGuiRef(options.anchorRef);
     const content = readGuiRef(options.contentRef);
     if (!anchor) {
+      setContentSize((current) => (areVector2Equal(current, ZERO_VECTOR2) ? current : ZERO_VECTOR2));
       setIsPositioned(false);
       return;
     }
 
     if (!content) {
+      setContentSize((current) => (areVector2Equal(current, ZERO_VECTOR2) ? current : ZERO_VECTOR2));
       const viewportRect = getViewportRect(anchor);
       const nextResult = computePopper({
         anchorPosition: anchor.AbsolutePosition,
         anchorSize: anchor.AbsoluteSize,
-        contentSize: new Vector2(0, 0),
-        offset: options.offset,
-        padding: options.padding,
-        placement: options.placement,
+        contentSize: ZERO_VECTOR2,
+        alignOffset: normalizedOptions.alignOffset,
+        collisionPadding: normalizedOptions.collisionPadding,
+        placement: normalizedOptions.placement,
+        sideOffset: normalizedOptions.sideOffset,
         viewportRect,
       });
 
@@ -91,20 +105,32 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
       return;
     }
 
+    const measuredContentSize = content.AbsoluteSize;
+    setContentSize((current) => (areVector2Equal(current, measuredContentSize) ? current : measuredContentSize));
+
     const viewportRect = getViewportRect(content ?? anchor);
     const nextResult = computePopper({
       anchorPosition: anchor.AbsolutePosition,
       anchorSize: anchor.AbsoluteSize,
-      contentSize: content.AbsoluteSize,
-      offset: options.offset,
-      padding: options.padding,
-      placement: options.placement,
+      contentSize: measuredContentSize,
+      alignOffset: normalizedOptions.alignOffset,
+      collisionPadding: normalizedOptions.collisionPadding,
+      placement: normalizedOptions.placement,
+      sideOffset: normalizedOptions.sideOffset,
       viewportRect,
     });
 
     setComputedResult((currentResult) => (areResultsEqual(currentResult, nextResult) ? currentResult : nextResult));
     setIsPositioned(true);
-  }, [enabled, options.anchorRef, options.contentRef, options.offset, options.padding, options.placement]);
+  }, [
+    enabled,
+    normalizedOptions.alignOffset,
+    normalizedOptions.collisionPadding,
+    normalizedOptions.placement,
+    normalizedOptions.sideOffset,
+    options.anchorRef,
+    options.contentRef,
+  ]);
 
   React.useLayoutEffect(() => {
     update();
@@ -113,6 +139,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
   React.useLayoutEffect(() => {
     if (!enabled) {
       setIsPositioned(false);
+      setContentSize((current) => (areVector2Equal(current, ZERO_VECTOR2) ? current : ZERO_VECTOR2));
     }
   }, [enabled]);
 
@@ -174,9 +201,10 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
   return React.useMemo(
     () => ({
       ...computedResult,
+      contentSize,
       isPositioned,
       update,
     }),
-    [computedResult, isPositioned, update],
+    [computedResult, contentSize, isPositioned, update],
   );
 }

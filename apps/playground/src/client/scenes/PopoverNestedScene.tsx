@@ -40,7 +40,7 @@ export function PopoverNestedScene() {
         </Popover.Trigger>
 
         <Popover.Portal>
-          <Popover.Content asChild offset={new Vector2(0, 10)} placement="bottom">
+          <Popover.Content asChild sideOffset={10} placement="bottom">
             <frame BackgroundColor3={Color3.fromRGB(31, 42, 58)} BorderSizePixel={0} Size={UDim2.fromOffset(360, 220)}>
               <uicorner CornerRadius={new UDim(0, 9)} />
               <uipadding PaddingLeft={new UDim(0, 12)} PaddingRight={new UDim(0, 12)} PaddingTop={new UDim(0, 10)} />
@@ -68,7 +68,7 @@ export function PopoverNestedScene() {
                 </Popover.Trigger>
 
                 <Popover.Portal>
-                  <Popover.Content asChild offset={new Vector2(0, 8)} placement="right">
+                  <Popover.Content asChild alignOffset={8} placement="right">
                     <frame
                       BackgroundColor3={Color3.fromRGB(56, 36, 80)}
                       BorderSizePixel={0}

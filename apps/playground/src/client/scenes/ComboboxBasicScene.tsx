@@ -92,7 +92,7 @@ export function ComboboxBasicScene() {
           </frame>
 
           <Combobox.Portal>
-            <Combobox.Content asChild offset={new Vector2(0, 8)} placement="bottom">
+            <Combobox.Content asChild sideOffset={8} placement="bottom">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                   Size: UDim2.fromOffset(320, 128),

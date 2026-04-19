@@ -71,7 +71,7 @@ export function MenuBasicScene() {
           />
 
           <Menu.Portal>
-            <Menu.Content asChild offset={new Vector2(0, 8)} placement="bottom">
+            <Menu.Content asChild sideOffset={8} placement="bottom">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                   Size: UDim2.fromOffset(240, 208),

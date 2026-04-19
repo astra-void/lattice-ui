@@ -295,7 +295,7 @@ export = () => {
                   <textlabel />
                 </Select.Value>
                 <Select.Portal>
-                  <Select.Content asChild padding={8} placement="bottom">
+                  <Select.Content asChild collisionPadding={8} placement="bottom">
                     <frame BackgroundTransparency={1} Size={UDim2.fromOffset(140, 80)} ref={contentRef}>
                       <textlabel Text="select-motion-content" />
                     </frame>

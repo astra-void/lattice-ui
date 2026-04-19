@@ -92,7 +92,7 @@ export function SelectBasicScene() {
             </Select.Trigger>
 
             <Select.Portal>
-              <Select.Content asChild offset={new Vector2(0, 8)} placement="bottom">
+              <Select.Content asChild sideOffset={8} placement="bottom">
                 <frame
                   {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                     Size: UDim2.fromOffset(320, 176),
@@ -209,7 +209,7 @@ export function SelectBasicScene() {
             </Select.Trigger>
 
             <Select.Portal>
-              <Select.Content asChild offset={new Vector2(0, 8)} placement="bottom">
+              <Select.Content asChild sideOffset={8} placement="bottom">
                 <frame
                   {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                     Size: UDim2.fromOffset(320, 126),

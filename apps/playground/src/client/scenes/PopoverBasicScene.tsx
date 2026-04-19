@@ -41,7 +41,7 @@ export function PopoverBasicScene() {
         </Popover.Trigger>
 
         <Popover.Portal>
-          <Popover.Content asChild offset={new Vector2(0, 10)} placement="bottom">
+          <Popover.Content asChild sideOffset={10} placement="bottom">
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Size: UDim2.fromOffset(300, 180),

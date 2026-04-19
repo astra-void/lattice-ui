@@ -47,7 +47,7 @@ export function TooltipFollowScene() {
         </Tooltip.Trigger>
 
         <Tooltip.Portal>
-          <Tooltip.Content asChild offset={new Vector2(0, 8)} placement="top">
+          <Tooltip.Content asChild sideOffset={-8} placement="top">
             <frame BackgroundColor3={Color3.fromRGB(31, 36, 50)} BorderSizePixel={0} Size={UDim2.fromOffset(220, 70)}>
               <uicorner CornerRadius={new UDim(0, 8)} />
               <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} PaddingTop={new UDim(0, 8)} />

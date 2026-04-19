@@ -27,19 +27,136 @@ describe("computePopper", () => {
     expect(offsets(result.position)).toEqual({ x: 60, y: 60 });
   });
 
-  it("applies explicit placement and offset", () => {
+  it("keeps bottom placement centered for wrapper origin and visible content edge", () => {
+    const anchorPosition = vector2(300, 200);
+    const anchorSize = vector2(100, 30);
+    const contentSize = vector2(200, 100);
+
+    const result = computePopper({
+      anchorPosition,
+      anchorSize,
+      contentSize,
+      viewportRect: new Rect(0, 0, 1200, 800),
+      placement: "bottom",
+    });
+
+    const resolvedPosition = offsets(result.position);
+    const wrapperOriginLeft = resolvedPosition.x - result.anchorPoint.X * contentSize.X;
+    const visibleContentLeft = wrapperOriginLeft + 0; // inner content remains at local x=0
+    const expectedCenteredLeft = anchorPosition.X + anchorSize.X / 2 - contentSize.X / 2;
+
+    expect(result.placement).toBe("bottom");
+    expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
+    expect(wrapperOriginLeft).toBe(expectedCenteredLeft);
+    expect(visibleContentLeft).toBe(expectedCenteredLeft);
+  });
+
+  it("applies explicit placement with side and align offsets", () => {
     const result = computePopper({
       anchorPosition: vector2(80, 120),
       anchorSize: vector2(60, 20),
       contentSize: vector2(40, 30),
       viewportRect: new Rect(0, 0, 500, 500),
       placement: "top",
-      offset: vector2(3, -4),
+      sideOffset: 4,
+      alignOffset: 3,
     });
 
     expect(result.placement).toBe("top");
     expect(result.anchorPoint).toEqual(new Vector2(0.5, 1));
     expect(offsets(result.position)).toEqual({ x: 113, y: 116 });
+  });
+
+  it("applies sideOffset for bottom as a vertical gap", () => {
+    const result = computePopper({
+      anchorPosition: vector2(80, 120),
+      anchorSize: vector2(60, 20),
+      contentSize: vector2(40, 30),
+      viewportRect: new Rect(0, 0, 500, 500),
+      placement: "bottom",
+      sideOffset: 6,
+    });
+
+    expect(result.placement).toBe("bottom");
+    expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
+    expect(offsets(result.position)).toEqual({ x: 110, y: 146 });
+  });
+
+  it("keeps bottom sideOffset centered horizontally", () => {
+    const baseline = computePopper({
+      anchorPosition: vector2(80, 120),
+      anchorSize: vector2(60, 20),
+      contentSize: vector2(40, 30),
+      viewportRect: new Rect(0, 0, 500, 500),
+      placement: "bottom",
+    });
+
+    const withSideOffset = computePopper({
+      anchorPosition: vector2(80, 120),
+      anchorSize: vector2(60, 20),
+      contentSize: vector2(40, 30),
+      viewportRect: new Rect(0, 0, 500, 500),
+      placement: "bottom",
+      sideOffset: 8,
+    });
+
+    expect(withSideOffset.placement).toBe("bottom");
+    expect(offsets(withSideOffset.position).x).toBe(offsets(baseline.position).x);
+    expect(offsets(withSideOffset.position).y).toBe(offsets(baseline.position).y + 8);
+  });
+
+  it("reinterprets sideOffset on the resolved side after bottom flips", () => {
+    const result = computePopper({
+      anchorPosition: vector2(100, 80),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(80, 170),
+      viewportRect: new Rect(0, 0, 240, 180),
+      placement: "bottom",
+      sideOffset: 12,
+      collisionPadding: 0,
+    });
+
+    expect(result.placement).toBe("right");
+    expect(result.anchorPoint).toEqual(new Vector2(0, 0.5));
+    expect(offsets(result.position)).toEqual({ x: 132, y: 90 });
+  });
+
+  it("applies alignOffset only on the cross axis", () => {
+    const withoutAlign = computePopper({
+      anchorPosition: vector2(50, 50),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(40, 30),
+      viewportRect: new Rect(0, 0, 500, 500),
+      placement: "right",
+      sideOffset: 5,
+    });
+
+    const withAlign = computePopper({
+      anchorPosition: vector2(50, 50),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(40, 30),
+      viewportRect: new Rect(0, 0, 500, 500),
+      placement: "right",
+      sideOffset: 5,
+      alignOffset: 7,
+    });
+
+    expect(withAlign.placement).toBe("right");
+    expect(offsets(withAlign.position).x).toBe(offsets(withoutAlign.position).x);
+    expect(offsets(withAlign.position).y).toBe(offsets(withoutAlign.position).y + 7);
+  });
+
+  it("prefers opposite side over orthogonal fallback when improvement is small", () => {
+    const result = computePopper({
+      anchorPosition: vector2(88, 0),
+      anchorSize: vector2(20, 20),
+      contentSize: vector2(40, 40),
+      viewportRect: new Rect(0, 0, 100, 100),
+      placement: "top",
+      collisionPadding: 0,
+    });
+
+    expect(result.placement).toBe("bottom");
   });
 
   it("flips to fallback placement when primary placement overflows", () => {
@@ -63,24 +180,23 @@ describe("computePopper", () => {
       contentSize: vector2(120, 140),
       viewportRect: new Rect(0, 0, 100, 100),
       placement: "right",
-      padding: 8,
+      collisionPadding: 8,
     });
 
-    // Content is larger than viewport. 'bottom' ends up with less overflow (65) than 'right' (75).
-    // Clamped TopLeft is (8, 8). For bottom, anchorPoint is (0.5, 0).
-    expect(result.placement).toBe("bottom");
-    expect(result.anchorPoint).toEqual(new Vector2(0.5, 0));
-    expect(offsets(result.position)).toEqual({ x: 68, y: 8 }); // 8 + 0.5*120, 8 + 0*140
+    // Content is larger than viewport. Position should still clamp within collision padding.
+    expect(result.placement).toBe("right");
+    expect(result.anchorPoint).toEqual(new Vector2(0, 0.5));
+    expect(offsets(result.position)).toEqual({ x: 8, y: 78 });
   });
 
-  it("respects padding while clamping near lower bounds", () => {
+  it("respects collisionPadding while clamping near lower bounds", () => {
     const result = computePopper({
       anchorPosition: vector2(4, 4),
       anchorSize: vector2(10, 10),
       contentSize: vector2(20, 20),
       viewportRect: new Rect(0, 0, 40, 40),
       placement: "left",
-      padding: 6,
+      collisionPadding: 6,
     });
 
     // 'right' is much better here because it avoids the left boundary entirely.
@@ -97,7 +213,7 @@ describe("computePopper", () => {
       contentSize: vector2(50, 150),
       viewportRect: new Rect(0, 0, 300, 200),
       placement: "top",
-      padding: 8,
+      collisionPadding: 8,
     });
 
     expect(result.placement).toBe("right");
@@ -111,7 +227,7 @@ describe("computePopper", () => {
       contentSize: vector2(190, 190),
       viewportRect: new Rect(0, 0, 200, 200),
       placement: "top",
-      padding: 8,
+      collisionPadding: 8,
     });
 
     expect(result.placement).toBe("bottom");
@@ -124,7 +240,7 @@ describe("computePopper", () => {
       contentSize: vector2(100, 100),
       viewportRect: new Rect(0, 0, 300, 300),
       placement: "right",
-      padding: 8,
+      collisionPadding: 8,
     });
 
     expect(result.placement).toBe("left");
@@ -138,7 +254,7 @@ describe("computePopper", () => {
       contentSize: vector2(500, 500),
       viewportRect: new Rect(0, 0, 200, 200),
       placement: "bottom",
-      padding: 8,
+      collisionPadding: 8,
     });
 
     expect(result.placement).toBe("bottom");
@@ -153,7 +269,7 @@ describe("computePopper", () => {
       contentSize: vector2(40, 40),
       viewportRect: new Rect(10, 10, 110, 110),
       placement: "top",
-      padding: 0,
+      collisionPadding: 0,
     });
 
     expect(result.placement).toBe("bottom");
@@ -166,7 +282,7 @@ describe("computePopper", () => {
       contentSize: vector2(50, 50),
       viewportRect: new Rect(20, 20, 120, 120),
       placement: "bottom",
-      padding: 0,
+      collisionPadding: 0,
     });
 
     expect(result.placement).toBe("bottom");

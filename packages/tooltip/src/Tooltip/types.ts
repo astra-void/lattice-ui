@@ -52,8 +52,9 @@ export type TooltipContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
   placement?: PopperPlacement;
-  offset?: Vector2;
-  padding?: number;
+  sideOffset?: number;
+  alignOffset?: number;
+  collisionPadding?: number;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;

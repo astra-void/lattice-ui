@@ -329,7 +329,7 @@ export = () => {
                 </Combobox.Input>
 
                 <Combobox.Portal>
-                  <Combobox.Content asChild forceMount offset={new Vector2(0, 6)} placement="bottom">
+                  <Combobox.Content asChild forceMount sideOffset={6} placement="bottom">
                     <frame Size={UDim2.fromOffset(180, 72)}>
                       <Combobox.Item asChild textValue="alpha" value="alpha">
                         <textbutton Selectable={true} Text="combobox-item-alpha-anchor" />

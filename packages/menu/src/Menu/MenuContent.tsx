@@ -29,8 +29,9 @@ function MenuContentImpl(props: {
   onExitComplete?: () => void;
   transition?: MenuContentProps["transition"];
   placement?: PopperPlacement;
-  offset?: Vector2;
-  padding?: number;
+  sideOffset?: number;
+  alignOffset?: number;
+  collisionPadding?: number;
   forceMount?: boolean;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
@@ -45,9 +46,10 @@ function MenuContentImpl(props: {
   const popper = usePopper({
     anchorRef: menuContext.triggerRef,
     contentRef: menuContext.contentRef,
+    alignOffset: props.alignOffset,
+    collisionPadding: props.collisionPadding,
+    sideOffset: props.sideOffset,
     placement: props.placement,
-    offset: props.offset,
-    padding: props.padding,
     enabled: shouldMeasure,
   });
 
@@ -82,6 +84,10 @@ function MenuContentImpl(props: {
   const shouldRender = motion.mounted;
   const contentVisible = shouldRender && (motion.present || motion.phase !== "exited");
   const popperPosition = popper.isPositioned ? popper.position : HIDDEN_POSITION;
+  const popperContentSize = (popper as { contentSize?: Vector2 }).contentSize ?? new Vector2(0, 0);
+  const popperWrapperSize = popper.isPositioned
+    ? UDim2.fromOffset(popperContentSize.X, popperContentSize.Y)
+    : UDim2.fromOffset(0, 0);
 
   const contentNode = props.asChild ? (
     (() => {
@@ -139,7 +145,7 @@ function MenuContentImpl(props: {
           BackgroundTransparency={1}
           BorderSizePixel={0}
           Position={popperPosition}
-          Size={UDim2.fromOffset(0, 0)}
+          Size={popperWrapperSize}
           Visible={shouldRender}
         >
           {contentNode}
@@ -159,8 +165,9 @@ export function MenuContent(props: MenuContentProps) {
         motionPresent={open}
         transition={props.transition}
         placement={props.placement}
-        offset={props.offset}
-        padding={props.padding}
+        sideOffset={props.sideOffset}
+        alignOffset={props.alignOffset}
+        collisionPadding={props.collisionPadding}
         forceMount={props.forceMount}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
@@ -180,8 +187,9 @@ export function MenuContent(props: MenuContentProps) {
           onExitComplete={state.onExitComplete}
           transition={props.transition}
           placement={props.placement}
-          offset={props.offset}
-          padding={props.padding}
+          sideOffset={props.sideOffset}
+          alignOffset={props.alignOffset}
+          collisionPadding={props.collisionPadding}
           forceMount={props.forceMount}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
