@@ -2,7 +2,11 @@ import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import { FocusScope } from "@lattice-ui/focus";
 import type { LayerInteractEvent } from "@lattice-ui/layer";
 import { DismissableLayer, Presence } from "@lattice-ui/layer";
-import { createCanvasGroupPopperEntranceRecipe, createPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/motion";
+import {
+  createCanvasGroupPopperEntranceRecipe,
+  createPopperEntranceRecipe,
+  usePresenceMotionController,
+} from "@lattice-ui/motion";
 import type { PopperPlacement } from "@lattice-ui/popper";
 import { usePopper } from "@lattice-ui/popper";
 import { usePopoverContext } from "./context";
@@ -53,12 +57,13 @@ function PopoverContentImpl(props: {
     enabled: shouldMeasure,
   });
 
+  const resolvedPlacement = popper.isPositioned ? popper.placement : (props.placement ?? "bottom");
   const defaultTransition = React.useMemo(
     () =>
       props.asChild
-        ? createPopperEntranceRecipe(popper.placement, CONTENT_OFFSET, 0.16)
-        : createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
-    [popper.placement, props.asChild],
+        ? createPopperEntranceRecipe(resolvedPlacement, CONTENT_OFFSET, 0.16)
+        : createCanvasGroupPopperEntranceRecipe(resolvedPlacement, CONTENT_OFFSET),
+    [resolvedPlacement, props.asChild],
   );
   const recipe = props.transition ?? defaultTransition;
 

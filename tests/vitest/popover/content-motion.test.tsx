@@ -241,7 +241,7 @@ afterEach(() => {
 });
 
 describe("Popover.Content motion host", () => {
-  it("keeps positioning on the outer host and animates the inner canvasgroup", () => {
+  it("keeps positioning on the outer host and animates asChild content relative to it", () => {
     const { getByTestId } = render(
       <Popover.Root open={true}>
         <Popover.Content asChild>
@@ -251,20 +251,16 @@ describe("Popover.Content motion host", () => {
     );
 
     const content = getByTestId("content");
-    const motionHost = content.parentElement as HTMLElement & Record<string, unknown>;
-    const outerHost = motionHost.parentElement as HTMLElement & Record<string, unknown>;
+    const outerHost = content.parentElement as HTMLElement & Record<string, unknown>;
 
-    expect(motionHost.tagName.toLowerCase()).toBe("canvasgroup");
     expect(outerHost.tagName.toLowerCase()).toBe("frame");
-    expect(motionHost.Position.Y.Offset).toBe(-10);
-    expect(motionHost.GroupTransparency).toBe(1);
+    expect(content.Position.Y.Offset).toBe(10);
 
     act(() => {
       runService.step(1);
     });
 
-    expect(motionHost.Position.Y.Offset).toBe(0);
-    expect(motionHost.GroupTransparency).toBe(0);
+    expect(content.Position.Y.Offset).toBe(0);
   });
 
   it("keeps bottom placement visually centered by matching wrapper and visible content left edge", () => {
@@ -284,7 +280,6 @@ describe("Popover.Content motion host", () => {
     );
 
     const content = getByTestId("content") as HTMLElement & Record<string, unknown>;
-    const motionHost = content.parentElement as HTMLElement & Record<string, unknown>;
     expect(capturedFrameProps.length).toBeGreaterThan(0);
     const wrapperProps = capturedFrameProps[capturedFrameProps.length - 1] as Record<string, unknown>;
     const wrapperSize = wrapperProps.Size as UDim2;
@@ -295,7 +290,7 @@ describe("Popover.Content motion host", () => {
     expect(wrapperSize.Y.Offset).toBe(100);
 
     const wrapperLeft = wrapperPosition.X.Offset - wrapperAnchorPoint.X * wrapperSize.X.Offset;
-    const visibleContentLeft = wrapperLeft + motionHost.Position.X.Offset;
+    const visibleContentLeft = wrapperLeft + (content.Position as UDim2).X.Offset;
 
     expect(wrapperLeft).toBe(250);
     expect(visibleContentLeft).toBe(250);

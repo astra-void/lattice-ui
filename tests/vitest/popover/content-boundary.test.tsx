@@ -102,6 +102,11 @@ vi.mock("@lattice-ui/motion", () => ({
     reveal: { values: {}, intent: {} },
     exit: { values: {}, intent: {} },
   }),
+  createPopperEntranceRecipe: () => ({
+    initial: {},
+    reveal: { values: {}, intent: {} },
+    exit: { values: {}, intent: {} },
+  }),
   usePresenceMotionController: () => ({
     ref: { current: undefined },
     phase: "visible",
@@ -141,12 +146,10 @@ describe("popover content boundary wiring", () => {
     );
 
     const content = getByTestId("content");
-    const contentHost = content.parentElement as HTMLElement;
-    const positionedWrapper = contentHost.parentElement as HTMLElement;
+    const positionedWrapper = content.parentElement as HTMLElement;
 
-    expect(contentHost.tagName.toLowerCase()).toBe("canvasgroup");
     expect(positionedWrapper.tagName.toLowerCase()).toBe("frame");
-    expect(positionedWrapper).not.toBe(contentHost);
-    expect((capturedLayerProps?.contentBoundaryRef as { current: unknown }).current).toBe(contentHost);
+    expect(positionedWrapper).not.toBe(content);
+    expect((capturedLayerProps?.contentBoundaryRef as { current: unknown }).current).toBe(content);
   });
 });
