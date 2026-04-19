@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!packages/cli/templates/init-lint"]
+    "includes": ["**", "!packages/cli/templates"]
   },
   "formatter": {
     "enabled": true,

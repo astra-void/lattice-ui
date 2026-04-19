@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Adopt placement-relative Popper positioning options (`placement`, `sideOffset`, `alignOffset`, and `collisionPadding`).
+- Expand `usePopper` positioning metadata to expose resolved placement/position state and measured content size (`position`, `anchorPoint`, `placement`, `contentSize`, `isPositioned`, and `update`).
+
 ### Fixed
 
+- Improve Popper placement resolution and viewport collision handling, including flip/clamp behavior near viewport edges.
+- Keep overlay content visually centered by sizing the positioned wrapper from measured content size.
+- Strengthen regression coverage for Popper/Popover consumer-level placement behavior.
 - Keep Select, Popover, Menu, and Combobox content mounted while motion is active so exit animations finish cleanly.
 - Keep Dialog motion scoped to the panel and make Popper placement resilient when refs are temporarily unavailable.
 - Normalize slider and switch thumb anchors so wrapped layouts keep animated thumbs aligned.

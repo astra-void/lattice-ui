@@ -16,7 +16,7 @@ These packages represent the long-term stable direction of Lattice UI and are th
 
 These packages are available, but should still be treated as experimental, evolving, or intentionally limited in scope:
 
-- `popper` - early positioning foundation
+- `popper` - experimental positioning foundation with placement-relative offsets and viewport collision handling
 - `select` - currently single-value only
 - `slider` - currently single-thumb only
 
