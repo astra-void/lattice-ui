@@ -29,7 +29,7 @@ function hasMeasuredContentSize(contentSize: Vector2) {
   return contentSize.X > 0 || contentSize.Y > 0;
 }
 
-function findNearestScreenGui(node: GuiObject | undefined) {
+function _findNearestScreenGui(node: GuiObject | undefined) {
   let current: Instance | undefined = node;
   while (current) {
     if (current.IsA("ScreenGui")) {
