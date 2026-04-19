@@ -12,10 +12,7 @@ import type { DialogContentProps } from "./types";
 
 type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
 
-function mergeRecord(
-  base: Record<string, unknown> | undefined,
-  override: Record<string, unknown> | undefined,
-) {
+function mergeRecord(base: Record<string, unknown> | undefined, override: Record<string, unknown> | undefined) {
   return {
     ...(base ?? {}),
     ...(override ?? {}),
