@@ -11,6 +11,7 @@ export type TimedDriverConfig = {
 
 export type FollowDriverConfig = {
   halfLife: number;
+  settleAfter: number;
   precision: number;
 };
 
@@ -89,11 +90,12 @@ export function resolveResponseDriver(intent?: MotionIntent): FollowDriverConfig
   });
 
   if (duration <= 0) {
-    return { halfLife: 0, precision: 0.0005 };
+    return { halfLife: 0, settleAfter: 0, precision: 0.0005 };
   }
 
   return {
     halfLife: duration * (tone === "responsive" ? 0.35 : tone === "expressive" ? 0.28 : 0.45),
+    settleAfter: duration * 2.5,
     precision: 0.0005,
   };
 }

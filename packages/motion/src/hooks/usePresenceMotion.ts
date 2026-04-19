@@ -31,6 +31,7 @@ export function usePresenceMotionController<T extends Instance = Instance>(
   const onExitCompleteRef = React.useRef(options.onExitComplete);
   const motionHostRef = React.useRef<MotionHost>();
   const setupGenerationRef = React.useRef(0);
+  const completedExitGenerationRef = React.useRef<number>();
   const hasEnteredRef = React.useRef(false);
   const phaseRef = React.useRef<PresenceMotionPhase>(options.present ? "mounted" : "exited");
   const [phase, setPhaseState] = React.useState<PresenceMotionPhase>(phaseRef.current);
@@ -75,6 +76,11 @@ export function usePresenceMotionController<T extends Instance = Instance>(
         return;
       }
 
+      if (completedExitGenerationRef.current === generation) {
+        return;
+      }
+      completedExitGenerationRef.current = generation;
+
       hasEnteredRef.current = false;
       setPhase("exited");
       onExitCompleteRef.current?.();
@@ -116,7 +122,8 @@ export function usePresenceMotionController<T extends Instance = Instance>(
       const motion = motionHostRef.current;
 
       if (options.present) {
-        const entering = !hasEnteredRef.current || phaseRef.current === "exited" || phaseRef.current === "exiting";
+        completedExitGenerationRef.current = undefined;
+        const entering = !hasEnteredRef.current || phaseRef.current !== "visible";
 
         if (entering) {
           setPhase("mounted");

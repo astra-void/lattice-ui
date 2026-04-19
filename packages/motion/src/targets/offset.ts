@@ -1,21 +1,23 @@
 export type MotionPlacement = "top" | "bottom" | "left" | "right";
 
 export function createPlacementOffset(placement: MotionPlacement | undefined, distance: number) {
-  if (placement === "top") {
+  const resolvedPlacement = placement ?? "bottom";
+
+  if (resolvedPlacement === "top") {
     return UDim2.fromOffset(0, -distance);
   }
 
-  if (placement === "bottom") {
+  if (resolvedPlacement === "bottom") {
     return UDim2.fromOffset(0, distance);
   }
 
-  if (placement === "left") {
+  if (resolvedPlacement === "left") {
     return UDim2.fromOffset(-distance, 0);
   }
 
-  if (placement === "right") {
+  if (resolvedPlacement === "right") {
     return UDim2.fromOffset(distance, 0);
   }
 
-  return UDim2.fromOffset(0, -distance);
+  return UDim2.fromOffset(0, distance);
 }

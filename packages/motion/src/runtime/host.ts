@@ -36,6 +36,7 @@ type MotionTrack =
       target: unknown;
       current: unknown;
       applied: unknown;
+      elapsed: number;
       config: FollowDriverConfig;
     };
 
@@ -147,10 +148,15 @@ export class MotionHost {
           finished = true;
         }
       } else {
+        track.elapsed += dt;
         const alpha = track.config.halfLife <= 0 ? 1 : 1 - math.pow(2, -dt / track.config.halfLife);
 
         nextValue = interpolateMotionValue(track.current, track.target, alpha, this.createContext(track, track.key));
-        if (isMotionValueSettled(nextValue, track.target, track.config.precision)) {
+        if (
+          track.config.settleAfter <= 0 ||
+          track.elapsed >= track.config.settleAfter ||
+          isMotionValueSettled(nextValue, track.target, track.config.precision)
+        ) {
           nextValue = track.target;
           finished = true;
         }
@@ -345,6 +351,7 @@ export class MotionHost {
       target,
       current,
       applied: current,
+      elapsed: 0,
       config,
     });
 
