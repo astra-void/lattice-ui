@@ -23,6 +23,7 @@ export type ComboboxContextValue = {
   value?: string;
   setValue: ComboboxSetValue;
   inputValue: string;
+  queryValue: string;
   setInputValue: ComboboxSetInputValue;
   syncInputFromValue: () => void;
   disabled: boolean;

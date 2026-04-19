@@ -39,6 +39,7 @@ export function ComboboxRoot(props: ComboboxProps) {
     defaultValue: props.defaultInputValue ?? "",
     onChange: props.onInputValueChange,
   });
+  const [visibleQueryValue, setVisibleQueryValue] = React.useState(inputValue);
 
   const disabled = props.disabled === true;
   const readOnly = props.readOnly === true;
@@ -131,15 +132,15 @@ export function ComboboxRoot(props: ComboboxProps) {
         return;
       }
 
-      if (
-        programmaticInputValueRef.current !== undefined &&
-        nextInputValue === programmaticInputValueRef.current
-      ) {
+      if (programmaticInputValueRef.current !== undefined && nextInputValue === programmaticInputValueRef.current) {
         programmaticInputValueRef.current = undefined;
         return;
       }
 
       programmaticInputValueRef.current = undefined;
+      setVisibleQueryValue((currentQueryValue) =>
+        currentQueryValue === nextInputValue ? currentQueryValue : nextInputValue,
+      );
 
       if (nextInputValue === inputValue) {
         return;
@@ -173,7 +174,10 @@ export function ComboboxRoot(props: ComboboxProps) {
     }
 
     syncInputFromValue();
-  }, [open, syncInputFromValue, value]);
+    setVisibleQueryValue((currentQueryValue) => (currentQueryValue === inputValue ? currentQueryValue : inputValue));
+  }, [inputValue, open, syncInputFromValue, value]);
+
+  const queryValue = open ? visibleQueryValue : inputValue;
 
   const contextValue = React.useMemo(
     () => ({
@@ -182,6 +186,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       value,
       setValue,
       inputValue,
+      queryValue,
       setInputValue,
       syncInputFromValue,
       disabled,
@@ -201,6 +206,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       getItemText,
       inputValue,
       open,
+      queryValue,
       readOnly,
       registerItem,
       required,
@@ -210,6 +216,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       setValue,
       syncInputFromValue,
       value,
+      visibleQueryValue,
     ],
   );
 

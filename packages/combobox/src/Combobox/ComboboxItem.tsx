@@ -8,10 +8,7 @@ let nextItemOrder = 0;
 export function ComboboxItem(props: ComboboxItemProps) {
   const comboboxContext = useComboboxContext();
   const textValue = props.textValue ?? props.value;
-  const visibleQuery = comboboxContext.open
-    ? (comboboxContext.inputRef.current?.Text ?? comboboxContext.inputValue)
-    : comboboxContext.inputValue;
-  const itemQueryMatch = comboboxContext.filterFn(textValue, visibleQuery);
+  const itemQueryMatch = comboboxContext.filterFn(textValue, comboboxContext.queryValue);
   const disabled = comboboxContext.disabled || props.disabled === true;
   const interactionDisabled = disabled || !itemQueryMatch;
 

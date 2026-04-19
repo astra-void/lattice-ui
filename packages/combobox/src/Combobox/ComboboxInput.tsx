@@ -49,10 +49,6 @@ export function ComboboxInput(props: ComboboxInputProps) {
         return;
       }
 
-      if (comboboxContext.open && comboboxContext.value !== undefined && lastInputValueRef.current !== "" && textBox.Text === "") {
-        return;
-      }
-
       if (disabled || readOnly) {
         if (textBox.Text !== lastInputValueRef.current) {
           textBox.Text = lastInputValueRef.current;
