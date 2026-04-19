@@ -25,6 +25,10 @@ function areVector2Equal(a: Vector2, b: Vector2) {
   return a.X === b.X && a.Y === b.Y;
 }
 
+function hasMeasuredContentSize(contentSize: Vector2) {
+  return contentSize.X > 0 || contentSize.Y > 0;
+}
+
 function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {
   return (
     a.placement === b.placement &&
@@ -121,7 +125,7 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
     });
 
     setComputedResult((currentResult) => (areResultsEqual(currentResult, nextResult) ? currentResult : nextResult));
-    setIsPositioned(true);
+    setIsPositioned(hasMeasuredContentSize(measuredContentSize));
   }, [
     enabled,
     normalizedOptions.alignOffset,
@@ -151,50 +155,56 @@ export function usePopper(options: UsePopperOptions): UsePopperResult {
     let disconnectAnchor: (() => void) | undefined;
     let disconnectContent: (() => void) | undefined;
     let disconnectViewport: (() => void) | undefined;
-    let waitForRefsConnection: RBXScriptConnection | undefined;
-    let attached = false;
+    let observedAnchor: GuiObject | undefined;
+    let observedContent: GuiObject | undefined;
 
-    const attachObservers = () => {
-      if (attached) {
-        return true;
-      }
+    const detachObservers = () => {
+      disconnectAnchor?.();
+      disconnectAnchor = undefined;
 
+      disconnectContent?.();
+      disconnectContent = undefined;
+
+      disconnectViewport?.();
+      disconnectViewport = undefined;
+
+      observedAnchor = undefined;
+      observedContent = undefined;
+    };
+
+    const syncObservers = () => {
       const anchor = readGuiRef(options.anchorRef);
       const content = readGuiRef(options.contentRef);
+
       if (!anchor || !content) {
-        return false;
+        if (observedAnchor || observedContent) {
+          detachObservers();
+          update();
+        }
+        return;
       }
+
+      if (anchor === observedAnchor && content === observedContent) {
+        return;
+      }
+
+      detachObservers();
 
       disconnectAnchor = subscribeAnchor(anchor, update);
       disconnectContent = subscribeContent(content, update);
       disconnectViewport = subscribeViewport(content, update);
-      attached = true;
-      return true;
+      observedAnchor = anchor;
+      observedContent = content;
+      update();
     };
 
-    if (!attachObservers()) {
-      waitForRefsConnection = RunService.Heartbeat.Connect(() => {
-        if (attachObservers()) {
-          if (waitForRefsConnection) {
-            waitForRefsConnection.Disconnect();
-            waitForRefsConnection = undefined;
-          }
-          update();
-        }
-      });
-    } else {
-      update();
-    }
+    update();
+    syncObservers();
+    const syncConnection = RunService.Heartbeat.Connect(syncObservers);
 
     return () => {
-      if (waitForRefsConnection) {
-        waitForRefsConnection.Disconnect();
-        waitForRefsConnection = undefined;
-      }
-
-      disconnectAnchor?.();
-      disconnectContent?.();
-      disconnectViewport?.();
+      syncConnection.Disconnect();
+      detachObservers();
     };
   }, [enabled, options.anchorRef, options.contentRef, update]);
 

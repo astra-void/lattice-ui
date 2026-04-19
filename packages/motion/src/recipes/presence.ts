@@ -21,7 +21,7 @@ export function createSurfaceRevealRecipe(offsetY = 4, duration = 0.12): Presenc
         Position: UDim2.fromOffset(0, offsetY),
         BackgroundTransparency: 1,
       },
-      intent: { duration: duration * 0.75, tempo: "swift", tone: "calm" },
+      intent: { duration, tempo: "swift", tone: "calm" },
     },
   };
 }
@@ -45,7 +45,7 @@ export function createCanvasGroupRevealRecipe(offsetY = 4, duration = 0.12): Pre
         Position: UDim2.fromOffset(0, offsetY),
         GroupTransparency: 1,
       },
-      intent: { duration: duration * 0.75, tempo: "swift", tone: "calm" },
+      intent: { duration, tempo: "swift", tone: "calm" },
     },
   };
 }

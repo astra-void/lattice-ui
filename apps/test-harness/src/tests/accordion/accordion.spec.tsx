@@ -10,7 +10,12 @@ const STATIC_TRANSITION: PresenceMotionConfig = {
   exit: { values: {} },
 };
 
-function renderAccordion(value?: string) {
+const NO_EXIT_TRANSITION: PresenceMotionConfig = {
+  initial: {},
+  reveal: { values: {} },
+};
+
+function renderAccordion(value?: string, transition?: PresenceMotionConfig) {
   return (
     <Accordion.Root type="single" value={value}>
       <Accordion.Item value="alpha">
@@ -19,7 +24,7 @@ function renderAccordion(value?: string) {
             <textbutton Selectable={true} Text="accordion-trigger-alpha" />
           </Accordion.Trigger>
         </Accordion.Header>
-        <Accordion.Content asChild>
+        <Accordion.Content asChild transition={transition}>
           <textlabel Text="accordion-content-alpha" />
         </Accordion.Content>
       </Accordion.Item>
@@ -30,7 +35,7 @@ function renderAccordion(value?: string) {
             <textbutton Selectable={true} Text="accordion-trigger-beta" />
           </Accordion.Trigger>
         </Accordion.Header>
-        <Accordion.Content asChild>
+        <Accordion.Content asChild transition={transition}>
           <textlabel Text="accordion-content-beta" />
         </Accordion.Content>
       </Accordion.Item>
@@ -40,8 +45,8 @@ function renderAccordion(value?: string) {
 
 export = () => {
   describe("accordion", () => {
-    it("shows controlled single item content", () => {
-      withReactHarness("AccordionControlled", (harness) => {
+    it("keeps previous controlled content mounted while exit motion is in progress", () => {
+      withReactHarness("AccordionControlledExitInProgress", (harness) => {
         harness.render(renderAccordion("alpha"));
 
         waitForEffects(2);
@@ -52,10 +57,46 @@ export = () => {
 
         harness.render(renderAccordion("beta"));
         waitForEffects(2);
+        const alphaDuringExit = findTextLabelByText(harness.container, "accordion-content-alpha");
+        const betaDuringExit = findTextLabelByText(harness.container, "accordion-content-beta");
+        assert(
+          alphaDuringExit !== undefined,
+          "Previous content should remain mounted while its exit motion is running.",
+        );
+        assert(betaDuringExit !== undefined, "Newly selected content should mount during the previous item's exit.");
+      });
+    });
+
+    it("unmounts previous controlled content after exit motion completes", () => {
+      withReactHarness("AccordionControlledExitComplete", (harness) => {
+        harness.render(renderAccordion("alpha"));
+        waitForEffects(2);
+
+        harness.render(renderAccordion("beta"));
+        waitForEffects(2);
+
+        task.wait(0.15);
+        waitForEffects(2);
+
         const alphaAfter = findTextLabelByText(harness.container, "accordion-content-alpha");
         const betaAfter = findTextLabelByText(harness.container, "accordion-content-beta");
-        assert(alphaAfter === undefined, "Previous content should unmount when controlled value changes.");
+        assert(alphaAfter === undefined, "Previous content should unmount after exit motion completes.");
         assert(betaAfter !== undefined, "Newly selected content should mount.");
+      });
+    });
+
+    it("unmounts previous controlled content immediately for static no-exit transitions", () => {
+      withReactHarness("AccordionControlledNoExitTransition", (harness) => {
+        harness.render(renderAccordion("alpha", NO_EXIT_TRANSITION));
+        waitForEffects(2);
+
+        harness.render(renderAccordion("beta", NO_EXIT_TRANSITION));
+        waitForEffects(2);
+
+        const alphaAfter = findTextLabelByText(harness.container, "accordion-content-alpha");
+        const betaAfter = findTextLabelByText(harness.container, "accordion-content-beta");
+        assert(alphaAfter === undefined, "Previous content should unmount immediately when no exit transition exists.");
+        assert(betaAfter !== undefined, "Newly selected content should mount with static no-exit transitions.");
       });
     });
 

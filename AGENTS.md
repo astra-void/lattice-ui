@@ -28,7 +28,6 @@ Primary goals of changes in this repository:
 - Do not rename packages, move large folders, or redesign public APIs unless the task explicitly requires it.
 - Prefer surgical fixes over architecture churn.
 - Keep user-facing behavior changes aligned with the existing package intent and maturity level.
-- Treat `popper`, `select`, and `slider` as more fragile / feature-limited surfaces than the main stable-direction packages.
 
 ## Headless UI philosophy
 

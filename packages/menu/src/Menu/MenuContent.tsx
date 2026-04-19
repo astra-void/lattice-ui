@@ -82,7 +82,7 @@ function MenuContentImpl(props: {
   }, [menuContext.setOpen]);
 
   const shouldRender = motion.mounted;
-  const contentVisible = shouldRender && (motion.present || motion.phase !== "exited");
+  const contentVisible = shouldRender && motion.present;
   const popperPosition = popper.isPositioned ? popper.position : HIDDEN_POSITION;
   const popperContentSize = (popper as { contentSize?: Vector2 }).contentSize ?? new Vector2(0, 0);
   const popperWrapperSize = popper.isPositioned

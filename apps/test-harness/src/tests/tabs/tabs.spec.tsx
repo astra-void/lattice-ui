@@ -1,9 +1,15 @@
 import { React } from "@lattice-ui/core";
+import type { PresenceMotionConfig } from "@lattice-ui/motion";
 import { Tabs } from "@lattice-ui/tabs";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
 const GuiService = game.GetService("GuiService");
+
+const NO_EXIT_TRANSITION: PresenceMotionConfig = {
+  initial: {},
+  reveal: { values: {} },
+};
 
 export = () => {
   describe("tabs", () => {
@@ -72,11 +78,20 @@ export = () => {
         const alphaAfterDisable = findTextLabelByText(harness.container, "tabs-content-alpha-fallback");
         const betaAfterDisable = findTextLabelByText(harness.container, "tabs-content-beta-fallback");
         assert(alphaAfterDisable !== undefined, "Tabs should fall back to the next enabled value.");
-        assert(betaAfterDisable === undefined, "Disabled selected tab content should unmount after fallback.");
+        assert(
+          betaAfterDisable !== undefined,
+          "Previously selected content should remain mounted while exit motion is in progress.",
+        );
+
+        task.wait(0.15);
+        waitForEffects(2);
+
+        const betaAfterExit = findTextLabelByText(harness.container, "tabs-content-beta-fallback");
+        assert(betaAfterExit === undefined, "Disabled selected tab content should unmount after exit completes.");
       });
     });
 
-    it("switches visible content when controlled value changes", () => {
+    it("keeps previous content mounted while controlled value exit motion is in progress", () => {
       withReactHarness("TabsContentSwitch", (harness) => {
         const renderControlledTabs = (value: string) => (
           <Tabs.Root value={value}>
@@ -111,12 +126,53 @@ export = () => {
         harness.render(renderControlledTabs("right"));
         waitForEffects(2);
         assert(
-          findTextLabelByText(harness.container, "tabs-content-left-controlled") === undefined,
-          "Left content should unmount when value switches to right.",
+          findTextLabelByText(harness.container, "tabs-content-left-controlled") !== undefined,
+          "Left content should remain mounted while exiting after value switches to right.",
         );
         assert(
           findTextLabelByText(harness.container, "tabs-content-right-controlled") !== undefined,
           "Right content should mount when value switches to right.",
+        );
+      });
+    });
+
+    it("unmounts previous content after controlled value exit motion completes", () => {
+      withReactHarness("TabsContentSwitchExitComplete", (harness) => {
+        const renderControlledTabs = (value: string) => (
+          <Tabs.Root value={value}>
+            <Tabs.List>
+              <Tabs.Trigger asChild value="left">
+                <textbutton Selectable={true} Text="tabs-trigger-left-controlled-exit" />
+              </Tabs.Trigger>
+              <Tabs.Trigger asChild value="right">
+                <textbutton Selectable={true} Text="tabs-trigger-right-controlled-exit" />
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content asChild value="left">
+              <textlabel Text="tabs-content-left-controlled-exit" />
+            </Tabs.Content>
+            <Tabs.Content asChild value="right">
+              <textlabel Text="tabs-content-right-controlled-exit" />
+            </Tabs.Content>
+          </Tabs.Root>
+        );
+
+        harness.render(renderControlledTabs("left"));
+        waitForEffects(2);
+
+        harness.render(renderControlledTabs("right"));
+        waitForEffects(2);
+
+        task.wait(0.15);
+        waitForEffects(2);
+
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-left-controlled-exit") === undefined,
+          "Left content should unmount after exit motion completes.",
+        );
+        assert(
+          findTextLabelByText(harness.container, "tabs-content-right-controlled-exit") !== undefined,
+          "Right content should remain mounted after the switch settles.",
         );
       });
     });
@@ -154,8 +210,16 @@ export = () => {
           "Focused trigger should immediately activate its tab content.",
         );
         assert(
+          findTextLabelByText(harness.container, "tabs-content-left-selection") !== undefined,
+          "Previous tab content should remain mounted while exit motion is running.",
+        );
+
+        task.wait(0.15);
+        waitForEffects(2);
+
+        assert(
           findTextLabelByText(harness.container, "tabs-content-left-selection") === undefined,
-          "Previous tab content should unmount after focused trigger activation.",
+          "Previous tab content should unmount after exit motion completes.",
         );
 
         GuiService.SelectedObject = undefined;
@@ -201,8 +265,8 @@ export = () => {
       });
     });
 
-    it("keeps content mounted during exit animation and unmounts after", () => {
-      withReactHarness("TabsExitAnimation", (harness) => {
+    it("unmounts previous content immediately when no exit transition is configured", () => {
+      withReactHarness("TabsNoExitTransition", (harness) => {
         const renderControlledTabs = (value: string) => (
           <Tabs.Root value={value}>
             <Tabs.List>
@@ -213,10 +277,10 @@ export = () => {
                 <textbutton Selectable={true} Text="tabs-trigger-right" />
               </Tabs.Trigger>
             </Tabs.List>
-            <Tabs.Content asChild value="left">
+            <Tabs.Content asChild transition={NO_EXIT_TRANSITION} value="left">
               <textlabel Text="tabs-content-left" />
             </Tabs.Content>
-            <Tabs.Content asChild value="right">
+            <Tabs.Content asChild transition={NO_EXIT_TRANSITION} value="right">
               <textlabel Text="tabs-content-right" />
             </Tabs.Content>
           </Tabs.Root>
@@ -231,19 +295,11 @@ export = () => {
         );
 
         harness.render(renderControlledTabs("right"));
-        waitForEffects(2); // React effects
-
-        assert(
-          findTextLabelByText(harness.container, "tabs-content-left") !== undefined,
-          "Left content should remain mounted immediately after switch due to exit animation.",
-        );
-
-        task.wait(0.15); // wait for 0.09s exit animation
         waitForEffects(2);
 
         assert(
           findTextLabelByText(harness.container, "tabs-content-left") === undefined,
-          "Left content should be unmounted after exit animation.",
+          "Left content should unmount immediately when no exit transition is configured.",
         );
         assert(
           findTextLabelByText(harness.container, "tabs-content-right") !== undefined,

@@ -35,7 +35,11 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
       }
 
       if (result.action === "open") {
-        tooltipContext.openWithDelay();
+        if (kind === "focus") {
+          tooltipContext.setOpen(true);
+        } else {
+          tooltipContext.openWithDelay();
+        }
         return;
       }
 

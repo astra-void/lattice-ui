@@ -13,7 +13,7 @@ import type { DialogContentProps } from "./types";
 type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
 
 function isMutableInstanceRef(ref: InstanceRef | undefined): ref is React.MutableRefObject<Instance | undefined> {
-  return typeIs(ref, "table") && "current" in ref;
+  return typeIs(ref, "table");
 }
 
 function setInstanceRef(ref: InstanceRef | undefined, value: Instance | undefined) {

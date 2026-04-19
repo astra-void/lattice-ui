@@ -1,5 +1,9 @@
 import { composeRefs, getElementRef, React } from "@lattice-ui/core";
-import { createToggleResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
+import {
+  motionTargets as motionTargetContracts,
+  type ResponseMotionConfig,
+  useResponseMotion,
+} from "@lattice-ui/motion";
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";
 
@@ -30,7 +34,13 @@ export function SwitchThumb(props: SwitchThumbProps) {
     }),
     [thumbSize],
   );
-  const motionConfig = React.useMemo(() => createToggleResponseRecipe(0.04), []);
+  const motionConfig = React.useMemo<ResponseMotionConfig>(
+    () => ({
+      target: motionTargetContracts.offsetWrapper("switch thumb response"),
+      settle: { duration: 0.1, tempo: "steady", tone: "responsive" },
+    }),
+    [],
+  );
 
   const motionRef = useResponseMotion<Frame>(switchContext.checked, motionTargets, motionConfig);
 

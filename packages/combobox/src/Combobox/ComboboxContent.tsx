@@ -40,6 +40,7 @@ function ComboboxContentImpl(props: {
   const comboboxContext = useComboboxContext();
   const open = comboboxContext.open;
   const shouldMeasure = open || props.motionPresent || props.onExitComplete !== undefined;
+  const contentBoundaryRef = React.useRef<GuiObject>();
 
   const popper = usePopper({
     anchorRef: comboboxContext.anchorRef,
@@ -69,6 +70,7 @@ function ComboboxContentImpl(props: {
     (instance: Instance | undefined) => {
       const guiObject = toGuiObject(instance);
       comboboxContext.contentRef.current = guiObject;
+      contentBoundaryRef.current = guiObject;
       motion.ref.current = guiObject;
     },
     [comboboxContext.contentRef, motion.ref],
@@ -135,6 +137,7 @@ function ComboboxContentImpl(props: {
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
+      contentBoundaryRef={contentBoundaryRef}
     >
       <frame
         AnchorPoint={popper.anchorPoint}

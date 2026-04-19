@@ -1,5 +1,9 @@
 import { React, Slot, useControllableState } from "@lattice-ui/core";
-import { createToggleResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
+import {
+  motionTargets as motionTargetContracts,
+  type ResponseMotionConfig,
+  useResponseMotion,
+} from "@lattice-ui/motion";
 import { SwitchContextProvider } from "./context";
 import type { SwitchProps } from "./types";
 
@@ -53,7 +57,13 @@ export function SwitchRoot(props: SwitchProps) {
       inactive: { BackgroundColor3: trackOffColor },
     };
   }, [disabled, ownTrackColor, props.disabledTrackColor, props.trackOffColor, props.trackOnColor]);
-  const motionConfig = React.useMemo(() => createToggleResponseRecipe(0.04), []);
+  const motionConfig = React.useMemo<ResponseMotionConfig>(
+    () => ({
+      target: motionTargetContracts.appearance("switch track response"),
+      settle: { duration: 0.1, tempo: "steady", tone: "responsive" },
+    }),
+    [],
+  );
 
   const motionRef = useResponseMotion<GuiObject>(checked, motionTargets, motionConfig);
 

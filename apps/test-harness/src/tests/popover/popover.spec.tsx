@@ -110,17 +110,19 @@ export = () => {
           wrapper.AbsolutePosition.X > 0 || wrapper.AbsolutePosition.Y > 0,
           "Popover wrapper should not render at the origin while opening.",
         );
+        const openingWrapperCenterX = wrapper.AbsolutePosition.X + wrapper.AbsoluteSize.X / 2;
+        const openingWrapperTopY = wrapper.AbsolutePosition.Y;
         assertWithinTolerance(
-          wrapper.AbsolutePosition.X,
+          openingWrapperCenterX,
           anchor.AbsolutePosition.X + anchor.AbsoluteSize.X / 2,
           2,
-          "Popover wrapper should stay aligned to the anchor center while opening.",
+          "Popover wrapper visual center should stay aligned to the anchor center while opening.",
         );
         assertWithinTolerance(
-          wrapper.AbsolutePosition.Y,
+          openingWrapperTopY,
           anchor.AbsolutePosition.Y + anchor.AbsoluteSize.Y,
           2,
-          "Popover wrapper should stay aligned below the anchor while opening.",
+          "Popover wrapper top edge should stay aligned below the anchor while opening.",
         );
         assert(
           content.Position.Y.Offset > 0,
@@ -133,6 +135,21 @@ export = () => {
         assert(
           contentRef.current?.Position.Y.Offset === 0,
           "Popover content should settle back onto the resolved popper position.",
+        );
+
+        const settledWrapper = contentRef.current?.Parent;
+        assert(settledWrapper?.IsA("GuiObject"), "Popover wrapper should remain mounted through reveal.");
+        assertWithinTolerance(
+          settledWrapper.AbsolutePosition.X + settledWrapper.AbsoluteSize.X / 2,
+          openingWrapperCenterX,
+          1,
+          "Popover wrapper visual center should remain stable throughout the reveal motion.",
+        );
+        assertWithinTolerance(
+          settledWrapper.AbsolutePosition.Y,
+          openingWrapperTopY,
+          1,
+          "Popover wrapper top edge should not jump while reveal motion completes.",
         );
       });
     });
