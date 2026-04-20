@@ -7,16 +7,7 @@ function main() {
   const dryRun = process.env.RELEASE_DRY_RUN === "true";
   const distTag = process.env.NPM_DIST_TAG?.trim();
 
-  const args = [
-    "-r",
-    "--filter",
-    "./packages/*",
-    "publish",
-    "--access",
-    "public",
-    "--report-summary",
-    "--provenance",
-  ];
+  const args = ["-r", "--filter", "./packages/*", "publish", "--access", "public", "--report-summary", "--provenance"];
 
   if (dryRun) {
     args.push("--dry-run");
@@ -26,9 +17,7 @@ function main() {
     args.push("--tag", distTag);
   }
 
-  console.log(
-    `[release-publish-ci] mode=${dryRun ? "dry-run" : "publish"} dist-tag=${distTag || "latest(default)"}`,
-  );
+  console.log(`[release-publish-ci] mode=${dryRun ? "dry-run" : "publish"} dist-tag=${distTag || "latest(default)"}`);
   console.log(`[release-publish-ci] pnpm ${args.join(" ")}`);
 
   const result = spawnSync("pnpm", args, {
