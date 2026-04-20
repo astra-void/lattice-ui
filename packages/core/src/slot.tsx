@@ -52,13 +52,12 @@ function mergeHandlerTable(a?: HandlerTable, b?: HandlerTable) {
 
     const af = a[rawKey];
     const bf = candidate;
-    out[rawKey] =
-      af && bf
-        ? (...args) => {
-            bf(...args);
-            af(...args);
-          }
-        : (bf ?? af)!;
+    out[rawKey] = af
+      ? (...args) => {
+          bf(...args);
+          af(...args);
+        }
+      : bf;
   }
   return out;
 }
