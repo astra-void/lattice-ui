@@ -7,3 +7,5 @@ allowBuilds:
 
 onlyBuiltDependencies:
   - esbuild
+
+nodeLinker: hoisted
