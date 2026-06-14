@@ -57,17 +57,22 @@ export function AccordionBasicScene() {
                       </Accordion.Trigger>
                     </frame>
                   </Accordion.Header>
-                  <Accordion.Content asChild>
-                    <Text
-                      BackgroundTransparency={1}
-                      Position={UDim2.fromOffset(10, 40)}
-                      Size={UDim2.fromOffset(840, 24)}
-                      Text={`${name} content`}
-                      TextColor3={theme.colors.textSecondary}
-                      TextSize={theme.typography.bodyMd.textSize}
-                      TextXAlignment={Enum.TextXAlignment.Left}
-                    />
-                  </Accordion.Content>
+                  <frame
+                    BackgroundTransparency={1}
+                    Position={UDim2.fromOffset(10, 40)}
+                    Size={UDim2.fromOffset(840, 24)}
+                  >
+                    <Accordion.Content asChild>
+                      <Text
+                        BackgroundTransparency={1}
+                        Size={UDim2.fromOffset(840, 24)}
+                        Text={`${name} content`}
+                        TextColor3={theme.colors.textSecondary}
+                        TextSize={theme.typography.bodyMd.textSize}
+                        TextXAlignment={Enum.TextXAlignment.Left}
+                      />
+                    </Accordion.Content>
+                  </frame>
                 </frame>
               </Accordion.Item>
             ))}
