@@ -2,6 +2,11 @@ import { React } from "@lattice-ui/core";
 import { ScrollAreaContextProvider } from "./context";
 import type { ScrollAreaProps, ScrollAxisMetrics } from "./types";
 
+type ScrollAreaMetrics = {
+  vertical: ScrollAxisMetrics;
+  horizontal: ScrollAxisMetrics;
+};
+
 function createAxisMetrics(): ScrollAxisMetrics {
   return {
     viewportSize: 0,
@@ -10,15 +15,36 @@ function createAxisMetrics(): ScrollAxisMetrics {
   };
 }
 
+function areAxisMetricsEqual(left: ScrollAxisMetrics, right: ScrollAxisMetrics) {
+  return (
+    left.viewportSize === right.viewportSize &&
+    left.contentSize === right.contentSize &&
+    left.scrollPosition === right.scrollPosition
+  );
+}
+
+function areMetricsEqual(left: ScrollAreaMetrics, right: ScrollAreaMetrics) {
+  return areAxisMetricsEqual(left.vertical, right.vertical) && areAxisMetricsEqual(left.horizontal, right.horizontal);
+}
+
 export function ScrollAreaRoot(props: ScrollAreaProps) {
   const scrollType = props.type ?? "auto";
   const scrollHideDelayMs = math.max(0, props.scrollHideDelayMs ?? 600);
 
   const viewportRef = React.useRef<ScrollingFrame>();
-  const [metrics, setMetrics] = React.useState(() => ({
+  const [metrics, setMetricsState] = React.useState<ScrollAreaMetrics>(() => ({
     vertical: createAxisMetrics(),
     horizontal: createAxisMetrics(),
   }));
+
+  // Bail out when the measured metrics are unchanged. Viewport measurement
+  // signals (and the effect that re-runs whenever this context value changes)
+  // fire updateMetrics repeatedly with identical values; without this guard
+  // every call allocates a fresh object, which changes the context reference,
+  // re-runs the viewport effect, and re-measures — an infinite render loop.
+  const setMetrics = React.useCallback((nextMetrics: ScrollAreaMetrics) => {
+    setMetricsState((previous) => (areMetricsEqual(previous, nextMetrics) ? previous : nextMetrics));
+  }, []);
   const [showScrollbarsFromActivity, setShowScrollbarsFromActivity] = React.useState(scrollType !== "scroll");
   const activitySequenceRef = React.useRef(0);
 
