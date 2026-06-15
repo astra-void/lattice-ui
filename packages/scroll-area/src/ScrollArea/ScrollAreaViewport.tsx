@@ -13,21 +13,23 @@ function toScrollingFrame(instance: Instance | undefined) {
 export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
   const scrollAreaContext = useScrollAreaContext();
 
+  const { viewportRef, setViewport, setMetrics, notifyScrollActivity } = scrollAreaContext;
+
   const setViewportRef = React.useCallback(
     (instance: Instance | undefined) => {
-      scrollAreaContext.setViewport(toScrollingFrame(instance));
+      setViewport(toScrollingFrame(instance));
     },
-    [scrollAreaContext],
+    [setViewport],
   );
 
   React.useEffect(() => {
-    const viewport = scrollAreaContext.viewportRef.current;
+    const viewport = viewportRef.current;
     if (!viewport) {
       return;
     }
 
     const updateMetrics = () => {
-      scrollAreaContext.setMetrics({
+      setMetrics({
         vertical: {
           viewportSize: viewport.AbsoluteWindowSize.Y,
           contentSize: viewport.AbsoluteCanvasSize.Y,
@@ -45,7 +47,7 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
 
     const canvasConnection = viewport.GetPropertyChangedSignal("CanvasPosition").Connect(() => {
       updateMetrics();
-      scrollAreaContext.notifyScrollActivity();
+      notifyScrollActivity();
     });
 
     const absoluteCanvasConnection = viewport.GetPropertyChangedSignal("AbsoluteCanvasSize").Connect(updateMetrics);
@@ -56,7 +58,7 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
       absoluteCanvasConnection.Disconnect();
       absoluteWindowConnection.Disconnect();
     };
-  }, [scrollAreaContext]);
+  }, [viewportRef, setMetrics, notifyScrollActivity]);
 
   if (props.asChild) {
     const child = props.children;

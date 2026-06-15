@@ -99,6 +99,25 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
     [axisMetrics.contentSize, axisMetrics.scrollPosition, axisMetrics.viewportSize, getTrack, vertical],
   );
 
+  // The drag listeners are global and only need the latest metrics/handlers at
+  // the moment input fires. Reading them through a ref keeps the effect deps
+  // stable, so we subscribe once instead of re-subscribing on every scroll
+  // (metrics change continuously while scrolling).
+  const dragInputRef = React.useRef({
+    axisMetrics,
+    getTrack,
+    vertical,
+    orientation: props.orientation,
+    setScrollPosition: scrollAreaContext.setScrollPosition,
+  });
+  dragInputRef.current = {
+    axisMetrics,
+    getTrack,
+    vertical,
+    orientation: props.orientation,
+    setScrollPosition: scrollAreaContext.setScrollPosition,
+  };
+
   React.useEffect(() => {
     const inputChangedConnection = UserInputService.InputChanged.Connect((inputObject) => {
       const dragState = dragStateRef.current;
@@ -114,6 +133,8 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
       if (!isMatchingInput) {
         return;
       }
+
+      const { axisMetrics, getTrack, vertical, orientation, setScrollPosition } = dragInputRef.current;
 
       const track = getTrack();
       if (!track) {
@@ -138,7 +159,7 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
         actualThumbSize,
       );
 
-      scrollAreaContext.setScrollPosition(props.orientation, nextCanvasPosition);
+      setScrollPosition(orientation, nextCanvasPosition);
     });
 
     const inputEndedConnection = UserInputService.InputEnded.Connect((inputObject) => {
@@ -163,7 +184,7 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
       inputChangedConnection.Disconnect();
       inputEndedConnection.Disconnect();
     };
-  }, [axisMetrics.contentSize, axisMetrics.viewportSize, getTrack, props.orientation, scrollAreaContext, vertical]);
+  }, []);
 
   if (props.asChild) {
     const child = props.children;

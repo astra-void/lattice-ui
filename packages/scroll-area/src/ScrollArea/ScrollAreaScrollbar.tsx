@@ -69,7 +69,7 @@ export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
       axisMetrics.scrollPosition,
       axisMetrics.viewportSize,
       props.orientation,
-      scrollAreaContext,
+      scrollAreaContext.setScrollPosition,
       vertical,
     ],
   );
