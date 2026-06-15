@@ -20,14 +20,16 @@ export function AvatarImage(props: AvatarImageProps) {
     imageRef.current = toImageLabel(instance);
   }, []);
 
+  const setStatus = avatarContext.setStatus;
+
   React.useEffect(() => {
     if (source === undefined || source.size() === 0) {
-      avatarContext.setStatus("error");
+      setStatus("error");
       return;
     }
 
-    avatarContext.setStatus("loading");
-  }, [avatarContext, source]);
+    setStatus("loading");
+  }, [setStatus, source]);
 
   React.useEffect(() => {
     const image = imageRef.current;
@@ -36,19 +38,19 @@ export function AvatarImage(props: AvatarImageProps) {
     }
 
     if (image.IsLoaded) {
-      avatarContext.setStatus("loaded");
+      setStatus("loaded");
     }
 
     const connection = image.GetPropertyChangedSignal("IsLoaded").Connect(() => {
       if (image.IsLoaded) {
-        avatarContext.setStatus("loaded");
+        setStatus("loaded");
       }
     });
 
     return () => {
       connection.Disconnect();
     };
-  }, [avatarContext, source]);
+  }, [setStatus, source]);
 
   if (props.asChild) {
     const child = props.children;
