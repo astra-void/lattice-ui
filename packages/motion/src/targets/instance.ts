@@ -42,6 +42,20 @@ const reservedProperties = new Set<string>([
   "ZIndex",
 ]);
 
+const instancePropertySupport = new Map<string, boolean>();
+
+function instanceSupportsProperty(instance: Instance, key: string) {
+  const cacheKey = `${instance.ClassName}.${key}`;
+  const cached = instancePropertySupport.get(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const [ok] = pcall(() => (instance as unknown as Record<string, unknown>)[key]);
+  instancePropertySupport.set(cacheKey, ok);
+  return ok;
+}
+
 function absNumber(value: number) {
   return value < 0 ? -value : value;
 }
@@ -226,30 +240,36 @@ export function validateMotionProperty(instance: Instance, key: string, context?
     return false;
   }
 
-  if (hasExplicitProperty(target?.allowProperties, key)) {
-    return true;
+  if (!hasExplicitProperty(target?.allowProperties, key)) {
+    const role = getTargetRole(target);
+    if (role === "custom") {
+      reportPropertyFailure(
+        "capability",
+        instance,
+        key,
+        context,
+        "custom targets must list this property in allowProperties",
+      );
+      return false;
+    }
+
+    if (!isPropertyAllowedForRole(role, key)) {
+      reportPropertyFailure(
+        "capability",
+        instance,
+        key,
+        context,
+        `property is not owned by ${role} targets; use an offset/size wrapper or a layout target when motion owns geometry`,
+      );
+      return false;
+    }
   }
 
-  const role = getTargetRole(target);
-  if (role === "custom") {
-    reportPropertyFailure(
-      "capability",
-      instance,
-      key,
-      context,
-      "custom targets must list this property in allowProperties",
-    );
-    return false;
-  }
-
-  if (!isPropertyAllowedForRole(role, key)) {
-    reportPropertyFailure(
-      "capability",
-      instance,
-      key,
-      context,
-      `property is not owned by ${role} targets; use an offset/size wrapper or a layout target when motion owns geometry`,
-    );
+  // Appearance property sets are generic across GUI classes, so a structurally
+  // valid property may simply not exist on this instance's class (for example
+  // TextColor3 on an ImageButton). Skip it silently rather than letting the
+  // read/write throw and flood diagnostics.
+  if (!instanceSupportsProperty(instance, key)) {
     return false;
   }
 
