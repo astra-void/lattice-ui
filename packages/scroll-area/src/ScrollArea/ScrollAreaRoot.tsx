@@ -47,6 +47,7 @@ export function ScrollAreaRoot(props: ScrollAreaProps) {
   }, []);
   const [showScrollbarsFromActivity, setShowScrollbarsFromActivity] = React.useState(scrollType !== "scroll");
   const activitySequenceRef = React.useRef(0);
+  const hideScrollbarsTaskRef = React.useRef<thread>();
 
   React.useEffect(() => {
     if (scrollType !== "scroll") {
@@ -68,7 +69,14 @@ export function ScrollAreaRoot(props: ScrollAreaProps) {
 
     setShowScrollbarsFromActivity(true);
 
-    task.delay(scrollHideDelayMs / 1000, () => {
+    const pendingHideTask = hideScrollbarsTaskRef.current;
+    if (pendingHideTask !== undefined) {
+      pcall(() => task.cancel(pendingHideTask));
+    }
+
+    hideScrollbarsTaskRef.current = task.delay(scrollHideDelayMs / 1000, () => {
+      hideScrollbarsTaskRef.current = undefined;
+
       if (sequence !== activitySequenceRef.current) {
         return;
       }
@@ -76,6 +84,16 @@ export function ScrollAreaRoot(props: ScrollAreaProps) {
       setShowScrollbarsFromActivity(false);
     });
   }, [scrollHideDelayMs, scrollType]);
+
+  React.useEffect(() => {
+    return () => {
+      const pendingHideTask = hideScrollbarsTaskRef.current;
+      if (pendingHideTask !== undefined) {
+        pcall(() => task.cancel(pendingHideTask));
+        hideScrollbarsTaskRef.current = undefined;
+      }
+    };
+  }, []);
 
   const setScrollPosition = React.useCallback(
     (orientation: "vertical" | "horizontal", position: number) => {
