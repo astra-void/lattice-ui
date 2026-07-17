@@ -10,7 +10,10 @@ function getCollectionSize<T>(collection: Set<T> | Map<unknown, unknown>) {
 }
 
 function onRenderStepped(dt: number) {
-  for (const host of activeHosts) {
+  for (const host of [...activeHosts]) {
+    if (!activeHosts.has(host)) {
+      continue;
+    }
     const stillActive = host.step(dt);
     if (!stillActive) {
       activeHosts.delete(host);
