@@ -25,13 +25,17 @@ export function AvatarRoot(props: AvatarProps) {
     setDelayElapsed(false);
 
     const delaySeconds = delayMs / 1000;
-    task.delay(delaySeconds, () => {
+    const handle = task.delay(delaySeconds, () => {
       if (sequenceRef.current !== sequence) {
         return;
       }
 
       setDelayElapsed(true);
     });
+
+    return () => {
+      pcall(() => task.cancel(handle));
+    };
   }, [delayMs, props.src]);
 
   const contextValue = React.useMemo(
