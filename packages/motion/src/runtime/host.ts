@@ -162,15 +162,18 @@ export class MotionHost {
         }
       }
 
+      let wrote = true;
       if (!areMotionValuesEqual(nextValue, track.applied)) {
-        const wrote = writeMotionProperty(this.instance, key, nextValue, this.createContext(track, key));
+        wrote = writeMotionProperty(this.instance, key, nextValue, this.createContext(track, key));
         if (!wrote) {
           finished = true;
         }
       }
 
       track.current = nextValue;
-      track.applied = nextValue;
+      if (wrote) {
+        track.applied = nextValue;
+      }
 
       if (finished) {
         completedTracks.push(track);
