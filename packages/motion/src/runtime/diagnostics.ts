@@ -13,7 +13,9 @@ export type MotionDiagnosticContext = {
   detail: string;
 };
 
+const MAX_EMITTED_DIAGNOSTICS = 512;
 const emittedDiagnostics = new Set<string>();
+let emittedCount = 0;
 
 function getTargetLabel(target: MotionTargetContract | undefined) {
   if (target === undefined) {
@@ -44,7 +46,13 @@ export function reportMotionDiagnostic(context: MotionDiagnosticContext) {
     return;
   }
 
+  if (emittedCount >= MAX_EMITTED_DIAGNOSTICS) {
+    emittedDiagnostics.clear();
+    emittedCount = 0;
+  }
+
   emittedDiagnostics.add(key);
+  emittedCount += 1;
 
   warn(
     `[Motion] ${context.stage} failure while handling ${context.domain}${
