@@ -21,3 +21,8 @@ export const Workspace = getService<{
   CurrentCamera?: unknown;
   GetPropertyChangedSignal?: (propertyName: string) => RBXScriptSignal;
 }>("Workspace");
+
+export const GuiService = getService<{
+  ReducedMotionEnabled?: boolean;
+  GetPropertyChangedSignal?: (p: string) => RBXScriptSignal;
+}>("GuiService");

@@ -233,10 +233,15 @@ if (!globalThis.game) {
     RenderStepped: connectSignal(),
     IsStudio: () => false,
   };
+  const mockGuiService = {
+    ReducedMotionEnabled: false,
+    GetPropertyChangedSignal: connectSignal,
+  };
   globalThis.game = {
     GetService: (service: string) => {
       if (service === "Workspace") return mockWorkspace;
       if (service === "RunService") return mockRunService;
+      if (service === "GuiService") return mockGuiService;
       return {};
     },
   };
