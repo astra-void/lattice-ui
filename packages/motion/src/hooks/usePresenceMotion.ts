@@ -4,6 +4,8 @@ import type { PresenceMotionConfig, PresenceMotionPhase } from "../core/types";
 import { MotionHost } from "../runtime/host";
 import { applyPresenceSnapshot, exitPresence, revealPresence } from "../runtime/presence";
 
+const MAX_MOUNT_ATTEMPTS = 120;
+
 export interface PresenceMotionControllerOptions {
   present: boolean;
   config: PresenceMotionConfig;
@@ -70,6 +72,7 @@ export function usePresenceMotionController<T extends Instance = Instance>(
   React.useLayoutEffect(() => {
     setupGenerationRef.current += 1;
     const generation = setupGenerationRef.current;
+    let mountAttempts = 0;
 
     const completeExit = () => {
       if (setupGenerationRef.current !== generation) {
@@ -106,7 +109,8 @@ export function usePresenceMotionController<T extends Instance = Instance>(
           return;
         }
 
-        if (mounted) {
+        if (mounted && mountAttempts < MAX_MOUNT_ATTEMPTS) {
+          mountAttempts += 1;
           task.delay(0, applyMotion);
         }
         return;

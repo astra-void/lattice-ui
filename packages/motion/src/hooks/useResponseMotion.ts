@@ -4,6 +4,8 @@ import type { MotionStateTargets, ResponseMotionConfig } from "../core/types";
 import { MotionHost } from "../runtime/host";
 import { settleResponse } from "../runtime/response";
 
+const MAX_MOUNT_ATTEMPTS = 120;
+
 export function useResponseMotion<T extends Instance = Instance>(
   active: boolean,
   properties: MotionStateTargets,
@@ -25,6 +27,7 @@ export function useResponseMotion<T extends Instance = Instance>(
   React.useLayoutEffect(() => {
     setupGenerationRef.current += 1;
     const generation = setupGenerationRef.current;
+    let mountAttempts = 0;
 
     const applyMotion = () => {
       if (setupGenerationRef.current !== generation) {
@@ -33,7 +36,10 @@ export function useResponseMotion<T extends Instance = Instance>(
 
       const instance = ref.current;
       if (!instance) {
-        task.delay(0, applyMotion);
+        if (mountAttempts < MAX_MOUNT_ATTEMPTS) {
+          mountAttempts += 1;
+          task.delay(0, applyMotion);
+        }
         return;
       }
 
