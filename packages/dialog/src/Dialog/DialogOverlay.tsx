@@ -1,5 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
-import { Presence } from "@lattice-ui/layer";
+import { Presence, usePortalContext } from "@lattice-ui/layer";
 import { createOverlayFadeRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import { useDialogContext } from "./context";
 import type { DialogOverlayProps } from "./types";
@@ -95,15 +95,38 @@ function DialogOverlayImpl(props: {
   );
 }
 
+function DialogOverlayGui(props: { children?: React.ReactNode }) {
+  // The overlay is portaled into BasePlayerGui by Dialog.Portal; a GuiObject
+  // without a LayerCollector (ScreenGui) ancestor never renders in Roblox, so
+  // it needs its own ScreenGui host. DisplayOrder sits at the layer base,
+  // below every DismissableLayer (base + stackOrder, stackOrder >= 1) so the
+  // dialog content always renders above its own dim.
+  const portalContext = usePortalContext();
+
+  return (
+    <screengui
+      DisplayOrder={portalContext.displayOrderBase}
+      IgnoreGuiInset={true}
+      ResetOnSpawn={false}
+      ScreenInsets={Enum.ScreenInsets.None}
+      ZIndexBehavior={Enum.ZIndexBehavior.Sibling}
+    >
+      {props.children}
+    </screengui>
+  );
+}
+
 export function DialogOverlay(props: DialogOverlayProps) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
 
   if (props.forceMount) {
     return (
-      <DialogOverlayImpl motionPresent={open} forceMount={props.forceMount} asChild={props.asChild}>
-        {props.children}
-      </DialogOverlayImpl>
+      <DialogOverlayGui>
+        <DialogOverlayImpl motionPresent={open} forceMount={props.forceMount} asChild={props.asChild}>
+          {props.children}
+        </DialogOverlayImpl>
+      </DialogOverlayGui>
     );
   }
 
@@ -111,14 +134,16 @@ export function DialogOverlay(props: DialogOverlayProps) {
     <Presence
       present={open}
       render={(state) => (
-        <DialogOverlayImpl
-          motionPresent={state.isPresent}
-          onExitComplete={state.onExitComplete}
-          forceMount={props.forceMount}
-          asChild={props.asChild}
-        >
-          {props.children}
-        </DialogOverlayImpl>
+        <DialogOverlayGui>
+          <DialogOverlayImpl
+            motionPresent={state.isPresent}
+            onExitComplete={state.onExitComplete}
+            forceMount={props.forceMount}
+            asChild={props.asChild}
+          >
+            {props.children}
+          </DialogOverlayImpl>
+        </DialogOverlayGui>
       )}
     />
   );
