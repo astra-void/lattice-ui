@@ -50,6 +50,21 @@ export function createCanvasGroupRevealRecipe(offsetY = 4, duration = 0.12): Pre
   };
 }
 
+export function createToastRevealRecipe(duration = 0.14): PresenceMotionConfig {
+  return {
+    target: motionTargets.appearance("toast reveal"),
+    initial: { GroupTransparency: 1 },
+    reveal: {
+      values: { GroupTransparency: 0 },
+      intent: { duration, tempo: "steady", tone: "calm" },
+    },
+    exit: {
+      values: { GroupTransparency: 1 },
+      intent: { duration, tempo: "swift", tone: "calm" },
+    },
+  };
+}
+
 export function createOverlayFadeRecipe(duration = 0.15): PresenceMotionConfig {
   return {
     target: motionTargets.appearance("overlay fade"),
