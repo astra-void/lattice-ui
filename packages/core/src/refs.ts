@@ -9,9 +9,21 @@ function isRefCallback<T>(ref: unknown): ref is RefCallback<T> {
 }
 
 function isMutableRefObject<T>(ref: unknown): ref is MutableRefObject<T> {
+  if (!typeIs(ref, "table")) {
+    return false;
+  }
+
+  // In __DEV__ react-lua builds, reading `element.props.ref` returns a shared
+  // warning sentinel table ({ isReactWarning = true }) instead of the real ref.
+  // Treating it as a ref would both drop the child's actual ref and mutate a
+  // table shared across every slotted element.
+  if ((ref as { isReactWarning?: boolean }).isReactWarning === true) {
+    return false;
+  }
+
   // In Luau, refs created from useRef() may start with current=nil, which means
-  // the key is not present in the table yet. Accept any table ref object.
-  return typeIs(ref, "table");
+  // the key is not present in the table yet. Accept any other table ref object.
+  return true;
 }
 
 export function toRef<T>(value: unknown): AnyRef<T> | undefined {

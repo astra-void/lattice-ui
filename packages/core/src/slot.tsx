@@ -83,7 +83,22 @@ function moveHandlersToReactKeyedProps(props: SlotPropBag, key: "Event" | "Chang
       continue;
     }
 
-    dynamicProps[reactKey] = candidate;
+    // @rbxts/react normalizes host-element Event/Change tables into tag-keyed
+    // props at createElement time, so a JSX host child's own handlers arrive
+    // here at `reactKey` (copied in by the childProps spread) rather than in
+    // childProps.Event/Change. Compose instead of overwriting: child handler
+    // first, then the slot's, matching mergeHandlerTable order.
+    const existing = dynamicProps[reactKey];
+    if (isFn(existing) && existing !== candidate) {
+      const childHandler = existing;
+      const slotHandler = candidate;
+      dynamicProps[reactKey] = (...args: unknown[]) => {
+        childHandler(...args);
+        slotHandler(...args);
+      };
+    } else {
+      dynamicProps[reactKey] = candidate;
+    }
   }
 
   props[key] = undefined;
@@ -116,7 +131,12 @@ export const Slot = React.forwardRef<Instance, SlotProps>((props, forwardedRef) 
 
   const slotRef = toRef<Instance>(props.ref);
   const childRef = getElementRef<Instance>(child);
-  const mergedRef = composeRefs(childRef, forwardedRef, slotRef);
+  // Memoize: a fresh callback-ref identity per render would make react-lua
+  // detach and reattach every composed ref on each parent re-render.
+  const mergedRef = React.useMemo(
+    () => composeRefs(childRef, forwardedRef, slotRef),
+    [childRef, forwardedRef, slotRef],
+  );
   mergedProps.ref = mergedRef;
 
   // cloneElement bypasses @rbxts/react createElement Event/Change normalization.
