@@ -11,11 +11,7 @@ export function TextFieldMessage(props: TextFieldMessageProps) {
       error("[TextFieldMessage] `asChild` requires a child element.");
     }
 
-    return (
-      <Slot Name="TextFieldMessage" Text="Message">
-        {child}
-      </Slot>
-    );
+    return <Slot Name="TextFieldMessage">{child}</Slot>;
   }
 
   return (

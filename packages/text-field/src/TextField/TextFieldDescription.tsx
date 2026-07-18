@@ -11,11 +11,7 @@ export function TextFieldDescription(props: TextFieldDescriptionProps) {
       error("[TextFieldDescription] `asChild` requires a child element.");
     }
 
-    return (
-      <Slot Name="TextFieldDescription" Text="Description">
-        {child}
-      </Slot>
-    );
+    return <Slot Name="TextFieldDescription">{child}</Slot>;
   }
 
   return (

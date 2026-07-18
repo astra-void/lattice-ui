@@ -17,7 +17,6 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
   const sharedProps = {
     Active: !disabled,
     Selectable: !disabled,
-    Text: "Label",
     Event: {
       Activated: handleActivated,
     },
@@ -39,6 +38,7 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
       BackgroundTransparency={1}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(240, 22)}
+      Text="Label"
       TextColor3={disabled ? Color3.fromRGB(149, 157, 173) : Color3.fromRGB(225, 231, 241)}
       TextSize={14}
       TextXAlignment={Enum.TextXAlignment.Left}
