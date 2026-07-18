@@ -36,7 +36,6 @@ export type SwitchProps = {
 };
 
 export type SwitchThumbProps = {
-  forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
 };
