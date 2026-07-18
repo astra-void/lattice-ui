@@ -13,7 +13,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
       active: { BackgroundColor3: Color3.fromRGB(88, 142, 255), TextColor3: Color3.fromRGB(236, 241, 249) },
       inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68), TextColor3: Color3.fromRGB(139, 146, 160) },
     },
-    createSelectionResponseRecipe(),
+    props.transition ?? createSelectionResponseRecipe(),
   );
 
   const handleToggle = React.useCallback(() => {
