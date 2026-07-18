@@ -407,5 +407,115 @@ export = () => {
         assert(openChanges[0] === false, "Selection should only close the combobox after syncing input text.");
       });
     });
+
+    it("keeps input and value text after items unmount", () => {
+      withReactHarness("ComboboxItemUnmountText", (harness) => {
+        const renderTree = (mountItems: boolean) => (
+          <PortalProvider container={harness.playerGui}>
+            <Combobox.Root defaultValue="beta" open={false}>
+              <Combobox.Trigger asChild>
+                <textbutton Selectable={true} Text="combobox-trigger-unmount" />
+              </Combobox.Trigger>
+              <Combobox.Input asChild>
+                <textbox />
+              </Combobox.Input>
+              <Combobox.Value asChild>
+                <textlabel />
+              </Combobox.Value>
+
+              <Combobox.Portal>
+                <Combobox.Content asChild forceMount>
+                  <frame>
+                    {mountItems ? (
+                      <Combobox.Item asChild textValue="Beta Option" value="beta">
+                        <textbutton Selectable={true} Text="combobox-item-beta-unmount" />
+                      </Combobox.Item>
+                    ) : undefined}
+                  </frame>
+                </Combobox.Content>
+              </Combobox.Portal>
+            </Combobox.Root>
+          </PortalProvider>
+        );
+
+        harness.render(renderTree(true));
+        waitForEffects(3);
+
+        const input = findTextBox(harness.container);
+        assert(input !== undefined, "ComboboxInput should mount a TextBox before items unmount.");
+        assert(input.Text === "Beta Option", "Closed combobox should sync input text while the item is mounted.");
+
+        harness.render(renderTree(false));
+        waitForEffects(3);
+
+        assert(input.Text === "Beta Option", "Input text should keep the selected label after the item unmounts.");
+        const valueLabel = findTextLabelByText(harness.container, "Beta Option");
+        assert(valueLabel !== undefined, "ComboboxValue should keep the selected item text after the item unmounts.");
+      });
+    });
+
+    it("keeps input text after closing unmounts non-forceMount content", () => {
+      withReactHarness("ComboboxCloseUnmountText", (harness) => {
+        const renderTree = (open: boolean) => (
+          <PortalProvider container={harness.playerGui}>
+            <Combobox.Root defaultValue="beta" open={open}>
+              <Combobox.Trigger asChild>
+                <textbutton Selectable={true} Text="combobox-trigger-close-unmount" />
+              </Combobox.Trigger>
+              <Combobox.Input asChild>
+                <textbox />
+              </Combobox.Input>
+              <Combobox.Value asChild>
+                <textlabel />
+              </Combobox.Value>
+
+              <Combobox.Portal>
+                <Combobox.Content asChild>
+                  <frame>
+                    <Combobox.Item asChild textValue="Beta Option" value="beta">
+                      <textbutton Selectable={true} Text="combobox-item-beta-close-unmount" />
+                    </Combobox.Item>
+                  </frame>
+                </Combobox.Content>
+              </Combobox.Portal>
+            </Combobox.Root>
+          </PortalProvider>
+        );
+
+        harness.render(renderTree(true));
+        waitForEffects(4);
+        assert(
+          findTextButtonByText(harness.playerGui, "combobox-item-beta-close-unmount") !== undefined,
+          "Combobox content should mount while open.",
+        );
+
+        harness.render(renderTree(false));
+
+        const deadline = os.clock() + 2;
+        while (
+          os.clock() < deadline &&
+          findTextButtonByText(harness.playerGui, "combobox-item-beta-close-unmount") !== undefined
+        ) {
+          task.wait();
+        }
+        assert(
+          findTextButtonByText(harness.playerGui, "combobox-item-beta-close-unmount") === undefined,
+          "Combobox content should unmount after the close transition completes.",
+        );
+
+        waitForEffects(3);
+        const input = findTextBox(harness.container);
+        assert(input !== undefined, "ComboboxInput should stay mounted after content unmounts.");
+        assert(
+          input.Text === "Beta Option",
+          "Input text should keep the selected label after close unmounts the items.",
+        );
+        const valueLabel = findTextLabelByText(harness.container, "Beta Option");
+        assert(
+          valueLabel !== undefined,
+          "ComboboxValue should keep the selected item text after close unmounts the items.",
+        );
+      });
+    });
   });
 };

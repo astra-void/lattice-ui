@@ -59,6 +59,7 @@ export function ComboboxRoot(props: ComboboxProps) {
   const itemTextCacheRef = React.useRef<Record<string, string>>({});
   const programmaticInputValueRef = React.useRef<string | undefined>();
   const pendingClearRef = React.useRef(false);
+  const hasOpenedRef = React.useRef(false);
   const [registryRevision, setRegistryRevision] = React.useState(0);
 
   const registerItem = React.useCallback((item: ComboboxItemRegistration) => {
@@ -71,7 +72,8 @@ export function ComboboxRoot(props: ComboboxProps) {
       const index = itemEntriesRef.current.findIndex((entry) => entry.id === item.id);
       if (index >= 0) {
         itemEntriesRef.current.remove(index);
-        delete itemTextCacheRef.current[item.value];
+        // Keep the text cache entry so the selected label survives content
+        // unmount (closed-state input sync and ComboboxValue read from it).
         setRegistryRevision((revision) => revision + 1);
       }
     };
@@ -177,6 +179,15 @@ export function ComboboxRoot(props: ComboboxProps) {
 
   React.useEffect(() => {
     if (open) {
+      hasOpenedRef.current = true;
+      return;
+    }
+
+    // Never sync before the popup has opened at least once: items only mount
+    // inside the content, so at mount time the registry and text cache are
+    // empty and syncInputFromValue would erase defaultInputValue (and cannot
+    // resolve defaultValue's label yet).
+    if (!hasOpenedRef.current) {
       return;
     }
 
