@@ -11,11 +11,7 @@ export function TextareaDescription(props: TextareaDescriptionProps) {
       error("[TextareaDescription] `asChild` requires a child element.");
     }
 
-    return (
-      <Slot Name="TextareaDescription" Text="Description">
-        {child}
-      </Slot>
-    );
+    return <Slot Name="TextareaDescription">{child}</Slot>;
   }
 
   return (

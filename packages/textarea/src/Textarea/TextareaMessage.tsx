@@ -11,11 +11,7 @@ export function TextareaMessage(props: TextareaMessageProps) {
       error("[TextareaMessage] `asChild` requires a child element.");
     }
 
-    return (
-      <Slot Name="TextareaMessage" Text="Message">
-        {child}
-      </Slot>
-    );
+    return <Slot Name="TextareaMessage">{child}</Slot>;
   }
 
   return (
