@@ -250,6 +250,10 @@ if (!globalThis.game) {
 if (!globalThis.Enum) {
   globalThis.Enum = {
     EasingStyle: { Quad: "Quad" },
+    ScreenInsets: { None: "None", CoreUISafeInsets: "CoreUISafeInsets" },
+    ZIndexBehavior: { Sibling: "Sibling", Global: "Global" },
+    UserInputType: { MouseButton1: "MouseButton1", Touch: "Touch" },
+    KeyCode: { Return: "Return", Space: "Space", Escape: "Escape" },
     EasingDirection: { Out: "Out", In: "In" },
     TextXAlignment: { Left: "Left" },
     TextYAlignment: { Top: "Top" },
@@ -280,3 +284,20 @@ class MockRect {
 }
 
 Object.assign(globalThis, { Rect: MockRect });
+
+function luauNext(value: Record<string, unknown>) {
+  const key = Object.keys(value)[0];
+  return key === undefined ? [undefined, undefined] : [key, value[key]];
+}
+
+function luauError(message: unknown): never {
+  throw new Error(typeof message === "string" ? message : String(message));
+}
+
+const globals = globalThis as Record<string, unknown>;
+if (globals.next === undefined) {
+  globals.next = luauNext;
+}
+if (globals.error === undefined) {
+  globals.error = luauError;
+}
