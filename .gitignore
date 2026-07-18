@@ -24,3 +24,6 @@ run-in-roblox.log
 .idea
 .vscode
 .vscode/settings.json
+
+.serena
+digest.txt
