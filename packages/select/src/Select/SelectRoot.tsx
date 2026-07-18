@@ -92,6 +92,12 @@ export function SelectRoot(props: SelectProps) {
     }
 
     const orderedItems = resolveOrderedItems();
+    // An empty registry means the content is unmounted (menu closed), not that
+    // the selected item disappeared — keep the current value in that case.
+    if (orderedItems.size() === 0) {
+      return;
+    }
+
     const selected = orderedItems.find((item) => item.value === value);
     if (selected && !selected.getDisabled()) {
       return;
