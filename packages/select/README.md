@@ -20,4 +20,6 @@ Headless single-select primitives built for Roblox UI.
 - Single value only in this release.
 - Supports controlled/uncontrolled `value` and `open`.
 - Content uses dismissable-layer semantics (outside pointer dismiss).
-- No built-in Roblox native selection or directional keyboard navigation.
+- Trigger and items are gamepad/keyboard selectable and register focus nodes, so
+  gamepad users can open the menu, move between items, and commit a selection.
+- No built-in directional (arrow-key) keyboard navigation between items.

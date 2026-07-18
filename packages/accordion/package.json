@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@lattice-ui/core": "workspace:*",
+    "@lattice-ui/focus": "workspace:*",
     "@lattice-ui/layer": "workspace:*",
     "@lattice-ui/motion": "workspace:*"
   },

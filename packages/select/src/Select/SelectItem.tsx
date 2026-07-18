@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import { useActivationGuard, useFocusNode } from "@lattice-ui/focus";
 import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
@@ -13,6 +14,7 @@ export function SelectItem(props: SelectItemProps) {
 
   const disabledRef = React.useRef(disabled);
   const textValueRef = React.useRef(textValue);
+  const itemRef = React.useRef<GuiObject>();
 
   const [active, setActive] = React.useState(false);
   const motionRef = useResponseMotion<GuiObject>(
@@ -56,30 +58,35 @@ export function SelectItem(props: SelectItemProps) {
     });
   }, [props.value, registerItem]);
 
+  useFocusNode({
+    ref: itemRef,
+    getDisabled: () => disabledRef.current,
+  });
+
+  const claimActivation = useActivationGuard();
+
+  // `Activated` and the `Return`/`Space` `InputBegan` branch share this guarded
+  // path: a gamepad/keyboard selection fires both events, and the guard keeps
+  // the selection from being committed twice.
   const handleSelect = React.useCallback(() => {
-    if (disabled) {
+    if (disabled || !claimActivation()) {
       return;
     }
 
     selectContext.setValue(props.value);
     selectContext.setOpen(false);
-  }, [disabled, props.value, selectContext]);
+  }, [claimActivation, disabled, props.value, selectContext]);
 
   const handleInputBegan = React.useCallback(
     (_rbx: GuiObject, inputObject: InputObject) => {
-      if (disabled) {
-        return;
-      }
-
       const keyCode = inputObject.KeyCode;
       if (keyCode !== Enum.KeyCode.Return && keyCode !== Enum.KeyCode.Space) {
         return;
       }
 
-      selectContext.setValue(props.value);
-      selectContext.setOpen(false);
+      handleSelect();
     },
-    [disabled, props.value, selectContext],
+    [handleSelect],
   );
 
   const handlePointerEnter = React.useCallback(() => setActive(true), []);
@@ -99,11 +106,9 @@ export function SelectItem(props: SelectItemProps) {
 
   const setItemRef = React.useCallback(
     (instance: Instance | undefined) => {
-      if (!instance?.IsA("GuiObject")) {
-        motionRef.current = undefined;
-        return;
-      }
-      motionRef.current = instance;
+      const nextItem = instance?.IsA("GuiObject") ? instance : undefined;
+      itemRef.current = nextItem;
+      motionRef.current = nextItem;
     },
     [motionRef],
   );
@@ -115,7 +120,7 @@ export function SelectItem(props: SelectItemProps) {
     }
 
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={setItemRef}>
+      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setItemRef}>
         {child}
       </Slot>
     );
@@ -128,7 +133,7 @@ export function SelectItem(props: SelectItemProps) {
       BackgroundColor3={active && !disabled ? Color3.fromRGB(66, 73, 91) : Color3.fromRGB(47, 53, 68)}
       BorderSizePixel={0}
       Event={eventHandlers}
-      Selectable={false}
+      Selectable={!disabled}
       Size={UDim2.fromOffset(220, 32)}
       Text={textValue}
       TextColor3={disabled ? Color3.fromRGB(134, 141, 156) : Color3.fromRGB(234, 239, 247)}
