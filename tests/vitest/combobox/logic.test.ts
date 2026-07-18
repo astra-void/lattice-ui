@@ -27,6 +27,31 @@ describe("combobox logic", () => {
     expect(resolveForcedComboboxValue("beta", options)).toBe("alpha");
   });
 
+  it("keeps an enabled selection as-is", () => {
+    const options = [
+      { value: "alpha", disabled: false, textValue: "Alpha" },
+      { value: "beta", disabled: false, textValue: "Beta" },
+    ];
+
+    expect(resolveForcedComboboxValue("beta", options)).toBe("beta");
+  });
+
+  it("does not force a value while the selected option is not registered yet", () => {
+    const options = [{ value: "alpha", disabled: false, textValue: "Alpha" }];
+
+    expect(resolveForcedComboboxValue("beta", options)).toBeUndefined();
+    expect(resolveForcedComboboxValue(undefined, options)).toBeUndefined();
+  });
+
+  it("returns undefined when the selected option is disabled and no option is enabled", () => {
+    const options = [
+      { value: "alpha", disabled: true, textValue: "Alpha" },
+      { value: "beta", disabled: true, textValue: "Beta" },
+    ];
+
+    expect(resolveForcedComboboxValue("beta", options)).toBeUndefined();
+  });
+
   it("resolves input text from selected value", () => {
     const options = [
       { value: "alpha", disabled: false, textValue: "Alpha Option" },

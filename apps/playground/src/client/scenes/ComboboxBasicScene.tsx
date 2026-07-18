@@ -5,7 +5,7 @@ import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 
 export function ComboboxBasicScene() {
   const { theme } = useTheme();
-  const [value, setValue] = React.useState("alpha");
+  const [value, setValue] = React.useState<string | undefined>("alpha");
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -22,7 +22,7 @@ export function ComboboxBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 34)}
         Size={UDim2.fromOffset(920, 24)}
-        Text={`Controlled open: ${open ? "true" : "false"} | value: ${value}`}
+        Text={`Controlled open: ${open ? "true" : "false"} | value: ${value ?? "(none)"}`}
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.bodyMd.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}

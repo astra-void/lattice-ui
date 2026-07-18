@@ -15,6 +15,7 @@ export type ComboboxItemRegistration = {
   order: number;
   getDisabled: () => boolean;
   getTextValue: () => string;
+  getInstance: () => GuiObject | undefined;
 };
 
 export type ComboboxContextValue = {
@@ -41,7 +42,7 @@ export type ComboboxContextValue = {
 export type ComboboxProps = {
   value?: string;
   defaultValue?: string;
-  onValueChange?: (value: string) => void;
+  onValueChange?: (value: string | undefined) => void;
   inputValue?: string;
   defaultInputValue?: string;
   onInputValueChange?: (inputValue: string) => void;

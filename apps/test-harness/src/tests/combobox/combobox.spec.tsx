@@ -70,7 +70,7 @@ type ControlledComboboxSelectionHarnessProps = {
 
 function ControlledComboboxSelectionHarness(props: ControlledComboboxSelectionHarnessProps) {
   const [open, setOpen] = React.useState(true);
-  const [value, setValue] = React.useState("alpha");
+  const [value, setValue] = React.useState<string | undefined>("alpha");
   const committedRef = React.useRef(false);
 
   const applyOpenChange = React.useCallback(
@@ -82,8 +82,8 @@ function ControlledComboboxSelectionHarness(props: ControlledComboboxSelectionHa
   );
 
   const applyValueChange = React.useCallback(
-    (nextValue: string) => {
-      props.valueChanges.push(nextValue);
+    (nextValue: string | undefined) => {
+      props.valueChanges.push(nextValue ?? "<cleared>");
       setValue(nextValue);
     },
     [props.valueChanges],

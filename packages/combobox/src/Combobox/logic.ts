@@ -13,20 +13,20 @@ export function defaultComboboxFilter(itemText: string, query: string) {
 }
 
 export function resolveForcedComboboxValue(currentValue: string | undefined, options: Array<ComboboxOption>) {
-  const enabled = options.filter((option) => !option.disabled);
-  if (enabled.size() === 0) {
-    return undefined;
-  }
-
   if (currentValue === undefined) {
     return undefined;
   }
 
-  const selected = enabled.find((option) => option.value === currentValue);
-  if (selected) {
+  const selected = options.find((option) => option.value === currentValue);
+  if (!selected) {
+    return undefined;
+  }
+
+  if (!selected.disabled) {
     return selected.value;
   }
 
+  const enabled = options.filter((option) => !option.disabled);
   return enabled[0]?.value;
 }
 

@@ -14,6 +14,7 @@ export function ComboboxItem(props: ComboboxItemProps) {
 
   const disabledRef = React.useRef(disabled);
   const textValueRef = React.useRef(textValue);
+  const instanceRef = React.useRef<GuiObject>();
 
   React.useEffect(() => {
     disabledRef.current = disabled;
@@ -22,6 +23,10 @@ export function ComboboxItem(props: ComboboxItemProps) {
   React.useEffect(() => {
     textValueRef.current = textValue;
   }, [textValue]);
+
+  const setItemRef = React.useCallback((instance: Instance | undefined) => {
+    instanceRef.current = instance?.IsA("GuiObject") ? instance : undefined;
+  }, []);
 
   const itemIdRef = React.useRef(0);
   if (itemIdRef.current === 0) {
@@ -44,8 +49,9 @@ export function ComboboxItem(props: ComboboxItemProps) {
       order: itemOrderRef.current,
       getDisabled: () => disabledRef.current,
       getTextValue: () => textValueRef.current,
+      getInstance: () => instanceRef.current,
     });
-  }, [registerItem, props.value]);
+  }, [registerItem, props.value, textValue, disabled]);
 
   const handleSelect = React.useCallback(() => {
     if (interactionDisabled) {
@@ -88,7 +94,13 @@ export function ComboboxItem(props: ComboboxItemProps) {
     }
 
     return (
-      <Slot Active={!interactionDisabled} Event={eventHandlers} Selectable={false} Visible={itemQueryMatch}>
+      <Slot
+        Active={!interactionDisabled}
+        Event={eventHandlers}
+        Selectable={false}
+        Visible={itemQueryMatch}
+        ref={setItemRef}
+      >
         {child}
       </Slot>
     );
@@ -108,6 +120,7 @@ export function ComboboxItem(props: ComboboxItemProps) {
       TextSize={15}
       TextXAlignment={Enum.TextXAlignment.Left}
       Visible={itemQueryMatch}
+      ref={setItemRef}
     >
       <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
       {props.children}

@@ -5,7 +5,15 @@ import type { ComboboxItemRegistration, ComboboxProps } from "./types";
 
 function getOrderedItems(items: Array<ComboboxItemRegistration>) {
   const ordered = [...items];
-  ordered.sort((left, right) => left.order < right.order);
+  ordered.sort((left, right) => {
+    const leftLayoutOrder = left.getInstance()?.LayoutOrder ?? 0;
+    const rightLayoutOrder = right.getInstance()?.LayoutOrder ?? 0;
+    if (leftLayoutOrder !== rightLayoutOrder) {
+      return leftLayoutOrder < rightLayoutOrder;
+    }
+
+    return left.order < right.order;
+  });
   return ordered;
 }
 
@@ -27,11 +35,7 @@ export function ComboboxRoot(props: ComboboxProps) {
   const [value, setValueState] = useControllableState<string | undefined>({
     value: props.value,
     defaultValue: props.defaultValue,
-    onChange: (nextValue) => {
-      if (nextValue !== undefined) {
-        props.onValueChange?.(nextValue);
-      }
-    },
+    onChange: props.onValueChange,
   });
 
   const [inputValue, setInputValueState] = useControllableState<string>({
@@ -54,6 +58,7 @@ export function ComboboxRoot(props: ComboboxProps) {
   const itemEntriesRef = React.useRef<Array<ComboboxItemRegistration>>([]);
   const itemTextCacheRef = React.useRef<Record<string, string>>({});
   const programmaticInputValueRef = React.useRef<string | undefined>();
+  const pendingClearRef = React.useRef(false);
   const [registryRevision, setRegistryRevision] = React.useState(0);
 
   const registerItem = React.useCallback((item: ComboboxItemRegistration) => {
@@ -118,6 +123,7 @@ export function ComboboxRoot(props: ComboboxProps) {
         return;
       }
 
+      pendingClearRef.current = false;
       setValueState(nextValue);
       const nextInputValue = getItemText(nextValue) ?? nextValue;
       programmaticInputValueRef.current = nextInputValue;
@@ -138,6 +144,7 @@ export function ComboboxRoot(props: ComboboxProps) {
       }
 
       programmaticInputValueRef.current = undefined;
+      pendingClearRef.current = nextInputValue === "";
       setVisibleQueryValue((currentQueryValue) =>
         currentQueryValue === nextInputValue ? currentQueryValue : nextInputValue,
       );
@@ -173,9 +180,23 @@ export function ComboboxRoot(props: ComboboxProps) {
       return;
     }
 
-    syncInputFromValue();
-    setVisibleQueryValue((currentQueryValue) => (currentQueryValue === inputValue ? currentQueryValue : inputValue));
-  }, [inputValue, open, syncInputFromValue, value]);
+    const shouldClear = pendingClearRef.current;
+    pendingClearRef.current = false;
+
+    if (shouldClear && value !== undefined) {
+      setValueState(undefined);
+      programmaticInputValueRef.current = "";
+      setInputValueState("");
+    } else {
+      syncInputFromValue();
+    }
+
+    setVisibleQueryValue((currentQueryValue) => (currentQueryValue === "" ? currentQueryValue : ""));
+  }, [open, setInputValueState, setValueState, syncInputFromValue, value]);
+
+  React.useEffect(() => {
+    programmaticInputValueRef.current = undefined;
+  }, [inputValue]);
 
   const queryValue = open ? visibleQueryValue : inputValue;
 
