@@ -7,7 +7,19 @@ function main() {
   const dryRun = process.env.RELEASE_DRY_RUN === "true";
   const distTag = process.env.NPM_DIST_TAG?.trim();
 
-  const args = ["-r", "--filter", "./packages/*", "publish", "--access", "public", "--report-summary", "--provenance"];
+  // Tag-triggered CI checks out a detached HEAD, so pnpm's branch check
+  // cannot pass; the workflow has already validated the release state.
+  const args = [
+    "-r",
+    "--filter",
+    "./packages/*",
+    "publish",
+    "--access",
+    "public",
+    "--report-summary",
+    "--provenance",
+    "--no-git-checks",
+  ];
 
   if (dryRun) {
     args.push("--dry-run");
