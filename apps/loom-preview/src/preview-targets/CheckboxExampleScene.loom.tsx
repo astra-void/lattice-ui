@@ -13,17 +13,17 @@ function CheckboxExample() {
     label: string;
     checked: boolean;
     disabled?: boolean;
-    onChange?: (next: CheckedState) => void;
+    onChange?: (state: CheckedState) => void;
   }> = [
     {
       label: "Accept terms and conditions",
       checked: terms,
-      onChange: (next) => setTerms(next === true),
+      onChange: (state) => setTerms(state === true),
     },
     {
       label: "Send me marketing emails",
       checked: marketing,
-      onChange: (next) => setMarketing(next === true),
+      onChange: (state) => setMarketing(state === true),
     },
     { label: "Sync usage data", checked: true, disabled: true },
   ];
