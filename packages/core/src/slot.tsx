@@ -98,6 +98,9 @@ export const Slot = React.forwardRef<Instance, SlotProps>((props, forwardedRef) 
   const child = props.children;
   const childProps = toSlotPropBag((child as { props?: unknown }).props);
 
+  // Slot props override child props: primitives pass state-driven props
+  // (Visible, Active, Selectable) that must win over the child's static
+  // values. Primitives must not pass cosmetic defaults through Slot.
   const mergedProps: SlotPropBag = { ...childProps, ...props };
   mergedProps.children = childProps.children;
 
