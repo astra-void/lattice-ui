@@ -10,7 +10,12 @@ function ProgressExample() {
   return (
     <frame BackgroundTransparency={1} Size={UDim2.fromScale(1, 1)}>
       <Progress.Spinner asChild speedDegPerSecond={240} spinning>
-        <frame BackgroundTransparency={1} BorderSizePixel={0} Position={UDim2.fromOffset(0, 1)} Size={UDim2.fromOffset(16, 16)}>
+        <frame
+          BackgroundTransparency={1}
+          BorderSizePixel={0}
+          Position={UDim2.fromOffset(0, 1)}
+          Size={UDim2.fromOffset(16, 16)}
+        >
           <uicorner CornerRadius={new UDim(1, 0)} />
           <uistroke Color={theme.colors.accent} Thickness={2} Transparency={0.35} />
           <frame

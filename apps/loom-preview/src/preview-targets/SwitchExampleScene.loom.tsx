@@ -40,7 +40,11 @@ function SwitchExample() {
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
               <Switch.Thumb asChild>
-                <frame BackgroundColor3={theme.colors.accentContrast} BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
+                <frame
+                  BackgroundColor3={theme.colors.accentContrast}
+                  BorderSizePixel={0}
+                  Size={UDim2.fromOffset(20, 20)}
+                >
                   <uicorner CornerRadius={new UDim(1, 0)} />
                 </frame>
               </Switch.Thumb>

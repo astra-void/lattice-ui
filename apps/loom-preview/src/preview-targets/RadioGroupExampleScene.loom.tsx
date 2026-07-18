@@ -30,12 +30,7 @@ function RadioGroupExample() {
           <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
           {options.map((option) => (
             <RadioGroup.Item asChild key={option.value} value={option.value}>
-              <textbutton
-                AutoButtonColor={false}
-                BackgroundTransparency={1}
-                Size={UDim2.fromOffset(280, 22)}
-                Text=""
-              >
+              <textbutton AutoButtonColor={false} BackgroundTransparency={1} Size={UDim2.fromOffset(280, 22)} Text="">
                 <frame
                   BackgroundColor3={theme.colors.surfaceElevated}
                   BorderSizePixel={0}
@@ -43,10 +38,7 @@ function RadioGroupExample() {
                   Size={UDim2.fromOffset(18, 18)}
                 >
                   <uicorner CornerRadius={new UDim(1, 0)} />
-                  <uistroke
-                    Color={value === option.value ? theme.colors.accent : theme.colors.border}
-                    Thickness={1}
-                  />
+                  <uistroke Color={value === option.value ? theme.colors.accent : theme.colors.border} Thickness={1} />
                   {value === option.value ? (
                     <frame
                       AnchorPoint={new Vector2(0.5, 0.5)}
