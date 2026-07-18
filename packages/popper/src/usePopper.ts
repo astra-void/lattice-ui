@@ -53,6 +53,26 @@ function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {
   );
 }
 
+/**
+ * Resolves the valid AbsolutePosition-space rect for a ScreenGui.
+ *
+ * AbsolutePosition is measured from the top-left of the inset-adjusted area:
+ * - IgnoreGuiInset=true: the gui spans the full screen, so its content starts
+ *   ABOVE the origin — valid range is [-inset, AbsoluteSize - inset].
+ * - IgnoreGuiInset=false: the gui starts below the topbar at the origin —
+ *   valid range is [0, AbsoluteSize] (AbsoluteSize already excludes the inset).
+ *
+ * Exported for tests.
+ */
+export function resolveScreenGuiViewportRect(
+  ignoreGuiInset: boolean,
+  absoluteSize: Vector2,
+  topLeftInset: Vector2,
+): Rect {
+  const min = ignoreGuiInset ? new Vector2(-topLeftInset.X, -topLeftInset.Y) : new Vector2(0, 0);
+  return new Rect(min, new Vector2(min.X + absoluteSize.X, min.Y + absoluteSize.Y));
+}
+
 function getViewportRect(node: GuiObject | undefined): Rect {
   // Try to find the nearest ScreenGui or PluginGui ancestor to use its absolute size as bounds.
   // This is more accurate for portals than assuming the camera viewport size,
@@ -61,12 +81,8 @@ function getViewportRect(node: GuiObject | undefined): Rect {
     let current: Instance | undefined = node;
     while (current) {
       if (current.IsA("ScreenGui")) {
-        let min = new Vector2(0, 0);
-        if (!current.IgnoreGuiInset) {
-          const [topLeftInset] = GuiService.GetGuiInset();
-          min = topLeftInset;
-        }
-        return new Rect(min, min.add(current.AbsoluteSize));
+        const [topLeftInset] = GuiService.GetGuiInset();
+        return resolveScreenGuiViewportRect(current.IgnoreGuiInset, current.AbsoluteSize, topLeftInset);
       }
       current = current.Parent;
     }
