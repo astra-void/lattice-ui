@@ -28,3 +28,17 @@ export function resolveTextareaHeight(text: string, options: TextareaAutoResizeO
 
   return clampedRows * lineHeight + verticalPadding;
 }
+
+/**
+ * Computes the Size to write during auto-resize, or undefined when no write
+ * is needed. Only the Y axis is motion-owned: the X axis must be preserved
+ * verbatim (including its Scale component — full-width textareas use
+ * X.Scale=1 with X.Offset=0, and dropping the scale collapses them to 0px).
+ */
+export function resolveAutoResizeSize(currentSize: UDim2, height: number): UDim2 | undefined {
+  if (currentSize.Y.Offset === height && currentSize.Y.Scale === 0) {
+    return undefined;
+  }
+
+  return new UDim2(currentSize.X.Scale, currentSize.X.Offset, 0, height);
+}

@@ -1,6 +1,6 @@
 import { React, Slot } from "@lattice-ui/core";
 import { createFieldResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
-import { resolveTextareaHeight } from "./autoResize";
+import { resolveAutoResizeSize, resolveTextareaHeight } from "./autoResize";
 import { useTextareaContext } from "./context";
 import type { TextareaInputProps } from "./types";
 
@@ -83,9 +83,9 @@ export function TextareaInput(props: TextareaInputProps) {
         measuredRows,
       });
 
-      const currentSize = textBox.Size;
-      if (currentSize.Y.Offset !== height || currentSize.Y.Scale !== 0) {
-        textBox.Size = UDim2.fromOffset(currentSize.X.Offset, height);
+      const nextSize = resolveAutoResizeSize(textBox.Size, height);
+      if (nextSize !== undefined) {
+        textBox.Size = nextSize;
       }
     },
     [props.lineHeight, textareaContext.autoResize, textareaContext.maxRows, textareaContext.minRows],
