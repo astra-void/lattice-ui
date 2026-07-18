@@ -21,6 +21,7 @@ export function AvatarImage(props: AvatarImageProps) {
   }, []);
 
   const setStatus = avatarContext.setStatus;
+  const status = avatarContext.status;
 
   React.useEffect(() => {
     if (source === undefined || source.size() === 0) {
@@ -31,7 +32,16 @@ export function AvatarImage(props: AvatarImageProps) {
     setStatus("loading");
   }, [setStatus, source]);
 
+  // `status` is a dependency so this re-runs after the root resets to "loading"
+  // (e.g. on a source change): if the texture is already cached — IsLoaded true
+  // and no further change signal — we re-report "loaded" instead of staying blank.
   React.useEffect(() => {
+    // Mirror the sibling effect's empty-source guard: with no source the status is
+    // "error", and a stale IsLoaded=true must not overwrite it with "loaded".
+    if (source === undefined || source.size() === 0) {
+      return;
+    }
+
     const image = imageRef.current;
     if (!image) {
       return;
@@ -50,7 +60,7 @@ export function AvatarImage(props: AvatarImageProps) {
     return () => {
       connection.Disconnect();
     };
-  }, [setStatus, source]);
+  }, [setStatus, source, status]);
 
   if (props.asChild) {
     const child = props.children;

@@ -10,18 +10,38 @@ export function AvatarRoot(props: AvatarProps) {
   const [status, setStatus] = React.useState<AvatarStatus>(hasSource ? "loading" : "error");
   const [delayElapsed, setDelayElapsed] = React.useState(!hasSource);
   const sequenceRef = React.useRef(0);
+  const isFirstStatusRun = React.useRef(true);
 
+  // Reset status only when the source actually changes. delayMs changes must not
+  // reset here: this parent effect runs AFTER the child AvatarImage effects, so
+  // resetting to "loading" would clobber a "loaded"/"error" status the image just
+  // reported — and since ImageLabel.IsLoaded stays true, the change signal never
+  // fires again, leaving the avatar permanently blank.
+  React.useEffect(() => {
+    if (isFirstStatusRun.current) {
+      // useState already seeded the initial status for the first source.
+      isFirstStatusRun.current = false;
+      return;
+    }
+
+    if (props.src === undefined || props.src.size() === 0) {
+      setStatus("error");
+      return;
+    }
+
+    setStatus("loading");
+  }, [props.src]);
+
+  // Arm the fallback-reveal delay whenever the source or delayMs changes.
   React.useEffect(() => {
     sequenceRef.current += 1;
     const sequence = sequenceRef.current;
 
     if (props.src === undefined || props.src.size() === 0) {
-      setStatus("error");
       setDelayElapsed(true);
       return;
     }
 
-    setStatus("loading");
     setDelayElapsed(false);
 
     const delaySeconds = delayMs / 1000;
