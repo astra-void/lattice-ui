@@ -34,9 +34,13 @@ export function useControllableState<T>({
       return;
     }
 
-    stateRef.current = computed;
-
     if (!controlledRef.current) {
+      // Only uncontrolled state may advance the ref before the re-render:
+      // setInner is guaranteed to commit, so same-frame updater chains see
+      // the pending value. In controlled mode the parent may reject the
+      // change (no re-render), and advancing the ref would make every retry
+      // hit the dedupe above and silently swallow onChange.
+      stateRef.current = computed;
       setInner(computed);
     }
 
