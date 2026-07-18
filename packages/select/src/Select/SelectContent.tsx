@@ -12,7 +12,6 @@ import { usePopper } from "@lattice-ui/popper";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
 
-const CONTENT_OFFSET = 10;
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
@@ -61,8 +60,8 @@ function SelectContentImpl(props: {
   const defaultTransition = React.useMemo(
     () =>
       props.asChild
-        ? createPopperEntranceRecipe(resolvedPlacement, CONTENT_OFFSET, 0.16)
-        : createCanvasGroupPopperEntranceRecipe(resolvedPlacement, CONTENT_OFFSET),
+        ? createPopperEntranceRecipe(resolvedPlacement)
+        : createCanvasGroupPopperEntranceRecipe(resolvedPlacement),
     [resolvedPlacement, props.asChild],
   );
   const recipe = props.transition ?? defaultTransition;

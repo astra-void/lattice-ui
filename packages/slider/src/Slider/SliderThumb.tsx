@@ -21,7 +21,7 @@ export function SliderThumb(props: SliderThumbProps) {
   const motionRef = useResponseMotion<GuiObject>(
     true,
     { active: { Position: position }, inactive: { Position: position } },
-    createSliderThumbResponseRecipe(sliderContext.isDragging, sliderContext.isDragging ? 0.03 : 0.04),
+    createSliderThumbResponseRecipe(sliderContext.isDragging),
   );
 
   const setNodeRef = React.useCallback(

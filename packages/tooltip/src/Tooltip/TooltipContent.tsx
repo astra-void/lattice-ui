@@ -7,7 +7,6 @@ import { usePopper } from "@lattice-ui/popper";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
 
-const CONTENT_OFFSET = 10;
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
@@ -53,7 +52,7 @@ function TooltipContentImpl(props: {
   });
 
   const defaultTransition = React.useMemo(
-    () => createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    () => createCanvasGroupPopperEntranceRecipe(popper.placement),
     [popper.placement],
   );
   const recipe = props.transition ?? defaultTransition;

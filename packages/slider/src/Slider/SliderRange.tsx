@@ -1,5 +1,5 @@
 import { composeRefs, getElementRef, React } from "@lattice-ui/core";
-import { createProgressResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
+import { createProgressResponseRecipe, motionDrag, useResponseMotion } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderRangeProps } from "./types";
@@ -21,7 +21,7 @@ export function SliderRange(props: SliderRangeProps) {
       active: { Position: rangePosition, Size: rangeSize },
       inactive: { Position: rangePosition, Size: rangeSize },
     },
-    createProgressResponseRecipe(sliderContext.isDragging ? 0.03 : 0.04),
+    createProgressResponseRecipe(sliderContext.isDragging ? motionDrag.active : motionDrag.idle),
   );
 
   if (props.asChild) {

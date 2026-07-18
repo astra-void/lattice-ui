@@ -1,5 +1,6 @@
 import { React, Slot, useControllableState } from "@lattice-ui/core";
 import {
+  motionSettle,
   motionTargets as motionTargetContracts,
   type ResponseMotionConfig,
   useResponseMotion,
@@ -60,7 +61,7 @@ export function SwitchRoot(props: SwitchProps) {
   const motionConfig = React.useMemo<ResponseMotionConfig>(
     () => ({
       target: motionTargetContracts.appearance("switch track response"),
-      settle: { duration: 0.08, tempo: "swift", tone: "responsive" },
+      settle: { duration: motionSettle.toggle, tempo: "swift", tone: "responsive" },
     }),
     [],
   );

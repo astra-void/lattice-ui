@@ -1,5 +1,6 @@
 import { composeRefs, getElementRef, React } from "@lattice-ui/core";
 import {
+  motionSettle,
   motionTargets as motionTargetContracts,
   type ResponseMotionConfig,
   useResponseMotion,
@@ -37,7 +38,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
   const motionConfig = React.useMemo<ResponseMotionConfig>(
     () => ({
       target: motionTargetContracts.offsetWrapper("switch thumb response"),
-      settle: { duration: 0.08, tempo: "swift", tone: "responsive" },
+      settle: { duration: motionSettle.toggle, tempo: "swift", tone: "responsive" },
     }),
     [],
   );

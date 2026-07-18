@@ -8,7 +8,6 @@ import { usePopper } from "@lattice-ui/popper";
 import { useMenuContext } from "./context";
 import type { MenuContentProps } from "./types";
 
-const CONTENT_OFFSET = 10;
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
@@ -54,7 +53,7 @@ function MenuContentImpl(props: {
   });
 
   const defaultTransition = React.useMemo(
-    () => createCanvasGroupPopperEntranceRecipe(popper.placement, CONTENT_OFFSET),
+    () => createCanvasGroupPopperEntranceRecipe(popper.placement),
     [popper.placement],
   );
   const recipe = props.transition ?? defaultTransition;

@@ -159,7 +159,7 @@ function DialogContentImpl(props: {
   const contentBoundaryRef = React.useRef<GuiObject>();
   const insideBoundaryRefsRef = React.useRef<Array<React.MutableRefObject<GuiObject | undefined>>>([]);
 
-  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(8, 0.3), []);
+  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(), []);
   const config = React.useMemo(
     () => mergePresenceMotionConfig(defaultTransition, props.transition),
     [defaultTransition, props.transition],

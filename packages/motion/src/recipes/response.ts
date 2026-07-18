@@ -1,6 +1,7 @@
 import { motionTargets, type ResponseMotionConfig } from "../core/types";
+import { motionDrag, motionSettle } from "../core/tokens";
 
-export function createIndicatorSettleRecipe(duration = 0.12): ResponseMotionConfig {
+export function createIndicatorSettleRecipe(duration: number = motionSettle.selection): ResponseMotionConfig {
   return {
     target: motionTargets.sizeWrapper("indicator settle"),
     settle: { duration, tempo: "swift", tone: "responsive" },
@@ -9,7 +10,7 @@ export function createIndicatorSettleRecipe(duration = 0.12): ResponseMotionConf
 
 export function createSliderThumbResponseRecipe(
   isDragging: boolean,
-  duration = isDragging ? 0.05 : 0.12,
+  duration: number = isDragging ? motionDrag.active : motionDrag.idle,
 ): ResponseMotionConfig {
   return {
     target: motionTargets.layout("slider thumb"),
@@ -19,35 +20,35 @@ export function createSliderThumbResponseRecipe(
   };
 }
 
-export function createToggleResponseRecipe(duration = 0.15): ResponseMotionConfig {
+export function createToggleResponseRecipe(duration: number = motionSettle.toggle): ResponseMotionConfig {
   return {
     target: motionTargets.layout("toggle response"),
-    settle: { duration, tempo: "steady", tone: "responsive" },
+    settle: { duration, tempo: "swift", tone: "responsive" },
   };
 }
 
-export function createSelectionResponseRecipe(duration = 0.1): ResponseMotionConfig {
+export function createSelectionResponseRecipe(duration: number = motionSettle.selection): ResponseMotionConfig {
   return {
     target: motionTargets.appearance("selection response"),
     settle: { duration, tempo: "swift", tone: "responsive" },
   };
 }
 
-export function createFieldResponseRecipe(duration = 0.1): ResponseMotionConfig {
+export function createFieldResponseRecipe(duration: number = motionSettle.field): ResponseMotionConfig {
   return {
     target: motionTargets.appearance("field response"),
     settle: { duration, tempo: "swift", tone: "calm" },
   };
 }
 
-export function createProgressResponseRecipe(duration = 0.12): ResponseMotionConfig {
+export function createProgressResponseRecipe(duration: number = motionSettle.progress): ResponseMotionConfig {
   return {
     target: motionTargets.layout("progress response"),
     settle: { duration, tempo: "swift", tone: "responsive" },
   };
 }
 
-export function createToastResponseRecipe(duration = 0.14): ResponseMotionConfig {
+export function createToastResponseRecipe(duration: number = motionSettle.toast): ResponseMotionConfig {
   return {
     target: motionTargets.appearance("toast response"),
     settle: { duration, tempo: "steady", tone: "calm" },
