@@ -47,11 +47,47 @@ function isCollectionEmpty(collection: Map<unknown, unknown>) {
 
 export class MotionHost {
   private readonly tracks = new Map<string, MotionTrack>();
+  private positionBase?: UDim2;
 
   public constructor(
     public readonly instance: Instance,
     private targetContract?: MotionTargetContract,
   ) {}
+
+  /**
+   * Offset-wrapper targets treat Position values as offsets relative to the
+   * position the instance had before motion first touched it. Dedicated
+   * wrappers sit at (0, 0), so their values resolve unchanged; an `asChild`
+   * target that carries an authored Position slides around it instead of
+   * having it clobbered by the recipe's absolute values.
+   */
+  private resolveMotionValue(
+    domain: MotionDomain,
+    phase: string,
+    key: string,
+    value: unknown,
+    targetContract?: MotionTargetContract,
+  ) {
+    const role = (targetContract ?? this.targetContract)?.role;
+    if (role !== "offset-wrapper" || key !== "Position" || typeOf(value) !== "UDim2") {
+      return value;
+    }
+
+    if (this.positionBase === undefined) {
+      const context = this.createOperationContext(domain, phase, key, targetContract);
+      const base = readMotionProperty(this.instance, key, context);
+      this.positionBase = typeOf(base) === "UDim2" ? (base as UDim2) : new UDim2(0, 0, 0, 0);
+    }
+
+    const base = this.positionBase;
+    const offset = value as UDim2;
+    return new UDim2(
+      base.X.Scale + offset.X.Scale,
+      base.X.Offset + offset.X.Offset,
+      base.Y.Scale + offset.Y.Scale,
+      base.Y.Offset + offset.Y.Offset,
+    );
+  }
 
   public setTargetContract(targetContract: MotionTargetContract | undefined) {
     this.targetContract = targetContract;
@@ -68,7 +104,7 @@ export class MotionHost {
     }
 
     for (const [key, value] of pairs(values)) {
-      this.setImmediate(domain, phase, key, value, targetContract);
+      this.setImmediate(domain, phase, key, this.resolveMotionValue(domain, phase, key, value, targetContract), targetContract);
     }
   }
 
@@ -97,7 +133,8 @@ export class MotionHost {
     };
 
     for (const [key, value] of pairs(values)) {
-      if (this.setTimedTrack(domain, step, key, value, config, notifyComplete, targetContract)) {
+      const resolved = this.resolveMotionValue(domain, step, key, value, targetContract);
+      if (this.setTimedTrack(domain, step, key, resolved, config, notifyComplete, targetContract)) {
         pending += 1;
       }
     }
@@ -118,7 +155,7 @@ export class MotionHost {
     }
 
     for (const [key, value] of pairs(values)) {
-      this.setFollowTrack(domain, key, value, config, targetContract);
+      this.setFollowTrack(domain, key, this.resolveMotionValue(domain, "settle", key, value, targetContract), config, targetContract);
     }
   }
 
