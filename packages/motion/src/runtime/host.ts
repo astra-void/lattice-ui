@@ -104,7 +104,13 @@ export class MotionHost {
     }
 
     for (const [key, value] of pairs(values)) {
-      this.setImmediate(domain, phase, key, this.resolveMotionValue(domain, phase, key, value, targetContract), targetContract);
+      this.setImmediate(
+        domain,
+        phase,
+        key,
+        this.resolveMotionValue(domain, phase, key, value, targetContract),
+        targetContract,
+      );
     }
   }
 
@@ -155,7 +161,13 @@ export class MotionHost {
     }
 
     for (const [key, value] of pairs(values)) {
-      this.setFollowTrack(domain, key, this.resolveMotionValue(domain, "settle", key, value, targetContract), config, targetContract);
+      this.setFollowTrack(
+        domain,
+        key,
+        this.resolveMotionValue(domain, "settle", key, value, targetContract),
+        config,
+        targetContract,
+      );
     }
   }
 
