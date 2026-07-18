@@ -192,7 +192,7 @@ export class MotionHost {
         const curved = applyMotionCurve(track.config.curve, alpha);
 
         nextValue = interpolateMotionValue(track.from, track.target, curved, this.createContext(track, track.key));
-        if (alpha >= 1 || areMotionValuesEqual(nextValue, track.target)) {
+        if (alpha >= 1 || areMotionValuesEqual(nextValue, track.target, track.config.precision)) {
           nextValue = track.target;
           finished = true;
         }
@@ -211,7 +211,14 @@ export class MotionHost {
         }
       }
 
-      let wrote = true;
+      // `applied` must track the last value actually written to the instance, not
+      // the last value we computed. When sustained sub-threshold per-frame deltas
+      // keep `nextValue` within precision of `applied` every frame (e.g. a long fade
+      // on a high-refresh client), the write is skipped each time. Advancing `applied`
+      // on a skip would let it creep toward the target while the instance is never
+      // touched — including the final write at completion — so only advance it when
+      // writeMotionProperty actually ran and succeeded.
+      let wrote = false;
       if (!areMotionValuesEqual(nextValue, track.applied)) {
         wrote = writeMotionProperty(this.instance, key, nextValue, this.createContext(track, key));
         if (!wrote) {
