@@ -1,6 +1,13 @@
 import { React } from "@lattice-ui/core";
 import { ToastContextProvider, useToastContext } from "./context";
-import { enqueueToast, getVisibleToasts, pruneExpiredToasts, type ToastRecord } from "./queue";
+import {
+  clearToasts,
+  enqueueToast,
+  finalizeToast,
+  getVisibleToasts,
+  pruneExpiredToasts,
+  type ToastRecord,
+} from "./queue";
 import type { ToastApi, ToastOptions, ToastProviderProps } from "./types";
 
 const RunService = game.GetService("RunService");
@@ -67,12 +74,18 @@ export function ToastProvider(props: ToastProviderProps) {
     [maxVisible],
   );
 
-  const clear = React.useCallback(() => {
-    setToasts([]);
+  const finalize = React.useCallback((id: string) => {
+    setToasts((currentQueue) => finalizeToast(currentQueue, id));
   }, []);
 
+  const clear = React.useCallback(() => {
+    setToasts((currentQueue) => clearToasts(currentQueue, nowMs(), maxVisible));
+  }, [maxVisible]);
+
+  const hasToasts = toasts.size() > 0;
+
   React.useEffect(() => {
-    if (toasts.size() === 0) {
+    if (!hasToasts) {
       return;
     }
 
@@ -83,7 +96,7 @@ export function ToastProvider(props: ToastProviderProps) {
     return () => {
       connection.Disconnect();
     };
-  }, [defaultDurationMs, maxVisible, toasts.size()]);
+  }, [defaultDurationMs, maxVisible, hasToasts]);
 
   const visibleToasts = React.useMemo(() => getVisibleToasts(toasts, maxVisible), [maxVisible, toasts]);
 
@@ -95,9 +108,10 @@ export function ToastProvider(props: ToastProviderProps) {
       maxVisible,
       enqueue,
       remove,
+      finalize,
       clear,
     }),
-    [clear, defaultDurationMs, enqueue, maxVisible, remove, toasts, visibleToasts],
+    [clear, defaultDurationMs, enqueue, finalize, maxVisible, remove, toasts, visibleToasts],
   );
 
   return <ToastContextProvider value={contextValue}>{props.children}</ToastContextProvider>;
@@ -110,6 +124,7 @@ export function useToast(): ToastApi {
     visibleToasts: toastContext.visibleToasts,
     enqueue: toastContext.enqueue,
     remove: toastContext.remove,
+    finalize: toastContext.finalize,
     clear: toastContext.clear,
   };
 }

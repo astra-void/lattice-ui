@@ -5,22 +5,29 @@ import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { useResponseMotion } = vi.hoisted(() => ({
-  useResponseMotion: vi.fn(() => ({ current: undefined })),
-}));
+const { usePresenceMotionController, createToastRevealRecipe, defaultRecipe, slotPropsLog } = vi.hoisted(() => {
+  const defaultRecipe = { initial: { GroupTransparency: 1 } };
+
+  return {
+    usePresenceMotionController: vi.fn(),
+    createToastRevealRecipe: vi.fn(() => defaultRecipe),
+    defaultRecipe,
+    slotPropsLog: [] as Array<Record<string, unknown>>,
+  };
+});
 
 vi.mock("@lattice-ui/core", () => {
   const React = require("react");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
     const { children, ...slotProps } = props;
+    slotPropsLog.push(slotProps);
     if (!React.isValidElement(children)) {
       return null;
     }
 
     return React.cloneElement(children, {
       ...children.props,
-      ...slotProps,
     });
   }
 
@@ -31,39 +38,88 @@ vi.mock("@lattice-ui/core", () => {
 });
 
 vi.mock("@lattice-ui/motion", () => ({
-  useResponseMotion,
+  usePresenceMotionController,
+  createToastRevealRecipe,
 }));
 
 import { ToastRoot } from "../../../packages/toast/src/Toast/ToastRoot";
 
+function controller(overrides = {}) {
+  return {
+    ref: { current: undefined },
+    phase: "visible",
+    mounted: true,
+    ready: true,
+    present: true,
+    isExiting: false,
+    isVisible: true,
+    markReady: () => {},
+    ...overrides,
+  };
+}
+
 afterEach(() => {
   vi.clearAllMocks();
+  slotPropsLog.splice(0, slotPropsLog.length);
 });
 
 describe("ToastRoot motion regressions", () => {
-  it("forwards custom response motion transitions to the motion hook", () => {
+  it("forwards custom presence transitions and exit callbacks to the controller", () => {
+    usePresenceMotionController.mockReturnValue(controller());
     const customTransition = {
-      settle: {
-        duration: 0.3,
-        tempo: "steady",
-        tone: "calm",
-      },
+      initial: { GroupTransparency: 1 },
+      reveal: { values: { GroupTransparency: 0 }, intent: { duration: 0.3 } },
+      exit: { values: { GroupTransparency: 1 }, intent: { duration: 0.3 } },
     };
+    const onExitComplete = vi.fn();
 
     render(
-      <ToastRoot asChild={true} transition={customTransition} visible={true}>
+      <ToastRoot asChild={true} onExitComplete={onExitComplete} transition={customTransition} visible={true}>
         <div data-testid="toast" />
       </ToastRoot>,
     );
 
-    expect(useResponseMotion).toHaveBeenCalledTimes(1);
-    expect(useResponseMotion).toHaveBeenCalledWith(
-      true,
-      {
-        active: { BackgroundTransparency: 0 },
-        inactive: { BackgroundTransparency: 1 },
-      },
-      customTransition,
+    expect(usePresenceMotionController).toHaveBeenCalledTimes(1);
+    expect(usePresenceMotionController).toHaveBeenCalledWith({
+      present: true,
+      config: customTransition,
+      onExitComplete,
+    });
+  });
+
+  it("falls back to the toast reveal recipe when no transition is given", () => {
+    usePresenceMotionController.mockReturnValue(controller());
+
+    render(
+      <ToastRoot asChild={true} visible={true}>
+        <div />
+      </ToastRoot>,
     );
+
+    expect(usePresenceMotionController).toHaveBeenCalledWith(expect.objectContaining({ config: defaultRecipe }));
+  });
+
+  it("keeps the root visible while the exit animation is running", () => {
+    usePresenceMotionController.mockReturnValue(controller({ phase: "exiting", present: false }));
+
+    render(
+      <ToastRoot asChild={true} visible={false}>
+        <div />
+      </ToastRoot>,
+    );
+
+    expect(slotPropsLog[0]?.Visible).toBe(true);
+  });
+
+  it("hides the root only after the exit completes", () => {
+    usePresenceMotionController.mockReturnValue(controller({ phase: "exited", mounted: false, present: false }));
+
+    render(
+      <ToastRoot asChild={true} visible={false}>
+        <div />
+      </ToastRoot>,
+    );
+
+    expect(slotPropsLog[0]?.Visible).toBe(false);
   });
 });

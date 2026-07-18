@@ -1,4 +1,4 @@
-import type { ResponseMotionConfig as MotionConfig } from "@lattice-ui/motion";
+import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/motion";
 import type React from "@rbxts/react";
 import type { ToastRecord } from "./queue";
 
@@ -16,6 +16,7 @@ export type ToastContextValue = {
   maxVisible: number;
   enqueue: (options: ToastOptions) => string;
   remove: (id: string) => void;
+  finalize: (id: string) => void;
   clear: () => void;
 };
 
@@ -24,6 +25,7 @@ export type ToastApi = {
   visibleToasts: Array<ToastRecord>;
   enqueue: (options: ToastOptions) => string;
   remove: (id: string) => void;
+  finalize: (id: string) => void;
   clear: () => void;
 };
 
@@ -42,6 +44,7 @@ export type ToastRootProps = {
   transition?: MotionConfig;
   asChild?: boolean;
   visible?: boolean;
+  onExitComplete?: () => void;
   children?: React.ReactNode;
 };
 

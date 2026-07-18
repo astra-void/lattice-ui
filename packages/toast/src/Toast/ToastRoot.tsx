@@ -1,19 +1,21 @@
 import { React, Slot } from "@lattice-ui/core";
-import { createToastResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
+import { createToastRevealRecipe, usePresenceMotionController } from "@lattice-ui/motion";
 import type { ToastRootProps } from "./types";
 
 export function ToastRoot(props: ToastRootProps) {
   const visible = props.visible ?? true;
-  const transition = props.transition ?? createToastResponseRecipe();
+  const defaultTransition = React.useMemo(() => createToastRevealRecipe(), []);
+  const transition = props.transition ?? defaultTransition;
 
-  const motionRef = useResponseMotion<Frame>(
-    visible,
-    {
-      active: { BackgroundTransparency: 0 },
-      inactive: { BackgroundTransparency: 1 },
-    },
-    transition,
-  );
+  const motion = usePresenceMotionController<CanvasGroup>({
+    present: visible,
+    config: transition,
+    onExitComplete: props.onExitComplete,
+  });
+
+  // Stay visible through the exiting phase so the exit animation can play;
+  // the instance only hides once the presence controller reports "exited".
+  const motionVisible = motion.mounted && motion.phase !== "exited";
 
   if (props.asChild) {
     const child = props.children;
@@ -22,20 +24,20 @@ export function ToastRoot(props: ToastRootProps) {
     }
 
     return (
-      <Slot Visible={visible} ref={motionRef}>
+      <Slot Visible={motionVisible} ref={motion.ref}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame
+    <canvasgroup
       BackgroundColor3={Color3.fromRGB(38, 45, 59)}
       BackgroundTransparency={0}
       BorderSizePixel={0}
       Size={UDim2.fromOffset(320, 72)}
-      Visible={visible}
-      ref={motionRef}
+      Visible={motionVisible}
+      ref={motion.ref}
     >
       <uicorner CornerRadius={new UDim(0, 10)} />
       <uipadding
@@ -45,6 +47,6 @@ export function ToastRoot(props: ToastRootProps) {
         PaddingTop={new UDim(0, 8)}
       />
       {props.children}
-    </frame>
+    </canvasgroup>
   );
 }
