@@ -139,7 +139,74 @@ importers:
         specifier: ^4.1.1
         version: 4.1.2(@types/node@25.5.2)(jsdom@29.0.1)(vite@8.0.8(@types/node@25.5.2)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.21.0))
 
-  apps/loom-preview: {}
+  apps/loom-preview:
+    dependencies:
+      '@lattice-ui/accordion':
+        specifier: workspace:*
+        version: link:../../packages/accordion
+      '@lattice-ui/avatar':
+        specifier: workspace:*
+        version: link:../../packages/avatar
+      '@lattice-ui/checkbox':
+        specifier: workspace:*
+        version: link:../../packages/checkbox
+      '@lattice-ui/combobox':
+        specifier: workspace:*
+        version: link:../../packages/combobox
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@lattice-ui/dialog':
+        specifier: workspace:*
+        version: link:../../packages/dialog
+      '@lattice-ui/layer':
+        specifier: workspace:*
+        version: link:../../packages/layer
+      '@lattice-ui/popover':
+        specifier: workspace:*
+        version: link:../../packages/popover
+      '@lattice-ui/progress':
+        specifier: workspace:*
+        version: link:../../packages/progress
+      '@lattice-ui/radio-group':
+        specifier: workspace:*
+        version: link:../../packages/radio-group
+      '@lattice-ui/scroll-area':
+        specifier: workspace:*
+        version: link:../../packages/scroll-area
+      '@lattice-ui/select':
+        specifier: workspace:*
+        version: link:../../packages/select
+      '@lattice-ui/slider':
+        specifier: workspace:*
+        version: link:../../packages/slider
+      '@lattice-ui/style':
+        specifier: workspace:*
+        version: link:../../packages/style
+      '@lattice-ui/switch':
+        specifier: workspace:*
+        version: link:../../packages/switch
+      '@lattice-ui/system':
+        specifier: workspace:*
+        version: link:../../packages/system
+      '@lattice-ui/tabs':
+        specifier: workspace:*
+        version: link:../../packages/tabs
+      '@lattice-ui/text-field':
+        specifier: workspace:*
+        version: link:../../packages/text-field
+      '@lattice-ui/textarea':
+        specifier: workspace:*
+        version: link:../../packages/textarea
+      '@lattice-ui/toast':
+        specifier: workspace:*
+        version: link:../../packages/toast
+      '@lattice-ui/toggle-group':
+        specifier: workspace:*
+        version: link:../../packages/toggle-group
+      '@lattice-ui/tooltip':
+        specifier: workspace:*
+        version: link:../../packages/tooltip
 
   apps/playground:
     dependencies:
