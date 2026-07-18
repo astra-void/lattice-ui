@@ -136,7 +136,10 @@ describe("layerStack dismiss key handling", () => {
     harness.layerStack.unregisterLayer(registration.id);
   });
 
-  it("ignores processed pointer input for outside dismiss", async () => {
+  it("dismisses on game-processed pointer input when the hit is outside", async () => {
+    // Roblox marks presses sunk by Active GUI elements (including the layer's
+    // own modal blocker and any other on-screen button) as game-processed;
+    // those are exactly the presses that must still dismiss.
     const harness = await createLayerStackHarness();
 
     let dismissCalls = 0;
@@ -156,8 +159,94 @@ describe("layerStack dismiss key handling", () => {
       true,
     );
 
+    expect(dismissCalls).toBe(1);
+
+    harness.layerStack.unregisterLayer(registration.id);
+  });
+
+  it("does not dismiss on game-processed pointer input when the hit is inside", async () => {
+    const harness = await createLayerStackHarness();
+
+    let dismissCalls = 0;
+
+    const registration = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => false,
+      onDismiss: () => {
+        dismissCalls += 1;
+      },
+    });
+
+    harness.emitInputBegan(
+      {
+        UserInputType: Enum.UserInputType.MouseButton1,
+      },
+      true,
+    );
+
     expect(dismissCalls).toBe(0);
 
     harness.layerStack.unregisterLayer(registration.id);
+  });
+});
+
+describe("layerStack open-order", () => {
+  it("dismisses the most recently promoted layer, not the last mounted one", async () => {
+    const harness = await createLayerStackHarness();
+
+    const dismissed: string[] = [];
+
+    const first = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => true,
+      onDismiss: () => {
+        dismissed.push("first");
+      },
+    });
+    const second = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => true,
+      onDismiss: () => {
+        dismissed.push("second");
+      },
+    });
+
+    // Without promotion the last registered layer is topmost.
+    harness.emitInputBegan({ UserInputType: Enum.UserInputType.MouseButton1 });
+    expect(dismissed).toEqual(["second"]);
+
+    // Promote the first layer (it re-opened): it must now be topmost.
+    harness.layerStack.promoteLayer(first.id);
+    harness.emitInputBegan({ UserInputType: Enum.UserInputType.MouseButton1 });
+    expect(dismissed).toEqual(["second", "first"]);
+
+    harness.layerStack.unregisterLayer(first.id);
+    harness.layerStack.unregisterLayer(second.id);
+  });
+
+  it("assigns a fresh, higher mount order when promoting a non-top layer", async () => {
+    const harness = await createLayerStackHarness();
+
+    const first = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => false,
+    });
+    const second = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => false,
+    });
+
+    const promoted = harness.layerStack.promoteLayer(first.id);
+    expect(promoted).toBeDefined();
+    expect(promoted!).toBeGreaterThan(second.mountOrder);
+
+    // Promoting the already-topmost layer keeps its order stable.
+    expect(harness.layerStack.promoteLayer(first.id)).toBe(promoted);
+
+    // Unknown layers report undefined.
+    expect(harness.layerStack.promoteLayer(9999)).toBeUndefined();
+
+    harness.layerStack.unregisterLayer(first.id);
+    harness.layerStack.unregisterLayer(second.id);
   });
 });

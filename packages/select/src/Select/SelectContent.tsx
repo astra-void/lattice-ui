@@ -133,6 +133,7 @@ function SelectContentImpl(props: {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
+      insideRefs={[selectContext.triggerRef]}
     >
       <FocusScope active={open} restoreFocus={true} trapped={false}>
         <frame

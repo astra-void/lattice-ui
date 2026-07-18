@@ -137,6 +137,7 @@ function MenuContentImpl(props: {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
+      insideRefs={[menuContext.triggerRef]}
     >
       <FocusScope active={open} restoreFocus={true} trapped={menuContext.modal}>
         <frame

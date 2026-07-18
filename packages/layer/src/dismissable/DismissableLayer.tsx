@@ -4,7 +4,7 @@ import { DEFAULT_LAYER_IGNORE_GUI_INSET } from "../internals/constants";
 import { Portal } from "../portal/Portal";
 import { usePortalContext } from "../portal/PortalProvider";
 import { isOutsidePointerEvent } from "./events";
-import { registerLayer, unregisterLayer } from "./layerStack";
+import { promoteLayer, registerLayer, unregisterLayer } from "./layerStack";
 import type { DismissableLayerProps, LayerInteractEvent } from "./types";
 
 const GuiService = game.GetService("GuiService");
@@ -28,6 +28,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
 
   const portalContext = usePortalContext();
   const contentWrapperRef = React.useRef<Frame>();
+  const registrationIdRef = React.useRef<number>();
   const [stackOrder, setStackOrder] = React.useState(0);
 
   const enabledRef = useLatest(enabled);
@@ -70,9 +71,11 @@ export function DismissableLayer(props: DismissableLayerProps) {
       onDismiss: callDismiss,
     });
 
+    registrationIdRef.current = registration.id;
     setStackOrder(registration.mountOrder);
 
     return () => {
+      registrationIdRef.current = undefined;
       unregisterLayer(registration.id);
     };
   }, [
@@ -86,10 +89,33 @@ export function DismissableLayer(props: DismissableLayerProps) {
     portalContext.container,
   ]);
 
+  // Declared after the registration effect so mount runs register → promote.
+  // Re-promotes on every open so z-order and dismissal order follow open
+  // order (layers stay permanently mounted with enabled={open}).
+  React.useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const registrationId = registrationIdRef.current;
+    if (registrationId === undefined) {
+      return;
+    }
+
+    const nextOrder = promoteLayer(registrationId);
+    if (nextOrder !== undefined) {
+      setStackOrder(nextOrder);
+    }
+  }, [enabled]);
+
   return (
     <Portal>
+      {/* Stable key: keying by stackOrder destroyed and recreated the whole
+          subtree one commit after every mount/open (stackOrder starts at 0 and
+          changes once registration resolves). DisplayOrder is a plain prop and
+          updates in place. */}
       <screengui
-        key={`Layer_${stackOrder}`}
+        key="Layer"
         DisplayOrder={portalContext.displayOrderBase + stackOrder}
         IgnoreGuiInset={layerIgnoresGuiInset}
         ResetOnSpawn={false}

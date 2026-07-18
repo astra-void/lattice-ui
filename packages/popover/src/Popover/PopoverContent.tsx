@@ -133,6 +133,7 @@ function PopoverContentImpl(props: {
       onInteractOutside={props.onInteractOutside}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
+      insideRefs={[popoverContext.triggerRef, popoverContext.anchorRef]}
     >
       <FocusScope active={open} restoreFocus={true} trapped={popoverContext.modal}>
         <frame

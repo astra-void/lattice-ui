@@ -41,11 +41,12 @@ function handleDismissEvent(entry: LayerEntry, event: LayerInteractEvent) {
   }
 }
 
-function handleInputBegan(inputObject: InputObject, gameProcessedEvent: boolean) {
-  if (gameProcessedEvent) {
-    return;
-  }
-
+function handleInputBegan(inputObject: InputObject) {
+  // Do NOT filter on gameProcessedEvent: Roblox marks any press sunk by an
+  // Active GUI element as processed, which includes the layer's own modal
+  // blocker and every other button on screen — exactly the presses that must
+  // dismiss. Inside/outside is decided by geometry (isPointerOutside), and
+  // triggers opt out via insideRefs.
   if (!isPointerInput(inputObject)) {
     return;
   }
@@ -70,8 +71,8 @@ function startInputListener() {
     return;
   }
 
-  inputConnection = UserInputService.InputBegan.Connect((inputObject, gameProcessedEvent) => {
-    handleInputBegan(inputObject, gameProcessedEvent);
+  inputConnection = UserInputService.InputBegan.Connect((inputObject) => {
+    handleInputBegan(inputObject);
   });
 }
 
@@ -107,6 +108,30 @@ export function registerLayer(params: RegisterLayerParams): LayerRegistration {
     id: entry.id,
     mountOrder: entry.mountOrder,
   };
+}
+
+/**
+ * Moves a layer to the top of the stack, assigning it a fresh mount order.
+ * Called when a layer becomes enabled (opens) so z-order and dismissal order
+ * follow open order rather than component mount order. Returns the layer's
+ * (possibly new) mount order, or undefined if the layer is not registered.
+ */
+export function promoteLayer(layerId: number): number | undefined {
+  const layerIndex = layerEntries.findIndex((entry) => entry.id === layerId);
+  if (layerIndex === -1) {
+    return undefined;
+  }
+
+  const entry = layerEntries[layerIndex];
+  if (layerIndex === layerEntries.size() - 1) {
+    return entry.mountOrder;
+  }
+
+  layerEntries.remove(layerIndex);
+  nextMountOrder += 1;
+  entry.mountOrder = nextMountOrder;
+  layerEntries.push(entry);
+  return entry.mountOrder;
 }
 
 export function unregisterLayer(layerId: number) {
