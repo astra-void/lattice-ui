@@ -35,8 +35,13 @@ function ToastExampleContent() {
             SortOrder={Enum.SortOrder.LayoutOrder}
           />
           {toast.visibleToasts.map((record) => (
-            <Toast.Root asChild key={record.id} visible={!record.exiting}>
-              <frame
+            <Toast.Root
+              asChild
+              key={record.id}
+              onExitComplete={() => toast.finalize(record.id)}
+              visible={!record.exiting}
+            >
+              <canvasgroup
                 BackgroundColor3={theme.colors.surfaceElevated}
                 BorderSizePixel={0}
                 Size={UDim2.fromOffset(340, 58)}
@@ -81,7 +86,7 @@ function ToastExampleContent() {
                     TextSize={12}
                   />
                 </Toast.Close>
-              </frame>
+              </canvasgroup>
             </Toast.Root>
           ))}
         </frame>
