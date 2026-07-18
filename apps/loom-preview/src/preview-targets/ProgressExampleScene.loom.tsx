@@ -8,7 +8,16 @@ function ProgressExample() {
   const value = 66;
 
   return (
-    <frame BackgroundTransparency={1} Size={UDim2.fromScale(1, 1)}>
+    <frame BackgroundColor3={theme.colors.surfaceElevated} BorderSizePixel={0} Size={UDim2.fromScale(1, 1)}>
+      <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
+      <uistroke Color={theme.colors.border} Thickness={1} />
+      <uipadding
+        PaddingBottom={new UDim(0, theme.space[16])}
+        PaddingLeft={new UDim(0, theme.space[20])}
+        PaddingRight={new UDim(0, theme.space[20])}
+        PaddingTop={new UDim(0, theme.space[16])}
+      />
+
       <Progress.Spinner asChild speedDegPerSecond={240} spinning>
         <frame
           BackgroundTransparency={1}
@@ -29,29 +38,32 @@ function ProgressExample() {
           </frame>
         </frame>
       </Progress.Spinner>
+
       <Text
         BackgroundTransparency={1}
-        Position={UDim2.fromOffset(24, 0)}
-        Size={UDim2.fromOffset(176, 18)}
-        Text="Uploading assets..."
+        Font={Enum.Font.GothamMedium}
+        Position={UDim2.fromOffset(26, 0)}
+        Size={UDim2.fromOffset(200, 18)}
+        Text="Syncing library…"
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.labelSm.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
       <Text
         BackgroundTransparency={1}
-        Position={UDim2.fromOffset(200, 0)}
-        Size={UDim2.fromOffset(80, 18)}
+        Position={UDim2.fromOffset(230, 0)}
+        Size={UDim2.fromOffset(50, 18)}
         Text={`${value}%`}
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.labelSm.textSize}
         TextXAlignment={Enum.TextXAlignment.Right}
       />
+
       <Progress.Root max={100} value={value}>
         <frame
-          BackgroundColor3={theme.colors.surfaceElevated}
+          BackgroundColor3={theme.colors.surface}
           BorderSizePixel={0}
-          Position={UDim2.fromOffset(0, 28)}
+          Position={UDim2.fromOffset(0, 30)}
           Size={UDim2.fromOffset(280, 8)}
         >
           <uicorner CornerRadius={new UDim(0, theme.radius.full)} />
@@ -62,13 +74,23 @@ function ProgressExample() {
           </Progress.Indicator>
         </frame>
       </Progress.Root>
+
+      <Text
+        BackgroundTransparency={1}
+        Position={UDim2.fromOffset(0, 48)}
+        Size={UDim2.fromOffset(280, 16)}
+        Text="128 of 194 items · about 2 min left"
+        TextColor3={theme.colors.textSecondary}
+        TextSize={theme.typography.labelSm.textSize}
+        TextXAlignment={Enum.TextXAlignment.Left}
+      />
     </frame>
   );
 }
 
 export const preview = {
   render: () => (
-    <DocExampleShell height={36} width={280}>
+    <DocExampleShell height={96} width={320}>
       <ProgressExample />
     </DocExampleShell>
   ),

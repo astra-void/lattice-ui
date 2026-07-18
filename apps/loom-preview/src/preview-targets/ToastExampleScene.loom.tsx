@@ -24,11 +24,15 @@ function ToastExampleContent() {
           Position: UDim2.fromScale(0.5, 0),
           Size: UDim2.fromOffset(140, 40),
           Text: "Show toast",
+          TextSize: theme.typography.labelSm.textSize,
         }) as Record<string, unknown>)}
-      />
+      >
+        <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+        <uistroke Color={theme.colors.border} Thickness={1} />
+      </textbutton>
 
       <Toast.Viewport asChild>
-        <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 56)} Size={UDim2.fromOffset(340, 196)}>
+        <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 56)} Size={UDim2.fromOffset(340, 220)}>
           <uilistlayout
             FillDirection={Enum.FillDirection.Vertical}
             Padding={new UDim(0, theme.space[8])}
@@ -44,19 +48,25 @@ function ToastExampleContent() {
               <canvasgroup
                 BackgroundColor3={theme.colors.surfaceElevated}
                 BorderSizePixel={0}
-                Size={UDim2.fromOffset(340, 58)}
+                Size={UDim2.fromOffset(340, 64)}
               >
-                <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
                 <uistroke Color={theme.colors.border} Thickness={1} />
-                <uipadding
-                  PaddingLeft={new UDim(0, theme.space[12])}
-                  PaddingRight={new UDim(0, theme.space[12])}
-                  PaddingTop={new UDim(0, theme.space[10])}
-                />
+                <frame
+                  AnchorPoint={new Vector2(0, 0.5)}
+                  BackgroundColor3={theme.colors.accent}
+                  BorderSizePixel={0}
+                  Position={new UDim2(0, 12, 0.5, 0)}
+                  Size={UDim2.fromOffset(3, 36)}
+                >
+                  <uicorner CornerRadius={new UDim(1, 0)} />
+                </frame>
                 <Toast.Title asChild>
                   <Text
                     BackgroundTransparency={1}
-                    Size={UDim2.fromOffset(280, 18)}
+                    Font={Enum.Font.GothamMedium}
+                    Position={UDim2.fromOffset(28, 14)}
+                    Size={UDim2.fromOffset(266, 18)}
                     Text={record.title ?? ""}
                     TextColor3={theme.colors.textPrimary}
                     TextSize={theme.typography.labelSm.textSize}
@@ -66,8 +76,8 @@ function ToastExampleContent() {
                 <Toast.Description asChild>
                   <Text
                     BackgroundTransparency={1}
-                    Position={UDim2.fromOffset(0, 22)}
-                    Size={UDim2.fromOffset(280, 16)}
+                    Position={UDim2.fromOffset(28, 35)}
+                    Size={UDim2.fromOffset(266, 16)}
                     Text={record.description ?? ""}
                     TextColor3={theme.colors.textSecondary}
                     TextSize={theme.typography.labelSm.textSize}
@@ -79,9 +89,9 @@ function ToastExampleContent() {
                     AutoButtonColor={false}
                     BackgroundTransparency={1}
                     BorderSizePixel={0}
-                    Position={UDim2.fromOffset(292, 0)}
-                    Size={UDim2.fromOffset(24, 18)}
-                    Text="X"
+                    Position={UDim2.fromOffset(306, 14)}
+                    Size={UDim2.fromOffset(18, 18)}
+                    Text="✕"
                     TextColor3={theme.colors.textSecondary}
                     TextSize={12}
                   />
@@ -105,7 +115,7 @@ function ToastExample() {
 
 export const preview = {
   render: () => (
-    <DocExampleShell height={260} width={340}>
+    <DocExampleShell height={276} width={340}>
       <ToastExample />
     </DocExampleShell>
   ),

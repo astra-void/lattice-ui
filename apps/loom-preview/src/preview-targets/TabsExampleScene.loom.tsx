@@ -1,7 +1,7 @@
 import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { Tabs } from "@lattice-ui/tabs";
-import { buttonRecipe, panelRecipe } from "../../../playground/src/client/theme/recipes";
+import { buttonRecipe } from "../../../playground/src/client/theme/recipes";
 import { DocExampleShell } from "./DocExampleShell";
 
 type AccountTabKey = "account" | "password";
@@ -11,34 +11,36 @@ type FieldSpec = {
   value: string;
 };
 
-function ExampleField(props: { field: FieldSpec; offsetY: number; theme: ReturnType<typeof useTheme>["theme"] }) {
-  const { field, offsetY, theme } = props;
+function ExampleField(props: { field: FieldSpec; layoutOrder: number }) {
+  const { theme } = useTheme();
+  const { field, layoutOrder } = props;
 
   return (
-    <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, offsetY)} Size={UDim2.fromOffset(276, 48)}>
+    <frame BackgroundTransparency={1} LayoutOrder={layoutOrder} Size={UDim2.fromOffset(280, 60)}>
       <Text
         BackgroundTransparency={1}
-        Size={UDim2.fromOffset(276, 14)}
+        Font={Enum.Font.GothamMedium}
+        Size={UDim2.fromOffset(280, 16)}
         Text={field.label}
-        TextColor3={theme.colors.textSecondary}
+        TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.labelSm.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
       <frame
-        BackgroundColor3={theme.colors.surfaceElevated}
+        BackgroundColor3={theme.colors.surface}
         BorderSizePixel={0}
-        Position={UDim2.fromOffset(0, 18)}
-        Size={UDim2.fromOffset(276, 30)}
+        Position={UDim2.fromOffset(0, 22)}
+        Size={UDim2.fromOffset(280, 38)}
       >
         <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
         <uistroke Color={theme.colors.border} Thickness={1} />
-        <uipadding PaddingLeft={new UDim(0, theme.space[10])} />
+        <uipadding PaddingLeft={new UDim(0, theme.space[12])} />
         <Text
           BackgroundTransparency={1}
           Size={UDim2.fromScale(1, 1)}
           Text={field.value}
           TextColor3={theme.colors.textPrimary}
-          TextSize={theme.typography.bodyMd.textSize}
+          TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
         />
       </frame>
@@ -50,10 +52,10 @@ function TabsExample() {
   const { theme } = useTheme();
   const [tab, setTab] = React.useState<AccountTabKey>("account");
 
-  const panels: Array<{ value: AccountTabKey; heading: string; fields: Array<FieldSpec> }> = [
+  const panels: Array<{ value: AccountTabKey; action: string; fields: Array<FieldSpec> }> = [
     {
       value: "account",
-      heading: "Account",
+      action: "Save changes",
       fields: [
         { label: "Name", value: "Jane Doe" },
         { label: "Username", value: "@jane" },
@@ -61,7 +63,7 @@ function TabsExample() {
     },
     {
       value: "password",
-      heading: "Password",
+      action: "Update password",
       fields: [
         { label: "Current password", value: "••••••••" },
         { label: "New password", value: "••••••••" },
@@ -69,65 +71,86 @@ function TabsExample() {
     },
   ];
 
+  const tabs: Array<{ value: AccountTabKey; label: string }> = [
+    { value: "account", label: "Account" },
+    { value: "password", label: "Password" },
+  ];
+
   return (
     <frame BackgroundTransparency={1} Size={UDim2.fromScale(1, 1)}>
       <Tabs.Root onValueChange={(nextValue) => setTab(nextValue as AccountTabKey)} value={tab}>
         <Tabs.List asChild>
-          <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 0)} Size={UDim2.fromOffset(300, 32)}>
-            <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[6])} />
+          <frame BackgroundColor3={theme.colors.surface} BorderSizePixel={0} Size={UDim2.fromOffset(320, 40)}>
+            <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+            <uistroke Color={theme.colors.border} Thickness={1} />
+            <uipadding
+              PaddingBottom={new UDim(0, theme.space[4])}
+              PaddingLeft={new UDim(0, theme.space[4])}
+              PaddingRight={new UDim(0, theme.space[4])}
+              PaddingTop={new UDim(0, theme.space[4])}
+            />
+            <uilistlayout FillDirection={Enum.FillDirection.Horizontal} Padding={new UDim(0, theme.space[4])} />
 
-            <Tabs.Trigger asChild value="account">
-              <textbutton
-                {...(mergeGuiProps(
-                  buttonRecipe({ intent: tab === "account" ? "primary" : "surface", size: "sm" }, theme),
-                  {
-                    Size: UDim2.fromOffset(100, 32),
-                    Text: "Account",
-                  },
-                ) as Record<string, unknown>)}
-              />
-            </Tabs.Trigger>
-
-            <Tabs.Trigger asChild value="password">
-              <textbutton
-                {...(mergeGuiProps(
-                  buttonRecipe({ intent: tab === "password" ? "primary" : "surface", size: "sm" }, theme),
-                  {
-                    Size: UDim2.fromOffset(100, 32),
-                    Text: "Password",
-                  },
-                ) as Record<string, unknown>)}
-              />
-            </Tabs.Trigger>
+            {tabs.map((entry, index) => {
+              const selected = tab === entry.value;
+              return (
+                <Tabs.Trigger asChild key={entry.value} value={entry.value}>
+                  <textbutton
+                    AutoButtonColor={false}
+                    BackgroundColor3={theme.colors.surfaceElevated}
+                    BackgroundTransparency={selected ? 0 : 1}
+                    BorderSizePixel={0}
+                    Font={selected ? Enum.Font.GothamMedium : Enum.Font.Gotham}
+                    LayoutOrder={index}
+                    Size={UDim2.fromOffset(154, 32)}
+                    Text={entry.label}
+                    TextColor3={selected ? theme.colors.textPrimary : theme.colors.textSecondary}
+                    TextSize={theme.typography.labelSm.textSize}
+                  >
+                    <uicorner CornerRadius={new UDim(0, theme.radius.sm)} />
+                    {selected ? <uistroke Color={theme.colors.border} Thickness={1} /> : undefined}
+                  </textbutton>
+                </Tabs.Trigger>
+              );
+            })}
           </frame>
         </Tabs.List>
 
         {panels.map((panel) => (
           <Tabs.Content asChild key={panel.value} value={panel.value}>
             <frame
-              {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
-                Position: UDim2.fromOffset(0, 44),
-                Size: UDim2.fromOffset(300, 160),
-              }) as Record<string, unknown>)}
+              BackgroundColor3={theme.colors.surfaceElevated}
+              BorderSizePixel={0}
+              Position={UDim2.fromOffset(0, 52)}
+              Size={UDim2.fromOffset(320, 224)}
             >
-              <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+              <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
+              <uistroke Color={theme.colors.border} Thickness={1} />
               <uipadding
-                PaddingBottom={new UDim(0, theme.space[12])}
-                PaddingLeft={new UDim(0, theme.space[12])}
-                PaddingRight={new UDim(0, theme.space[12])}
-                PaddingTop={new UDim(0, theme.space[12])}
+                PaddingBottom={new UDim(0, theme.space[20])}
+                PaddingLeft={new UDim(0, theme.space[20])}
+                PaddingRight={new UDim(0, theme.space[20])}
+                PaddingTop={new UDim(0, theme.space[20])}
               />
-              <Text
-                BackgroundTransparency={1}
-                Size={UDim2.fromOffset(276, 20)}
-                Text={panel.heading}
-                TextColor3={theme.colors.textPrimary}
-                TextSize={theme.typography.bodyMd.textSize}
-                TextXAlignment={Enum.TextXAlignment.Left}
-              />
+              <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[12])} />
+
               {panel.fields.map((field, index) => (
-                <ExampleField field={field} key={field.label} offsetY={28 + index * 56} theme={theme} />
+                <ExampleField field={field} key={field.label} layoutOrder={index} />
               ))}
+
+              <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(280, 40)}>
+                <textbutton
+                  {...(mergeGuiProps(buttonRecipe({ intent: "primary", size: "sm" }, theme), {
+                    AnchorPoint: new Vector2(1, 1),
+                    Position: UDim2.fromScale(1, 1),
+                    Size: UDim2.fromOffset(150, 36),
+                    Text: panel.action,
+                    TextSize: theme.typography.labelSm.textSize,
+                  }) as Record<string, unknown>)}
+                >
+                  <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                </textbutton>
+              </frame>
             </frame>
           </Tabs.Content>
         ))}
@@ -138,7 +161,7 @@ function TabsExample() {
 
 export const preview = {
   render: () => (
-    <DocExampleShell height={210} width={300}>
+    <DocExampleShell height={276} width={320}>
       <TabsExample />
     </DocExampleShell>
   ),
