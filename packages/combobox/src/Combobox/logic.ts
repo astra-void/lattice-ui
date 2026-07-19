@@ -9,7 +9,11 @@ export type ComboboxFilterFn = (itemText: string, query: string) => boolean;
 export function defaultComboboxFilter(itemText: string, query: string) {
   const normalizedItemText = string.lower(itemText);
   const normalizedQuery = string.lower(query);
-  return string.find(normalizedItemText, normalizedQuery, 1, true) !== undefined;
+  // Destructure the LuaTuple: comparing `string.find(...)` directly against
+  // `undefined` makes roblox-ts wrap the multi-return in a table, which is
+  // always truthy — so the filter would match every item.
+  const [matchStart] = string.find(normalizedItemText, normalizedQuery, 1, true);
+  return matchStart !== undefined;
 }
 
 export function resolveForcedComboboxValue(currentValue: string | undefined, options: Array<ComboboxOption>) {

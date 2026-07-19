@@ -88,10 +88,12 @@ const luauString = {
   lower(value: string) {
     return value.toLowerCase();
   },
-  find(value: string, query: string, init = 1) {
+  // Luau's `string.find` returns a multi-return that roblox-ts models as a
+  // `LuaTuple`, so the shim has to hand back an array — callers destructure it.
+  find(value: string, query: string, init = 1, _plain = false) {
     const start = Math.max(0, init - 1);
     const index = value.indexOf(query, start);
-    return index >= 0 ? index + 1 : undefined;
+    return index >= 0 ? [index + 1, index + query.length] : [undefined, undefined];
   },
 };
 

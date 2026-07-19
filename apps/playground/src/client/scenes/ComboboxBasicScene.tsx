@@ -22,7 +22,8 @@ function queryMatches(text: string, query: string) {
   if (query === "") {
     return true;
   }
-  return string.find(string.lower(text), string.lower(query), 1, true) !== undefined;
+  const [matchStart] = string.find(string.lower(text), string.lower(query), 1, true);
+  return matchStart !== undefined;
 }
 
 function OptionItem(props: { value: string }) {
