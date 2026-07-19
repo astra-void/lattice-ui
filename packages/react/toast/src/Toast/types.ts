@@ -1,4 +1,5 @@
 import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 import type { ToastRecord } from "./queue";
 
@@ -38,7 +39,7 @@ export type ToastProviderProps = {
 export type ToastViewportProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type ToastRootProps = {
   transition?: MotionConfig;
@@ -46,26 +47,26 @@ export type ToastRootProps = {
   visible?: boolean;
   onExitComplete?: () => void;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type ToastTitleProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ToastDescriptionProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ToastActionProps = {
   asChild?: boolean;
   onAction?: () => void;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ToastCloseProps = {
   asChild?: boolean;
   onClose?: () => void;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

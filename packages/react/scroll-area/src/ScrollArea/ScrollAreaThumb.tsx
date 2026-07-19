@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import {
   resolveCanvasPositionFromThumbOffset,
@@ -9,6 +9,15 @@ import {
 import type { ScrollAreaThumbProps } from "./types";
 
 const UserInputService = game.GetService("UserInputService");
+
+const OWN_PROPS = ["orientation", "asChild", "children"] as const;
+
+// Only the Roblox instance defaults are neutralized; the thumb's look is the consumer's decision.
+// Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
 
 type DragState = {
   inputType: Enum.UserInputType;
@@ -186,36 +195,34 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
     };
   }, []);
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  // The thumb instance is read back to find its track, so its ref must reach this primitive even
+  // when the consumer forwards one of their own.
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, setThumbRef);
+  // Position/Size are the scroll ratio, not decoration; spread after passthrough so they win.
+  const behaviorProps = {
+    Active: axisMetrics.contentSize > axisMetrics.viewportSize,
+    Event: composeEvents(passthrough.Event, { InputBegan: handleInputBegan }),
+    Position: vertical ? UDim2.fromScale(0, offsetScale) : UDim2.fromScale(offsetScale, 0),
+    Size: vertical ? UDim2.fromScale(1, sizeScale) : UDim2.fromScale(sizeScale, 1),
+  };
+
   if (props.asChild) {
     const child = props.children;
-    if (!child) {
+    if (!React.isValidElement(child)) {
       error("[ScrollAreaThumb] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot
-        Active={axisMetrics.contentSize > axisMetrics.viewportSize}
-        Event={{ InputBegan: handleInputBegan }}
-        Position={vertical ? UDim2.fromScale(0, offsetScale) : UDim2.fromScale(offsetScale, 0)}
-        Size={vertical ? UDim2.fromScale(1, sizeScale) : UDim2.fromScale(sizeScale, 1)}
-        ref={setThumbRef}
-      >
+      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame
-      Active={axisMetrics.contentSize > axisMetrics.viewportSize}
-      BackgroundColor3={Color3.fromRGB(118, 128, 149)}
-      BorderSizePixel={0}
-      Event={{ InputBegan: handleInputBegan }}
-      Position={vertical ? UDim2.fromScale(0, offsetScale) : UDim2.fromScale(offsetScale, 0)}
-      Size={vertical ? UDim2.fromScale(1, sizeScale) : UDim2.fromScale(sizeScale, 1)}
-      ref={setThumbRef}
-    >
-      <uicorner CornerRadius={new UDim(1, 0)} />
+    <frame {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref}>
       {props.children}
     </frame>
   );

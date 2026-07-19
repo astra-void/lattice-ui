@@ -2,14 +2,15 @@
 
 A headless-first UI toolkit for Roblox, built with [roblox-ts](https://roblox-ts.com/) and [`@rbxts/react`](https://github.com/littensy/rbxts-react).
 
-Lattice UI ships composable primitives that own interaction, focus flow, layering, portals, presence, and motion — while leaving visual styling up to you. Primitives are unstyled or minimally styled by design, so you can drop them into any project and bring your own look.
+Lattice UI ships composable primitives that own interaction, focus flow, layering, portals, and presence — while leaving visual styling entirely up to you. Primitives are unstyled: they set behavior and neutralize Roblox's instance defaults, and nothing else. Style them by passing instance props straight through, or by slotting your own element with `asChild`.
 
 ## Highlights
 
 - **Headless-first** — primitives own behavior and state orchestration, not opinionated visuals.
 - **Composable** — small wrappers and slotting patterns over monolithic components.
 - **Focus & layering** — deliberate focus restoration, ordered navigation, trapping, portals, and overlay stacking.
-- **Motion built in** — presence, feedback, and response motion flow through `@lattice-ui/react-motion`, with reduced-motion policy support.
+- **Unstyled, not unusable** — every part forwards instance props to what it renders, so styling never requires `asChild`; consumer props win over defaults, and consumer event handlers compose with the primitive's rather than replacing them.
+- **Motion is opt-in** — presence timing is owned by the primitives, but animation flows through `@lattice-ui/react-motion` only when you pass a `transition`, with reduced-motion policy support.
 - **Controlled & uncontrolled** — consistent state semantics across primitives.
 
 ## Installation

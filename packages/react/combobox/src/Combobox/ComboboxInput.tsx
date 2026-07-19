@@ -1,8 +1,17 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxInputProps } from "./types";
 
 const UserInputService = game.GetService("UserInputService");
+
+const OWN_PROPS = ["asChild", "disabled", "readOnly", "placeholder", "children"] as const;
+
+// See ComboboxTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function toTextBox(instance: Instance | undefined) {
   if (!instance?.IsA("TextBox")) {
@@ -83,17 +92,19 @@ export function ComboboxInput(props: ComboboxInputProps) {
     [comboboxContext, disabled, readOnly],
   );
 
-  const sharedProps = {
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
     Active: !disabled,
+    // Roblox clears a TextBox on focus by default, which would wipe the controlled query.
     ClearTextOnFocus: false,
-    PlaceholderText: props.placeholder ?? "Type to filter",
+    PlaceholderText: props.placeholder ?? "",
     Selectable: !disabled,
     Text: comboboxContext.inputValue,
     TextEditable: !disabled && !readOnly,
-    Change: {
-      Text: handleTextChanged,
-    },
-    ref: setInputRef,
+    Change: composeEvents(passthrough.Change, {
+      Text: handleTextChanged as Callback,
+    }),
+    ref: composeRefs<Instance>(passthrough.ref as never, setInputRef),
   };
 
   if (props.asChild) {
@@ -102,20 +113,17 @@ export function ComboboxInput(props: ComboboxInputProps) {
       error("[ComboboxInput] `asChild` requires a child element.");
     }
 
-    return <Slot {...sharedProps}>{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return (
+      <Slot {...passthrough} {...behaviorProps}>
+        {child}
+      </Slot>
+    );
   }
 
   return (
-    <textbox
-      {...sharedProps}
-      BackgroundColor3={Color3.fromRGB(39, 46, 61)}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(240, 36)}
-      TextColor3={disabled ? Color3.fromRGB(137, 145, 162) : Color3.fromRGB(235, 240, 248)}
-      TextSize={15}
-      TextXAlignment={Enum.TextXAlignment.Left}
-    >
-      <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
+    <textbox {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+      {props.children}
     </textbox>
   );
 }

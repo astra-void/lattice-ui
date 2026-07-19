@@ -1,7 +1,19 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE, updateTooltipTriggerActivity } from "./activity";
 import { useTooltipContext } from "./context";
 import type { TooltipTriggerProps } from "./types";
+
+const OWN_PROPS = ["asChild", "disabled", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance?.IsA("GuiObject")) {
@@ -69,38 +81,30 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     [applyActivity],
   );
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: props.disabled !== true,
+    Event: composeEvents(passthrough.Event, eventHandlers),
+    Selectable: props.disabled !== true,
+    ref: composeRefs<Instance>(passthrough.ref as never, setTriggerRef),
+  };
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
       error("[TooltipTrigger] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot
-        Active={props.disabled !== true}
-        Event={eventHandlers}
-        Selectable={props.disabled !== true}
-        ref={setTriggerRef}
-      >
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={props.disabled !== true}
-      AutoButtonColor={false}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={props.disabled !== true}
-      Size={UDim2.fromOffset(140, 36)}
-      Text="Tooltip Trigger"
-      TextColor3={Color3.fromRGB(240, 244, 250)}
-      TextSize={15}
-      ref={setTriggerRef}
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
       {props.children}
     </textbutton>
   );

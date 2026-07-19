@@ -22,6 +22,7 @@ export const Combobox = {
   Separator: ComboboxSeparator,
 } as const;
 
+export { useComboboxItemContext } from "./Combobox/context";
 export {
   defaultComboboxFilter,
   filterComboboxOptions,
@@ -34,6 +35,7 @@ export type {
   ComboboxFilterFn,
   ComboboxGroupProps,
   ComboboxInputProps,
+  ComboboxItemContextValue,
   ComboboxItemProps,
   ComboboxItemRegistration,
   ComboboxLabelProps,

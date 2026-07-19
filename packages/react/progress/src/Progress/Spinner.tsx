@@ -1,9 +1,15 @@
-import { composeRefs, getElementRef, React } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import type { SpinnerProps } from "./types";
 
 const RunService = game.GetService("RunService");
 
-type GuiPropBag = React.Attributes & Record<string, unknown>;
+const OWN_PROPS = ["spinning", "speedDegPerSecond", "asChild", "children"] as const;
+
+// See ProgressIndicator: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance?.IsA("GuiObject")) {
@@ -11,10 +17,6 @@ function toGuiObject(instance: Instance | undefined) {
   }
 
   return instance;
-}
-
-function toGuiPropBag(value: unknown): GuiPropBag {
-  return typeIs(value, "table") ? (value as GuiPropBag) : {};
 }
 
 export function Spinner(props: SpinnerProps) {
@@ -46,42 +48,29 @@ export function Spinner(props: SpinnerProps) {
     };
   }, [spinning, speedDegPerSecond]);
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, setSpinnerRef);
+  const behaviorProps = {
+    Visible: spinning,
+  };
+
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
       error("[Spinner] `asChild` requires a child element.");
     }
 
-    const childProps = toGuiPropBag((child as { props?: unknown }).props);
-    const childRef = getElementRef<Instance>(child);
-    const mergedProps: GuiPropBag = {
-      ...childProps,
-      Visible: spinning,
-      ref: composeRefs(childRef, setSpinnerRef),
-    };
-
-    return React.cloneElement(child as React.ReactElement<GuiPropBag>, mergedProps);
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return (
+      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+        {child}
+      </Slot>
+    );
   }
 
   return (
-    <frame
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(22, 22)}
-      Visible={spinning}
-      ref={setSpinnerRef}
-    >
-      <uicorner CornerRadius={new UDim(1, 0)} />
-      <uistroke Color={Color3.fromRGB(102, 156, 255)} Thickness={2} Transparency={0.35} />
-      <frame
-        AnchorPoint={new Vector2(0.5, 0.5)}
-        BackgroundColor3={Color3.fromRGB(102, 156, 255)}
-        BorderSizePixel={0}
-        Position={UDim2.fromScale(0.5, 0.1)}
-        Size={UDim2.fromOffset(4, 4)}
-      >
-        <uicorner CornerRadius={new UDim(1, 0)} />
-      </frame>
+    <frame {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref}>
+      {props.children}
     </frame>
   );
 }

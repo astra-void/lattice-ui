@@ -1,9 +1,21 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useTextareaContext } from "./context";
 import type { TextareaDescriptionProps } from "./types";
 
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// See TextareaInput: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
+
 export function TextareaDescription(props: TextareaDescriptionProps) {
-  const textareaContext = useTextareaContext();
+  // Renders nothing of its own, but must still be inside a `Textarea.Root`.
+  useTextareaContext();
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.asChild) {
     const child = props.children;
@@ -11,18 +23,9 @@ export function TextareaDescription(props: TextareaDescriptionProps) {
       error("[TextareaDescription] `asChild` requires a child element.");
     }
 
-    return <Slot Name="TextareaDescription">{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return <Slot {...passthrough}>{child}</Slot>;
   }
 
-  return (
-    <textlabel
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(300, 20)}
-      Text="Description"
-      TextColor3={textareaContext.disabled ? Color3.fromRGB(132, 139, 154) : Color3.fromRGB(170, 179, 195)}
-      TextSize={13}
-      TextXAlignment={Enum.TextXAlignment.Left}
-    />
-  );
+  return <textlabel {...NEUTRAL_PROPS} {...passthrough} />;
 }

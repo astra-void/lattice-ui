@@ -10,6 +10,8 @@ import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@lattice-ui/react-runtime", async () => {
+  const runtimeProps = await import("../../../packages/react/runtime/src/props");
+  const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const react = await import("react");
   const controllable = await import("../../../packages/react/runtime/src/useControllableState");
   const strictContext = await import("../../../packages/react/runtime/src/context");
@@ -27,6 +29,9 @@ vi.mock("@lattice-ui/react-runtime", async () => {
   }
 
   return {
+    composeEvents: runtimeProps.composeEvents,
+    getPassthroughProps: runtimeProps.getPassthroughProps,
+    composeRefs: runtimeRefs.composeRefs,
     React: react.default,
     Slot,
     useControllableState: controllable.useControllableState,

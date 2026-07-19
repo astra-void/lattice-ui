@@ -1,6 +1,16 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import type { SliderTrackProps } from "./types";
+
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `frame` renders an opaque grey box.
+// Neutralize only that, and leave every real appearance decision (colors, size, corners) to the
+// consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
 
 function isPointerStartInput(inputObject: InputObject) {
   return (
@@ -23,32 +33,32 @@ export function SliderTrack(props: SliderTrackProps) {
     [sliderContext],
   );
 
-  const sharedProps = {
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  // The track instance is measured to convert pointer position into a value, so its ref must reach
+  // the slider even when the consumer forwards one of their own.
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, sliderContext.setTrackNode);
+  const behaviorProps = {
     Active: !sliderContext.disabled,
-    Name: "SliderTrack",
+    Event: composeEvents(passthrough.Event, { InputBegan: handleInputBegan }),
     Selectable: !sliderContext.disabled,
-    Event: {
-      InputBegan: handleInputBegan,
-    },
-    ref: sliderContext.setTrackNode,
   };
 
   if (props.asChild) {
     const child = props.children;
-    if (!child) {
+    if (!React.isValidElement(child)) {
       error("[SliderTrack] `asChild` requires a child element.");
     }
 
-    return <Slot {...sharedProps}>{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return (
+      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+        {child}
+      </Slot>
+    );
   }
 
   return (
-    <frame
-      {...sharedProps}
-      BackgroundColor3={Color3.fromRGB(47, 53, 68)}
-      BorderSizePixel={0}
-      Size={sliderContext.orientation === "horizontal" ? UDim2.fromOffset(260, 10) : UDim2.fromOffset(10, 220)}
-    >
+    <frame {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref}>
       {props.children}
     </frame>
   );

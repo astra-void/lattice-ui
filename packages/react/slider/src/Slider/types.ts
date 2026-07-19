@@ -1,3 +1,4 @@
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type SliderOrientation = "horizontal" | "vertical";
@@ -35,15 +36,15 @@ export type SliderProps = {
 
 export type SliderTrackProps = {
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;
 
 export type SliderRangeProps = {
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;
 
 export type SliderThumbProps = {
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;

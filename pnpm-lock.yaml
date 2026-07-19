@@ -802,9 +802,6 @@ importers:
       '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/react-motion':
-        specifier: workspace:*
-        version: link:../motion
       '@lattice-ui/react-runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -821,9 +818,6 @@ importers:
       '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/react-motion':
-        specifier: workspace:*
-        version: link:../motion
       '@lattice-ui/react-runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -837,9 +831,6 @@ importers:
 
   packages/react/toast:
     dependencies:
-      '@lattice-ui/react-layer':
-        specifier: workspace:*
-        version: link:../layer
       '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
@@ -859,9 +850,6 @@ importers:
       '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/react-motion':
-        specifier: workspace:*
-        version: link:../motion
       '@lattice-ui/react-runtime':
         specifier: workspace:*
         version: link:../runtime

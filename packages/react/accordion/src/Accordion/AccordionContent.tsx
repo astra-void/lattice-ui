@@ -1,76 +1,37 @@
 import { Presence } from "@lattice-ui/react-layer";
-import { createSurfaceRevealRecipe, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useAccordionItemContext } from "./context";
 import type { AccordionContentProps } from "./types";
 
-type GuiPropBag = React.Attributes & Record<string, unknown>;
+const OWN_PROPS = ["transition", "forceMount", "asChild", "children"] as const;
 
-type AccordionContentImplProps = AccordionContentProps & {
-  present: boolean;
-  onExitComplete?: () => void;
+// See AccordionTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
 };
 
-function getImplRestProps(props: AccordionContentImplProps): GuiPropBag {
-  const restProps: GuiPropBag = {};
+// An unstyled panel has nothing to animate, so there is no default recipe. Presence timing is still
+// owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
-  for (const [rawKey, value] of pairs(props as Record<string, unknown>)) {
-    if (!typeIs(rawKey, "string")) {
-      continue;
-    }
-
-    if (
-      rawKey === "present" ||
-      rawKey === "forceMount" ||
-      rawKey === "transition" ||
-      rawKey === "onExitComplete" ||
-      rawKey === "asChild" ||
-      rawKey === "children"
-    ) {
-      continue;
-    }
-
-    restProps[rawKey] = value;
-  }
-
-  return restProps;
-}
-
-function getContentRestProps(props: AccordionContentProps): GuiPropBag {
-  const restProps: GuiPropBag = {};
-
-  for (const [rawKey, value] of pairs(props as Record<string, unknown>)) {
-    if (!typeIs(rawKey, "string")) {
-      continue;
-    }
-
-    if (rawKey === "asChild" || rawKey === "forceMount" || rawKey === "transition" || rawKey === "children") {
-      continue;
-    }
-
-    restProps[rawKey] = value;
-  }
-
-  return restProps;
-}
-
-function AccordionContentImpl(props: AccordionContentImplProps) {
-  const present = props.present;
-  const forceMount = props.forceMount;
-  const transition = props.transition;
-  const onExitComplete = props.onExitComplete;
-  const asChild = props.asChild;
-  const children = props.children;
-  const restProps = getImplRestProps(props);
-
-  const defaultTransition = React.useMemo(() => createSurfaceRevealRecipe(), []);
-  const config = transition ?? defaultTransition;
+function AccordionContentImpl(props: {
+  present: boolean;
+  forceMount?: boolean;
+  transition?: PresenceMotionConfig;
+  onExitComplete?: () => void;
+  asChild?: boolean;
+  children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
+}) {
+  const config = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<Frame>({
-    present,
-    forceMount,
+    present: props.present,
+    forceMount: props.forceMount,
     config,
-    onExitComplete,
+    onExitComplete: props.onExitComplete,
   });
 
   const mounted = motion.mounted;
@@ -80,52 +41,44 @@ function AccordionContentImpl(props: AccordionContentImplProps) {
     return undefined;
   }
 
-  if (asChild) {
-    const child = children;
-    if (React.Children.count(children) !== 1 || !React.isValidElement(child)) {
+  const passthrough = props.passthrough;
+  const ref = composeRefs<Frame>(passthrough.ref as never, motion.ref);
+
+  if (props.asChild) {
+    const child = props.children;
+    if (React.Children.count(props.children) !== 1 || !React.isValidElement(child)) {
       error("[AccordionContent] `asChild` requires a single child element.");
     }
 
     return (
-      <Slot {...restProps} Visible={visible} ref={motion.ref}>
+      <Slot {...passthrough} Visible={visible} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame
-      BackgroundColor3={Color3.fromRGB(35, 41, 54)}
-      BorderSizePixel={0}
-      {...restProps}
-      Visible={visible}
-      ref={motion.ref}
-    >
-      {children}
+    <frame {...NEUTRAL_PROPS} {...passthrough} Visible={visible} ref={ref}>
+      {props.children}
     </frame>
   );
 }
 
 export function AccordionContent(props: AccordionContentProps) {
   const itemContext = useAccordionItemContext();
-  const asChild = props.asChild;
-  const forceMount = props.forceMount;
-  const transition = props.transition;
-  const children = props.children;
-  const restProps = getContentRestProps(props);
+  const forceMount = props.forceMount === true;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
-  const shouldForceMount = forceMount === true;
-
-  if (shouldForceMount) {
+  if (forceMount) {
     return (
       <AccordionContentImpl
-        {...restProps}
-        asChild={asChild}
+        asChild={props.asChild}
         forceMount={true}
+        passthrough={passthrough}
         present={itemContext.open}
-        transition={transition}
+        transition={props.transition}
       >
-        {children}
+        {props.children}
       </AccordionContentImpl>
     );
   }
@@ -135,13 +88,13 @@ export function AccordionContent(props: AccordionContentProps) {
       present={itemContext.open}
       render={(state) => (
         <AccordionContentImpl
-          {...restProps}
-          asChild={asChild}
+          asChild={props.asChild}
           onExitComplete={state.onExitComplete}
+          passthrough={passthrough}
           present={state.isPresent}
-          transition={transition}
+          transition={props.transition}
         >
-          {children}
+          {props.children}
         </AccordionContentImpl>
       )}
     />

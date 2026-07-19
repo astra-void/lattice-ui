@@ -1,11 +1,34 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
-import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
 import { usePopper } from "@lattice-ui/react-popper";
-import { composeRefs, getElementRef, React } from "@lattice-ui/react-runtime";
+import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
+
+const OWN_PROPS = [
+  "transition",
+  "asChild",
+  "forceMount",
+  "placement",
+  "sideOffset",
+  "alignOffset",
+  "collisionPadding",
+  "onPointerDownOutside",
+  "onInteractOutside",
+  "children",
+] as const;
+
+// See TooltipTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// An unstyled tooltip has nothing to animate, so there is no default recipe. Presence timing is
+// still owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
 
@@ -35,6 +58,7 @@ function TooltipContentImpl(props: {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
@@ -51,11 +75,7 @@ function TooltipContentImpl(props: {
     enabled: shouldMeasure,
   });
 
-  const defaultTransition = React.useMemo(
-    () => createCanvasGroupPopperEntranceRecipe(popper.placement),
-    [popper.placement],
-  );
-  const recipe = props.transition ?? defaultTransition;
+  const recipe = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<GuiObject>({
     present: props.motionPresent,
@@ -87,6 +107,25 @@ function TooltipContentImpl(props: {
     ? UDim2.fromOffset(popperContentSize.X, popperContentSize.Y)
     : UDim2.fromOffset(0, 0);
 
+  // The wrapper frame is the popper's positioning shell, not a consumer surface: every prop on it
+  // is measurement-driven. Passthrough lands on the content element instead.
+  const wrapperProps = {
+    ...NEUTRAL_PROPS,
+    AnchorPoint: popper.anchorPoint,
+    Position: popperPosition,
+    Size: popperWrapperSize,
+    Visible: shouldRender,
+  };
+
+  // AutomaticSize over a zero base size is how the popper measures the content, so it is behavior.
+  const contentBehaviorProps = {
+    AutomaticSize: Enum.AutomaticSize.XY,
+    Size: UDim2.fromOffset(0, 0),
+    Visible: contentVisible,
+  };
+
+  const passthrough = props.passthrough;
+
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
@@ -105,24 +144,12 @@ function TooltipContentImpl(props: {
         onPointerDownOutside={props.onPointerDownOutside}
         contentBoundaryRef={contentBoundaryRef}
       >
-        <frame
-          AnchorPoint={popper.anchorPoint}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Position={popperPosition}
-          Size={popperWrapperSize}
-          Visible={shouldRender}
-        >
-          <canvasgroup
-            AutomaticSize={Enum.AutomaticSize.XY}
-            BackgroundTransparency={1}
-            BorderSizePixel={0}
-            Size={UDim2.fromOffset(0, 0)}
-            Visible={contentVisible}
-            ref={setContentRef as React.Ref<CanvasGroup>}
-          >
+        <frame {...wrapperProps}>
+          <canvasgroup {...NEUTRAL_PROPS} {...contentBehaviorProps} ref={setContentRef as React.Ref<CanvasGroup>}>
             {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
+              // No neutral defaults here: the rendered element belongs to the consumer.
               ...childProps,
+              ...passthrough,
               Position: UDim2.fromOffset(0, 0),
               Visible: contentVisible,
               ref: composeRefs(childRef),
@@ -142,22 +169,8 @@ function TooltipContentImpl(props: {
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
     >
-      <frame
-        AnchorPoint={popper.anchorPoint}
-        BackgroundTransparency={1}
-        BorderSizePixel={0}
-        Position={popperPosition}
-        Size={popperWrapperSize}
-        Visible={shouldRender}
-      >
-        <canvasgroup
-          AutomaticSize={Enum.AutomaticSize.XY}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Size={UDim2.fromOffset(0, 0)}
-          Visible={contentVisible}
-          ref={setContentRef}
-        >
+      <frame {...wrapperProps}>
+        <canvasgroup {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={setContentRef}>
           {props.children}
         </canvasgroup>
       </frame>
@@ -168,11 +181,13 @@ function TooltipContentImpl(props: {
 export function TooltipContent(props: TooltipContentProps) {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (
       <TooltipContentImpl
         motionPresent={open}
+        passthrough={passthrough}
         transition={props.transition}
         placement={props.placement}
         sideOffset={props.sideOffset}
@@ -195,6 +210,7 @@ export function TooltipContent(props: TooltipContentProps) {
         <TooltipContentImpl
           motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
+          passthrough={passthrough}
           transition={props.transition}
           placement={props.placement}
           sideOffset={props.sideOffset}

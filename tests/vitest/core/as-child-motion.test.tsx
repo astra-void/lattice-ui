@@ -54,7 +54,9 @@ const { runService } = vi.hoisted(() => {
   },
 };
 
-vi.mock("@lattice-ui/react-runtime", () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
+  const runtimeProps = await import("../../../packages/react/runtime/src/props");
+  const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const React = require("react");
 
   function Slot(props: { children?: React.ReactNode; ref?: React.Ref<unknown> } & Record<string, unknown>) {
@@ -126,6 +128,8 @@ vi.mock("@lattice-ui/react-runtime", () => {
   }
 
   return {
+    composeEvents: runtimeProps.composeEvents,
+    getPassthroughProps: runtimeProps.getPassthroughProps,
     React,
     Slot,
     composeRefs,
@@ -175,10 +179,12 @@ describe("asChild motion ownership", () => {
       runService.step(1);
     });
 
+    // The 2px inset the old assertions encoded was a design choice and is gone with the primitive's
+    // styling; the motion-owned wrapper and its travel are what this test is actually about.
     const thumbHost = getByTestId("thumb").parentElement as HTMLElement & { Position: UDim2 };
     expect(thumbHost.tagName.toLowerCase()).toBe("frame");
-    expect(thumbHost.Position.X.Offset).toBe(2);
-    expect(thumbHost.Position.Y.Offset).toBe(2);
+    expect(thumbHost.Position.X.Offset).toBe(0);
+    expect(thumbHost.Position.Y.Offset).toBe(0);
 
     rerender(
       <Switch.Root checked={true}>
@@ -200,8 +206,8 @@ describe("asChild motion ownership", () => {
     });
 
     expect(thumbHost.Position.X.Scale).toBe(1);
-    expect(thumbHost.Position.X.Offset).toBe(-18);
-    expect(thumbHost.Position.Y.Offset).toBe(2);
+    expect(thumbHost.Position.X.Offset).toBe(0);
+    expect(thumbHost.Position.Y.Offset).toBe(0);
   });
 
   it("keeps progress width motion on the wrapper while the custom child fills it", () => {

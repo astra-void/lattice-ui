@@ -1,6 +1,16 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useTextFieldContext } from "./context";
 import type { TextFieldLabelProps } from "./types";
+
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// See TextFieldInput: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 export function TextFieldLabel(props: TextFieldLabelProps) {
   const textFieldContext = useTextFieldContext();
@@ -14,12 +24,11 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
     textFieldContext.inputRef.current?.CaptureFocus();
   }, [disabled, textFieldContext.inputRef]);
 
-  const sharedProps = {
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
     Active: !disabled,
     Selectable: !disabled,
-    Event: {
-      Activated: handleActivated,
-    },
+    Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
   };
 
   if (props.asChild) {
@@ -28,20 +37,13 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
       error("[TextFieldLabel] `asChild` requires a child element.");
     }
 
-    return <Slot {...sharedProps}>{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return (
+      <Slot {...passthrough} {...behaviorProps}>
+        {child}
+      </Slot>
+    );
   }
 
-  return (
-    <textbutton
-      {...sharedProps}
-      AutoButtonColor={false}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(240, 22)}
-      Text="Label"
-      TextColor3={disabled ? Color3.fromRGB(149, 157, 173) : Color3.fromRGB(225, 231, 241)}
-      TextSize={14}
-      TextXAlignment={Enum.TextXAlignment.Left}
-    />
-  );
+  return <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
 }

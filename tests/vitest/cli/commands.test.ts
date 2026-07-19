@@ -353,6 +353,76 @@ describe("command behavior", () => {
         },
       ),
     ).rejects.toThrow(/registry unavailable/i);
+
+    await expect(access(path.join(dir, "my-game"))).rejects.toThrow();
+  });
+
+  it("create leaves no directory behind when package manager detection fails", async () => {
+    const dir = await createTempDir();
+
+    await expect(
+      runCreateCommand(
+        {
+          cwd: dir,
+          projectPath: "my-game",
+          yes: true,
+          pm: "bogus",
+          template: "rbxts",
+          git: false,
+        },
+        {
+          detectPackageManagerFn: vi.fn(async () => {
+            throw new Error('Invalid --pm value "bogus". Use pnpm, npm, or yarn.');
+          }),
+          resolveLatestVersionsFn: vi.fn(async (packages) =>
+            Object.fromEntries(packages.map((packageName: string) => [packageName, "9.9.9"])),
+          ),
+        },
+      ),
+    ).rejects.toThrow(/invalid --pm value/i);
+
+    await expect(access(path.join(dir, "my-game"))).rejects.toThrow();
+  });
+
+  it("create pins the scaffolded project at the package manager that installed it", async () => {
+    const dir = await createTempDir();
+    const projectRoot = path.join(dir, "pinned-game");
+    const install = vi.fn(async () => undefined);
+
+    await runCreateCommand(
+      {
+        cwd: dir,
+        projectPath: "pinned-game",
+        yes: true,
+        pm: "pnpm",
+        template: "rbxts",
+        git: false,
+        lint: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "pnpm" as const,
+          manager: createPackageManager({ name: "pnpm", install }),
+          lockfiles: [],
+          installed: ["pnpm" as const],
+          source: "override" as const,
+          pins: [],
+        })),
+        resolveLatestVersionsFn: vi.fn(async (packages) =>
+          Object.fromEntries(packages.map((packageName: string) => [packageName, "9.9.9"])),
+        ),
+      },
+    );
+
+    const packageJson = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8")) as {
+      devEngines?: { packageManager?: { name?: string; version?: string } };
+    };
+
+    expect(packageJson.devEngines?.packageManager?.name).toBe("pnpm");
+    // The range belongs to the manager it was written for, so the pin stays version-less.
+    expect(packageJson.devEngines?.packageManager?.version).toBeUndefined();
+    // The pin has to land before install, or the first install runs unpinned.
+    expect(install).toHaveBeenCalledTimes(1);
   });
 
   it("create skips lint setup when lint is disabled", async () => {

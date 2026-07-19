@@ -1,10 +1,22 @@
 import { createProgressResponseRecipe, motionDrag, useResponseMotion } from "@lattice-ui/react-motion";
-import { composeRefs, getElementRef, React } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderRangeProps } from "./types";
 
-type GuiPropBag = React.Attributes & Record<string, unknown>;
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// See SliderTrack: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// The consumer's element fills the motion-owned host instead of re-applying the value ratio itself.
+const CHILD_FILL_PROPS = {
+  Position: UDim2.fromScale(0, 0),
+  Size: UDim2.fromScale(1, 1),
+};
 
 export function SliderRange(props: SliderRangeProps) {
   const sliderContext = useSliderContext();
@@ -15,6 +27,7 @@ export function SliderRange(props: SliderRangeProps) {
   const rangePosition =
     sliderContext.orientation === "horizontal" ? UDim2.fromScale(0, 0) : UDim2.fromScale(0, 1 - percent);
 
+  // Position/Size are the value mapping, not decoration: motion owns them on this instance.
   const motionRef = useResponseMotion<Frame>(
     true,
     {
@@ -24,30 +37,29 @@ export function SliderRange(props: SliderRangeProps) {
     createProgressResponseRecipe(sliderContext.isDragging ? motionDrag.active : motionDrag.idle),
   );
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
       error("[SliderRange] `asChild` requires a child element.");
     }
 
-    const childProps = (child as { props?: Record<string, unknown> }).props ?? {};
-    const childRef = getElementRef<Instance>(child);
-    const mergedChildProps: GuiPropBag = {
-      ...childProps,
-      Position: UDim2.fromScale(0, 0),
-      Size: UDim2.fromScale(1, 1),
-      ref: composeRefs(childRef),
-    };
-
+    // The wrapper is ours (motion owns its geometry), so it keeps the neutral defaults; the
+    // consumer's element only receives passthrough and fill geometry.
     return (
-      <frame BackgroundTransparency={1} BorderSizePixel={0} ref={motionRef}>
-        {React.cloneElement(child, mergedChildProps)}
+      <frame {...NEUTRAL_PROPS} ref={motionRef}>
+        <Slot {...passthrough} {...CHILD_FILL_PROPS}>
+          {child}
+        </Slot>
       </frame>
     );
   }
 
+  const ref = composeRefs<Frame>(passthrough.ref as never, motionRef);
+
   return (
-    <frame BackgroundColor3={Color3.fromRGB(86, 142, 255)} BorderSizePixel={0} ref={motionRef}>
+    <frame {...NEUTRAL_PROPS} {...passthrough} ref={ref}>
       {props.children}
     </frame>
   );

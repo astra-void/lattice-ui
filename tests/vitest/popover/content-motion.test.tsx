@@ -98,7 +98,9 @@ function clearGuiDefaults() {
   delete prototype.GroupTransparency;
 }
 
-vi.mock("@lattice-ui/react-runtime", () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
+  const runtimeProps = await import("../../../packages/react/runtime/src/props");
+  const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const React = require("react");
   const createElement = React.createElement.bind(React);
 
@@ -170,6 +172,8 @@ vi.mock("@lattice-ui/react-runtime", () => {
   }
 
   return {
+    composeEvents: runtimeProps.composeEvents,
+    getPassthroughProps: runtimeProps.getPassthroughProps,
     React: InstrumentedReact,
     composeRefs,
     createStrictContext,
@@ -225,6 +229,7 @@ vi.mock("@lattice-ui/react-popper", () => ({
   usePopper: () => mockPopperResult,
 }));
 
+import { createCanvasGroupPopperEntranceRecipe } from "@lattice-ui/react-motion";
 import { Popover } from "@lattice-ui/react-popover";
 
 beforeEach(() => {
@@ -241,10 +246,13 @@ afterEach(() => {
 });
 
 describe("Popover.Content motion host", () => {
+  // The primitive no longer ships a default entrance recipe (it animated hardcoded offsets), so the
+  // transition is passed explicitly here. What is under test is unchanged: positioning stays on the
+  // outer host and the consumer's asChild content animates relative to it.
   it("keeps positioning on the outer host and animates asChild content relative to it", () => {
     const { getByTestId } = render(
       <Popover.Root open={true}>
-        <Popover.Content asChild>
+        <Popover.Content asChild transition={createCanvasGroupPopperEntranceRecipe("bottom")}>
           <div data-testid="content" />
         </Popover.Content>
       </Popover.Root>,

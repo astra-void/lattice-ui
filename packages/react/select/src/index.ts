@@ -30,10 +30,12 @@ export const Select = {
   Separator: typeof SelectSeparator;
 };
 
+export { useSelectItemContext } from "./Select/context";
 export type {
   SelectContentProps,
   SelectContextValue,
   SelectGroupProps,
+  SelectItemContextValue,
   SelectItemProps,
   SelectItemRegistration,
   SelectLabelProps,

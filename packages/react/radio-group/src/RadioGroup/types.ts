@@ -1,4 +1,5 @@
-import type { PresenceMotionConfig, ResponseMotionConfig } from "@lattice-ui/react-motion";
+import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type RadioGroupSetValue = (value: string) => void;
@@ -38,16 +39,15 @@ export type RadioGroupProps = {
 };
 
 export type RadioGroupItemProps = {
-  transition?: ResponseMotionConfig;
   value: string;
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type RadioGroupIndicatorProps = {
   transition?: PresenceMotionConfig;
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-};
+} & PassthroughProps;

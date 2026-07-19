@@ -1,7 +1,16 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import { resolveCanvasPositionFromTrackPosition, resolveThumbOffset, resolveThumbSize } from "./scrollMath";
 import type { ScrollAreaScrollbarProps } from "./types";
+
+const OWN_PROPS = ["orientation", "asChild", "children"] as const;
+
+// Only the Roblox instance defaults are neutralized: where the bar sits, how wide it is and what it
+// looks like are the consumer's decisions. Passthrough props are spread after these.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
 
 function isPointerInput(inputObject: InputObject) {
   return (
@@ -74,30 +83,32 @@ export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
     ],
   );
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  // The bar instance is measured to turn a click into a canvas position, so its ref must reach this
+  // primitive even when the consumer forwards one of their own.
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, setScrollbarRef);
+  const behaviorProps = {
+    Active: visible,
+    Event: composeEvents(passthrough.Event, { InputBegan: handleInputBegan }),
+    Visible: visible,
+  };
+
   if (props.asChild) {
     const child = props.children;
-    if (!child) {
+    if (!React.isValidElement(child)) {
       error("[ScrollAreaScrollbar] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={visible} Event={{ InputBegan: handleInputBegan }} Visible={visible} ref={setScrollbarRef}>
+      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame
-      Active={visible}
-      BackgroundColor3={Color3.fromRGB(44, 52, 67)}
-      BorderSizePixel={0}
-      Event={{ InputBegan: handleInputBegan }}
-      Position={vertical ? UDim2.fromScale(1, 0) : UDim2.fromScale(0, 1)}
-      Size={vertical ? UDim2.fromOffset(8, 160) : UDim2.fromOffset(260, 8)}
-      Visible={visible}
-      ref={setScrollbarRef}
-    >
+    <frame {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref}>
       {props.children}
     </frame>
   );

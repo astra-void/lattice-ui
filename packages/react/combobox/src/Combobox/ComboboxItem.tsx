@@ -1,6 +1,16 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
-import { useComboboxContext } from "./context";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { ComboboxItemContextProvider, useComboboxContext } from "./context";
 import type { ComboboxItemProps } from "./types";
+
+const OWN_PROPS = ["value", "textValue", "disabled", "asChild", "children"] as const;
+
+// See ComboboxTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 let nextItemId = 0;
 let nextItemOrder = 0;
@@ -15,6 +25,8 @@ export function ComboboxItem(props: ComboboxItemProps) {
   const disabledRef = React.useRef(disabled);
   const textValueRef = React.useRef(textValue);
   const instanceRef = React.useRef<GuiObject>();
+
+  const [highlighted, setHighlighted] = React.useState(false);
 
   React.useEffect(() => {
     disabledRef.current = disabled;
@@ -79,13 +91,43 @@ export function ComboboxItem(props: ComboboxItemProps) {
     [comboboxContext, interactionDisabled, props.value],
   );
 
-  const eventHandlers = React.useMemo(
+  // Pointer and gamepad/keyboard focus both feed the same flag, so a controller-driven selection
+  // highlights exactly like a hover does.
+  const handlePointerEnter = React.useCallback(() => setHighlighted(true), []);
+  const handlePointerLeave = React.useCallback(() => setHighlighted(false), []);
+
+  const ownEvents = React.useMemo(
     () => ({
       Activated: handleSelect,
       InputBegan: handleInputBegan,
+      MouseEnter: handlePointerEnter,
+      MouseLeave: handlePointerLeave,
+      SelectionGained: handlePointerEnter,
+      SelectionLost: handlePointerLeave,
     }),
-    [handleInputBegan, handleSelect],
+    [handleInputBegan, handleSelect, handlePointerEnter, handlePointerLeave],
   );
+
+  // Highlight is tracked, never painted: consumers read it here and style however they like. An
+  // item filtered out of the query is hidden, so it never reads as highlighted.
+  const itemContextValue = React.useMemo(
+    () => ({
+      highlighted: highlighted && !interactionDisabled,
+      disabled,
+    }),
+    [disabled, highlighted, interactionDisabled],
+  );
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !interactionDisabled,
+    Event: composeEvents(passthrough.Event, ownEvents),
+    // The input keeps focus while the list is open, so items are never selection targets.
+    Selectable: false,
+    // Filtering is what this part does: items that no longer match the query are hidden.
+    Visible: itemQueryMatch,
+    ref: composeRefs<Instance>(passthrough.ref as never, setItemRef),
+  };
 
   if (props.asChild) {
     const child = props.children;
@@ -93,37 +135,21 @@ export function ComboboxItem(props: ComboboxItemProps) {
       error("[ComboboxItem] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot
-        Active={!interactionDisabled}
-        Event={eventHandlers}
-        Selectable={false}
-        Visible={itemQueryMatch}
-        ref={setItemRef}
-      >
-        {child}
-      </Slot>
+      <ComboboxItemContextProvider value={itemContextValue}>
+        <Slot {...passthrough} {...behaviorProps}>
+          {child}
+        </Slot>
+      </ComboboxItemContextProvider>
     );
   }
 
   return (
-    <textbutton
-      Active={!interactionDisabled}
-      AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(47, 53, 68)}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={false}
-      Size={UDim2.fromOffset(220, 32)}
-      Text={textValue}
-      TextColor3={interactionDisabled ? Color3.fromRGB(134, 141, 156) : Color3.fromRGB(234, 239, 247)}
-      TextSize={15}
-      TextXAlignment={Enum.TextXAlignment.Left}
-      Visible={itemQueryMatch}
-      ref={setItemRef}
-    >
-      <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
-      {props.children}
-    </textbutton>
+    <ComboboxItemContextProvider value={itemContextValue}>
+      <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+        {props.children}
+      </textbutton>
+    </ComboboxItemContextProvider>
   );
 }

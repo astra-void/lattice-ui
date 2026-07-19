@@ -27,9 +27,11 @@ export const ContextMenu = {
   Separator: typeof ContextMenuSeparator;
 };
 
+export { useContextMenuItemContext } from "./ContextMenu/context";
 export type {
   ContextMenuContentProps,
   ContextMenuGroupProps,
+  ContextMenuItemContextValue,
   ContextMenuItemProps,
   ContextMenuLabelProps,
   ContextMenuPortalProps,

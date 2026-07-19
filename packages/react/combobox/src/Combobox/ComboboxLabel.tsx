@@ -1,26 +1,30 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import type { ComboboxLabelProps } from "./types";
 
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// See ComboboxTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
+
 export function ComboboxLabel(props: ComboboxLabelProps) {
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
       error("[ComboboxLabel] `asChild` requires a child element.");
     }
 
-    return <Slot>{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return <Slot {...passthrough}>{child}</Slot>;
   }
 
   return (
-    <textlabel
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(220, 20)}
-      Text="Label"
-      TextColor3={Color3.fromRGB(168, 176, 191)}
-      TextSize={13}
-      TextXAlignment={Enum.TextXAlignment.Left}
-    >
+    <textlabel {...NEUTRAL_PROPS} {...passthrough}>
       {props.children}
     </textlabel>
   );

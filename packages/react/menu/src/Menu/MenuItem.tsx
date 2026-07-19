@@ -1,8 +1,17 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
-import { useMenuContext } from "./context";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { MenuItemContextProvider, useMenuContext } from "./context";
 import type { MenuItemProps, MenuSelectEvent } from "./types";
+
+const OWN_PROPS = ["asChild", "disabled", "onSelect", "children"] as const;
+
+// See MenuTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 let nextItemId = 0;
 let nextItemOrder = 0;
@@ -23,7 +32,7 @@ export function MenuItem(props: MenuItemProps) {
   const itemRef = React.useRef<GuiObject>();
   const disabledRef = React.useRef(props.disabled === true);
 
-  const [active, setActive] = React.useState(false);
+  const [highlighted, setHighlighted] = React.useState(false);
 
   React.useEffect(() => {
     disabledRef.current = props.disabled === true;
@@ -55,23 +64,9 @@ export function MenuItem(props: MenuItemProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const motionRef = useResponseMotion<GuiObject>(
-    active && props.disabled !== true,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(39, 46, 61) },
-      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
-    },
-    createSelectionResponseRecipe(),
-  );
-
-  const setItemRef = React.useCallback(
-    (instance: Instance | undefined) => {
-      const nextItem = !instance?.IsA("GuiObject") ? undefined : instance;
-      itemRef.current = nextItem;
-      motionRef.current = nextItem;
-    },
-    [motionRef],
-  );
+  const setItemRef = React.useCallback((instance: Instance | undefined) => {
+    itemRef.current = !instance?.IsA("GuiObject") ? undefined : instance;
+  }, []);
 
   const handleActivated = React.useCallback(() => {
     if (props.disabled) {
@@ -102,10 +97,10 @@ export function MenuItem(props: MenuItemProps) {
     [handleActivated, props.disabled],
   );
 
-  const handlePointerEnter = React.useCallback(() => setActive(true), []);
-  const handlePointerLeave = React.useCallback(() => setActive(false), []);
+  const handlePointerEnter = React.useCallback(() => setHighlighted(true), []);
+  const handlePointerLeave = React.useCallback(() => setHighlighted(false), []);
 
-  const eventHandlers = React.useMemo(
+  const ownEvents = React.useMemo(
     () => ({
       Activated: handleActivated,
       InputBegan: handleInputBegan,
@@ -117,41 +112,46 @@ export function MenuItem(props: MenuItemProps) {
     [handleActivated, handleInputBegan, handlePointerEnter, handlePointerLeave],
   );
 
+  const disabled = props.disabled === true;
+
+  // Highlight is tracked, never painted: consumers read it here and style however they like.
+  const itemContextValue = React.useMemo(
+    () => ({
+      highlighted: highlighted && !disabled,
+      disabled,
+    }),
+    [disabled, highlighted],
+  );
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, ownEvents),
+    Selectable: !disabled,
+  };
+  const ref = composeRefs<Instance>(passthrough.ref as never, setItemRef);
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
       error("[MenuItem] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot
-        Active={props.disabled !== true}
-        Event={eventHandlers}
-        Selectable={props.disabled !== true}
-        ref={setItemRef}
-      >
-        {child}
-      </Slot>
+      <MenuItemContextProvider value={itemContextValue}>
+        <Slot {...passthrough} {...behaviorProps} ref={ref}>
+          {child}
+        </Slot>
+      </MenuItemContextProvider>
     );
   }
 
   return (
-    <textbutton
-      Active={props.disabled !== true}
-      AutoButtonColor={false}
-      BackgroundColor3={active && props.disabled !== true ? Color3.fromRGB(66, 73, 91) : Color3.fromRGB(47, 53, 68)}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={props.disabled !== true}
-      Size={UDim2.fromOffset(220, 34)}
-      Text="Menu Item"
-      TextColor3={props.disabled ? Color3.fromRGB(135, 142, 156) : Color3.fromRGB(234, 239, 247)}
-      TextSize={15}
-      TextXAlignment={Enum.TextXAlignment.Left}
-      ref={setItemRef}
-    >
-      <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
-      {props.children}
-    </textbutton>
+    <MenuItemContextProvider value={itemContextValue}>
+      <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
+        {props.children}
+      </textbutton>
+    </MenuItemContextProvider>
   );
 }

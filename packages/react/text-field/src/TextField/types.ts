@@ -1,3 +1,4 @@
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type TextFieldSetValue = (value: string) => void;
@@ -33,19 +34,19 @@ export type TextFieldInputProps = {
   disabled?: boolean;
   readOnly?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type TextFieldLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type TextFieldDescriptionProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type TextFieldMessageProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

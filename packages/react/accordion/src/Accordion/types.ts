@@ -1,4 +1,5 @@
 import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 import type { AccordionType } from "./state";
 
@@ -28,23 +29,21 @@ export type AccordionItemProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type AccordionHeaderProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type AccordionTriggerProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
-
-type AccordionContentGuiProps = React.Attributes & Record<string, unknown>;
+} & PassthroughProps;
 
 export type AccordionContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
   transition?: PresenceMotionConfig;
   children?: React.ReactNode;
-} & AccordionContentGuiProps;
+} & PassthroughProps;

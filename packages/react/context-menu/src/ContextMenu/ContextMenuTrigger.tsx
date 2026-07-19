@@ -1,8 +1,20 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useContextMenuContext } from "./context";
 import type { ContextMenuTriggerProps } from "./types";
 
 const GuiService = game.GetService("GuiService");
+
+const OWN_PROPS = ["asChild", "disabled", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 /**
  * Converts a raw pointer position (top-bar inclusive, as reported by
@@ -30,31 +42,28 @@ export function ContextMenuTrigger(props: ContextMenuTriggerProps) {
     [contextMenuContext, props.disabled],
   );
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: props.disabled !== true,
+    Event: composeEvents(passthrough.Event, { InputBegan: handleInputBegan }),
+  };
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
       error("[ContextMenuTrigger] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={props.disabled !== true} Event={{ InputBegan: handleInputBegan }}>
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={props.disabled !== true}
-      AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(47, 53, 68)}
-      BorderSizePixel={0}
-      Event={{ InputBegan: handleInputBegan }}
-      Size={UDim2.fromOffset(280, 160)}
-      Text="Right-click here"
-      TextColor3={Color3.fromRGB(234, 239, 247)}
-      TextSize={15}
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
       {props.children}
     </textbutton>
   );

@@ -1,8 +1,19 @@
 import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
-import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useAccordionContext, useAccordionItemContext } from "./context";
 import type { AccordionTriggerProps } from "./types";
+
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 export function AccordionTrigger(props: AccordionTriggerProps) {
   const accordionContext = useAccordionContext();
@@ -10,23 +21,10 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
   const disabled = itemContext.disabled;
 
   const triggerRef = React.useRef<GuiObject>();
-  const motionRef = useResponseMotion<GuiObject>(
-    itemContext.open,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(59, 66, 84) },
-      inactive: { BackgroundColor3: Color3.fromRGB(41, 48, 63) },
-    },
-    createSelectionResponseRecipe(),
-  );
 
-  const setTriggerRef = React.useCallback(
-    (instance: Instance | undefined) => {
-      const nextTrigger = instance?.IsA("GuiObject") ? instance : undefined;
-      triggerRef.current = nextTrigger;
-      motionRef.current = nextTrigger;
-    },
-    [motionRef],
-  );
+  const setTriggerRef = React.useCallback((instance: Instance | undefined) => {
+    triggerRef.current = instance?.IsA("GuiObject") ? instance : undefined;
+  }, []);
 
   useFocusNode({
     ref: triggerRef,
@@ -56,13 +54,16 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
     [toggle],
   );
 
-  const eventHandlers = React.useMemo(
-    () => ({
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, {
       Activated: toggle,
       InputBegan: handleInputBegan,
     }),
-    [handleInputBegan, toggle],
-  );
+    Selectable: !disabled,
+  };
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, setTriggerRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -70,29 +71,16 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
       error("[AccordionTrigger] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setTriggerRef}>
+      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={!disabled}
-      AutoButtonColor={false}
-      BackgroundColor3={itemContext.open ? Color3.fromRGB(59, 66, 84) : Color3.fromRGB(41, 48, 63)}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={!disabled}
-      Size={UDim2.fromOffset(260, 34)}
-      Text={itemContext.open ? "Collapse" : "Expand"}
-      TextColor3={disabled ? Color3.fromRGB(143, 150, 165) : Color3.fromRGB(236, 241, 249)}
-      TextSize={14}
-      TextXAlignment={Enum.TextXAlignment.Left}
-      ref={setTriggerRef}
-    >
-      <uipadding PaddingLeft={new UDim(0, 10)} />
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
       {props.children}
     </textbutton>
   );

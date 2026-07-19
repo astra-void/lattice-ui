@@ -1,14 +1,39 @@
 import { FocusScope } from "@lattice-ui/react-focus";
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
-import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/react-motion";
+import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
+import { usePresenceMotionController } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
 import { usePopper } from "@lattice-ui/react-popper";
-import { composeRefs, getElementRef, React } from "@lattice-ui/react-runtime";
+import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
 import { useMenuContext } from "./context";
 import type { MenuContentProps } from "./types";
 
+const OWN_PROPS = [
+  "transition",
+  "asChild",
+  "forceMount",
+  "placement",
+  "sideOffset",
+  "alignOffset",
+  "collisionPadding",
+  "onPointerDownOutside",
+  "onInteractOutside",
+  "children",
+] as const;
+
+// See MenuTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// Unstyled content has nothing to animate, so there is no default recipe. Presence timing is still
+// owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
+
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
+const ZERO_UDIM2 = UDim2.fromOffset(0, 0);
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -36,6 +61,7 @@ function MenuContentImpl(props: {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const menuContext = useMenuContext();
   const open = menuContext.open;
@@ -52,17 +78,11 @@ function MenuContentImpl(props: {
     enabled: shouldMeasure,
   });
 
-  const defaultTransition = React.useMemo(
-    () => createCanvasGroupPopperEntranceRecipe(popper.placement),
-    [popper.placement],
-  );
-  const recipe = props.transition ?? defaultTransition;
-
   const motion = usePresenceMotionController<GuiObject>({
     present: props.motionPresent,
     ready: popper.isPositioned,
     forceMount: props.forceMount,
-    config: recipe,
+    config: props.transition ?? NO_MOTION,
     onExitComplete: props.onExitComplete,
   });
 
@@ -86,7 +106,17 @@ function MenuContentImpl(props: {
   const popperContentSize = (popper as { contentSize?: Vector2 }).contentSize ?? new Vector2(0, 0);
   const popperWrapperSize = popper.isPositioned
     ? UDim2.fromOffset(popperContentSize.X, popperContentSize.Y)
-    : UDim2.fromOffset(0, 0);
+    : ZERO_UDIM2;
+
+  const passthrough = props.passthrough;
+
+  // The canvasgroup measures itself against its items so the popper has something to position, and
+  // it is the flattening layer any consumer-supplied `transition` fades as a unit.
+  const contentBehaviorProps = {
+    AutomaticSize: Enum.AutomaticSize.XY,
+    Size: ZERO_UDIM2,
+    Visible: contentVisible,
+  };
 
   const contentNode = props.asChild ? (
     (() => {
@@ -99,32 +129,20 @@ function MenuContentImpl(props: {
       const childRef = getElementRef<Instance>(child);
 
       return (
-        <canvasgroup
-          AutomaticSize={Enum.AutomaticSize.XY}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Size={UDim2.fromOffset(0, 0)}
-          Visible={contentVisible}
-          ref={setContentRef as React.Ref<CanvasGroup>}
-        >
+        <canvasgroup {...NEUTRAL_PROPS} {...contentBehaviorProps} ref={setContentRef as React.Ref<CanvasGroup>}>
+          {/* No neutral defaults here: the rendered element belongs to the consumer. */}
           {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
             ...childProps,
-            Position: UDim2.fromOffset(0, 0),
+            ...passthrough,
+            Position: ZERO_UDIM2,
             Visible: contentVisible,
-            ref: composeRefs(childRef),
+            ref: composeRefs(childRef, (passthrough.ref ?? undefined) as never),
           })}
         </canvasgroup>
       );
     })()
   ) : (
-    <canvasgroup
-      AutomaticSize={Enum.AutomaticSize.XY}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(0, 0)}
-      Visible={contentVisible}
-      ref={setContentRef}
-    >
+    <canvasgroup {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={setContentRef}>
       {props.children}
     </canvasgroup>
   );
@@ -147,10 +165,10 @@ function MenuContentImpl(props: {
         navOrientation="vertical"
         navWrap={true}
       >
+        {/* Internal positioning wrapper: owned by the popper, never by the consumer. */}
         <frame
+          {...NEUTRAL_PROPS}
           AnchorPoint={popper.anchorPoint}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
           Position={popperPosition}
           Size={popperWrapperSize}
           Visible={shouldRender}
@@ -165,6 +183,7 @@ function MenuContentImpl(props: {
 export function MenuContent(props: MenuContentProps) {
   const menuContext = useMenuContext();
   const open = menuContext.open;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (
@@ -179,6 +198,7 @@ export function MenuContent(props: MenuContentProps) {
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         asChild={props.asChild}
+        passthrough={passthrough}
       >
         {props.children}
       </MenuContentImpl>
@@ -201,6 +221,7 @@ export function MenuContent(props: MenuContentProps) {
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           asChild={props.asChild}
+          passthrough={passthrough}
         >
           {props.children}
         </MenuContentImpl>

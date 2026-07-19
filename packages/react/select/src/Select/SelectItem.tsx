@@ -1,8 +1,17 @@
 import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
-import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
-import { useSelectContext } from "./context";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { SelectItemContextProvider, useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
+
+const OWN_PROPS = ["value", "textValue", "disabled", "asChild", "children"] as const;
+
+// See SelectTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 let nextItemId = 0;
 let nextItemOrder = 0;
@@ -16,15 +25,7 @@ export function SelectItem(props: SelectItemProps) {
   const textValueRef = React.useRef(textValue);
   const itemRef = React.useRef<GuiObject>();
 
-  const [active, setActive] = React.useState(false);
-  const motionRef = useResponseMotion<GuiObject>(
-    active && !disabled,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(39, 46, 61) },
-      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
-    },
-    createSelectionResponseRecipe(),
-  );
+  const [highlighted, setHighlighted] = React.useState(false);
 
   React.useEffect(() => {
     disabledRef.current = disabled;
@@ -89,10 +90,12 @@ export function SelectItem(props: SelectItemProps) {
     [handleSelect],
   );
 
-  const handlePointerEnter = React.useCallback(() => setActive(true), []);
-  const handlePointerLeave = React.useCallback(() => setActive(false), []);
+  // Pointer and gamepad/keyboard focus both feed the same flag, so a controller-driven selection
+  // highlights exactly like a hover does.
+  const handlePointerEnter = React.useCallback(() => setHighlighted(true), []);
+  const handlePointerLeave = React.useCallback(() => setHighlighted(false), []);
 
-  const eventHandlers = React.useMemo(
+  const ownEvents = React.useMemo(
     () => ({
       Activated: handleSelect,
       InputBegan: handleInputBegan,
@@ -104,14 +107,26 @@ export function SelectItem(props: SelectItemProps) {
     [handleInputBegan, handleSelect, handlePointerEnter, handlePointerLeave],
   );
 
-  const setItemRef = React.useCallback(
-    (instance: Instance | undefined) => {
-      const nextItem = instance?.IsA("GuiObject") ? instance : undefined;
-      itemRef.current = nextItem;
-      motionRef.current = nextItem;
-    },
-    [motionRef],
+  const setItemRef = React.useCallback((instance: Instance | undefined) => {
+    itemRef.current = instance?.IsA("GuiObject") ? instance : undefined;
+  }, []);
+
+  // Highlight is tracked, never painted: consumers read it here and style however they like.
+  const itemContextValue = React.useMemo(
+    () => ({
+      highlighted: highlighted && !disabled,
+      disabled,
+    }),
+    [disabled, highlighted],
   );
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, ownEvents),
+    Selectable: !disabled,
+    ref: composeRefs<Instance>(passthrough.ref as never, setItemRef),
+  };
 
   if (props.asChild) {
     const child = props.children;
@@ -119,30 +134,21 @@ export function SelectItem(props: SelectItemProps) {
       error("[SelectItem] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setItemRef}>
-        {child}
-      </Slot>
+      <SelectItemContextProvider value={itemContextValue}>
+        <Slot {...passthrough} {...behaviorProps}>
+          {child}
+        </Slot>
+      </SelectItemContextProvider>
     );
   }
 
   return (
-    <textbutton
-      Active={!disabled}
-      AutoButtonColor={false}
-      BackgroundColor3={active && !disabled ? Color3.fromRGB(66, 73, 91) : Color3.fromRGB(47, 53, 68)}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={!disabled}
-      Size={UDim2.fromOffset(220, 32)}
-      Text={textValue}
-      TextColor3={disabled ? Color3.fromRGB(134, 141, 156) : Color3.fromRGB(234, 239, 247)}
-      TextSize={15}
-      TextXAlignment={Enum.TextXAlignment.Left}
-      ref={setItemRef}
-    >
-      <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
-      {props.children}
-    </textbutton>
+    <SelectItemContextProvider value={itemContextValue}>
+      <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+        {props.children}
+      </textbutton>
+    </SelectItemContextProvider>
   );
 }

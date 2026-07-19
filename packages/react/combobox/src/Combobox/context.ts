@@ -1,6 +1,8 @@
 import { createStrictContext } from "@lattice-ui/react-runtime";
-import type { ComboboxContextValue } from "./types";
+import type { ComboboxContextValue, ComboboxItemContextValue } from "./types";
 
 const [ComboboxContextProvider, useComboboxContext] = createStrictContext<ComboboxContextValue>("Combobox");
+const [ComboboxItemContextProvider, useComboboxItemContext] =
+  createStrictContext<ComboboxItemContextValue>("ComboboxItem");
 
-export { ComboboxContextProvider, useComboboxContext };
+export { ComboboxContextProvider, ComboboxItemContextProvider, useComboboxContext, useComboboxItemContext };

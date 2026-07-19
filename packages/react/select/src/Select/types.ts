@@ -1,6 +1,7 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type SelectSetOpen = (open: boolean) => void;
@@ -27,6 +28,14 @@ export type SelectContextValue = {
   getItemText: (value: string) => string | undefined;
 };
 
+/** Per-item state consumers read to style the item; the primitive never paints it. */
+export type SelectItemContextValue = {
+  highlighted: boolean;
+  disabled: boolean;
+};
+
+// `Select` renders no instance of its own (it is a context provider), so it takes no passthrough
+// props. Every part below renders an instance and forwards unknown props onto it.
 export type SelectProps = {
   value?: string;
   defaultValue?: string;
@@ -43,13 +52,13 @@ export type SelectTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type SelectValueProps = {
   asChild?: boolean;
   placeholder?: string;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type SelectPortalProps = {
   container?: BasePlayerGui;
@@ -68,7 +77,7 @@ export type SelectContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type SelectItemProps = {
   value: string;
@@ -76,19 +85,19 @@ export type SelectItemProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type SelectSeparatorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type SelectGroupProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type SelectLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

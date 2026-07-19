@@ -16,7 +16,9 @@ const { usePresenceMotionController, createToastRevealRecipe, defaultRecipe, slo
   };
 });
 
-vi.mock("@lattice-ui/react-runtime", () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
+  const runtimeProps = await import("../../../packages/react/runtime/src/props");
+  const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const React = require("react");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
@@ -32,6 +34,9 @@ vi.mock("@lattice-ui/react-runtime", () => {
   }
 
   return {
+    composeEvents: runtimeProps.composeEvents,
+    getPassthroughProps: runtimeProps.getPassthroughProps,
+    composeRefs: runtimeRefs.composeRefs,
     React,
     Slot,
   };
@@ -87,7 +92,9 @@ describe("ToastRoot motion regressions", () => {
     });
   });
 
-  it("falls back to the toast reveal recipe when no transition is given", () => {
+  // Unstyled primitives ship no default animation: the toast reveal recipe animated hardcoded
+  // offsets/transparency, so it is the consumer's to supply via `transition`.
+  it("uses no motion when no transition is given", () => {
     usePresenceMotionController.mockReturnValue(controller());
 
     render(
@@ -96,7 +103,8 @@ describe("ToastRoot motion regressions", () => {
       </ToastRoot>,
     );
 
-    expect(usePresenceMotionController).toHaveBeenCalledWith(expect.objectContaining({ config: defaultRecipe }));
+    expect(createToastRevealRecipe).not.toHaveBeenCalled();
+    expect(usePresenceMotionController).toHaveBeenCalledWith(expect.objectContaining({ config: {} }));
   });
 
   it("keeps the root visible while the exit animation is running", () => {

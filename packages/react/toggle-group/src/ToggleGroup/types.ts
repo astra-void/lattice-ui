@@ -1,4 +1,4 @@
-import type { ResponseMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type ToggleGroupType = "single" | "multiple";
@@ -8,7 +8,7 @@ export type ToggleGroupCommonProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type ToggleGroupSingleProps = {
   type: "single";
@@ -34,9 +34,8 @@ export type ToggleGroupContextValue = {
 };
 
 export type ToggleGroupItemProps = {
-  transition?: MotionConfig;
   value: string;
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

@@ -1,5 +1,6 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type DialogSetOpen = (open: boolean) => void;
@@ -23,7 +24,7 @@ export type DialogTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type DialogPortalProps = {
   container?: BasePlayerGui;
@@ -35,7 +36,7 @@ export type DialogOverlayProps = {
   asChild?: boolean;
   forceMount?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type DialogContentProps = {
   transition?: PresenceMotionConfig;
@@ -45,9 +46,9 @@ export type DialogContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type DialogCloseProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

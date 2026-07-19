@@ -37,7 +37,19 @@ Lattice UI is a headless-first UI toolkit.
 Agent guidance for component design:
 
 - Prefer behavior, composition, and state orchestration over opinionated visuals.
-- Keep primitives unstyled or minimally styled unless the task explicitly targets a styled surface.
+- Keep primitives unstyled. A primitive may set behavior props and may neutralize Roblox instance
+  defaults that would otherwise impose a look the consumer never asked for (`BackgroundTransparency: 1`,
+  `BorderSizePixel: 0`, `Text: ""`, `AutoButtonColor: false`). It may not set colors, static sizes,
+  fonts, text content, or decorative `UICorner`/`UIStroke`/`UIPadding` children.
+- Geometry computed from state is behavior, not appearance: progress fill ratios, slider thumb travel,
+  popper-driven position, scroll thumb size, and presence-driven `Visible` all stay in the primitive.
+- Ship no default motion recipes — they encode hardcoded colors and offsets. Own presence *timing*;
+  let the consumer supply animation through `transition`.
+- When you remove a built-in visual, expose the state it was driven by (see `useMenuItemContext`)
+  rather than deleting it, or consumers lose the ability to style that state at all.
+- Spread order on a rendered instance is neutral defaults, then consumer passthrough, then behavior
+  props, so consumers can override the defaults but never the behavior. Compose consumer `Event`
+  handlers and refs instead of replacing them.
 - Do not bake product-specific appearance decisions into shared primitives.
 - Prefer composability and small wrappers over monolithic, highly opinionated components.
 - Preserve or improve flexible composition patterns such as slotting / `asChild`-style usage where already supported.

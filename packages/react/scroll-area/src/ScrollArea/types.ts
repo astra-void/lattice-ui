@@ -1,3 +1,4 @@
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type ScrollAreaType = "auto" | "always" | "scroll";
@@ -31,22 +32,22 @@ export type ScrollAreaProps = {
 
 export type ScrollAreaViewportProps = {
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;
 
 export type ScrollAreaScrollbarProps = {
   orientation: ScrollAreaOrientation;
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;
 
 export type ScrollAreaThumbProps = {
   orientation: ScrollAreaOrientation;
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;
 
 export type ScrollAreaCornerProps = {
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;

@@ -1,6 +1,16 @@
-import { React, Slot, useControllableState } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, useControllableState } from "@lattice-ui/react-runtime";
 import { ToggleGroupContextProvider } from "./context";
 import type { ToggleGroupProps } from "./types";
+
+const OWN_PROPS = ["type", "value", "defaultValue", "onValueChange", "disabled", "asChild", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `frame` renders an opaque grey box.
+// Neutralize only that, and leave every real appearance decision to the consumer. Passthrough props
+// are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
 
 function normalizeMultiple(value: unknown): Array<string> {
   if (!typeIs(value, "table")) {
@@ -91,6 +101,8 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
     [disabled, isPressed, props.type, toggleValue],
   );
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+
   const groupNode = props.asChild ? (
     (() => {
       const child = props.children;
@@ -98,10 +110,11 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
         error("[ToggleGroup] `asChild` requires a child element.");
       }
 
-      return <Slot>{child}</Slot>;
+      // No neutral defaults here: the rendered element belongs to the consumer.
+      return <Slot {...passthrough}>{child}</Slot>;
     })()
   ) : (
-    <frame BackgroundTransparency={1} BorderSizePixel={0} Size={UDim2.fromOffset(0, 0)}>
+    <frame {...NEUTRAL_PROPS} {...passthrough}>
       {props.children}
     </frame>
   );

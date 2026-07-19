@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@lattice-ui/react-focus": "workspace:*",
-    "@lattice-ui/react-motion": "workspace:*",
     "@lattice-ui/react-runtime": "workspace:*"
   },
   "devDependencies": {

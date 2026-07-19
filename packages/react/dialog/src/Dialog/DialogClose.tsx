@@ -1,6 +1,16 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogCloseProps } from "./types";
+
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// See DialogTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 export function DialogClose(props: DialogCloseProps) {
   const dialogContext = useDialogContext();
@@ -9,32 +19,29 @@ export function DialogClose(props: DialogCloseProps) {
     dialogContext.setOpen(false);
   }, [dialogContext.setOpen]);
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: true,
+    Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
+    Selectable: false,
+  };
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
       error("[DialogClose] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={true} Event={{ Activated: handleActivated }} Selectable={false}>
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={true}
-      AutoButtonColor={false}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Event={{ Activated: handleActivated }}
-      Selectable={false}
-      Size={UDim2.fromOffset(110, 34)}
-      Text="Close"
-      TextColor3={Color3.fromRGB(240, 244, 250)}
-      TextSize={16}
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
       {props.children}
     </textbutton>
   );

@@ -1,6 +1,15 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxValueProps } from "./types";
+
+const OWN_PROPS = ["asChild", "placeholder", "children"] as const;
+
+// See ComboboxTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 export function ComboboxValue(props: ComboboxValueProps) {
   const comboboxContext = useComboboxContext();
@@ -15,6 +24,12 @@ export function ComboboxValue(props: ComboboxValueProps) {
     return comboboxContext.getItemText(selectedValue) ?? selectedValue;
   }, [comboboxContext, hasValue, props.placeholder, selectedValue]);
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  // Rendering the selected label *is* this part's behavior, so `Text` is state-driven, not styling.
+  const behaviorProps = {
+    Text: resolvedText,
+  };
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
@@ -22,21 +37,11 @@ export function ComboboxValue(props: ComboboxValueProps) {
     }
 
     return (
-      <Slot Name="ComboboxValue" Text={resolvedText}>
+      <Slot Name="ComboboxValue" {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
-  return (
-    <textlabel
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(200, 20)}
-      Text={resolvedText}
-      TextColor3={hasValue ? Color3.fromRGB(235, 240, 248) : Color3.fromRGB(153, 161, 177)}
-      TextSize={14}
-      TextXAlignment={Enum.TextXAlignment.Left}
-    />
-  );
+  return <textlabel {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
 }

@@ -1,18 +1,39 @@
 import { FocusScope } from "@lattice-ui/react-focus";
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
-import {
-  createCanvasGroupPopperEntranceRecipe,
-  createPopperEntranceRecipe,
-  usePresenceMotionController,
-} from "@lattice-ui/react-motion";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
 import { usePopper } from "@lattice-ui/react-popper";
-import { composeRefs, getElementRef, React } from "@lattice-ui/react-runtime";
+import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";
 
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
+
+const OWN_PROPS = [
+  "transition",
+  "asChild",
+  "forceMount",
+  "placement",
+  "sideOffset",
+  "alignOffset",
+  "collisionPadding",
+  "onPointerDownOutside",
+  "onInteractOutside",
+  "children",
+] as const;
+
+// Roblox instance defaults are themselves a look: a bare canvasgroup renders an opaque grey box.
+// Neutralize only that, and leave every real appearance decision to the consumer. Passthrough props
+// are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// An unstyled popover has nothing to animate, so there is no default entrance recipe. Presence
+// timing is still owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -40,6 +61,7 @@ function PopoverContentImpl(props: {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const popoverContext = usePopoverContext();
   const open = popoverContext.open;
@@ -56,15 +78,7 @@ function PopoverContentImpl(props: {
     enabled: shouldMeasure,
   });
 
-  const resolvedPlacement = popper.isPositioned ? popper.placement : (props.placement ?? "bottom");
-  const defaultTransition = React.useMemo(
-    () =>
-      props.asChild
-        ? createPopperEntranceRecipe(resolvedPlacement)
-        : createCanvasGroupPopperEntranceRecipe(resolvedPlacement),
-    [resolvedPlacement, props.asChild],
-  );
-  const recipe = props.transition ?? defaultTransition;
+  const recipe = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<GuiObject>({
     present: props.motionPresent,
@@ -96,6 +110,15 @@ function PopoverContentImpl(props: {
     ? UDim2.fromOffset(popperContentSize.X, popperContentSize.Y)
     : UDim2.fromOffset(0, 0);
 
+  const passthrough = props.passthrough;
+  const contentRef = composeRefs<Instance>(passthrough.ref as never, setContentRef);
+  const behaviorProps = {
+    // The content host measures itself so the popper can position it: measurement, not appearance.
+    AutomaticSize: Enum.AutomaticSize.XY,
+    Visible: contentVisible,
+    ref: contentRef as never,
+  };
+
   const contentNode = props.asChild ? (
     (() => {
       const child = props.children;
@@ -106,21 +129,17 @@ function PopoverContentImpl(props: {
       const childProps = toGuiPropBag((child as { props?: unknown }).props);
       const childRef = getElementRef<Instance>(child);
 
+      // No neutral defaults here: the rendered element belongs to the consumer. AutomaticSize is
+      // left to the child too, since the consumer owns that element's layout.
       return React.cloneElement(child as React.ReactElement<GuiPropBag>, {
         ...childProps,
+        ...passthrough,
         Visible: contentVisible,
-        ref: composeRefs(childRef, setContentRef),
+        ref: composeRefs<Instance>(childRef, contentRef),
       });
     })()
   ) : (
-    <canvasgroup
-      AutomaticSize={Enum.AutomaticSize.XY}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(0, 0)}
-      Visible={contentVisible}
-      ref={setContentRef}
-    >
+    <canvasgroup {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
       {props.children}
     </canvasgroup>
   );
@@ -136,10 +155,10 @@ function PopoverContentImpl(props: {
       insideRefs={[popoverContext.triggerRef, popoverContext.anchorRef]}
     >
       <FocusScope active={open} restoreFocus={true} trapped={popoverContext.modal}>
+        {/* Popper-driven placement wrapper: geometry comes from measurement, not from styling. */}
         <frame
+          {...NEUTRAL_PROPS}
           AnchorPoint={popper.anchorPoint}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
           Position={popperPosition}
           Size={popperWrapperSize}
           Visible={shouldRender}
@@ -154,6 +173,7 @@ function PopoverContentImpl(props: {
 export function PopoverContent(props: PopoverContentProps) {
   const popoverContext = usePopoverContext();
   const open = popoverContext.open;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (
@@ -168,6 +188,7 @@ export function PopoverContent(props: PopoverContentProps) {
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
         asChild={props.asChild}
+        passthrough={passthrough}
       >
         {props.children}
       </PopoverContentImpl>
@@ -190,6 +211,7 @@ export function PopoverContent(props: PopoverContentProps) {
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
           asChild={props.asChild}
+          passthrough={passthrough}
         >
           {props.children}
         </PopoverContentImpl>

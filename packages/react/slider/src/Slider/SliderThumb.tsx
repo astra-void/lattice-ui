@@ -1,9 +1,21 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
 import { createSliderThumbResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderThumbProps } from "./types";
+
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that; passthrough props are spread after these, so every real
+// appearance decision stays with the consumer.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function isPointerStartInput(inputObject: InputObject) {
   return (
@@ -96,35 +108,33 @@ export function SliderThumb(props: SliderThumbProps) {
     [isHorizontal, sliderContext],
   );
 
-  const sharedProps = {
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, setNodeRef);
+  const behaviorProps = {
     Active: !sliderContext.disabled,
+    // Motion drives `Position` to the value point; the centered anchor is what makes that point the
+    // middle of the thumb rather than its top-left corner.
     AnchorPoint: new Vector2(0.5, 0.5),
-    Name: "SliderThumb",
+    Event: composeEvents(passthrough.Event, { InputBegan: handleInputBegan }),
     Selectable: !sliderContext.disabled,
-    Event: {
-      InputBegan: handleInputBegan,
-    },
-    ref: setNodeRef,
   };
 
   if (props.asChild) {
     const child = props.children;
-    if (!child) {
+    if (!React.isValidElement(child)) {
       error("[SliderThumb] `asChild` requires a child element.");
     }
 
-    return <Slot {...sharedProps}>{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return (
+      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+        {child}
+      </Slot>
+    );
   }
 
   return (
-    <textbutton
-      {...sharedProps}
-      AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(235, 241, 250)}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(16, 16)}
-      Text=""
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref}>
       {props.children}
     </textbutton>
   );

@@ -1,6 +1,7 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type TooltipSetOpen = (open: boolean) => void;
@@ -39,7 +40,7 @@ export type TooltipTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type TooltipPortalProps = {
   container?: BasePlayerGui;
@@ -58,4 +59,4 @@ export type TooltipContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-};
+} & PassthroughProps;

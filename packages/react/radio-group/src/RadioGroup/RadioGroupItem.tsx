@@ -1,8 +1,19 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
+
+const OWN_PROPS = ["value", "disabled", "asChild", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 let nextItemId = 0;
 let nextItemOrder = 0;
@@ -45,23 +56,9 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const motionRef = useResponseMotion<GuiObject>(
-    checked,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(88, 142, 255) },
-      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68) },
-    },
-    props.transition ?? createSelectionResponseRecipe(),
-  );
-
-  const setItemRef = React.useCallback(
-    (instance: Instance | undefined) => {
-      const nextItem = !instance?.IsA("GuiObject") ? undefined : instance;
-      itemRef.current = nextItem;
-      motionRef.current = nextItem;
-    },
-    [motionRef],
-  );
+  const setItemRef = React.useCallback((instance: Instance | undefined) => {
+    itemRef.current = !instance?.IsA("GuiObject") ? undefined : instance;
+  }, []);
 
   const handleSelect = React.useCallback(() => {
     if (disabled) {
@@ -113,15 +110,6 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     [disabled, props.value, radioGroupContext],
   );
 
-  const eventHandlers = React.useMemo(
-    () => ({
-      Activated: handleSelect,
-      InputBegan: handleInputBegan,
-      SelectionGained: handleSelectionGained,
-    }),
-    [handleInputBegan, handleSelect, handleSelectionGained],
-  );
-
   const itemContextValue = React.useMemo(
     () => ({
       checked,
@@ -129,6 +117,18 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     }),
     [checked, disabled],
   );
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, {
+      Activated: handleSelect,
+      InputBegan: handleInputBegan,
+      SelectionGained: handleSelectionGained,
+    }),
+    Selectable: !disabled,
+  };
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, setItemRef);
 
   return (
     <RadioGroupItemContextProvider value={itemContextValue}>
@@ -139,26 +139,15 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
             error("[RadioGroupItem] `asChild` requires a child element.");
           }
 
+          // No neutral defaults here: the rendered element belongs to the consumer.
           return (
-            <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setItemRef}>
+            <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
               {child}
             </Slot>
           );
         })()
       ) : (
-        <textbutton
-          Active={!disabled}
-          AutoButtonColor={false}
-          BackgroundColor3={checked ? Color3.fromRGB(88, 142, 255) : Color3.fromRGB(47, 53, 68)}
-          BorderSizePixel={0}
-          Event={eventHandlers}
-          Selectable={!disabled}
-          Size={UDim2.fromOffset(170, 34)}
-          Text={props.value}
-          TextColor3={disabled ? Color3.fromRGB(139, 146, 160) : Color3.fromRGB(236, 241, 249)}
-          TextSize={15}
-          ref={setItemRef}
-        >
+        <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
           {props.children}
         </textbutton>
       )}

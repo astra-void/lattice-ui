@@ -1,9 +1,20 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
+
+const OWN_PROPS = ["value", "disabled", "asChild", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 let nextTriggerId = 0;
 let nextTriggerOrder = 0;
@@ -19,7 +30,6 @@ function toGuiObject(instance: Instance | undefined) {
 export function TabsTrigger(props: TabsTriggerProps) {
   const tabsContext = useTabsContext();
   const triggerRef = React.useRef<GuiObject>();
-  const selected = tabsContext.value === props.value;
   const disabled = props.disabled === true;
   const disabledRef = React.useRef(disabled);
   disabledRef.current = disabled;
@@ -51,22 +61,9 @@ export function TabsTrigger(props: TabsTriggerProps) {
     getDisabled: () => disabledRef.current,
   });
 
-  const motionRef = useResponseMotion<GuiObject>(
-    selected,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(86, 137, 245), TextColor3: Color3.fromRGB(235, 240, 248) },
-      inactive: { BackgroundColor3: Color3.fromRGB(47, 53, 68), TextColor3: Color3.fromRGB(136, 144, 159) },
-    },
-    createSelectionResponseRecipe(),
-  );
-  const setTriggerRef = React.useCallback(
-    (instance: Instance | undefined) => {
-      const nextTrigger = toGuiObject(instance);
-      triggerRef.current = nextTrigger;
-      motionRef.current = nextTrigger;
-    },
-    [motionRef],
-  );
+  const setTriggerRef = React.useCallback((instance: Instance | undefined) => {
+    triggerRef.current = toGuiObject(instance);
+  }, []);
 
   const handleActivated = React.useCallback(() => {
     if (disabled) {
@@ -118,16 +115,21 @@ export function TabsTrigger(props: TabsTriggerProps) {
     [disabled, props.value, tabsContext],
   );
 
-  const eventHandlers = React.useMemo(
-    () => ({
+  const triggerName = React.useMemo(() => createTabsTriggerName(props.value), [props.value]);
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, {
       Activated: handleActivated,
       InputBegan: handleInputBegan,
       SelectionGained: handleSelectionGained,
     }),
-    [handleActivated, handleInputBegan, handleSelectionGained],
-  );
-
-  const triggerName = React.useMemo(() => createTabsTriggerName(props.value), [props.value]);
+    // The name pairs the trigger with its panel, so it is wiring rather than appearance.
+    Name: triggerName,
+    Selectable: !disabled,
+  };
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, setTriggerRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -135,33 +137,16 @@ export function TabsTrigger(props: TabsTriggerProps) {
       error("[TabsTrigger] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Name={triggerName} Selectable={!disabled} ref={setTriggerRef}>
+      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={!disabled}
-      AutoButtonColor={false}
-      BackgroundColor3={selected ? Color3.fromRGB(86, 137, 245) : Color3.fromRGB(47, 53, 68)}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={!disabled}
-      Size={UDim2.fromOffset(132, 34)}
-      Text={props.value}
-      TextColor3={
-        selected
-          ? Color3.fromRGB(235, 240, 248)
-          : disabled
-            ? Color3.fromRGB(136, 144, 159)
-            : Color3.fromRGB(235, 240, 248)
-      }
-      TextSize={15}
-      ref={setTriggerRef}
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
       {props.children}
     </textbutton>
   );

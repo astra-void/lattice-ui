@@ -1,6 +1,7 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type ComboboxFilterFn = (itemText: string, query: string) => boolean;
@@ -39,6 +40,14 @@ export type ComboboxContextValue = {
   getItemText: (value: string) => string | undefined;
 };
 
+/** Per-item state consumers read to style the item; the primitive never paints it. */
+export type ComboboxItemContextValue = {
+  highlighted: boolean;
+  disabled: boolean;
+};
+
+// `Combobox` renders no instance of its own (it is a context provider), so it takes no passthrough
+// props. Every part below renders an instance and forwards unknown props onto it.
 export type ComboboxProps = {
   value?: string;
   defaultValue?: string;
@@ -60,7 +69,7 @@ export type ComboboxTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ComboboxInputProps = {
   asChild?: boolean;
@@ -68,13 +77,13 @@ export type ComboboxInputProps = {
   readOnly?: boolean;
   placeholder?: string;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ComboboxValueProps = {
   asChild?: boolean;
   placeholder?: string;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ComboboxPortalProps = {
   container?: BasePlayerGui;
@@ -93,7 +102,7 @@ export type ComboboxContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type ComboboxItemProps = {
   value: string;
@@ -101,19 +110,19 @@ export type ComboboxItemProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ComboboxSeparatorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ComboboxGroupProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ComboboxLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

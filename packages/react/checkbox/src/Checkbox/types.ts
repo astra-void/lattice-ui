@@ -1,4 +1,5 @@
 import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type CheckedState = boolean | "indeterminate";
@@ -20,11 +21,11 @@ export type CheckboxProps = {
   required?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type CheckboxIndicatorProps = {
   transition?: PresenceMotionConfig;
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-};
+} & PassthroughProps;

@@ -1,8 +1,19 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { createFieldResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useTextFieldContext } from "./context";
 import type { TextFieldInputProps } from "./types";
+
+const OWN_PROPS = ["asChild", "disabled", "readOnly", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbox` renders an opaque grey box
+// labelled "TextBox". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, placeholder text) to the consumer. Passthrough props are spread after these, so they stay
+// overridable — and the controlled `Text` lands in the behavior props spread last of all.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function toTextBox(instance: Instance | undefined) {
   if (!instance?.IsA("TextBox")) {
@@ -18,16 +29,6 @@ export function TextFieldInput(props: TextFieldInputProps) {
   const readOnly = textFieldContext.readOnly || props.readOnly === true;
   const [focused, setFocused] = React.useState(false);
 
-  const active = focused && !disabled && !readOnly;
-  const localRef = useResponseMotion<TextBox>(
-    active,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(35, 41, 54) },
-      inactive: { BackgroundColor3: Color3.fromRGB(39, 46, 61) },
-    },
-    createFieldResponseRecipe(),
-  );
-
   const focusRef = React.useRef<GuiObject>();
   useFocusNode({
     ref: focusRef,
@@ -40,11 +41,10 @@ export function TextFieldInput(props: TextFieldInputProps) {
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
       const textBox = toTextBox(instance);
-      localRef.current = textBox;
       textFieldContext.inputRef.current = textBox;
       focusRef.current = textBox;
     },
-    [textFieldContext.inputRef, localRef],
+    [textFieldContext.inputRef],
   );
 
   const handleTextChanged = React.useCallback(
@@ -78,20 +78,21 @@ export function TextFieldInput(props: TextFieldInputProps) {
     [disabled, textFieldContext],
   );
 
-  const sharedProps = {
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
     Active: !disabled,
     ClearTextOnFocus: false,
     Selectable: !disabled,
     Text: textFieldContext.value,
     TextEditable: !disabled && !readOnly,
-    Change: {
-      Text: handleTextChanged,
-    },
-    Event: {
-      Focused: handleFocused,
-      FocusLost: handleFocusLost,
-    },
-    ref: setInputRef,
+    Change: composeEvents(passthrough.Change, {
+      Text: handleTextChanged as Callback,
+    }),
+    Event: composeEvents(passthrough.Event, {
+      Focused: handleFocused as Callback,
+      FocusLost: handleFocusLost as Callback,
+    }),
+    ref: composeRefs<Instance>(passthrough.ref as never, setInputRef),
   };
 
   if (props.asChild) {
@@ -100,21 +101,13 @@ export function TextFieldInput(props: TextFieldInputProps) {
       error("[TextFieldInput] `asChild` requires a child element.");
     }
 
-    return <Slot {...sharedProps}>{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return (
+      <Slot {...passthrough} {...behaviorProps}>
+        {child}
+      </Slot>
+    );
   }
 
-  return (
-    <textbox
-      {...sharedProps}
-      BackgroundColor3={focused && !disabled && !readOnly ? Color3.fromRGB(47, 53, 68) : Color3.fromRGB(39, 46, 61)}
-      BorderSizePixel={0}
-      PlaceholderText="Type..."
-      Size={UDim2.fromOffset(240, 36)}
-      TextColor3={disabled ? Color3.fromRGB(137, 145, 162) : Color3.fromRGB(235, 240, 248)}
-      TextSize={15}
-      TextXAlignment={Enum.TextXAlignment.Left}
-    >
-      <uipadding PaddingLeft={new UDim(0, 10)} PaddingRight={new UDim(0, 10)} />
-    </textbox>
-  );
+  return <textbox {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
 }

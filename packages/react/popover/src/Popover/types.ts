@@ -1,6 +1,7 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type PopoverSetOpen = (open: boolean) => void;
@@ -26,7 +27,7 @@ export type PopoverTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type PopoverPortalProps = {
   container?: BasePlayerGui;
@@ -45,14 +46,14 @@ export type PopoverContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type PopoverAnchorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type PopoverCloseProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

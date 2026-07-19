@@ -1,9 +1,20 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { createFieldResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { resolveAutoResizeSize, resolveTextareaHeight } from "./autoResize";
 import { useTextareaContext } from "./context";
 import type { TextareaInputProps } from "./types";
+
+const OWN_PROPS = ["asChild", "disabled", "readOnly", "lineHeight", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbox` renders an opaque grey box
+// labelled "TextBox". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, placeholder text) to the consumer. Passthrough props are spread after these, so they stay
+// overridable — and the controlled `Text` lands in the behavior props spread last of all.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function toTextBox(instance: Instance | undefined) {
   if (!instance?.IsA("TextBox")) {
@@ -26,7 +37,7 @@ function resolveVerticalPadding(textBox: TextBox) {
     verticalPadding += math.floor(child.PaddingBottom.Scale * textBox.AbsoluteSize.Y);
   }
 
-  return verticalPadding > 0 ? verticalPadding : 14;
+  return verticalPadding;
 }
 
 function resolveLineHeight(textBox: TextBox, explicitLineHeight: number | undefined) {
@@ -48,16 +59,6 @@ export function TextareaInput(props: TextareaInputProps) {
   const readOnly = textareaContext.readOnly || props.readOnly === true;
   const [focused, setFocused] = React.useState(false);
 
-  const active = focused && !disabled && !readOnly;
-  const localRef = useResponseMotion<TextBox>(
-    active,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(35, 41, 54) },
-      inactive: { BackgroundColor3: Color3.fromRGB(39, 46, 61) },
-    },
-    createFieldResponseRecipe(),
-  );
-
   const focusRef = React.useRef<GuiObject>();
   useFocusNode({
     ref: focusRef,
@@ -70,11 +71,10 @@ export function TextareaInput(props: TextareaInputProps) {
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
       const textBox = toTextBox(instance);
-      localRef.current = textBox;
       textareaContext.inputRef.current = textBox;
       focusRef.current = textBox;
     },
-    [textareaContext.inputRef, localRef],
+    [textareaContext.inputRef],
   );
 
   const applyAutoResize = React.useCallback(
@@ -155,22 +155,25 @@ export function TextareaInput(props: TextareaInputProps) {
     });
   }, [applyAutoResize, textareaContext.inputRef, textareaContext.value]);
 
-  const sharedProps = {
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
     Active: !disabled,
     ClearTextOnFocus: false,
     MultiLine: true,
     Selectable: !disabled,
     Text: textareaContext.value,
     TextEditable: !disabled && !readOnly,
+    // Multiline only wraps at the box edge when TextWrapped is on; without it the
+    // auto-resize measurement below can never see more than one rendered line.
     TextWrapped: true,
-    Change: {
-      Text: handleTextChanged,
-    },
-    Event: {
-      Focused: handleFocused,
-      FocusLost: handleFocusLost,
-    },
-    ref: setInputRef,
+    Change: composeEvents(passthrough.Change, {
+      Text: handleTextChanged as Callback,
+    }),
+    Event: composeEvents(passthrough.Event, {
+      Focused: handleFocused as Callback,
+      FocusLost: handleFocusLost as Callback,
+    }),
+    ref: composeRefs<Instance>(passthrough.ref as never, setInputRef),
   };
 
   if (props.asChild) {
@@ -179,27 +182,13 @@ export function TextareaInput(props: TextareaInputProps) {
       error("[TextareaInput] `asChild` requires a child element.");
     }
 
-    return <Slot {...sharedProps}>{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return (
+      <Slot {...passthrough} {...behaviorProps}>
+        {child}
+      </Slot>
+    );
   }
 
-  return (
-    <textbox
-      {...sharedProps}
-      BackgroundColor3={focused && !disabled && !readOnly ? Color3.fromRGB(47, 53, 68) : Color3.fromRGB(39, 46, 61)}
-      BorderSizePixel={0}
-      PlaceholderText="Type..."
-      Size={UDim2.fromOffset(240, 68)}
-      TextColor3={disabled ? Color3.fromRGB(137, 145, 162) : Color3.fromRGB(235, 240, 248)}
-      TextSize={15}
-      TextXAlignment={Enum.TextXAlignment.Left}
-      TextYAlignment={Enum.TextYAlignment.Top}
-    >
-      <uipadding
-        PaddingBottom={new UDim(0, 7)}
-        PaddingLeft={new UDim(0, 10)}
-        PaddingRight={new UDim(0, 10)}
-        PaddingTop={new UDim(0, 7)}
-      />
-    </textbox>
-  );
+  return <textbox {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
 }

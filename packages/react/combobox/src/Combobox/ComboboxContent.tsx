@@ -1,13 +1,36 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
-import { createCanvasGroupPopperEntranceRecipe, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
 import { usePopper } from "@lattice-ui/react-popper";
-import { composeRefs, getElementRef, React } from "@lattice-ui/react-runtime";
+import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxContentProps } from "./types";
 
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
+
+const OWN_PROPS = [
+  "transition",
+  "asChild",
+  "forceMount",
+  "placement",
+  "sideOffset",
+  "alignOffset",
+  "collisionPadding",
+  "onPointerDownOutside",
+  "onInteractOutside",
+  "children",
+] as const;
+
+// See ComboboxTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// Unstyled content has nothing to animate, so there is no default entrance recipe. Presence timing
+// is still owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -33,8 +56,9 @@ function ComboboxContentImpl(props: {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
-  transition?: ComboboxContentProps["transition"];
+  transition?: PresenceMotionConfig;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const comboboxContext = useComboboxContext();
   const open = comboboxContext.open;
@@ -51,17 +75,13 @@ function ComboboxContentImpl(props: {
     enabled: shouldMeasure,
   });
 
-  const defaultTransition = React.useMemo(
-    () => createCanvasGroupPopperEntranceRecipe(popper.placement),
-    [popper.placement],
-  );
-  const recipe = props.transition ?? defaultTransition;
+  const config = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<GuiObject>({
     present: props.motionPresent,
     ready: popper.isPositioned,
     forceMount: props.forceMount,
-    config: recipe,
+    config,
     onExitComplete: props.onExitComplete,
   });
 
@@ -87,6 +107,10 @@ function ComboboxContentImpl(props: {
     ? UDim2.fromOffset(popperContentSize.X, popperContentSize.Y)
     : UDim2.fromOffset(0, 0);
 
+  const passthrough = props.passthrough;
+
+  // `AutomaticSize`/`Size` on the canvasgroup are measured layout, not styling: automatic sizing
+  // from zero is what lets the popper read the content's real extents before positioning it.
   const contentNode = props.asChild ? (
     (() => {
       const child = props.children;
@@ -99,30 +123,30 @@ function ComboboxContentImpl(props: {
 
       return (
         <canvasgroup
+          {...NEUTRAL_PROPS}
           AutomaticSize={Enum.AutomaticSize.XY}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
           Size={UDim2.fromOffset(0, 0)}
           Visible={contentVisible}
           ref={setContentRef as React.Ref<CanvasGroup>}
         >
           {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
             ...childProps,
+            ...passthrough,
             Position: UDim2.fromOffset(0, 0),
             Visible: contentVisible,
-            ref: composeRefs(childRef),
+            ref: composeRefs(childRef, passthrough.ref as never),
           })}
         </canvasgroup>
       );
     })()
   ) : (
     <canvasgroup
+      {...NEUTRAL_PROPS}
+      {...passthrough}
       AutomaticSize={Enum.AutomaticSize.XY}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
       Size={UDim2.fromOffset(0, 0)}
       Visible={contentVisible}
-      ref={setContentRef}
+      ref={composeRefs<Instance>(passthrough.ref as never, setContentRef)}
     >
       {props.children}
     </canvasgroup>
@@ -139,9 +163,8 @@ function ComboboxContentImpl(props: {
       contentBoundaryRef={contentBoundaryRef}
     >
       <frame
+        {...NEUTRAL_PROPS}
         AnchorPoint={popper.anchorPoint}
-        BackgroundTransparency={1}
-        BorderSizePixel={0}
         Position={popperPosition}
         Size={popperWrapperSize}
         Visible={shouldRender}
@@ -155,6 +178,7 @@ function ComboboxContentImpl(props: {
 export function ComboboxContent(props: ComboboxContentProps) {
   const comboboxContext = useComboboxContext();
   const open = comboboxContext.open;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (
@@ -166,6 +190,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
         motionPresent={open}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
+        passthrough={passthrough}
         placement={props.placement}
         sideOffset={props.sideOffset}
         transition={props.transition}
@@ -188,6 +213,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
           onExitComplete={state.onExitComplete}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
+          passthrough={passthrough}
           placement={props.placement}
           sideOffset={props.sideOffset}
           transition={props.transition}

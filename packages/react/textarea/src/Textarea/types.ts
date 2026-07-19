@@ -1,3 +1,4 @@
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type TextareaSetValue = (value: string) => void;
@@ -40,19 +41,19 @@ export type TextareaInputProps = {
   readOnly?: boolean;
   lineHeight?: number;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type TextareaLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type TextareaDescriptionProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type TextareaMessageProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

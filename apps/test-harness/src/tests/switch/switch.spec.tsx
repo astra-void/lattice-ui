@@ -1,25 +1,47 @@
 import { React } from "@lattice-ui/react-runtime";
 import { Switch } from "@lattice-ui/react-switch";
-import { findFirstDescendant } from "../../test-utils/guiFind";
+import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
-const TRACK_ON_COLOR = Color3.fromRGB(86, 141, 255);
-const TRACK_OFF_COLOR = Color3.fromRGB(66, 73, 91);
-const DISABLED_TRACK_COLOR = Color3.fromRGB(103, 110, 128);
-const CUSTOM_TRACK_COLOR = Color3.fromRGB(42, 48, 62);
-const CUSTOM_TRACK_ON_COLOR = Color3.fromRGB(116, 176, 95);
-const CUSTOM_TRACK_OFF_COLOR = Color3.fromRGB(84, 92, 112);
-const CUSTOM_DISABLED_TRACK_COLOR = Color3.fromRGB(122, 127, 140);
+// The primitives are unstyled, so nothing about a rendered instance is discoverable from its
+// appearance any more. Each spec plants an invisible marker label inside the instance it wants to
+// measure and looks the instance up through that marker, which is structural and cannot drift with
+// styling decisions.
+const SWITCH_ROOT_MARKER = "lattice-switch-root-marker";
+const SWITCH_THUMB_MARKER = "lattice-switch-thumb-marker";
+const CUSTOM_SWITCH_ROOT_MARKER = "lattice-custom-switch-root-marker";
+const CUSTOM_SWITCH_THUMB_MARKER = "lattice-custom-switch-thumb-marker";
+
+function Marker(props: { text: string }) {
+  return (
+    <textlabel
+      BackgroundTransparency={1}
+      Size={UDim2.fromOffset(0, 0)}
+      Text={props.text}
+      TextTransparency={1}
+      Visible={false}
+    />
+  );
+}
+
+function findMarkedInstance(root: Instance, markerText: string) {
+  return findTextLabelByText(root, markerText)?.Parent;
+}
+
+const TRACK_WIDTH = 160;
+const TRACK_HEIGHT = 36;
+const THUMB_WIDTH = 16;
+
+const CUSTOM_TRACK_WIDTH = 46;
+const CUSTOM_TRACK_HEIGHT = 24;
+const CUSTOM_THUMB_WIDTH = 20;
 
 function assertWithinTolerance(actual: number, expected: number, tolerance: number, message: string) {
   assert(math.abs(actual - expected) <= tolerance, `${message} (expected ${expected}, got ${actual})`);
 }
 
 function findSwitchRoot(root: Instance) {
-  const matched = findFirstDescendant(
-    root,
-    (instance) => instance.IsA("TextButton") && instance.AbsoluteSize.X === 160 && instance.AbsoluteSize.Y === 36,
-  );
+  const matched = findMarkedInstance(root, SWITCH_ROOT_MARKER);
   if (!matched?.IsA("TextButton")) {
     return undefined;
   }
@@ -28,10 +50,7 @@ function findSwitchRoot(root: Instance) {
 }
 
 function findSwitchThumb(root: Instance) {
-  const matched = findFirstDescendant(
-    root,
-    (instance) => instance.IsA("Frame") && instance.AbsoluteSize.X === 16 && instance.AbsoluteSize.Y === 16,
-  );
+  const matched = findMarkedInstance(root, SWITCH_THUMB_MARKER);
   if (!matched?.IsA("Frame")) {
     return undefined;
   }
@@ -40,10 +59,7 @@ function findSwitchThumb(root: Instance) {
 }
 
 function findCustomSwitchRoot(root: Instance) {
-  const matched = findFirstDescendant(
-    root,
-    (instance) => instance.IsA("TextButton") && instance.AbsoluteSize.X === 46 && instance.AbsoluteSize.Y === 24,
-  );
+  const matched = findMarkedInstance(root, CUSTOM_SWITCH_ROOT_MARKER);
   if (!matched?.IsA("TextButton")) {
     return undefined;
   }
@@ -52,22 +68,23 @@ function findCustomSwitchRoot(root: Instance) {
 }
 
 function findCustomSwitchThumb(root: Instance) {
-  const marker = findFirstDescendant(
-    root,
-    (instance) => instance.IsA("TextLabel") && instance.Text === "custom-switch-thumb-marker",
-  );
-  const parent = marker?.Parent;
-  if (!parent?.IsA("Frame")) {
+  const matched = findMarkedInstance(root, CUSTOM_SWITCH_THUMB_MARKER);
+  if (!matched?.IsA("Frame")) {
     return undefined;
   }
 
-  return parent;
+  return matched;
 }
 
+// Sizes are supplied explicitly: the primitive no longer ships any, and the thumb needs a declared
+// `Size` for its travel distance to be computable at all.
 function renderSwitch(checked: boolean, disabled = false) {
   return (
-    <Switch.Root checked={checked} disabled={disabled}>
-      <Switch.Thumb />
+    <Switch.Root checked={checked} disabled={disabled} Size={UDim2.fromOffset(TRACK_WIDTH, TRACK_HEIGHT)}>
+      <Marker text={SWITCH_ROOT_MARKER} />
+      <Switch.Thumb Size={UDim2.fromOffset(THUMB_WIDTH, THUMB_WIDTH)}>
+        <Marker text={SWITCH_THUMB_MARKER} />
+      </Switch.Thumb>
     </Switch.Root>
   );
 }
@@ -75,30 +92,16 @@ function renderSwitch(checked: boolean, disabled = false) {
 function renderCustomSwitch(checked: boolean) {
   return (
     <Switch.Root asChild checked={checked}>
-      <textbutton AutoButtonColor={false} BorderSizePixel={0} Size={UDim2.fromOffset(46, 24)} Text="">
-        <Switch.Thumb asChild>
-          <frame BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
-            <textlabel BackgroundTransparency={1} Text="custom-switch-thumb-marker" TextTransparency={1} />
-          </frame>
-        </Switch.Thumb>
-      </textbutton>
-    </Switch.Root>
-  );
-}
-
-function renderConsumerOwnedCustomSwitch(checked: boolean, disabled = false) {
-  return (
-    <Switch.Root asChild checked={checked} disabled={disabled}>
       <textbutton
         AutoButtonColor={false}
-        BackgroundColor3={CUSTOM_TRACK_COLOR}
         BorderSizePixel={0}
-        Size={UDim2.fromOffset(46, 24)}
+        Size={UDim2.fromOffset(CUSTOM_TRACK_WIDTH, CUSTOM_TRACK_HEIGHT)}
         Text=""
       >
+        <Marker text={CUSTOM_SWITCH_ROOT_MARKER} />
         <Switch.Thumb asChild>
-          <frame BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
-            <textlabel BackgroundTransparency={1} Text="custom-switch-thumb-marker" TextTransparency={1} />
+          <frame BorderSizePixel={0} Size={UDim2.fromOffset(CUSTOM_THUMB_WIDTH, CUSTOM_THUMB_WIDTH)}>
+            <Marker text={CUSTOM_SWITCH_THUMB_MARKER} />
           </frame>
         </Switch.Thumb>
       </textbutton>
@@ -106,87 +109,12 @@ function renderConsumerOwnedCustomSwitch(checked: boolean, disabled = false) {
   );
 }
 
-function renderColorConfiguredCustomSwitch(checked: boolean, disabled = false) {
-  return (
-    <Switch.Root
-      asChild
-      checked={checked}
-      disabled={disabled}
-      disabledTrackColor={CUSTOM_DISABLED_TRACK_COLOR}
-      trackOffColor={CUSTOM_TRACK_OFF_COLOR}
-      trackOnColor={CUSTOM_TRACK_ON_COLOR}
-    >
-      <textbutton
-        AutoButtonColor={false}
-        BackgroundColor3={CUSTOM_TRACK_COLOR}
-        BorderSizePixel={0}
-        Size={UDim2.fromOffset(46, 24)}
-        Text=""
-      >
-        <Switch.Thumb asChild>
-          <frame BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
-            <textlabel BackgroundTransparency={1} Text="custom-switch-thumb-marker" TextTransparency={1} />
-          </frame>
-        </Switch.Thumb>
-      </textbutton>
-    </Switch.Root>
-  );
-}
-
-function renderSwitchOwnedCustomSwitch(checked: boolean, disabled = false) {
-  return (
-    <Switch.Root asChild checked={checked} disabled={disabled} trackColorMode="switch">
-      <textbutton
-        AutoButtonColor={false}
-        BackgroundColor3={CUSTOM_TRACK_COLOR}
-        BorderSizePixel={0}
-        Size={UDim2.fromOffset(46, 24)}
-        Text=""
-      >
-        <Switch.Thumb asChild>
-          <frame BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
-            <textlabel BackgroundTransparency={1} Text="custom-switch-thumb-marker" TextTransparency={1} />
-          </frame>
-        </Switch.Thumb>
-      </textbutton>
-    </Switch.Root>
-  );
-}
-
-function renderConsumerModeColorConfiguredCustomSwitch(checked: boolean, disabled = false) {
-  return (
-    <Switch.Root
-      asChild
-      checked={checked}
-      disabled={disabled}
-      disabledTrackColor={CUSTOM_DISABLED_TRACK_COLOR}
-      trackColorMode="consumer"
-      trackOffColor={CUSTOM_TRACK_OFF_COLOR}
-      trackOnColor={CUSTOM_TRACK_ON_COLOR}
-    >
-      <textbutton
-        AutoButtonColor={false}
-        BackgroundColor3={CUSTOM_TRACK_COLOR}
-        BorderSizePixel={0}
-        Size={UDim2.fromOffset(46, 24)}
-        Text=""
-      >
-        <Switch.Thumb asChild>
-          <frame BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
-            <textlabel BackgroundTransparency={1} Text="custom-switch-thumb-marker" TextTransparency={1} />
-          </frame>
-        </Switch.Thumb>
-      </textbutton>
-    </Switch.Root>
-  );
-}
-
-function getThumbTargetX(root: TextButton, checked: boolean) {
-  return root.AbsolutePosition.X + (checked ? root.AbsoluteSize.X - 18 : 2);
-}
-
-function getCustomThumbTargetX(root: TextButton, checked: boolean) {
-  return root.AbsolutePosition.X + (checked ? root.AbsoluteSize.X - 22 : 2);
+/**
+ * The thumb travels the full track: unchecked sits flush at the leading edge, checked at the
+ * trailing edge. There is no inset - the primitive contributes no padding of its own.
+ */
+function getThumbTargetX(root: TextButton, checked: boolean, thumbWidth: number) {
+  return root.AbsolutePosition.X + (checked ? root.AbsoluteSize.X - thumbWidth : 0);
 }
 
 export = () => {
@@ -201,15 +129,14 @@ export = () => {
         assert(root !== undefined, "Switch root should mount for motion coverage.");
         assert(initialThumb !== undefined, "Switch thumb should mount for motion coverage.");
 
-        const uncheckedX = getThumbTargetX(root, false);
-        const checkedX = getThumbTargetX(root, true);
+        const uncheckedX = getThumbTargetX(root, false, THUMB_WIDTH);
+        const checkedX = getThumbTargetX(root, true, THUMB_WIDTH);
         assertWithinTolerance(
           initialThumb.AbsolutePosition.X,
           uncheckedX,
           1,
           "Unchecked thumb should start at the leading edge.",
         );
-        assert(root.BackgroundColor3 === TRACK_OFF_COLOR, "Unchecked switch track should start with the off color.");
 
         harness.render(renderSwitch(true));
         waitForEffects(2);
@@ -225,10 +152,6 @@ export = () => {
         assert(
           enteringThumb.AbsolutePosition.X > uncheckedX && enteringThumb.AbsolutePosition.X < checkedX,
           "Switch thumb should move smoothly toward the checked position while toggling on.",
-        );
-        assert(
-          enteringRoot.BackgroundColor3 !== TRACK_OFF_COLOR && enteringRoot.BackgroundColor3 !== TRACK_ON_COLOR,
-          "Switch track color should tween instead of snapping on toggle.",
         );
 
         task.wait(0.2);
@@ -246,7 +169,6 @@ export = () => {
           1,
           "Checked thumb should settle at the trailing edge.",
         );
-        assert(checkedRoot.BackgroundColor3 === TRACK_ON_COLOR, "Checked switch track should settle on the on color.");
 
         harness.render(renderSwitch(false));
         waitForEffects(2);
@@ -274,10 +196,6 @@ export = () => {
           uncheckedX,
           1,
           "Unchecked thumb should settle back at the leading edge.",
-        );
-        assert(
-          finalRoot.BackgroundColor3 === TRACK_OFF_COLOR,
-          "Unchecked switch track should settle back on the off color.",
         );
       });
     });
@@ -307,13 +225,9 @@ export = () => {
         assert(root !== undefined && thumb !== undefined, "Switch should remain mounted after rapid toggles.");
         assertWithinTolerance(
           thumb.AbsolutePosition.X,
-          getThumbTargetX(root, true),
+          getThumbTargetX(root, true, THUMB_WIDTH),
           1,
           "Rapid toggles should converge on the final checked thumb position.",
-        );
-        assert(
-          root.BackgroundColor3 === TRACK_ON_COLOR,
-          "Rapid toggles should converge on the final checked track color.",
         );
       });
     });
@@ -330,181 +244,9 @@ export = () => {
         assert(root !== undefined && thumb !== undefined, "Custom switch should mount the root and thumb.");
         assertWithinTolerance(
           thumb.AbsolutePosition.X,
-          getCustomThumbTargetX(root, true),
+          getThumbTargetX(root, true, CUSTOM_THUMB_WIDTH),
           1,
-          "Custom switch thumb should align to the checked edge without using the default thumb width.",
-        );
-      });
-    });
-
-    it("preserves consumer-owned track colors for asChild switches", () => {
-      withReactHarness("SwitchAsChildConsumerColorOwnership", (harness) => {
-        harness.render(renderConsumerOwnedCustomSwitch(false));
-        waitForEffects(2);
-
-        const uncheckedRoot = findCustomSwitchRoot(harness.container);
-        assert(uncheckedRoot !== undefined, "Consumer-owned asChild switch should mount.");
-        assert(
-          uncheckedRoot.BackgroundColor3 === CUSTOM_TRACK_COLOR,
-          "Unchecked asChild switch should preserve the consumer track color.",
-        );
-
-        harness.render(renderConsumerOwnedCustomSwitch(true));
-        waitForEffects(2);
-        task.wait(0.15);
-        waitForEffects(1);
-
-        const checkedRoot = findCustomSwitchRoot(harness.container);
-        assert(checkedRoot !== undefined, "Checked asChild switch should remain mounted.");
-        assert(
-          checkedRoot.BackgroundColor3 === CUSTOM_TRACK_COLOR,
-          "Checked asChild switch should keep the consumer track color when no track props are provided.",
-        );
-
-        harness.render(renderConsumerOwnedCustomSwitch(true, true));
-        waitForEffects(2);
-
-        const disabledRoot = findCustomSwitchRoot(harness.container);
-        assert(disabledRoot !== undefined, "Disabled asChild switch should remain mounted.");
-        assert(
-          disabledRoot.BackgroundColor3 === CUSTOM_TRACK_COLOR,
-          "Disabled asChild switch should keep consumer-owned track color by default.",
-        );
-      });
-    });
-
-    it("supports explicit switch-owned track colors for asChild switches", () => {
-      withReactHarness("SwitchAsChildExplicitSwitchColorOwnership", (harness) => {
-        harness.render(renderSwitchOwnedCustomSwitch(false));
-        waitForEffects(2);
-
-        const uncheckedRoot = findCustomSwitchRoot(harness.container);
-        assert(uncheckedRoot !== undefined, "Explicit switch-owned asChild switch should mount.");
-        assert(
-          uncheckedRoot.BackgroundColor3 === TRACK_OFF_COLOR,
-          "Unchecked explicit switch-owned asChild switch should settle on the default off color.",
-        );
-
-        harness.render(renderSwitchOwnedCustomSwitch(true));
-        waitForEffects(2);
-        task.wait(0.05);
-        waitForEffects(1);
-
-        const enteringRoot = findCustomSwitchRoot(harness.container);
-        assert(
-          enteringRoot !== undefined,
-          "Explicit switch-owned asChild switch should remain mounted while animating.",
-        );
-        assert(
-          enteringRoot.BackgroundColor3 !== TRACK_OFF_COLOR && enteringRoot.BackgroundColor3 !== TRACK_ON_COLOR,
-          "Explicit switch-owned asChild switch should tween between unchecked and checked colors.",
-        );
-
-        task.wait(0.2);
-        waitForEffects(2);
-
-        const checkedRoot = findCustomSwitchRoot(harness.container);
-        assert(checkedRoot !== undefined, "Explicit switch-owned asChild switch should settle after animating.");
-        assert(
-          checkedRoot.BackgroundColor3 === TRACK_ON_COLOR,
-          "Checked explicit switch-owned asChild switch should settle on the default on color.",
-        );
-
-        harness.render(renderSwitchOwnedCustomSwitch(true, true));
-        waitForEffects(2);
-        task.wait(0.2);
-        waitForEffects(2);
-
-        const disabledRoot = findCustomSwitchRoot(harness.container);
-        assert(disabledRoot !== undefined, "Explicit switch-owned disabled asChild switch should remain mounted.");
-        assert(
-          disabledRoot.BackgroundColor3 === DISABLED_TRACK_COLOR,
-          "Explicit switch-owned disabled asChild switch should settle on the default disabled track color.",
-        );
-      });
-    });
-
-    it("lets explicit consumer mode override implicit asChild track color ownership", () => {
-      withReactHarness("SwitchAsChildExplicitConsumerColorOwnership", (harness) => {
-        harness.render(renderConsumerModeColorConfiguredCustomSwitch(false));
-        waitForEffects(2);
-
-        const uncheckedRoot = findCustomSwitchRoot(harness.container);
-        assert(uncheckedRoot !== undefined, "Explicit consumer-mode asChild switch should mount.");
-        assert(
-          uncheckedRoot.BackgroundColor3 === CUSTOM_TRACK_COLOR,
-          "Explicit consumer-mode asChild switch should preserve consumer color even with track color props.",
-        );
-
-        harness.render(renderConsumerModeColorConfiguredCustomSwitch(true));
-        waitForEffects(2);
-        task.wait(0.15);
-        waitForEffects(1);
-
-        const checkedRoot = findCustomSwitchRoot(harness.container);
-        assert(checkedRoot !== undefined, "Explicit consumer-mode checked asChild switch should remain mounted.");
-        assert(
-          checkedRoot.BackgroundColor3 === CUSTOM_TRACK_COLOR,
-          "Explicit consumer-mode asChild switch should keep consumer-owned color when checked.",
-        );
-
-        harness.render(renderConsumerModeColorConfiguredCustomSwitch(true, true));
-        waitForEffects(2);
-
-        const disabledRoot = findCustomSwitchRoot(harness.container);
-        assert(disabledRoot !== undefined, "Explicit consumer-mode disabled asChild switch should remain mounted.");
-        assert(
-          disabledRoot.BackgroundColor3 === CUSTOM_TRACK_COLOR,
-          "Explicit consumer-mode asChild switch should keep consumer-owned color while disabled.",
-        );
-      });
-    });
-
-    it("uses explicit asChild track color props and disabledTrackColor", () => {
-      withReactHarness("SwitchAsChildColorOverrides", (harness) => {
-        harness.render(renderColorConfiguredCustomSwitch(false));
-        waitForEffects(2);
-
-        const uncheckedRoot = findCustomSwitchRoot(harness.container);
-        assert(uncheckedRoot !== undefined, "Configured asChild switch should mount.");
-        assert(
-          uncheckedRoot.BackgroundColor3 === CUSTOM_TRACK_OFF_COLOR,
-          "Configured asChild switch should settle on trackOffColor when unchecked.",
-        );
-
-        harness.render(renderColorConfiguredCustomSwitch(true));
-        waitForEffects(2);
-        task.wait(0.05);
-        waitForEffects(1);
-
-        const enteringRoot = findCustomSwitchRoot(harness.container);
-        assert(enteringRoot !== undefined, "Configured asChild switch should remain mounted while animating.");
-        assert(
-          enteringRoot.BackgroundColor3 !== CUSTOM_TRACK_OFF_COLOR &&
-            enteringRoot.BackgroundColor3 !== CUSTOM_TRACK_ON_COLOR,
-          "Configured asChild switch should tween between explicit unchecked and checked colors.",
-        );
-
-        task.wait(0.2);
-        waitForEffects(2);
-
-        const checkedRoot = findCustomSwitchRoot(harness.container);
-        assert(checkedRoot !== undefined, "Configured asChild switch should settle after animating.");
-        assert(
-          checkedRoot.BackgroundColor3 === CUSTOM_TRACK_ON_COLOR,
-          "Configured asChild switch should settle on trackOnColor when checked.",
-        );
-
-        harness.render(renderColorConfiguredCustomSwitch(true, true));
-        waitForEffects(2);
-        task.wait(0.2);
-        waitForEffects(2);
-
-        const disabledRoot = findCustomSwitchRoot(harness.container);
-        assert(disabledRoot !== undefined, "Configured disabled asChild switch should remain mounted.");
-        assert(
-          disabledRoot.BackgroundColor3 === CUSTOM_DISABLED_TRACK_COLOR,
-          "Configured disabled asChild switch should settle on disabledTrackColor.",
+          "Custom switch thumb should align to the checked edge using its own declared width.",
         );
       });
     });
@@ -524,13 +266,9 @@ export = () => {
         assert(initialRoot.Selectable === false, "Disabled switch should stay out of native selection.");
         assertWithinTolerance(
           initialThumb.AbsolutePosition.X,
-          getThumbTargetX(initialRoot, false),
+          getThumbTargetX(initialRoot, false, THUMB_WIDTH),
           1,
           "Disabled switch should still render the unchecked thumb position correctly.",
-        );
-        assert(
-          initialRoot.BackgroundColor3 === DISABLED_TRACK_COLOR,
-          "Disabled switch should use a muted disabled track color while unchecked.",
         );
 
         harness.render(renderSwitch(true, true));
@@ -547,13 +285,9 @@ export = () => {
         assert(checkedRoot.Active === false, "Disabled controlled switch should remain non-interactive after updates.");
         assertWithinTolerance(
           checkedThumb.AbsolutePosition.X,
-          getThumbTargetX(checkedRoot, true),
+          getThumbTargetX(checkedRoot, true, THUMB_WIDTH),
           1,
           "Disabled controlled switch should still follow the external checked state.",
-        );
-        assert(
-          checkedRoot.BackgroundColor3 === DISABLED_TRACK_COLOR,
-          "Disabled controlled switch should keep the muted disabled track color after external updates.",
         );
       });
     });

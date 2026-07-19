@@ -13,7 +13,9 @@ let capturedLayerProps: Record<string, unknown> | undefined;
   },
 };
 
-vi.mock("@lattice-ui/react-runtime", () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
+  const runtimeProps = await import("../../../packages/react/runtime/src/props");
+  const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const React = require("react");
 
   function useControllableState<T>(options: { value?: T; defaultValue?: T; onChange?: (value: T) => void }) {
@@ -73,6 +75,8 @@ vi.mock("@lattice-ui/react-runtime", () => {
   }
 
   return {
+    composeEvents: runtimeProps.composeEvents,
+    getPassthroughProps: runtimeProps.getPassthroughProps,
     React,
     composeRefs,
     createStrictContext,

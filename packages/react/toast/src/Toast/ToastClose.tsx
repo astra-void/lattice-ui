@@ -1,10 +1,27 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import type { ToastCloseProps } from "./types";
+
+const OWN_PROPS = ["asChild", "onClose", "children"] as const;
+
+// See ToastRoot: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 export function ToastClose(props: ToastCloseProps) {
   const handleActivated = React.useCallback(() => {
     props.onClose?.();
   }, [props]);
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: true,
+    Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
+    Selectable: true,
+  };
 
   if (props.asChild) {
     const child = props.children;
@@ -12,33 +29,17 @@ export function ToastClose(props: ToastCloseProps) {
       error("[ToastClose] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot
-        Active
-        Event={{
-          Activated: handleActivated,
-        }}
-        Selectable
-      >
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active
-      AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(58, 66, 84)}
-      BorderSizePixel={0}
-      Event={{
-        Activated: handleActivated,
-      }}
-      Selectable
-      Size={UDim2.fromOffset(26, 26)}
-      Text="X"
-      TextColor3={Color3.fromRGB(235, 240, 248)}
-      TextSize={13}
-    />
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+      {props.children}
+    </textbutton>
   );
 }

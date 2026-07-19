@@ -1,7 +1,26 @@
-import { createSelectionResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { React, Slot, useControllableState } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot, useControllableState } from "@lattice-ui/react-runtime";
 import { CheckboxContextProvider } from "./context";
 import type { CheckboxProps, CheckedState } from "./types";
+
+const OWN_PROPS = [
+  "checked",
+  "defaultChecked",
+  "onCheckedChange",
+  "disabled",
+  "required",
+  "asChild",
+  "children",
+] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function getNextCheckedState(checked: CheckedState) {
   if (checked === "indeterminate") {
@@ -20,15 +39,6 @@ export function CheckboxRoot(props: CheckboxProps) {
 
   const disabled = props.disabled === true;
   const required = props.required === true;
-
-  const motionRef = useResponseMotion<TextButton>(
-    checked !== false,
-    {
-      active: { BackgroundColor3: Color3.fromRGB(88, 142, 255) },
-      inactive: { BackgroundColor3: Color3.fromRGB(59, 66, 84) },
-    },
-    createSelectionResponseRecipe(),
-  );
 
   const setChecked = React.useCallback(
     (nextChecked: CheckedState) => {
@@ -60,6 +70,12 @@ export function CheckboxRoot(props: CheckboxProps) {
   );
 
   const child = props.children;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, { Activated: toggle }),
+    Selectable: !disabled,
+  };
 
   return (
     <CheckboxContextProvider value={contextValue}>
@@ -69,26 +85,15 @@ export function CheckboxRoot(props: CheckboxProps) {
             error("[Checkbox] `asChild` requires a child element.");
           }
 
+          // No neutral defaults here: the rendered element belongs to the consumer.
           return (
-            <Slot Active={!disabled} Event={{ Activated: toggle }} Selectable={!disabled} ref={motionRef}>
+            <Slot {...passthrough} {...behaviorProps}>
               {child}
             </Slot>
           );
         })()
       ) : (
-        <textbutton
-          Active={!disabled}
-          AutoButtonColor={false}
-          BackgroundColor3={checked !== false ? Color3.fromRGB(88, 142, 255) : Color3.fromRGB(59, 66, 84)}
-          BorderSizePixel={0}
-          Event={{ Activated: toggle }}
-          Selectable={!disabled}
-          Size={UDim2.fromOffset(160, 36)}
-          Text={checked === "indeterminate" ? "Indeterminate" : checked ? "Checked" : "Unchecked"}
-          TextColor3={disabled ? Color3.fromRGB(145, 152, 168) : Color3.fromRGB(240, 244, 252)}
-          TextSize={15}
-          ref={motionRef}
-        >
+        <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
           {child}
         </textbutton>
       )}

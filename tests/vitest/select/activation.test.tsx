@@ -12,6 +12,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // Mocked Slot records the props the primitive forwards to an asChild child, so
 // we can read `Selectable`/`Active` and invoke the composed `Event` handlers.
 vi.mock("@lattice-ui/react-runtime", async () => {
+  const runtimeProps = await import("../../../packages/react/runtime/src/props");
+  const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const react = await import("react");
   const strictContext = await import("../../../packages/react/runtime/src/context");
 
@@ -27,6 +29,9 @@ vi.mock("@lattice-ui/react-runtime", async () => {
   }
 
   return {
+    composeEvents: runtimeProps.composeEvents,
+    getPassthroughProps: runtimeProps.getPassthroughProps,
+    composeRefs: runtimeRefs.composeRefs,
     React: react.default,
     Slot,
     createStrictContext: strictContext.createStrictContext,

@@ -73,6 +73,42 @@ describe("planPackageManagerPin", () => {
     expect(plan.changed).toBe(false);
     expect(plan.nextManifest).toBe(pnpmInitManifest);
   });
+
+  it("leaves a pinless manifest alone by default", () => {
+    const manifest = { name: "unpinned" };
+    const plan = planPackageManagerPin(manifest, "pnpm");
+
+    expect(plan.changed).toBe(false);
+    expect(plan.nextManifest).toBe(manifest);
+  });
+
+  it("writes a version-less devEngines pin for a pinless manifest when creating", () => {
+    const plan = planPackageManagerPin({ name: "unpinned" }, "pnpm", { create: true });
+
+    expect(plan.changed).toBe(true);
+    expect(plan.previous).toEqual([]);
+    expect(plan.nextManifest.devEngines).toEqual({
+      packageManager: { name: "pnpm" },
+    });
+  });
+
+  it("does not duplicate a matching pin when creating", () => {
+    const plan = planPackageManagerPin(pnpmInitManifest, "pnpm", { create: true });
+
+    expect(plan.changed).toBe(false);
+    expect(plan.nextManifest).toBe(pnpmInitManifest);
+  });
+
+  it("preserves sibling devEngines entries when writing a pin", () => {
+    const plan = planPackageManagerPin({ name: "unpinned", devEngines: { runtime: { name: "node" } } }, "npm", {
+      create: true,
+    });
+
+    expect(plan.nextManifest.devEngines).toEqual({
+      runtime: { name: "node" },
+      packageManager: { name: "npm" },
+    });
+  });
 });
 
 describe("detectPackageManager with package manager pins", () => {

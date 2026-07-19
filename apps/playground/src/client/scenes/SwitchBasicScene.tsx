@@ -6,10 +6,6 @@ import { panelRecipe } from "../theme/recipes";
 
 type Theme = ReturnType<typeof useTheme>["theme"];
 
-const DEMO_TRACK_ON_COLOR = Color3.fromRGB(116, 176, 95);
-const DEMO_TRACK_OFF_COLOR = Color3.fromRGB(84, 92, 112);
-const DEMO_DISABLED_TRACK_COLOR = Color3.fromRGB(122, 127, 140);
-
 function toSwitchLabel(checked: boolean) {
   return checked ? "on" : "off";
 }
@@ -96,8 +92,8 @@ const SETTINGS = [
 
 export function SwitchBasicScene() {
   const { theme } = useTheme();
-  const [consumerOwned, setConsumerOwned] = React.useState(false);
-  const [switchOwned, setSwitchOwned] = React.useState(false);
+  const [passthroughStyled, setPassthroughStyled] = React.useState(false);
+  const [asChildStyled, setAsChildStyled] = React.useState(false);
   const [settings, setSettings] = React.useState<Array<boolean>>([true, false, false]);
 
   const enabledCount = settings.filter((value) => value).size();
@@ -111,7 +107,7 @@ export function SwitchBasicScene() {
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(860, 28)}
-        Text="Switch: settings rows + asChild track color ownership (consumer vs switch-owned)"
+        Text="Switch: settings rows + consumer-owned styling (passthrough props vs asChild)"
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -121,7 +117,7 @@ export function SwitchBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 34)}
         Size={UDim2.fromOffset(860, 22)}
-        Text={`Consumer-owned: ${toSwitchLabel(consumerOwned)} | Switch-owned: ${toSwitchLabel(switchOwned)} | Settings enabled ${enabledCount}/${settings.size()}`}
+        Text={`Passthrough-styled: ${toSwitchLabel(passthroughStyled)} | asChild-styled: ${toSwitchLabel(asChildStyled)} | Settings enabled ${enabledCount}/${settings.size()}`}
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.bodyMd.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -171,7 +167,7 @@ export function SwitchBasicScene() {
           />
         </frame>
 
-        {/* Track color ownership */}
+        {/* Consumer-owned styling: passthrough props vs asChild */}
         <frame
           {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
             LayoutOrder: 2,
@@ -188,54 +184,48 @@ export function SwitchBasicScene() {
           />
           <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
-          <SectionHeader theme={theme} text="TRACK COLOR OWNERSHIP" order={1} />
+          <SectionHeader theme={theme} text="CONSUMER-OWNED STYLING" order={1} />
 
+          {/*
+            The primitive is unstyled: it neutralizes Roblox instance defaults and nothing else.
+            Every color below is picked by this scene from the current `checked`/`disabled` state.
+            Route 1 - style the primitive's own instances with plain instance props.
+          */}
           <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(610, 44)}>
-            <Switch.Root asChild checked={consumerOwned} onCheckedChange={setConsumerOwned}>
-              <textbutton
-                AutoButtonColor={false}
-                BackgroundColor3={theme.colors.surfaceElevated}
-                BorderSizePixel={0}
-                Position={UDim2.fromOffset(0, 10)}
-                Size={UDim2.fromOffset(46, 24)}
-                Text=""
+            <Switch.Root
+              BackgroundColor3={passthroughStyled ? theme.colors.accent : theme.colors.surfaceElevated}
+              BackgroundTransparency={0}
+              checked={passthroughStyled}
+              onCheckedChange={setPassthroughStyled}
+              Position={UDim2.fromOffset(0, 10)}
+              Size={UDim2.fromOffset(46, 24)}
+            >
+              <uicorner CornerRadius={new UDim(1, 0)} />
+              <Switch.Thumb
+                BackgroundColor3={theme.colors.accentContrast}
+                BackgroundTransparency={0}
+                Size={UDim2.fromOffset(20, 20)}
               >
                 <uicorner CornerRadius={new UDim(1, 0)} />
-                <Switch.Thumb asChild>
-                  <frame
-                    BackgroundColor3={theme.colors.accentContrast}
-                    BorderSizePixel={0}
-                    Size={UDim2.fromOffset(20, 20)}
-                  >
-                    <uicorner CornerRadius={new UDim(1, 0)} />
-                  </frame>
-                </Switch.Thumb>
-              </textbutton>
+              </Switch.Thumb>
             </Switch.Root>
             <Text
               BackgroundTransparency={1}
               Position={UDim2.fromOffset(56, 0)}
               Size={UDim2.fromOffset(540, 44)}
-              Text={`Consumer-owned (asChild default): ${toSwitchLabel(consumerOwned)}`}
+              Text={`Passthrough props on the primitive: ${toSwitchLabel(passthroughStyled)}`}
               TextColor3={theme.colors.textPrimary}
               TextSize={theme.typography.bodyMd.textSize}
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </frame>
 
+          {/* Route 2 - hand the primitive your own instances with `asChild`. */}
           <frame BackgroundTransparency={1} LayoutOrder={3} Size={UDim2.fromOffset(610, 44)}>
-            <Switch.Root
-              asChild
-              checked={switchOwned}
-              disabledTrackColor={DEMO_DISABLED_TRACK_COLOR}
-              onCheckedChange={setSwitchOwned}
-              trackColorMode="switch"
-              trackOffColor={DEMO_TRACK_OFF_COLOR}
-              trackOnColor={DEMO_TRACK_ON_COLOR}
-            >
+            <Switch.Root asChild checked={asChildStyled} onCheckedChange={setAsChildStyled}>
               <textbutton
                 AutoButtonColor={false}
-                BackgroundColor3={theme.colors.surfaceElevated}
+                BackgroundColor3={asChildStyled ? theme.colors.accent : theme.colors.surfaceElevated}
                 BorderSizePixel={0}
                 Position={UDim2.fromOffset(0, 10)}
                 Size={UDim2.fromOffset(46, 24)}
@@ -257,23 +247,16 @@ export function SwitchBasicScene() {
               BackgroundTransparency={1}
               Position={UDim2.fromOffset(56, 0)}
               Size={UDim2.fromOffset(540, 44)}
-              Text={`Switch-owned (trackColorMode="switch"): ${toSwitchLabel(switchOwned)}`}
+              Text={`asChild with your own instances: ${toSwitchLabel(asChildStyled)}`}
               TextColor3={theme.colors.textPrimary}
               TextSize={theme.typography.bodyMd.textSize}
               TextXAlignment={Enum.TextXAlignment.Left}
             />
           </frame>
 
+          {/* `disabled` is behavior only - the muted palette is this scene's choice. */}
           <frame BackgroundTransparency={1} LayoutOrder={4} Size={UDim2.fromOffset(610, 44)}>
-            <Switch.Root
-              asChild
-              checked={true}
-              disabled
-              disabledTrackColor={DEMO_DISABLED_TRACK_COLOR}
-              trackColorMode="switch"
-              trackOffColor={DEMO_TRACK_OFF_COLOR}
-              trackOnColor={DEMO_TRACK_ON_COLOR}
-            >
+            <Switch.Root asChild checked={true} disabled>
               <textbutton
                 AutoButtonColor={false}
                 BackgroundColor3={theme.colors.surfaceElevated}
@@ -298,7 +281,7 @@ export function SwitchBasicScene() {
               BackgroundTransparency={1}
               Position={UDim2.fromOffset(56, 0)}
               Size={UDim2.fromOffset(540, 44)}
-              Text="Disabled switch-owned: uses disabledTrackColor"
+              Text="Disabled: the consumer supplies the muted palette"
               TextColor3={theme.colors.textSecondary}
               TextSize={theme.typography.bodyMd.textSize}
               TextXAlignment={Enum.TextXAlignment.Left}

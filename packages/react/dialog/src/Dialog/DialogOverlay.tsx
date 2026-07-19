@@ -1,8 +1,24 @@
 import { Presence, usePortalContext } from "@lattice-ui/react-layer";
-import { createOverlayFadeRecipe, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogOverlayProps } from "./types";
+
+const OWN_PROPS = ["asChild", "forceMount", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that; the dim color and its transparency are appearance and
+// belong to the consumer. A fully transparent overlay still hit-tests, so it keeps blocking input.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
+
+// An unstyled overlay has nothing to fade, so there is no default recipe. Presence timing is still
+// owned here; consumers opt into motion by animating their own `asChild` overlay.
+const NO_MOTION: PresenceMotionConfig = {};
 
 function resolveOverlayChild(child: React.ReactNode): React.ReactElement | undefined {
   if (!React.isValidElement(child)) {
@@ -45,15 +61,15 @@ function DialogOverlayImpl(props: {
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
 
-  const config = React.useMemo(() => createOverlayFadeRecipe(), []);
   const motion = usePresenceMotionController<GuiObject>({
     present: props.motionPresent,
     forceMount: props.forceMount,
-    config,
+    config: NO_MOTION,
     onExitComplete: props.onExitComplete,
   });
   const shouldRender = motion.mounted;
@@ -63,36 +79,32 @@ function DialogOverlayImpl(props: {
     dialogContext.setOpen(false);
   }, [dialogContext.setOpen]);
 
+  const passthrough = props.passthrough;
+  const behaviorProps = {
+    Active: open,
+    Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
+    Selectable: false,
+    Visible: overlayVisible,
+    ref: composeRefs<GuiObject>(passthrough.ref as never, motion.ref) as never,
+  };
+
   if (props.asChild) {
     const child = resolveOverlayChild(props.children);
     if (!child) {
       error("[DialogOverlay] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={open} Event={{ Activated: handleActivated }} Visible={overlayVisible} ref={motion.ref}>
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
-  return (
-    <textbutton
-      Active={open}
-      AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(8, 10, 14)}
-      BorderSizePixel={0}
-      Event={{ Activated: handleActivated }}
-      Position={UDim2.fromScale(0, 0)}
-      Selectable={false}
-      Size={UDim2.fromScale(1, 1)}
-      Text=""
-      TextTransparency={1}
-      Visible={overlayVisible}
-      ZIndex={5}
-      ref={motion.ref as React.MutableRefObject<TextButton>}
-    />
-  );
+  // Full-screen so the overlay actually covers and intercepts input: hit-testing, not a size
+  // design choice. ZIndex keeps the dim below the dialog content it shares a host with.
+  return <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} Size={UDim2.fromScale(1, 1)} ZIndex={5} />;
 }
 
 function DialogOverlayGui(props: { children?: React.ReactNode }) {
@@ -119,11 +131,17 @@ function DialogOverlayGui(props: { children?: React.ReactNode }) {
 export function DialogOverlay(props: DialogOverlayProps) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (
       <DialogOverlayGui>
-        <DialogOverlayImpl motionPresent={open} forceMount={props.forceMount} asChild={props.asChild}>
+        <DialogOverlayImpl
+          asChild={props.asChild}
+          forceMount={props.forceMount}
+          motionPresent={open}
+          passthrough={passthrough}
+        >
           {props.children}
         </DialogOverlayImpl>
       </DialogOverlayGui>
@@ -136,10 +154,11 @@ export function DialogOverlay(props: DialogOverlayProps) {
       render={(state) => (
         <DialogOverlayGui>
           <DialogOverlayImpl
+            asChild={props.asChild}
+            forceMount={props.forceMount}
             motionPresent={state.isPresent}
             onExitComplete={state.onExitComplete}
-            forceMount={props.forceMount}
-            asChild={props.asChild}
+            passthrough={passthrough}
           >
             {props.children}
           </DialogOverlayImpl>

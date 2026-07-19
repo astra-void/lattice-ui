@@ -1,6 +1,14 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useAvatarContext } from "./context";
 import type { AvatarImageProps } from "./types";
+
+const OWN_PROPS = ["asChild", "src", "children"] as const;
+
+// See AvatarFallback: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
 
 function toImageLabel(instance: Instance | undefined) {
   if (!instance?.IsA("ImageLabel")) {
@@ -62,29 +70,27 @@ export function AvatarImage(props: AvatarImageProps) {
     };
   }, [setStatus, source, status]);
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    // `Image` is data, not appearance: it is the source the load state is derived from.
+    Image: source ?? "",
+    Visible: avatarContext.status === "loaded",
+    ref: composeRefs<Instance>(passthrough.ref as never, setImageRef),
+  };
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
       error("[AvatarImage] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Image={source ?? ""} Visible={avatarContext.status === "loaded"} ref={setImageRef}>
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
-  return (
-    <imagelabel
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Image={source ?? ""}
-      Size={UDim2.fromOffset(40, 40)}
-      Visible={avatarContext.status === "loaded"}
-      ref={setImageRef}
-    >
-      <uicorner CornerRadius={new UDim(1, 0)} />
-    </imagelabel>
-  );
+  return <imagelabel {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
 }

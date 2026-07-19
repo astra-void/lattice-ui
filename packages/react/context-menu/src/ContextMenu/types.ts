@@ -1,6 +1,7 @@
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type ContextMenuSetOpen = (open: boolean) => void;
@@ -29,11 +30,17 @@ export type ContextMenuProps = {
   children?: React.ReactNode;
 };
 
+/** Per-item state consumers read to style the item; the primitive never paints it. */
+export type ContextMenuItemContextValue = {
+  highlighted: boolean;
+  disabled: boolean;
+};
+
 export type ContextMenuTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ContextMenuPortalProps = {
   container?: BasePlayerGui;
@@ -52,7 +59,7 @@ export type ContextMenuContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-};
+} & PassthroughProps;
 
 export type ContextMenuSelectEvent = {
   defaultPrevented: boolean;
@@ -64,19 +71,19 @@ export type ContextMenuItemProps = {
   disabled?: boolean;
   onSelect?: (event: ContextMenuSelectEvent) => void;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ContextMenuSeparatorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ContextMenuGroupProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;
 
 export type ContextMenuLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-};
+} & PassthroughProps;

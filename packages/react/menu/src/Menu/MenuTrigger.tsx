@@ -1,7 +1,19 @@
 import { focusGuiObject, useFocusNode } from "@lattice-ui/react-focus";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useMenuContext } from "./context";
 import type { MenuTriggerProps } from "./types";
+
+const OWN_PROPS = ["asChild", "disabled", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance?.IsA("GuiObject")) {
@@ -57,38 +69,30 @@ export function MenuTrigger(props: MenuTriggerProps) {
     [menuContext.open, menuContext.setOpen, props.disabled, triggerRef],
   );
 
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: props.disabled !== true,
+    Event: composeEvents(passthrough.Event, { Activated: handleActivated, InputBegan: handleInputBegan }),
+    Selectable: props.disabled !== true,
+  };
+  const ref = composeRefs<Instance>(passthrough.ref as never, setTriggerRef);
+
   if (props.asChild) {
     const child = props.children;
     if (!child) {
       error("[MenuTrigger] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot
-        Active={props.disabled !== true}
-        Event={{ Activated: handleActivated, InputBegan: handleInputBegan }}
-        Selectable={props.disabled !== true}
-        ref={setTriggerRef}
-      >
+      <Slot {...passthrough} {...behaviorProps} ref={ref}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={props.disabled !== true}
-      AutoButtonColor={false}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Event={{ Activated: handleActivated, InputBegan: handleInputBegan }}
-      Selectable={props.disabled !== true}
-      Size={UDim2.fromOffset(140, 38)}
-      Text="Toggle Menu"
-      TextColor3={Color3.fromRGB(240, 244, 250)}
-      TextSize={16}
-      ref={setTriggerRef}
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
       {props.children}
     </textbutton>
   );

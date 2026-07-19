@@ -1,4 +1,5 @@
 import type { ResponseMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
+import type { PassthroughProps } from "@lattice-ui/react-runtime";
 import type React from "@rbxts/react";
 
 export type ProgressContextValue = {
@@ -20,12 +21,12 @@ export type ProgressProps = {
 export type ProgressIndicatorProps = {
   transition?: MotionConfig;
   asChild?: boolean;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;
 
 export type SpinnerProps = {
   asChild?: boolean;
   spinning?: boolean;
   speedDegPerSecond?: number;
-  children?: React.ReactElement;
-};
+  children?: React.ReactNode;
+} & PassthroughProps;

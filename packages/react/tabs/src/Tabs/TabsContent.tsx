@@ -1,13 +1,21 @@
 import { Presence } from "@lattice-ui/react-layer";
-import {
-  createSurfaceRevealRecipe,
-  type PresenceMotionConfig,
-  usePresenceMotionController,
-} from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useTabsContext } from "./context";
 import { createTabsContentName } from "./internals/ids";
 import type { TabsContentProps } from "./types";
+
+const OWN_PROPS = ["transition", "value", "forceMount", "asChild", "children"] as const;
+
+// See TabsTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// An unstyled panel has nothing to animate, so there is no default recipe. Presence timing is still
+// owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 function TabsContentImpl(props: {
   present: boolean;
@@ -17,14 +25,10 @@ function TabsContentImpl(props: {
   value: string;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const contentName = createTabsContentName(props.value);
-  const defaultTransition = React.useMemo(() => createSurfaceRevealRecipe(), []);
-
-  const config = React.useMemo(() => {
-    if (!props.transition) return defaultTransition;
-    return props.transition;
-  }, [defaultTransition, props.transition]);
+  const config = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<Frame>({
     present: props.present,
@@ -40,6 +44,9 @@ function TabsContentImpl(props: {
     return undefined;
   }
 
+  const passthrough = props.passthrough;
+  const ref = composeRefs<Frame>(passthrough.ref as never, motion.ref);
+
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
@@ -47,20 +54,14 @@ function TabsContentImpl(props: {
     }
 
     return (
-      <Slot Name={contentName} Visible={visible} ref={motion.ref}>
+      <Slot {...passthrough} Name={contentName} Visible={visible} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(0, 0)}
-      Visible={visible}
-      ref={motion.ref}
-    >
+    <frame {...NEUTRAL_PROPS} {...passthrough} Visible={visible} ref={ref}>
       {props.children}
     </frame>
   );
@@ -70,12 +71,14 @@ export function TabsContent(props: TabsContentProps) {
   const tabsContext = useTabsContext();
   const selected = tabsContext.value === props.value;
   const forceMount = props.forceMount === true;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (forceMount) {
     return (
       <TabsContentImpl
         asChild={props.asChild}
         forceMount={true}
+        passthrough={passthrough}
         present={selected}
         transition={props.transition}
         value={props.value}
@@ -92,6 +95,7 @@ export function TabsContent(props: TabsContentProps) {
         <TabsContentImpl
           asChild={props.asChild}
           onExitComplete={state.onExitComplete}
+          passthrough={passthrough}
           present={state.isPresent}
           transition={props.transition}
           value={props.value}

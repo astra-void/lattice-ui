@@ -1,12 +1,20 @@
 import { Presence } from "@lattice-ui/react-layer";
-import {
-  createIndicatorRevealRecipe,
-  type PresenceMotionConfig,
-  usePresenceMotionController,
-} from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useCheckboxContext } from "./context";
 import type { CheckboxIndicatorProps } from "./types";
+
+const OWN_PROPS = ["transition", "forceMount", "asChild", "children"] as const;
+
+// See CheckboxRoot: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// An unstyled indicator has nothing to animate, so there is no default recipe. Presence timing is
+// still owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 function CheckboxIndicatorImpl(props: {
   present: boolean;
@@ -15,9 +23,9 @@ function CheckboxIndicatorImpl(props: {
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
-  const defaultTransition = React.useMemo(() => createIndicatorRevealRecipe(UDim2.fromOffset(12, 12)), []);
-  const config = props.transition ?? defaultTransition;
+  const config = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<Frame>({
     present: props.present,
@@ -33,6 +41,9 @@ function CheckboxIndicatorImpl(props: {
     return undefined;
   }
 
+  const passthrough = props.passthrough;
+  const ref = composeRefs<Frame>(passthrough.ref as never, motion.ref);
+
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
@@ -40,20 +51,14 @@ function CheckboxIndicatorImpl(props: {
     }
 
     return (
-      <Slot Visible={visible} ref={motion.ref}>
+      <Slot {...passthrough} Visible={visible} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame
-      BackgroundColor3={Color3.fromRGB(240, 244, 252)}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(12, 12)}
-      Visible={visible}
-      ref={motion.ref}
-    >
+    <frame {...NEUTRAL_PROPS} {...passthrough} Visible={visible} ref={ref}>
       {props.children}
     </frame>
   );
@@ -63,10 +68,17 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
   const checkboxContext = useCheckboxContext();
   const visible = checkboxContext.checked !== false;
   const forceMount = props.forceMount === true;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (forceMount) {
     return (
-      <CheckboxIndicatorImpl asChild={props.asChild} forceMount={true} present={visible} transition={props.transition}>
+      <CheckboxIndicatorImpl
+        asChild={props.asChild}
+        forceMount={true}
+        passthrough={passthrough}
+        present={visible}
+        transition={props.transition}
+      >
         {props.children}
       </CheckboxIndicatorImpl>
     );
@@ -79,6 +91,7 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
         <CheckboxIndicatorImpl
           asChild={props.asChild}
           onExitComplete={state.onExitComplete}
+          passthrough={passthrough}
           present={state.isPresent}
           transition={props.transition}
         >

@@ -27,9 +27,11 @@ export const Menu = {
   Separator: typeof MenuSeparator;
 };
 
+export { useMenuItemContext } from "./Menu/context";
 export type {
   MenuContentProps,
   MenuGroupProps,
+  MenuItemContextValue,
   MenuItemProps,
   MenuLabelProps,
   MenuPortalProps,

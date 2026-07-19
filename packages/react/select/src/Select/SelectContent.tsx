@@ -1,18 +1,37 @@
 import { FocusScope } from "@lattice-ui/react-focus";
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
-import {
-  createCanvasGroupPopperEntranceRecipe,
-  createPopperEntranceRecipe,
-  usePresenceMotionController,
-} from "@lattice-ui/react-motion";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
 import { usePopper } from "@lattice-ui/react-popper";
-import { composeRefs, getElementRef, React } from "@lattice-ui/react-runtime";
+import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
 
 const HIDDEN_POSITION = UDim2.fromOffset(-9999, -9999);
+
+const OWN_PROPS = [
+  "transition",
+  "asChild",
+  "forceMount",
+  "placement",
+  "sideOffset",
+  "alignOffset",
+  "collisionPadding",
+  "onPointerDownOutside",
+  "onInteractOutside",
+  "children",
+] as const;
+
+// See SelectTrigger: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// Unstyled content has nothing to animate, so there is no default entrance recipe. Presence timing
+// is still owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -30,7 +49,7 @@ function toGuiObject(instance: Instance | undefined) {
 function SelectContentImpl(props: {
   motionPresent: boolean;
   onExitComplete?: () => void;
-  transition?: SelectContentProps["transition"];
+  transition?: PresenceMotionConfig;
   placement?: PopperPlacement;
   sideOffset?: number;
   alignOffset?: number;
@@ -40,6 +59,7 @@ function SelectContentImpl(props: {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const selectContext = useSelectContext();
   const open = selectContext.open;
@@ -56,21 +76,13 @@ function SelectContentImpl(props: {
     enabled: shouldMeasure,
   });
 
-  const resolvedPlacement = popper.isPositioned ? popper.placement : (props.placement ?? "bottom");
-  const defaultTransition = React.useMemo(
-    () =>
-      props.asChild
-        ? createPopperEntranceRecipe(resolvedPlacement)
-        : createCanvasGroupPopperEntranceRecipe(resolvedPlacement),
-    [resolvedPlacement, props.asChild],
-  );
-  const recipe = props.transition ?? defaultTransition;
+  const config = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<GuiObject>({
     present: props.motionPresent,
     ready: popper.isPositioned,
     forceMount: props.forceMount,
-    config: recipe,
+    config,
     onExitComplete: props.onExitComplete,
   });
 
@@ -96,6 +108,8 @@ function SelectContentImpl(props: {
     ? UDim2.fromOffset(popperContentSize.X, popperContentSize.Y)
     : UDim2.fromOffset(0, 0);
 
+  const passthrough = props.passthrough;
+
   const contentNode = props.asChild ? (
     (() => {
       const child = props.children;
@@ -106,20 +120,24 @@ function SelectContentImpl(props: {
       const childProps = toGuiPropBag((child as { props?: unknown }).props);
       const childRef = getElementRef<Instance>(child);
 
+      // No neutral defaults here: the rendered element belongs to the consumer.
       return React.cloneElement(child as React.ReactElement<GuiPropBag>, {
         ...childProps,
+        ...passthrough,
         Visible: contentVisible,
-        ref: composeRefs(childRef, setContentRef),
+        ref: composeRefs(childRef, passthrough.ref as never, setContentRef),
       });
     })()
   ) : (
+    // `AutomaticSize`/`Size` below are measured layout, not styling: automatic sizing from zero is
+    // what lets the popper read the content's real extents before positioning it.
     <canvasgroup
+      {...NEUTRAL_PROPS}
+      {...passthrough}
       AutomaticSize={Enum.AutomaticSize.XY}
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
       Size={UDim2.fromOffset(0, 0)}
       Visible={contentVisible}
-      ref={setContentRef}
+      ref={composeRefs<Instance>(passthrough.ref as never, setContentRef)}
     >
       {props.children}
     </canvasgroup>
@@ -144,9 +162,8 @@ function SelectContentImpl(props: {
         navWrap={true}
       >
         <frame
+          {...NEUTRAL_PROPS}
           AnchorPoint={popper.anchorPoint}
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
           Position={popperPosition}
           Size={popperWrapperSize}
           Visible={shouldRender}
@@ -161,11 +178,13 @@ function SelectContentImpl(props: {
 export function SelectContent(props: SelectContentProps) {
   const selectContext = useSelectContext();
   const open = selectContext.open;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (
       <SelectContentImpl
         motionPresent={open}
+        passthrough={passthrough}
         transition={props.transition}
         placement={props.placement}
         sideOffset={props.sideOffset}
@@ -188,6 +207,7 @@ export function SelectContent(props: SelectContentProps) {
         <SelectContentImpl
           motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
+          passthrough={passthrough}
           transition={props.transition}
           placement={props.placement}
           sideOffset={props.sideOffset}

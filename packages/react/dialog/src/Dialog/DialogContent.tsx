@@ -1,65 +1,34 @@
 import { FocusScope } from "@lattice-ui/react-focus";
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
-import {
-  createCanvasGroupRevealRecipe,
-  type PresenceMotionConfig,
-  usePresenceMotionController,
-} from "@lattice-ui/react-motion";
-import { getElementRef, React } from "@lattice-ui/react-runtime";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
 type InstanceRef = React.Ref<Instance> | React.ForwardedRef<Instance>;
 
-function mergeRecord(base: Record<string, unknown> | undefined, override: Record<string, unknown> | undefined) {
-  return {
-    ...(base ?? {}),
-    ...(override ?? {}),
-  };
-}
+const OWN_PROPS = [
+  "transition",
+  "forceMount",
+  "trapFocus",
+  "restoreFocus",
+  "onPointerDownOutside",
+  "onInteractOutside",
+  "children",
+] as const;
 
-function mergeMotionStep(
-  base: PresenceMotionConfig["reveal"] | undefined,
-  override: PresenceMotionConfig["reveal"] | undefined,
-) {
-  if (!base && !override) {
-    return undefined;
-  }
+// Roblox instance defaults are themselves a look: a bare frame renders an opaque grey box.
+// Neutralize only that, and leave every real appearance decision to the consumer. Passthrough props
+// are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
 
-  if (!base) {
-    return override;
-  }
-
-  if (!override) {
-    return base;
-  }
-
-  return {
-    target: override.target ?? base.target,
-    values: mergeRecord(base.values as Record<string, unknown> | undefined, override.values as Record<string, unknown>),
-    intent: {
-      ...(base.intent ?? {}),
-      ...(override.intent ?? {}),
-    },
-  };
-}
-
-function mergePresenceMotionConfig(base: PresenceMotionConfig, override?: PresenceMotionConfig): PresenceMotionConfig {
-  if (!override) {
-    return base;
-  }
-
-  return {
-    target: override.target ?? base.target,
-    initial: mergeRecord(
-      base.initial as Record<string, unknown> | undefined,
-      override.initial as Record<string, unknown> | undefined,
-    ),
-    reveal: mergeMotionStep(base.reveal, override.reveal),
-    exit: mergeMotionStep(base.exit, override.exit),
-  };
-}
+// An unstyled dialog has nothing to animate, so there is no default recipe. Presence timing is
+// still owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 function isMutableInstanceRef(ref: InstanceRef | undefined): ref is React.MutableRefObject<Instance | undefined> {
   if (!typeIs(ref, "table")) {
@@ -152,6 +121,7 @@ function DialogContentImpl(props: {
   onInteractOutside?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
@@ -159,11 +129,7 @@ function DialogContentImpl(props: {
   const contentBoundaryRef = React.useRef<GuiObject>();
   const insideBoundaryRefsRef = React.useRef<Array<React.MutableRefObject<GuiObject | undefined>>>([]);
 
-  const defaultTransition = React.useMemo(() => createCanvasGroupRevealRecipe(), []);
-  const config = React.useMemo(
-    () => mergePresenceMotionConfig(defaultTransition, props.transition),
-    [defaultTransition, props.transition],
-  );
+  const config = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<CanvasGroup>({
     present: props.motionPresent,
@@ -235,6 +201,15 @@ function DialogContentImpl(props: {
     dialogContext.setOpen(false);
   }, [dialogContext.setOpen]);
 
+  const passthrough = props.passthrough;
+  const behaviorProps = {
+    // The motion host spans the layer so the consumer's own children lay themselves out inside it:
+    // layer geometry, not a size design choice.
+    Size: UDim2.fromScale(1, 1),
+    Visible: motionVisible,
+    ref: composeRefs<CanvasGroup>(passthrough.ref as never, motion.ref),
+  };
+
   return (
     <DismissableLayer
       contentBoundaryRef={contentBoundaryRef}
@@ -246,20 +221,9 @@ function DialogContentImpl(props: {
       onPointerDownOutside={props.onPointerDownOutside}
     >
       <FocusScope active={open} restoreFocus={props.restoreFocus} trapped={props.trapFocus}>
-        <frame
-          BackgroundTransparency={1}
-          BorderSizePixel={0}
-          Size={UDim2.fromScale(1, 1)}
-          Visible={shouldRender}
-          ZIndex={10}
-        >
-          <canvasgroup
-            BackgroundTransparency={1}
-            BorderSizePixel={0}
-            Size={UDim2.fromScale(1, 1)}
-            Visible={motionVisible}
-            ref={motion.ref}
-          >
+        {/* Layer host: full-screen and ZIndex-stacked above the overlay. Layering, not appearance. */}
+        <frame {...NEUTRAL_PROPS} Size={UDim2.fromScale(1, 1)} Visible={shouldRender} ZIndex={10}>
+          <canvasgroup {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
             {renderedChildren.content}
           </canvasgroup>
         </frame>
@@ -273,6 +237,7 @@ export function DialogContent(props: DialogContentProps) {
   const open = dialogContext.open;
   const trapFocus = props.trapFocus ?? true;
   const restoreFocus = props.restoreFocus ?? true;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (
@@ -283,6 +248,7 @@ export function DialogContent(props: DialogContentProps) {
         restoreFocus={restoreFocus}
         onInteractOutside={props.onInteractOutside}
         onPointerDownOutside={props.onPointerDownOutside}
+        passthrough={passthrough}
         transition={props.transition}
       >
         {props.children}
@@ -301,6 +267,7 @@ export function DialogContent(props: DialogContentProps) {
           restoreFocus={restoreFocus}
           onInteractOutside={props.onInteractOutside}
           onPointerDownOutside={props.onPointerDownOutside}
+          passthrough={passthrough}
           transition={props.transition}
         >
           {props.children}

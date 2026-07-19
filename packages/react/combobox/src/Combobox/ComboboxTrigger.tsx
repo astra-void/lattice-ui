@@ -1,6 +1,18 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxTriggerProps } from "./types";
+
+const OWN_PROPS = ["asChild", "disabled", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance?.IsA("GuiObject")) {
@@ -59,13 +71,18 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
     [comboboxContext, disabled],
   );
 
-  const eventHandlers = React.useMemo(
-    () => ({
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, {
       Activated: handleActivated,
       InputBegan: handleInputBegan,
     }),
-    [handleActivated, handleInputBegan],
-  );
+    // The input owns gamepad/keyboard focus for the combobox, so the trigger stays out of the
+    // selection order.
+    Selectable: false,
+    ref: composeRefs<Instance>(passthrough.ref as never, setTriggerRef),
+  };
 
   if (props.asChild) {
     const child = props.children;
@@ -73,27 +90,16 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
       error("[ComboboxTrigger] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={false} ref={setTriggerRef}>
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={!disabled}
-      AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(41, 48, 63)}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={false}
-      Size={UDim2.fromOffset(220, 36)}
-      Text="Combobox"
-      TextColor3={disabled ? Color3.fromRGB(140, 148, 164) : Color3.fromRGB(235, 241, 248)}
-      TextSize={15}
-      ref={setTriggerRef}
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
       {props.children}
     </textbutton>
   );

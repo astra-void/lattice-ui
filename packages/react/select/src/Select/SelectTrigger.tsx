@@ -1,7 +1,19 @@
 import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useSelectContext } from "./context";
 import type { SelectTriggerProps } from "./types";
+
+const OWN_PROPS = ["asChild", "disabled", "children"] as const;
+
+// Roblox instance defaults are themselves a look: a bare `textbutton` renders an opaque grey box
+// labelled "Button". Neutralize only that, and leave every real appearance decision (colors, size,
+// fonts, text) to the consumer. Passthrough props are spread after these, so they stay overridable.
+const NEUTRAL_PROPS = {
+  AutoButtonColor: false,
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
 
 function toGuiObject(instance: Instance | undefined) {
   if (!instance?.IsA("GuiObject")) {
@@ -51,13 +63,16 @@ export function SelectTrigger(props: SelectTriggerProps) {
     [toggleOpen],
   );
 
-  const eventHandlers = React.useMemo(
-    () => ({
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const behaviorProps = {
+    Active: !disabled,
+    Event: composeEvents(passthrough.Event, {
       Activated: toggleOpen,
       InputBegan: handleInputBegan,
     }),
-    [handleInputBegan, toggleOpen],
-  );
+    Selectable: !disabled,
+    ref: composeRefs<Instance>(passthrough.ref as never, setTriggerRef),
+  };
 
   if (props.asChild) {
     const child = props.children;
@@ -65,27 +80,16 @@ export function SelectTrigger(props: SelectTriggerProps) {
       error("[SelectTrigger] `asChild` requires a child element.");
     }
 
+    // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot Active={!disabled} Event={eventHandlers} Selectable={!disabled} ref={setTriggerRef}>
+      <Slot {...passthrough} {...behaviorProps}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <textbutton
-      Active={!disabled}
-      AutoButtonColor={false}
-      BackgroundColor3={Color3.fromRGB(41, 48, 63)}
-      BorderSizePixel={0}
-      Event={eventHandlers}
-      Selectable={!disabled}
-      Size={UDim2.fromOffset(220, 36)}
-      Text="Select"
-      TextColor3={disabled ? Color3.fromRGB(140, 148, 164) : Color3.fromRGB(235, 241, 248)}
-      TextSize={15}
-      ref={setTriggerRef}
-    >
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
       {props.children}
     </textbutton>
   );

@@ -91,18 +91,12 @@ function SwitchExample() {
             TextSize={theme.typography.labelSm.textSize}
             TextXAlignment={Enum.TextXAlignment.Left}
           />
-          <Switch.Root
-            asChild
-            checked={row.checked}
-            onCheckedChange={row.onChange}
-            trackColorMode="switch"
-            trackOffColor={theme.colors.surface}
-            trackOnColor={theme.colors.accent}
-          >
+          {/* The track color is entirely consumer-owned: the primitive only reports state. */}
+          <Switch.Root asChild checked={row.checked} onCheckedChange={row.onChange}>
             <textbutton
               AnchorPoint={new Vector2(1, 0.5)}
               AutoButtonColor={false}
-              BackgroundColor3={theme.colors.surface}
+              BackgroundColor3={row.checked ? theme.colors.accent : theme.colors.surface}
               BorderSizePixel={0}
               Position={new UDim2(1, 0, 0.5, 0)}
               Size={UDim2.fromOffset(44, 24)}

@@ -1,9 +1,21 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useTextFieldContext } from "./context";
 import type { TextFieldDescriptionProps } from "./types";
 
+const OWN_PROPS = ["asChild", "children"] as const;
+
+// See TextFieldInput: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+  Text: "",
+};
+
 export function TextFieldDescription(props: TextFieldDescriptionProps) {
-  const textFieldContext = useTextFieldContext();
+  // Renders nothing of its own, but must still be inside a `TextField.Root`.
+  useTextFieldContext();
+
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (props.asChild) {
     const child = props.children;
@@ -11,18 +23,9 @@ export function TextFieldDescription(props: TextFieldDescriptionProps) {
       error("[TextFieldDescription] `asChild` requires a child element.");
     }
 
-    return <Slot Name="TextFieldDescription">{child}</Slot>;
+    // No neutral defaults here: the rendered element belongs to the consumer.
+    return <Slot {...passthrough}>{child}</Slot>;
   }
 
-  return (
-    <textlabel
-      BackgroundTransparency={1}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(300, 20)}
-      Text="Description"
-      TextColor3={textFieldContext.disabled ? Color3.fromRGB(132, 139, 154) : Color3.fromRGB(170, 179, 195)}
-      TextSize={13}
-      TextXAlignment={Enum.TextXAlignment.Left}
-    />
-  );
+  return <textlabel {...NEUTRAL_PROPS} {...passthrough} />;
 }

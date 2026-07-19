@@ -1,12 +1,20 @@
 import { Presence } from "@lattice-ui/react-layer";
-import {
-  createIndicatorRevealRecipe,
-  type PresenceMotionConfig,
-  usePresenceMotionController,
-} from "@lattice-ui/react-motion";
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
+import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
 import { useRadioGroupItemContext } from "./context";
 import type { RadioGroupIndicatorProps } from "./types";
+
+const OWN_PROPS = ["transition", "forceMount", "asChild", "children"] as const;
+
+// See RadioGroupItem: only the Roblox instance defaults are neutralized, never appearance.
+const NEUTRAL_PROPS = {
+  BackgroundTransparency: 1,
+  BorderSizePixel: 0,
+};
+
+// An unstyled indicator has nothing to animate, so there is no default recipe. Presence timing is
+// still owned here; consumers opt into motion with `transition`.
+const NO_MOTION: PresenceMotionConfig = {};
 
 function RadioGroupIndicatorImpl(props: {
   present: boolean;
@@ -15,9 +23,9 @@ function RadioGroupIndicatorImpl(props: {
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
+  passthrough: Record<string, unknown>;
 }) {
-  const defaultTransition = React.useMemo(() => createIndicatorRevealRecipe(UDim2.fromOffset(10, 10)), []);
-  const config = props.transition ?? defaultTransition;
+  const config = props.transition ?? NO_MOTION;
 
   const motion = usePresenceMotionController<Frame>({
     present: props.present,
@@ -33,6 +41,9 @@ function RadioGroupIndicatorImpl(props: {
     return undefined;
   }
 
+  const passthrough = props.passthrough;
+  const ref = composeRefs<Frame>(passthrough.ref as never, motion.ref);
+
   if (props.asChild) {
     const child = props.children;
     if (!React.isValidElement(child)) {
@@ -40,20 +51,14 @@ function RadioGroupIndicatorImpl(props: {
     }
 
     return (
-      <Slot Visible={visible} ref={motion.ref}>
+      <Slot {...passthrough} Visible={visible} ref={ref as never}>
         {child}
       </Slot>
     );
   }
 
   return (
-    <frame
-      BackgroundColor3={Color3.fromRGB(240, 244, 252)}
-      BorderSizePixel={0}
-      Size={UDim2.fromOffset(10, 10)}
-      Visible={visible}
-      ref={motion.ref}
-    >
+    <frame {...NEUTRAL_PROPS} {...passthrough} Visible={visible} ref={ref}>
       {props.children}
     </frame>
   );
@@ -63,12 +68,14 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
   const radioGroupItemContext = useRadioGroupItemContext();
   const visible = radioGroupItemContext.checked;
   const forceMount = props.forceMount === true;
+  const passthrough = getPassthroughProps(props, OWN_PROPS);
 
   if (forceMount) {
     return (
       <RadioGroupIndicatorImpl
         asChild={props.asChild}
         forceMount={true}
+        passthrough={passthrough}
         present={visible}
         transition={props.transition}
       >
@@ -84,6 +91,7 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
         <RadioGroupIndicatorImpl
           asChild={props.asChild}
           onExitComplete={state.onExitComplete}
+          passthrough={passthrough}
           present={state.isPresent}
           transition={props.transition}
         >
