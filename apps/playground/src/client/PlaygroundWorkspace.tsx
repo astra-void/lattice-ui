@@ -414,7 +414,7 @@ function AppContent(props: PlaygroundWorkspaceProps) {
 
   return (
     <PortalProvider container={props.playerGui}>
-      <screengui IgnoreGuiInset={true} ResetOnSpawn={false}>
+      <screengui IgnoreGuiInset={false} ResetOnSpawn={false}>
         <frame
           BackgroundColor3={theme.colors.background}
           BorderSizePixel={0}
@@ -476,7 +476,13 @@ function AppContent(props: PlaygroundWorkspaceProps) {
               />
             </frame>
 
-            <frame BackgroundTransparency={1} Position={new UDim2(1, -250, 0, 0)} Size={UDim2.fromOffset(250, 80)}>
+            <frame
+              AnchorPoint={new Vector2(1, 0)}
+              AutomaticSize={Enum.AutomaticSize.X}
+              BackgroundTransparency={1}
+              Position={new UDim2(1, 0, 0, 0)}
+              Size={new UDim2(0, 0, 0, 40)}
+            >
               <uilistlayout
                 FillDirection={Enum.FillDirection.Horizontal}
                 HorizontalAlignment={Enum.HorizontalAlignment.Right}
@@ -485,28 +491,34 @@ function AppContent(props: PlaygroundWorkspaceProps) {
               />
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "primary", size: "sm" }, theme), {
-                  Text: darkMode ? "Theme: Dark" : "Theme: Light",
-                  Event: {
-                    Activated: () => {
-                      setDarkMode((value) => !value);
-                    },
-                  },
+                  AutomaticSize: Enum.AutomaticSize.X,
+                  Size: new UDim2(0, 0, 0, 36),
+                  Text: darkMode ? "Theme · Dark" : "Theme · Light",
                 }) as Record<string, unknown>)}
+                Event={{
+                  Activated: () => {
+                    setDarkMode((value) => !value);
+                  },
+                }}
               >
                 <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+                <uipadding PaddingLeft={new UDim(0, theme.space[16])} PaddingRight={new UDim(0, theme.space[16])} />
               </textbutton>
               <textbutton
                 {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
-                  Text: `Density: ${density}`,
-                  Event: {
-                    Activated: () => {
-                      setDensity(nextDensity(density));
-                    },
-                  },
+                  AutomaticSize: Enum.AutomaticSize.X,
+                  Size: new UDim2(0, 0, 0, 36),
+                  Text: `Density · ${density}`,
                 }) as Record<string, unknown>)}
+                Event={{
+                  Activated: () => {
+                    setDensity(nextDensity(density));
+                  },
+                }}
               >
                 <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
                 <uistroke Color={theme.colors.border} Thickness={1} Transparency={0.4} />
+                <uipadding PaddingLeft={new UDim(0, theme.space[16])} PaddingRight={new UDim(0, theme.space[16])} />
               </textbutton>
             </frame>
           </frame>
@@ -686,13 +698,31 @@ function AppContent(props: PlaygroundWorkspaceProps) {
               <frame
                 BackgroundColor3={theme.colors.surface}
                 BorderSizePixel={0}
+                ClipsDescendants={true}
                 Position={UDim2.fromOffset(0, 70)}
                 Size={new UDim2(1, 0, 1, -70)}
               >
                 <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
-                <frame BackgroundTransparency={1} Size={UDim2.fromScale(1, 1)}>
+                <scrollingframe
+                  AutomaticCanvasSize={Enum.AutomaticSize.XY}
+                  BackgroundTransparency={1}
+                  BorderSizePixel={0}
+                  CanvasSize={new UDim2(0, 0, 0, 0)}
+                  ScrollBarImageColor3={theme.colors.border}
+                  ScrollBarImageTransparency={0.25}
+                  ScrollBarThickness={8}
+                  ScrollingDirection={Enum.ScrollingDirection.XY}
+                  Size={UDim2.fromScale(1, 1)}
+                  TopImage="rbxasset://textures/ui/Scroll/scroll-middle.png"
+                >
+                  <uipadding
+                    PaddingBottom={new UDim(0, theme.space[16])}
+                    PaddingLeft={new UDim(0, theme.space[16])}
+                    PaddingRight={new UDim(0, theme.space[16])}
+                    PaddingTop={new UDim(0, theme.space[16])}
+                  />
                   <ActiveScene />
-                </frame>
+                </scrollingframe>
               </frame>
             </frame>
           </frame>
