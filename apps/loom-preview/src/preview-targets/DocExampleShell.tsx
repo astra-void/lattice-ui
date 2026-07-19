@@ -10,7 +10,8 @@ type DocExampleShellProps = {
   children: React.ReactNode;
 };
 
-function getDocPortalContainer() {
+/** The docs preview's portal container. Also used by the playground scene. */
+export function getDocPortalContainer() {
   const players = game.GetService("Players");
   const localPlayer = players.LocalPlayer;
 
@@ -32,7 +33,7 @@ function getDocPortalContainer() {
  * examples always match the host page's theme; defaults to dark outside the
  * docs (plain gallery browsing).
  */
-function useDocTheme(playerGui: PlayerGui) {
+export function useDocTheme(playerGui: PlayerGui) {
   const readThemeName = React.useCallback(() => {
     const value = (playerGui as unknown as { LoomTheme?: unknown }).LoomTheme;
     return value === "light" ? "light" : "dark";
