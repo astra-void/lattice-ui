@@ -8,7 +8,7 @@ export interface SummarizedItems {
 
 export function resolveLocalLatticeCommand(pmName: PackageManagerName): string {
   if (pmName === "npm") {
-    return "npx lattice";
+    return "npx lattice-ui";
   }
 
   return `${pmName} lattice`;
