@@ -12,6 +12,7 @@
       "@lattice-ui/avatar",
       "@lattice-ui/checkbox",
       "@lattice-ui/combobox",
+      "@lattice-ui/context-menu",
       "@lattice-ui/core",
       "@lattice-ui/dialog",
       "@lattice-ui/focus",

@@ -222,6 +222,9 @@ importers:
       '@lattice-ui/combobox':
         specifier: workspace:*
         version: link:../../packages/combobox
+      '@lattice-ui/context-menu':
+        specifier: workspace:*
+        version: link:../../packages/context-menu
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -310,6 +313,9 @@ importers:
       '@lattice-ui/combobox':
         specifier: workspace:*
         version: link:../../packages/combobox
+      '@lattice-ui/context-menu':
+        specifier: workspace:*
+        version: link:../../packages/context-menu
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -444,6 +450,28 @@ importers:
   packages/cli: {}
 
   packages/combobox:
+    dependencies:
+      '@lattice-ui/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lattice-ui/layer':
+        specifier: workspace:*
+        version: link:../layer
+      '@lattice-ui/motion':
+        specifier: workspace:*
+        version: link:../motion
+      '@lattice-ui/popper':
+        specifier: workspace:*
+        version: link:../popper
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/context-menu:
     dependencies:
       '@lattice-ui/core':
         specifier: workspace:*
@@ -688,6 +716,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
       '@lattice-ui/motion':
         specifier: workspace:*
         version: link:../motion
@@ -770,6 +801,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
       '@lattice-ui/motion':
         specifier: workspace:*
         version: link:../motion
@@ -786,6 +820,9 @@ importers:
       '@lattice-ui/core':
         specifier: workspace:*
         version: link:../core
+      '@lattice-ui/focus':
+        specifier: workspace:*
+        version: link:../focus
       '@lattice-ui/motion':
         specifier: workspace:*
         version: link:../motion

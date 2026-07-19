@@ -1,0 +1,9 @@
+{
+  "name": "context-menu",
+  "tree": {
+    "$path": "out",
+    "out": {
+      "$path": "out"
+    }
+  }
+}

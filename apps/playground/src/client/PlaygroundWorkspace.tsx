@@ -8,6 +8,7 @@ import { AvatarBasicScene } from "./scenes/AvatarBasicScene";
 import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";
 import { ComboboxBasicScene } from "./scenes/ComboboxBasicScene";
 import { ConfirmDialogScene } from "./scenes/ConfirmDialogScene";
+import { ContextMenuBasicScene } from "./scenes/ContextMenuBasicScene";
 import { DensityScopeScene } from "./scenes/DensityScopeScene";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
 import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
@@ -62,6 +63,7 @@ export type SceneKey =
   | "dialog-nested"
   | "dialog-modal"
   | "menu-basic"
+  | "context-menu-basic"
   | "popover-basic"
   | "popover-flip"
   | "popover-nested"
@@ -167,6 +169,13 @@ const sceneOptions = [
     key: "menu-basic",
     label: "Menu Basic",
     description: "Grouped menu items with selection and dismissal.",
+    category: "Layering",
+    hasMotion: true,
+  },
+  {
+    key: "context-menu-basic",
+    label: "Context Menu Basic",
+    description: "Right-click a region to open a pointer-anchored menu.",
     category: "Layering",
     hasMotion: true,
   },
@@ -368,6 +377,7 @@ const sceneComponents = {
   "dialog-nested": DialogNestedScene,
   "dialog-modal": DialogModalBlockScene,
   "menu-basic": MenuBasicScene,
+  "context-menu-basic": ContextMenuBasicScene,
   "popover-basic": PopoverBasicScene,
   "popover-flip": PopoverFlipClampScene,
   "popover-nested": PopoverNestedScene,

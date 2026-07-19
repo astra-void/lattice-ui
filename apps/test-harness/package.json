@@ -14,6 +14,7 @@
     "@lattice-ui/avatar": "workspace:*",
     "@lattice-ui/checkbox": "workspace:*",
     "@lattice-ui/combobox": "workspace:*",
+    "@lattice-ui/context-menu": "workspace:*",
     "@lattice-ui/core": "workspace:*",
     "@lattice-ui/dialog": "workspace:*",
     "@lattice-ui/focus": "workspace:*",
