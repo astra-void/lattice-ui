@@ -18,6 +18,12 @@
       "providers": ["@lattice-ui/react-layer:PortalProvider?"],
       "notes": ["Combobox content can be portal-mounted via PortalProvider."]
     },
+    "context-menu": {
+      "npm": "@lattice-ui/react-context-menu",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["ContextMenu.Content can use PortalProvider for display order control."]
+    },
     "dialog": {
       "npm": "@lattice-ui/react-dialog",
       "peers": ["@rbxts/react", "@rbxts/react-roblox"],
@@ -37,6 +43,10 @@
       "peers": ["@rbxts/react", "@rbxts/react-roblox"],
       "providers": ["@lattice-ui/react-layer:PortalProvider?"],
       "notes": ["Menu.Content can use PortalProvider for display order control."]
+    },
+    "motion": {
+      "npm": "@lattice-ui/react-motion",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
     },
     "popover": {
       "npm": "@lattice-ui/react-popover",

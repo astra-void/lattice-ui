@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -55,6 +55,31 @@ describe("registry loading", () => {
     const registry = await loadRegistry(dir);
     expect(registry.packages.popover.npm).toBe("@lattice-ui/react-popover");
     expect(registry.presets.overlay).toEqual(["popover"]);
+  });
+
+  it("ships a registry entry for every published react package", async () => {
+    const reactPackagesDir = path.resolve(__dirname, "../../../packages/react");
+    const entries = await readdir(reactPackagesDir, { withFileTypes: true });
+
+    const publishedNames: string[] = [];
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+
+      const manifest = JSON.parse(
+        await readFile(path.join(reactPackagesDir, entry.name, "package.json"), "utf8"),
+      ) as { name: string; private?: boolean };
+
+      if (manifest.private !== true) {
+        publishedNames.push(manifest.name);
+      }
+    }
+
+    const registry = await loadRegistry(path.resolve(__dirname, "../../../packages/tools/cli/registry"));
+    const registeredNames = Object.values(registry.packages).map((entry) => entry.npm);
+
+    expect([...registeredNames].sort()).toEqual([...publishedNames].sort());
   });
 
   it("fails when preset references unknown component", () => {
