@@ -1,6 +1,6 @@
 {
   "name": "@lattice-ui/react-combobox",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": false,
   "main": "out/init.luau",
   "types": "out/index.d.ts",
@@ -33,7 +33,7 @@
     "@rbxts/react-roblox": "17.3.7-ts.1"
   },
   "peerDependencies": {
-    "@rbxts/react": "^17",
-    "@rbxts/react-roblox": "^17"
+    "@rbxts/react": "^17.3.7-ts.1",
+    "@rbxts/react-roblox": "^17.3.7-ts.1"
   }
 }

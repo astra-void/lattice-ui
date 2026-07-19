@@ -766,11 +766,11 @@ importers:
         specifier: workspace:*
         version: link:../style
       '@rbxts/react':
-        specifier: ^17
-        version: 17.2.3
+        specifier: ^17.3.7-ts.1
+        version: 17.3.7-ts.1
       '@rbxts/react-roblox':
-        specifier: ^17
-        version: 17.2.3
+        specifier: ^17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
   packages/react/tabs:
     dependencies:
@@ -1407,19 +1407,10 @@ packages:
   '@rbxts/compiler-types@3.0.0-types.0':
     resolution: {integrity: sha512-VGOHJPoL7+56NTatMGqQj3K7xWuzEV+aP4QD5vZiHu+bcff3kiTmtoadaF6NkJrmwfFAvbsd4Dg764ZjWNceag==}
 
-  '@rbxts/react-roblox@17.2.3':
-    resolution: {integrity: sha512-YgS+C3tf92iM1NTK1f6R2O2G8+nbcKFnblA0mTs2Nt878OsWLgxhnhkCBZ6wYv+yeDGD9/sssKHZ6s2LzUWTrQ==}
-
   '@rbxts/react-roblox@17.3.7-ts.1':
     resolution: {integrity: sha512-lsH3lP+X0JUS/6Fg5MJfP8OjMn7bjxapbg3r1ajrpvwZGPGU1WOFcFDS/xMMk/2RK/GNYRmkduNM8pQ9vHw54Q==}
     peerDependencies:
       '@rbxts/react': ^17.3.7-ts.1
-
-  '@rbxts/react-vendor@17.2.3':
-    resolution: {integrity: sha512-dWCiVelvTK6h920geaFH/OQ5zoWHyhyqyfH51hKx2/iVZ6OiiyNVJ5UqEIkJMG4HsJ8JnkTORizV3+MtQ41BtA==}
-
-  '@rbxts/react@17.2.3':
-    resolution: {integrity: sha512-IoOB8e2W8MxT0MKWFf0Ls0vT61ImYL6ctHQgz5+oazma6z8bqFtJjgPxOuy6jmMSuyfBe7rYp/muou0kIjZT+Q==}
 
   '@rbxts/react@17.3.7-ts.1':
     resolution: {integrity: sha512-/jqZ2TvyLSAPwC30h95loUmy4XN2PwPhv6fBARJKtZfyozFx2RuxC9FiQSjpEZ2uOOPzr60It0MBUf94D+tsMg==}
@@ -3381,21 +3372,10 @@ snapshots:
 
   '@rbxts/compiler-types@3.0.0-types.0': {}
 
-  '@rbxts/react-roblox@17.2.3':
-    dependencies:
-      '@rbxts/react': 17.2.3
-      '@rbxts/react-vendor': 17.2.3
-
   '@rbxts/react-roblox@17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)':
     dependencies:
       '@rbxts-js/react-roblox': 17.3.7-ts.1
       '@rbxts/react': 17.3.7-ts.1
-
-  '@rbxts/react-vendor@17.2.3': {}
-
-  '@rbxts/react@17.2.3':
-    dependencies:
-      '@rbxts/react-vendor': 17.2.3
 
   '@rbxts/react@17.3.7-ts.1':
     dependencies:
