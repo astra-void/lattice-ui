@@ -7,6 +7,7 @@ import { AccordionBasicScene } from "./scenes/AccordionBasicScene";
 import { AvatarBasicScene } from "./scenes/AvatarBasicScene";
 import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";
 import { ComboboxBasicScene } from "./scenes/ComboboxBasicScene";
+import { ConfirmDialogScene } from "./scenes/ConfirmDialogScene";
 import { DensityScopeScene } from "./scenes/DensityScopeScene";
 import { DialogBasicScene } from "./scenes/DialogBasicScene";
 import { DialogModalBlockScene } from "./scenes/DialogModalBlockScene";
@@ -25,6 +26,7 @@ import { ProgressBasicScene } from "./scenes/ProgressBasicScene";
 import { RadioGroupDisabledScene } from "./scenes/RadioGroupDisabledScene";
 import { ScrollAreaBasicScene } from "./scenes/ScrollAreaBasicScene";
 import { SelectBasicScene } from "./scenes/SelectBasicScene";
+import { SettingsFormScene } from "./scenes/SettingsFormScene";
 import { SliderBasicScene } from "./scenes/SliderBasicScene";
 import { StackShowcaseScene } from "./scenes/StackShowcaseScene";
 import { SurfaceShowcaseScene } from "./scenes/SurfaceShowcaseScene";
@@ -36,6 +38,7 @@ import { ToastBasicScene } from "./scenes/ToastBasicScene";
 import { ToggleGroupBasicScene } from "./scenes/ToggleGroupBasicScene";
 import { TooltipDelayScene } from "./scenes/TooltipDelayScene";
 import { TooltipFollowScene } from "./scenes/TooltipFollowScene";
+import { UserMenuScene } from "./scenes/UserMenuScene";
 import { buttonRecipe, panelRecipe, sceneTabRecipe } from "./theme/recipes";
 
 export type SceneKey =
@@ -71,9 +74,12 @@ export type SceneKey =
   | "surface-showcase"
   | "stack-showcase"
   | "grid-showcase"
-  | "accordion-basic";
+  | "accordion-basic"
+  | "settings-form"
+  | "user-menu"
+  | "confirm-dialog";
 
-type SceneCategory = "Layering" | "Forms" | "Selection" | "Showcase";
+type SceneCategory = "Patterns" | "Layering" | "Forms" | "Selection" | "Showcase";
 
 type SceneOption = {
   key: SceneKey;
@@ -84,6 +90,27 @@ type SceneOption = {
 };
 
 const sceneOptions = [
+  {
+    key: "settings-form",
+    label: "Settings Form",
+    description: "Switch, Select, RadioGroup, TextField and Slider composed into one panel.",
+    category: "Patterns",
+    hasMotion: true,
+  },
+  {
+    key: "user-menu",
+    label: "Account Menu",
+    description: "Avatar trigger opening a popover with a status switch and menu actions.",
+    category: "Patterns",
+    hasMotion: true,
+  },
+  {
+    key: "confirm-dialog",
+    label: "Confirm Dialog",
+    description: "Modal destructive confirmation flow with cancel and delete.",
+    category: "Patterns",
+    hasMotion: true,
+  },
   {
     key: "dismiss",
     label: "Layer Dismiss",
@@ -304,6 +331,7 @@ const sceneOptions = [
 ] satisfies ReadonlyArray<SceneOption>;
 
 const sceneCategories = [
+  { key: "Patterns", label: "Composed Patterns" },
   { key: "Layering", label: "Layering & Overlays" },
   { key: "Forms", label: "Forms & Inputs" },
   { key: "Selection", label: "Selection Patterns" },
@@ -317,6 +345,9 @@ const scenesByCategory = sceneCategories.map((category) => ({
 }));
 
 const sceneComponents = {
+  "settings-form": SettingsFormScene,
+  "user-menu": UserMenuScene,
+  "confirm-dialog": ConfirmDialogScene,
   dismiss: LayerDismissScene,
   nested: NestedStackScene,
   modal: ModalBlockScene,
