@@ -4,6 +4,7 @@ import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
+import { applyPackageManagerPin } from "./pin";
 import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 function normalizeList(values: string[]): string[] {
@@ -85,6 +86,10 @@ export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): 
     if (missingSummary.hidden > 0) {
       ctx.logger.step(`...and ${missingSummary.hidden} more`);
     }
+  }
+
+  if (plannedSpecs.length > 0) {
+    await applyPackageManagerPin(ctx);
   }
 
   if (ctx.options.dryRun) {

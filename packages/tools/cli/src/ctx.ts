@@ -2,6 +2,7 @@ import * as path from "node:path";
 import { projectNotFoundError } from "./core/errors";
 import { createLogger, type Logger } from "./core/logger";
 import { detectPackageManager, type PackageManagerResolutionSource } from "./core/pm/detect";
+import type { PackageManagerPin } from "./core/pm/devEngines";
 import type { PackageManager, PackageManagerName } from "./core/pm/types";
 import { findRoot } from "./core/project/findRoot";
 import { loadRegistry } from "./core/registry/load";
@@ -26,6 +27,7 @@ export interface CliContext {
   detectedLockfiles: PackageManagerName[];
   installedPackageManagers: PackageManagerName[];
   pmResolutionSource: PackageManagerResolutionSource;
+  pins: PackageManagerPin[];
   registry: Registry;
 }
 
@@ -66,6 +68,7 @@ export async function createContext(
     detectedLockfiles: pm.lockfiles,
     installedPackageManagers: pm.installed,
     pmResolutionSource: pm.source,
+    pins: pm.pins,
     registry,
   };
 }

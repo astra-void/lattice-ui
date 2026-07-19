@@ -5,6 +5,7 @@ import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import { parseProviderRequirement } from "../core/registry/schema";
 import type { CliContext } from "../ctx";
+import { applyPackageManagerPin } from "./pin";
 import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 async function resolveSelectionInput(ctx: CliContext, input: SelectionInput): Promise<SelectionInput> {
@@ -102,6 +103,10 @@ export async function runAddCommand(ctx: CliContext, input: SelectionInput): Pro
     if (plannedSummary.hidden > 0) {
       ctx.logger.step(`...and ${plannedSummary.hidden} more`);
     }
+  }
+
+  if (plannedSpecs.length > 0) {
+    await applyPackageManagerPin(ctx);
   }
 
   if (ctx.options.dryRun) {

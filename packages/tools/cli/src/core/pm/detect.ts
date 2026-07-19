@@ -2,14 +2,16 @@ import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { usageError } from "../errors";
+import { readPackageJson } from "../project/readPackageJson";
 import type { PromptRuntime } from "../prompt";
 import { promptSelect } from "../prompt";
+import { type PackageManagerPin, readPackageManagerPins } from "./devEngines";
 import { createNpmPackageManager } from "./npm";
 import { createPnpmPackageManager } from "./pnpm";
 import type { PackageManager, PackageManagerName } from "./types";
 import { createYarnPackageManager } from "./yarn";
 
-export type PackageManagerResolutionSource = "override" | "lockfile" | "installed" | "prompt";
+export type PackageManagerResolutionSource = "override" | "lockfile" | "manifest" | "installed" | "prompt";
 
 export interface DetectPackageManagerResult {
   name: PackageManagerName;
@@ -17,6 +19,7 @@ export interface DetectPackageManagerResult {
   lockfiles: PackageManagerName[];
   installed: PackageManagerName[];
   source: PackageManagerResolutionSource;
+  pins: PackageManagerPin[];
 }
 
 export interface DetectPackageManagerOptions {
@@ -87,6 +90,7 @@ function createResult(
   lockfiles: PackageManagerName[],
   installed: PackageManagerName[],
   source: PackageManagerResolutionSource,
+  pins: PackageManagerPin[],
 ): DetectPackageManagerResult {
   return {
     name,
@@ -94,13 +98,14 @@ function createResult(
     lockfiles,
     installed,
     source,
+    pins,
   };
 }
 
 function ensureInstalled(
   selected: PackageManagerName,
   installed: PackageManagerName[],
-  reason: "override" | "lockfile",
+  reason: "override" | "lockfile" | "manifest",
 ): void {
   if (installed.includes(selected)) {
     return;
@@ -112,9 +117,23 @@ function ensureInstalled(
     );
   }
 
+  if (reason === "manifest") {
+    throw usageError(
+      `package.json pins this project to ${selected} but ${selected} is not installed. Install ${selected} or re-run with ${PACKAGE_MANAGER_HINT} to repin the project.`,
+    );
+  }
+
   throw usageError(
     `Detected ${selected} from ${lockfileByManager[selected]} but ${selected} is not installed. Install ${selected} or re-run with ${PACKAGE_MANAGER_HINT}.`,
   );
+}
+
+async function readPackageManagerPinsAt(cwd: string): Promise<PackageManagerPin[]> {
+  try {
+    return readPackageManagerPins(await readPackageJson(cwd));
+  } catch {
+    return [];
+  }
 }
 
 export async function detectPackageManager(
@@ -137,17 +156,24 @@ export async function detectPackageManager(
   const installed = normalizePackageManagers(
     await (options?.detectInstalledPackageManagersFn ?? detectInstalledPackageManagers)(),
   );
+  const pins = await readPackageManagerPinsAt(cwd);
 
   if (requested) {
     const selected = requested as PackageManagerName;
     ensureInstalled(selected, installed, "override");
-    return createResult(selected, lockfiles, installed, "override");
+    return createResult(selected, lockfiles, installed, "override", pins);
   }
 
   if (lockfiles.length > 0) {
     const selected = lockfiles[0];
     ensureInstalled(selected, installed, "lockfile");
-    return createResult(selected, lockfiles, installed, "lockfile");
+    return createResult(selected, lockfiles, installed, "lockfile", pins);
+  }
+
+  if (pins.length > 0) {
+    const selected = pins[0].name;
+    ensureInstalled(selected, installed, "manifest");
+    return createResult(selected, lockfiles, installed, "manifest", pins);
   }
 
   if (installed.length === 0) {
@@ -155,7 +181,7 @@ export async function detectPackageManager(
   }
 
   if (installed.length === 1) {
-    return createResult(installed[0], lockfiles, installed, "installed");
+    return createResult(installed[0], lockfiles, installed, "installed", pins);
   }
 
   const runtime = options?.runtime ?? { yes: false, stdin: process.stdin, stdout: process.stdout };
@@ -177,5 +203,5 @@ export async function detectPackageManager(
     { defaultIndex: 0 },
   );
 
-  return createResult(selected, lockfiles, installed, "prompt");
+  return createResult(selected, lockfiles, installed, "prompt", pins);
 }
