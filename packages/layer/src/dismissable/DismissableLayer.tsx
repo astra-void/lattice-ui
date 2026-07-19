@@ -55,7 +55,11 @@ export function DismissableLayer(props: DismissableLayerProps) {
       getEnabled: () => enabledRef.current,
       isPointerOutside: (inputObject) => {
         const boundaryRef = contentBoundaryRef.current;
-        const contentBoundary = boundaryRef ? boundaryRef.current : contentWrapperRef.current;
+        // When the consumer provides a boundary ref it points at real content;
+        // otherwise we fall back to the internal full-screen positioning canvas,
+        // which is hit at every position and must not count as content itself.
+        const usingProvidedBoundary = boundaryRef !== undefined;
+        const contentBoundary = usingProvidedBoundary ? boundaryRef.current : contentWrapperRef.current;
         if (!contentBoundary) {
           return false;
         }
@@ -64,6 +68,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
         return isOutsidePointerEvent(inputObject, portalContext.container, contentBoundary, {
           insideRoots,
           layerIgnoresGuiInset,
+          boundaryMatchesSelf: usingProvidedBoundary,
         });
       },
       onPointerDownOutside: callPointerDownOutside,

@@ -71,6 +71,60 @@ describe("dismissable layer outside pointer detection", () => {
     expect(outside).toBe(false);
   });
 
+  it("treats a hit on the boundary node itself as outside when boundaryMatchesSelf is false", async () => {
+    // The internal fallback boundary is a full-screen positioning canvas that is
+    // hit at every pointer position. With boundaryMatchesSelf disabled, landing
+    // on the canvas itself must read as outside so outside clicks still dismiss.
+    const layerEvents = await loadLayerEvents();
+
+    const contentWrapper = createGuiNode("ContentWrapper");
+
+    const container = {
+      GetGuiObjectsAtPosition: vi.fn(() => [contentWrapper]),
+    } as unknown as BasePlayerGui;
+
+    const outside = layerEvents.isOutsidePointerEvent(
+      {
+        Position: { X: 120, Y: 88 },
+        UserInputType: Enum.UserInputType.MouseButton1,
+      } as InputObject,
+      container,
+      contentWrapper as unknown as GuiObject,
+      {
+        layerIgnoresGuiInset: false,
+        boundaryMatchesSelf: false,
+      },
+    );
+
+    expect(outside).toBe(true);
+  });
+
+  it("still treats descendants of the boundary as inside when boundaryMatchesSelf is false", async () => {
+    const layerEvents = await loadLayerEvents();
+
+    const contentWrapper = createGuiNode("ContentWrapper");
+    const contentChild = createGuiNode("ContentChild", contentWrapper);
+
+    const container = {
+      GetGuiObjectsAtPosition: vi.fn(() => [contentChild]),
+    } as unknown as BasePlayerGui;
+
+    const outside = layerEvents.isOutsidePointerEvent(
+      {
+        Position: { X: 120, Y: 88 },
+        UserInputType: Enum.UserInputType.MouseButton1,
+      } as InputObject,
+      container,
+      contentWrapper as unknown as GuiObject,
+      {
+        layerIgnoresGuiInset: false,
+        boundaryMatchesSelf: false,
+      },
+    );
+
+    expect(outside).toBe(false);
+  });
+
   it("treats descendants of the content wrapper as inside hits", async () => {
     const layerEvents = await loadLayerEvents();
 

@@ -4,6 +4,12 @@ import type { LayerInteractEvent } from "./types";
 type OutsidePointerOptions = {
   layerIgnoresGuiInset: boolean;
   insideRoots?: Array<GuiObject | undefined>;
+  // Whether a hit on the boundary node itself counts as inside. True when the
+  // consumer passes a real content ref (clicking the content's own bare areas
+  // is inside). False for the layer's internal fallback boundary, which is a
+  // full-screen positioning canvas — it is hit at every position and must not
+  // be mistaken for content, or nothing would ever read as outside.
+  boundaryMatchesSelf?: boolean;
 };
 
 export function isPointerInput(inputObject: InputObject) {
@@ -38,8 +44,11 @@ function isWithinInsideRoots(hitObject: GuiObject, insideRoots: Array<GuiObject 
   return false;
 }
 
-function isWithinContentBoundary(hitObject: GuiObject, contentWrapper: GuiObject) {
-  return hitObject === contentWrapper || hitObject.IsDescendantOf(contentWrapper);
+function isWithinContentBoundary(hitObject: GuiObject, contentWrapper: GuiObject, matchesSelf: boolean) {
+  if (matchesSelf && hitObject === contentWrapper) {
+    return true;
+  }
+  return hitObject.IsDescendantOf(contentWrapper);
 }
 
 function addUniqueSample(samples: Array<Vector2>, sampleKeys: Record<string, true>, x: number, y: number) {
@@ -84,11 +93,15 @@ export function isOutsidePointerEvent(
   const pointerPosition = new Vector2(rawPointerPosition.X, rawPointerPosition.Y);
   const pointerSamples = getPointerSamples(pointerPosition, options);
   const insideRoots = options.insideRoots ?? [];
+  const boundaryMatchesSelf = options.boundaryMatchesSelf ?? true;
 
   for (const sample of pointerSamples) {
     const hitGuiObjects = container.GetGuiObjectsAtPosition(sample.X, sample.Y);
     for (const hitObject of hitGuiObjects) {
-      if (isWithinContentBoundary(hitObject, contentWrapper) || isWithinInsideRoots(hitObject, insideRoots)) {
+      if (
+        isWithinContentBoundary(hitObject, contentWrapper, boundaryMatchesSelf) ||
+        isWithinInsideRoots(hitObject, insideRoots)
+      ) {
         return false;
       }
     }
