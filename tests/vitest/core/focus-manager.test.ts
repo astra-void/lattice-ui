@@ -283,9 +283,6 @@ describe("focusManager", () => {
 
   it("gives nested trapped scopes priority and restores ancestor fallback on inner close", async () => {
     const harness = await createFocusManagerHarness();
-    const outside = createGuiObject("outside", {
-      parent: harness.mountRoot,
-    });
     const outerRoot = createGuiObject("outer-root", {
       parent: harness.mountRoot,
       selectable: false,
@@ -319,62 +316,30 @@ describe("focusManager", () => {
       getGuiObject: () => innerButton,
     });
 
-    harness.focusManager.retainExternalFocusBridge();
-    harness.setSelectedObject(outside);
+    // Registering nodes under a trapped scope enforces focus into the top-most
+    // trapped scope's fallback without any external selection round-trip.
     expect(harness.getSelectedObject()).toBe(innerButton);
 
     innerActive = false;
     harness.focusManager.syncFocusScope(innerScopeId);
     expect(harness.getSelectedObject()).toBe(outerButton);
-
-    harness.focusManager.releaseExternalFocusBridge();
   });
 
-  it("bridges external selection into an implicit focus node when needed", async () => {
+  it("creates an implicit focus node when focusing a raw GuiObject", async () => {
     const harness = await createFocusManagerHarness();
     const rawButton = createGuiObject("raw-button", {
       parent: harness.mountRoot,
     });
 
-    harness.focusManager.retainExternalFocusBridge();
-    harness.setSelectedObject(rawButton);
+    harness.focusManager.focusGuiObject(rawButton);
 
     expect(harness.focusManager.getFocusedNode()?.implicit).toBe(true);
     expect(harness.focusManager.getFocusedGuiObject()).toBe(rawButton);
-
-    harness.focusManager.releaseExternalFocusBridge();
+    // Focus is mirrored to Roblox selection for rendering (render-only bridge).
+    expect(harness.getSelectedObject()).toBe(rawButton);
   });
 
-  it("prunes unreferenced implicit nodes once external bridge focus moves elsewhere", async () => {
-    const harness = await createFocusManagerHarness();
-    const first = createGuiObject("first-implicit", {
-      parent: harness.mountRoot,
-    });
-    const second = createGuiObject("second-implicit", {
-      parent: harness.mountRoot,
-    });
-
-    harness.focusManager.retainExternalFocusBridge();
-
-    harness.setSelectedObject(first);
-    const firstFocusId = harness.focusManager.getFocusedNode()?.id;
-    expect(firstFocusId).toBeDefined();
-    expect(harness.focusManager.getFocusedNode()?.implicit).toBe(true);
-
-    harness.setSelectedObject(second);
-    const secondFocusId = harness.focusManager.getFocusedNode()?.id;
-    expect(secondFocusId).toBeDefined();
-    expect(secondFocusId).not.toBe(firstFocusId);
-
-    harness.setSelectedObject(first);
-    const nextFirstFocusId = harness.focusManager.getFocusedNode()?.id;
-    expect(nextFirstFocusId).toBeDefined();
-    expect(nextFirstFocusId).not.toBe(firstFocusId);
-
-    harness.focusManager.releaseExternalFocusBridge();
-  });
-
-  it("keeps explicit registered nodes stable while implicit nodes are pruned", async () => {
+  it("resolves explicit nodes over implicit ones and keeps explicit ids stable", async () => {
     const harness = await createFocusManagerHarness();
     const explicitButton = createGuiObject("explicit-button", {
       parent: harness.mountRoot,
@@ -387,20 +352,55 @@ describe("focusManager", () => {
       getGuiObject: () => explicitButton,
     });
 
-    harness.focusManager.retainExternalFocusBridge();
-
-    harness.setSelectedObject(explicitButton);
+    harness.focusManager.focusGuiObject(explicitButton);
     expect(harness.focusManager.getFocusedNode()?.id).toBe(explicitNodeId);
     expect(harness.focusManager.getFocusedNode()?.implicit).toBe(false);
 
-    harness.setSelectedObject(otherButton);
+    harness.focusManager.focusGuiObject(otherButton);
     expect(harness.focusManager.getFocusedNode()?.implicit).toBe(true);
 
-    harness.setSelectedObject(explicitButton);
+    harness.focusManager.focusGuiObject(explicitButton);
     expect(harness.focusManager.getFocusedNode()?.id).toBe(explicitNodeId);
     expect(harness.focusManager.getFocusedNode()?.implicit).toBe(false);
+  });
 
-    harness.focusManager.releaseExternalFocusBridge();
+  it("steps through an ordered scope by registration order", async () => {
+    const harness = await createFocusManagerHarness();
+    const scopeRoot = createGuiObject("ordered-root", {
+      parent: harness.mountRoot,
+      selectable: false,
+    });
+    const first = createGuiObject("first", { parent: scopeRoot });
+    const second = createGuiObject("second", { parent: scopeRoot });
+    const third = createGuiObject("third", { parent: scopeRoot });
+
+    const scopeId = harness.focusManager.createFocusScopeId();
+    harness.focusManager.registerFocusScope(scopeId, {
+      getRoot: () => scopeRoot,
+      getActive: () => true,
+      getTrapped: () => false,
+      getNavStrategy: () => "ordered",
+      getNavOrientation: () => "vertical",
+      getNavWrap: () => true,
+    });
+
+    const firstId = harness.focusManager.registerFocusNode({ scopeId, getGuiObject: () => first });
+    harness.focusManager.registerFocusNode({ scopeId, getGuiObject: () => second });
+    harness.focusManager.registerFocusNode({ scopeId, getGuiObject: () => third });
+
+    harness.focusManager.focusNode(firstId);
+    expect(harness.focusManager.getFocusedGuiObject()).toBe(first);
+
+    // On-axis moves step through the ordered list.
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "down" })?.guiObject).toBe(second);
+
+    harness.focusManager.focusGuiObject(third);
+    // Wrapping enabled: stepping past the end returns to the first node.
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "down" })?.guiObject).toBe(first);
+
+    // Stepping backward from the first node wraps to the last.
+    harness.focusManager.focusGuiObject(first);
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "up" })?.guiObject).toBe(third);
   });
 
   it("prefers actual tree order over registration order for trapped scope fallback", async () => {
@@ -435,22 +435,18 @@ describe("focusManager", () => {
     expect(harness.focusManager.getFocusedNode()?.id).toBe(firstId);
     expect(harness.getSelectedObject()).toBe(first);
   });
-  it("absorbs external Roblox selection only while the bridge listener is retained", async () => {
+  it("ignores external Roblox selection changes (selection bridge is render-only)", async () => {
     const harness = await createFocusManagerHarness();
     const button = createGuiObject("button", {
       parent: harness.mountRoot,
     });
-    const nodeId = harness.focusManager.registerFocusNode({
+    harness.focusManager.registerFocusNode({
       getGuiObject: () => button,
     });
 
+    // Navigation is owned by the controller; a raw external selection change is
+    // not absorbed back into focus state.
     harness.setSelectedObject(button);
     expect(harness.focusManager.getFocusedNode()).toBeUndefined();
-
-    harness.focusManager.retainExternalFocusBridge();
-    harness.setSelectedObject(button);
-    expect(harness.focusManager.getFocusedNode()?.id).toBe(nodeId);
-
-    harness.focusManager.releaseExternalFocusBridge();
   });
 });

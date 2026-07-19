@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import { useFocusNode } from "@lattice-ui/focus";
 import { createFieldResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { resolveAutoResizeSize, resolveTextareaHeight } from "./autoResize";
 import { useTextareaContext } from "./context";
@@ -57,10 +58,21 @@ export function TextareaInput(props: TextareaInputProps) {
     createFieldResponseRecipe(),
   );
 
+  const focusRef = React.useRef<GuiObject>();
+  useFocusNode({
+    ref: focusRef,
+    disabled,
+    // While editing, arrow keys move the text cursor across lines, so the
+    // navigation controller passes them through instead of moving focus.
+    getCapturesDirectional: () => focused,
+  });
+
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
-      localRef.current = toTextBox(instance);
-      textareaContext.inputRef.current = toTextBox(instance);
+      const textBox = toTextBox(instance);
+      localRef.current = textBox;
+      textareaContext.inputRef.current = textBox;
+      focusRef.current = textBox;
     },
     [textareaContext.inputRef, localRef],
   );

@@ -3,7 +3,7 @@ import { getFocusNodeRecord, getFocusScopeRecord } from "./registry";
 import { focusNodes, focusScopes, focusState } from "./state";
 import type { FocusNodeRecord, FocusScopeRecord, ResolvedFocusNode, ResolveNodeOptions } from "./types";
 
-function getNodeOwningScopeId(record: FocusNodeRecord, guiObject: GuiObject | undefined) {
+export function getNodeOwningScopeId(record: FocusNodeRecord, guiObject: GuiObject | undefined) {
   if (record.scopeId !== undefined) {
     return record.scopeId;
   }
@@ -139,6 +139,7 @@ function registerImplicitFocusNode(guiObject: GuiObject) {
     getDisabled: () => false,
     getVisible: () => undefined,
     getSyncToRoblox: () => true,
+    getCapturesDirectional: () => false,
   };
 
   focusNodes.push(nodeRecord);

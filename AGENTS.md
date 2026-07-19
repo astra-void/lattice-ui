@@ -110,13 +110,75 @@ Practical expectations:
 - If a primitive needs new motion behavior, extend `packages/motion` recipes, hooks, or public APIs instead of adding one-off animation logic in the primitive.
 - Be especially careful with position, size, transparency, and color props that may be controlled by motion APIs.
 
+## Navigation and focus guidance
+
+Lattice ships its own directional-navigation system and does **not** use Roblox's native GUI
+selection navigation. All keyboard, gamepad, and programmatic focus movement flows through
+`@lattice-ui/focus`. Do not reimplement or fall back to native navigation in consumer
+packages, playground scenes, or app code.
+
+How the custom navigation works (`packages/focus/src/focusManager/navigation/`):
+
+- A single controller drives navigation. It binds input via
+  `ContextActionService.BindActionAtPriority` (keyboard arrows + Tab, gamepad D-pad +
+  Thumbstick1 with deadzone/auto-repeat) and resolves the next node itself.
+- The controller is bound **only while a `FocusScope` is active** (ref-counted
+  `retainNavigation` / `releaseNavigation`), and it sets `GuiService.AutoSelectGuiEnabled = false`
+  while bound so native auto-selection stays off. When no scope is open, input is not captured
+  and normal game controls keep working.
+- `GuiService.SelectedObject` is **render-only**: focus state is mirrored *out* to it
+  (`bridge.ts`) so the native `SelectionImageObject` and `SelectionGained`/`SelectionLost`
+  events still fire, but external selection changes are **not** read back into focus state
+  (there is no reverse listener).
+- Resolution is hybrid (`resolve.ts`): a scope's `navStrategy` is either `"ordered"` (step by
+  node registration order along `navOrientation`, cross-axis moves escape to the parent) or
+  `"spatial"` (nearest-centre geometry, GUI-inset invariant). Walks escape up the scope chain
+  until a `trapped` scope stops them.
+
+Hard rules:
+
+- Do not use Roblox's built-in selection navigation. Do not set `NextSelectionUp`,
+  `NextSelectionDown`, `NextSelectionLeft`, `NextSelectionRight`, `SelectionGroup`, or
+  `GuiService.AutoSelectGuiEnabled` to drive navigation.
+- Do not read or write `GuiService.SelectedObject` from consumer packages, scenes, or app
+  code, and do not treat it as an input - it is an output that `@lattice-ui/focus` owns.
+- Do not bind `ContextActionService` / `UserInputService` for focus movement outside
+  `@lattice-ui/focus`. The navigation controller is the single owner of directional input while
+  a scope is active.
+
+Do instead:
+
+- Wrap navigable regions in a `FocusScope`, and pick `navStrategy` deliberately: `"ordered"`
+  for menus / lists / tab lists (with `navOrientation` and optional `navWrap`), `"spatial"`
+  (the default) for free-form 2D layouts. Use `trapped` to contain navigation (overlays,
+  dialogs, menus).
+- Register focusable nodes with `useFocusNode` and mark focusability with the `Selectable`
+  prop; let the controller own traversal, escaping, trapping, and restoration.
+- When a widget must consume an arrow itself (text cursor in TextField/Textarea, or future
+  value adjust like Slider), return `true` from `getCapturesDirectional(direction)` on its
+  focus node instead of intercepting input separately.
+- Use `useActivationGuard` for activation, rather than hand-rolling per-component input.
+- If navigation behavior is missing, extend the navigation module (controller, `resolve`,
+  `spatial`, `candidates`) or the focus registry/engine - never add native selection wiring in
+  a consuming primitive or scene.
+
+Note on inline widgets: primitives that are not wrapped in an active `FocusScope`
+(e.g. Tabs / RadioGroup / ToggleGroup / Slider used inline) still handle their own arrow keys
+via `InputBegan`, because the controller is not bound without an active scope. That is
+intentional - do not "fix" them to go through the controller unless they are placed inside a
+scope. Menu and Select content are ordered vertical scopes and must stay that way.
+
+The reason: native Roblox navigation ignores Lattice's ordered/spatial resolution, focus
+trapping, overlay/layer stacking, and restoration semantics, which produces inconsistent and
+unrecoverable focus behavior across primitives and overlays.
+
 ## Change strategy
 
 When fixing a bug:
 
 1. Identify the narrowest package or app surface responsible.
 2. Change the package first unless the problem is clearly scene-only or harness-only.
-3. Avoid â€œfixingâ€ package bugs only in playground scenes unless the issue is truly local to the scene.
+3. Avoid "fixing" package bugs only in playground scenes unless the issue is truly local to the scene.
 4. Preserve existing APIs unless the task explicitly allows API changes.
 5. If behavior depends on focus, layer stacking, portals, presence, motion, or popper positioning, inspect neighboring packages before patching around the symptom.
 
@@ -211,7 +273,7 @@ When reporting work:
 - state what changed
 - state why that package / file was the right place
 - state what validation was run
-- clearly distinguish â€œverifiedâ€ from â€œnot runâ€
+- clearly distinguish "verified" from "not run"
 
 When validation was not run:
 
@@ -222,6 +284,34 @@ When a task spans multiple packages:
 
 - explain the dependency chain
 - keep each change minimal and justified
+
+## Commit and change hygiene
+
+Before committing:
+
+- Run `pnpm run lint:fix` to auto-fix and format the working tree, then confirm `pnpm run lint`
+  passes clean. Do not commit with unresolved lint errors.
+- Run `pnpm run typecheck` and make sure it passes for any code change.
+- For behavior changes, run `pnpm run test:unit` (and Roblox harness commands only when
+  `Roblox_Studio` MCP connectivity is confirmed, per the validation rules above).
+- `pnpm run check` (`workspace:check` + lint + typecheck + unit tests) is the aggregate gate
+  when you want a single command before committing.
+
+Commit messages:
+
+- Follow Conventional Commits, matching the existing history: `type(scope): summary`
+  (e.g. `fix(popper): ...`, `feat(focus): ...`, `docs: ...`, `chore: ...`, `test(select): ...`).
+- Scope is the package or app name without the `@lattice-ui/` prefix (`focus`, `popper`,
+  `playground`, `test-harness`), or omitted for repo-wide changes.
+- Keep the summary imperative and lowercase; make one logical change per commit.
+
+Changesets:
+
+- Any user-facing change to a publishable package under `packages/*` needs a changeset
+  (`pnpm run changeset:add`). Internal-only, scene-only, tooling, or docs changes usually do not.
+- Do not hand-edit versions; let the changeset/release flow own version bumps.
+
+Do not `git push` or open PRs unless explicitly asked. Commit only when the user asks.
 
 ## Release and publish safety
 
@@ -239,6 +329,8 @@ If unsure:
 
 - prefer root `typecheck` over package-local guessing
 - prefer package fixes over playground-only patches
+- prefer `@lattice-ui/focus` over any native Roblox selection navigation
 - prefer minimal diffs
+- prefer running `lint:fix` + `typecheck` before committing
 - prefer adding or updating tests when behavior changes
 - prefer explicit notes about environment limitations

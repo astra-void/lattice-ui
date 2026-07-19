@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import { useFocusNode } from "@lattice-ui/focus";
 import { createFieldResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useTextFieldContext } from "./context";
 import type { TextFieldInputProps } from "./types";
@@ -27,10 +28,21 @@ export function TextFieldInput(props: TextFieldInputProps) {
     createFieldResponseRecipe(),
   );
 
+  const focusRef = React.useRef<GuiObject>();
+  useFocusNode({
+    ref: focusRef,
+    disabled,
+    // While the field is being edited, arrow keys move the text cursor, so the
+    // navigation controller passes them through instead of moving focus.
+    getCapturesDirectional: () => focused,
+  });
+
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
-      localRef.current = toTextBox(instance);
-      textFieldContext.inputRef.current = toTextBox(instance);
+      const textBox = toTextBox(instance);
+      localRef.current = textBox;
+      textFieldContext.inputRef.current = textBox;
+      focusRef.current = textBox;
     },
     [textFieldContext.inputRef, localRef],
   );

@@ -3,8 +3,8 @@ import { FocusScopeProvider, useFocusLayerOrder, useFocusScopeId } from "../cont
 import {
   createFocusScopeId,
   registerFocusScope,
-  releaseExternalFocusBridge,
-  retainExternalFocusBridge,
+  releaseNavigation,
+  retainNavigation,
   syncFocusScope,
   unregisterFocusScope,
 } from "../focusManager";
@@ -32,6 +32,9 @@ export function FocusScope(props: FocusScopeProps) {
   const active = props.active ?? true;
   const trapped = props.trapped === true;
   const shouldRestoreFocus = props.restoreFocus !== false;
+  const navStrategy = props.navStrategy ?? "spatial";
+  const navOrientation = props.navOrientation ?? "vertical";
+  const navWrap = props.navWrap === true;
 
   const scopeIdRef = React.useRef(0);
   if (scopeIdRef.current === 0) {
@@ -43,6 +46,9 @@ export function FocusScope(props: FocusScopeProps) {
   const trappedRef = useLatest(trapped);
   const restoreFocusRef = useLatest(shouldRestoreFocus);
   const layerOrderRef = useLatest(layerOrder);
+  const navStrategyRef = useLatest(navStrategy);
+  const navOrientationRef = useLatest(navOrientation);
+  const navWrapRef = useLatest(navWrap);
 
   const setScopeRoot = React.useCallback((instance: Instance | undefined) => {
     scopeRootRef.current = toGuiObject(instance);
@@ -60,12 +66,24 @@ export function FocusScope(props: FocusScopeProps) {
       getTrapped: () => trappedRef.current,
       getRestoreFocus: () => restoreFocusRef.current,
       getLayerOrder: () => layerOrderRef.current,
+      getNavStrategy: () => navStrategyRef.current,
+      getNavOrientation: () => navOrientationRef.current,
+      getNavWrap: () => navWrapRef.current,
     });
 
     return () => {
       unregisterFocusScope(scopeId);
     };
-  }, [activeRef, layerOrderRef, parentScopeId, restoreFocusRef, trappedRef]);
+  }, [
+    activeRef,
+    layerOrderRef,
+    navOrientationRef,
+    navStrategyRef,
+    navWrapRef,
+    parentScopeId,
+    restoreFocusRef,
+    trappedRef,
+  ]);
 
   React.useEffect(() => {
     syncFocusScope(scopeIdRef.current);
@@ -76,9 +94,9 @@ export function FocusScope(props: FocusScopeProps) {
       return;
     }
 
-    retainExternalFocusBridge();
+    retainNavigation();
     return () => {
-      releaseExternalFocusBridge();
+      releaseNavigation();
     };
   }, [active]);
 

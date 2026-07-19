@@ -1,4 +1,5 @@
 import { React, Slot } from "@lattice-ui/core";
+import { useFocusNode } from "@lattice-ui/focus";
 import { createSliderThumbResponseRecipe, useResponseMotion } from "@lattice-ui/motion";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
@@ -24,10 +25,23 @@ export function SliderThumb(props: SliderThumbProps) {
     createSliderThumbResponseRecipe(sliderContext.isDragging),
   );
 
+  const isHorizontal = sliderContext.orientation === "horizontal";
+
+  const focusRef = React.useRef<GuiObject>();
+  useFocusNode({
+    ref: focusRef,
+    disabled: sliderContext.disabled,
+    // Arrow keys along the value axis adjust the slider, so the navigation
+    // controller passes them through; cross-axis directions move focus away.
+    getCapturesDirectional: (direction) =>
+      isHorizontal ? direction === "left" || direction === "right" : direction === "up" || direction === "down",
+  });
+
   const setNodeRef = React.useCallback(
     (instance: Instance | undefined) => {
       const nextThumb = !instance?.IsA("GuiObject") ? undefined : instance;
       motionRef.current = nextThumb;
+      focusRef.current = nextThumb;
       sliderContext.setThumbNode(nextThumb);
     },
     [motionRef, sliderContext],
@@ -48,6 +62,11 @@ export function SliderThumb(props: SliderThumbProps) {
       let nextValue: number | undefined;
       const pageStep = sliderContext.step * 10;
 
+      // Only the value axis adjusts the slider; the cross axis is left for the
+      // navigation controller to move focus away from the thumb.
+      const incrementKey = isHorizontal ? Enum.KeyCode.Right : Enum.KeyCode.Up;
+      const decrementKey = isHorizontal ? Enum.KeyCode.Left : Enum.KeyCode.Down;
+
       if (keyCode === Enum.KeyCode.Home) {
         nextValue = sliderContext.min;
       } else if (keyCode === Enum.KeyCode.End) {
@@ -56,9 +75,9 @@ export function SliderThumb(props: SliderThumbProps) {
         nextValue = sliderContext.value + pageStep;
       } else if (keyCode === Enum.KeyCode.PageDown) {
         nextValue = sliderContext.value - pageStep;
-      } else if (keyCode === Enum.KeyCode.Right || keyCode === Enum.KeyCode.Up) {
+      } else if (keyCode === incrementKey) {
         nextValue = sliderContext.value + sliderContext.step;
-      } else if (keyCode === Enum.KeyCode.Left || keyCode === Enum.KeyCode.Down) {
+      } else if (keyCode === decrementKey) {
         nextValue = sliderContext.value - sliderContext.step;
       } else if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
         sliderContext.commitValue(sliderContext.value);
@@ -74,7 +93,7 @@ export function SliderThumb(props: SliderThumbProps) {
       sliderContext.setValue(nextValue);
       sliderContext.commitValue(nextValue);
     },
-    [sliderContext],
+    [isHorizontal, sliderContext],
   );
 
   const sharedProps = {

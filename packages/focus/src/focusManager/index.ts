@@ -1,10 +1,4 @@
-import {
-  enforceTrappedFocus,
-  focusNode,
-  pruneImplicitFocusNodes,
-  setCurrentFocusedNode,
-} from "./engine";
-import { syncExternalSelectionListener } from "./externalBridge";
+import { enforceTrappedFocus, focusNode, pruneImplicitFocusNodes, setCurrentFocusedNode } from "./engine";
 import { findFocusNodeIndex, findFocusScopeIndex, getFocusNodeRecord, getFocusScopeRecord } from "./registry";
 import { captureRestoreSnapshot, getCurrentFocusGuiObject, restoreScopeFocus } from "./restore";
 import { focusNodes, focusScopes, focusState } from "./state";
@@ -16,14 +10,20 @@ import type {
   RegisterFocusScopeParams,
 } from "./types";
 
+export { canFocusNode, focusGuiObject, focusNode, getFocusedGuiObject, getFocusedNode } from "./engine";
+export { releaseNavigation, retainNavigation } from "./navigation/controller";
+export type { NavIntent } from "./navigation/resolve";
+export { resolveNavigation } from "./navigation/resolve";
+export { captureRestoreSnapshot } from "./restore";
 export type {
   FocusNodeRecord,
   FocusRestoreSnapshot,
+  NavDirection,
+  NavOrientation,
+  NavStrategy,
   RegisterFocusNodeParams,
   RegisterFocusScopeParams,
 } from "./types";
-export { canFocusNode, focusGuiObject, focusNode, getFocusedGuiObject, getFocusedNode } from "./engine";
-export { captureRestoreSnapshot } from "./restore";
 
 export function registerFocusNode(params: RegisterFocusNodeParams) {
   focusState.nextFocusNodeId += 1;
@@ -38,6 +38,7 @@ export function registerFocusNode(params: RegisterFocusNodeParams) {
     getDisabled: params.getDisabled ?? (() => false),
     getVisible: params.getVisible ?? (() => undefined),
     getSyncToRoblox: params.getSyncToRoblox ?? (() => true),
+    getCapturesDirectional: params.getCapturesDirectional ?? (() => false),
   };
 
   focusNodes.push(nodeRecord);
@@ -97,6 +98,9 @@ export function registerFocusScope(scopeId: number, params: RegisterFocusScopePa
     getTrapped: params.getTrapped,
     getRestoreFocus: params.getRestoreFocus ?? (() => true),
     getLayerOrder: params.getLayerOrder ?? (() => undefined),
+    getNavStrategy: params.getNavStrategy ?? (() => "spatial"),
+    getNavOrientation: params.getNavOrientation ?? (() => "vertical"),
+    getNavWrap: params.getNavWrap ?? (() => false),
   };
 
   focusScopes.push(scopeRecord);
@@ -157,16 +161,6 @@ export function unregisterFocusScope(scopeId: number) {
   }
 
   pruneImplicitFocusNodes();
-}
-
-export function retainExternalFocusBridge() {
-  focusState.externalSelectionConsumerCount += 1;
-  syncExternalSelectionListener();
-}
-
-export function releaseExternalFocusBridge() {
-  focusState.externalSelectionConsumerCount = math.max(0, focusState.externalSelectionConsumerCount - 1);
-  syncExternalSelectionListener();
 }
 
 export function clearFocus() {

@@ -139,7 +139,14 @@ function MenuContentImpl(props: {
       contentBoundaryRef={contentBoundaryRef}
       insideRefs={[menuContext.triggerRef]}
     >
-      <FocusScope active={open} restoreFocus={true} trapped={menuContext.modal}>
+      <FocusScope
+        active={open}
+        restoreFocus={true}
+        trapped={menuContext.modal}
+        navStrategy="ordered"
+        navOrientation="vertical"
+        navWrap={true}
+      >
         <frame
           AnchorPoint={popper.anchorPoint}
           BackgroundTransparency={1}

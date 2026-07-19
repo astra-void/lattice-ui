@@ -4,7 +4,24 @@ Focus management primitives for Roblox UI.
 
 ## Current status
 
-- `FocusScope` can trap `GuiService.SelectedObject` and restore captured focus on scope teardown.
+- `FocusScope` traps and restores focus, and now drives a custom navigation
+  controller instead of native Roblox GUI selection.
+
+## Navigation
+
+- Directional input is owned by a `ContextActionService`-based controller
+  (keyboard arrows + Tab, gamepad D-pad + thumbstick with auto-repeat). It binds
+  only while a `FocusScope` is active and disables `AutoSelectGuiEnabled`.
+- `GuiService.SelectedObject` is a render-only mirror; external changes are not
+  read back into focus state.
+- Resolution is hybrid. A scope's `navStrategy` selects between:
+  - `"ordered"`: step through nodes by registration order along
+    `navOrientation`; cross-axis moves escape to the parent scope.
+  - `"spatial"` (default): pick the nearest node in the pressed direction by
+    geometry.
+- Focus nodes can consume a direction themselves via `getCapturesDirectional`
+  (e.g. text inputs move the text cursor while editing); the controller passes
+  those inputs through instead of moving focus.
 
 ## FocusScope behavior
 
@@ -18,5 +35,5 @@ Focus management primitives for Roblox UI.
 
 ## Known limits
 
-- Trap and restore currently use `GuiService.SelectedObject` only.
-- This phase does not manage `NextSelection*` graph rewrites.
+- Spatial resolution compares element centres; it does not yet special-case
+  overlapping or nested candidates.

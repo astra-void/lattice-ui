@@ -135,7 +135,14 @@ function SelectContentImpl(props: {
       contentBoundaryRef={contentBoundaryRef}
       insideRefs={[selectContext.triggerRef]}
     >
-      <FocusScope active={open} restoreFocus={true} trapped={false}>
+      <FocusScope
+        active={open}
+        restoreFocus={true}
+        trapped={false}
+        navStrategy="ordered"
+        navOrientation="vertical"
+        navWrap={true}
+      >
         <frame
           AnchorPoint={popper.anchorPoint}
           BackgroundTransparency={1}

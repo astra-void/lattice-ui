@@ -1,11 +1,5 @@
 import { React, useControllableState } from "@lattice-ui/core";
-import {
-  focusGuiObject,
-  focusOrderedSelectionEntry,
-  getCurrentOrderedSelectionEntry,
-  getFirstOrderedSelectionEntry,
-  getRelativeOrderedSelectionEntry,
-} from "@lattice-ui/focus";
+import { focusGuiObject, focusOrderedSelectionEntry, getFirstOrderedSelectionEntry } from "@lattice-ui/focus";
 import { MenuContextProvider } from "./context";
 import type { MenuItemRegistration, MenuProps } from "./types";
 
@@ -46,12 +40,6 @@ export function Menu(props: MenuProps) {
     focusOrderedSelectionEntry(getFirstOrderedSelectionEntry(itemEntriesRef.current));
   }, []);
 
-  const moveSelection = React.useCallback((direction: -1 | 1) => {
-    const currentItem = getCurrentOrderedSelectionEntry(itemEntriesRef.current);
-    const nextItem = getRelativeOrderedSelectionEntry(itemEntriesRef.current, currentItem?.id, direction);
-    focusOrderedSelectionEntry(nextItem);
-  }, []);
-
   const restoreTriggerFocus = React.useCallback(() => {
     focusGuiObject(triggerRef.current);
   }, []);
@@ -83,10 +71,9 @@ export function Menu(props: MenuProps) {
       contentRef,
       registerItem,
       focusFirstItem,
-      moveSelection,
       restoreTriggerFocus,
     }),
-    [focusFirstItem, modal, moveSelection, open, registerItem, restoreTriggerFocus, setOpen],
+    [focusFirstItem, modal, open, registerItem, restoreTriggerFocus, setOpen],
   );
 
   return <MenuContextProvider value={contextValue}>{props.children}</MenuContextProvider>;

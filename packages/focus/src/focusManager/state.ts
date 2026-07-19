@@ -11,7 +11,8 @@ export const focusState = {
   nextFocusScopeId: 0,
   nextFocusOrder: 0,
   currentFocusedNodeId: undefined as number | undefined,
-  externalSelectionConsumerCount: 0,
-  selectedObjectConnection: undefined as RBXScriptConnection | undefined,
+  // Number of active FocusScopes; the navigation controller binds input only
+  // while this is > 0 so game controls keep working when no UI is active.
+  navigationConsumerCount: 0,
   bridgeWriteDepth: 0,
 };

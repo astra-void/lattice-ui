@@ -92,17 +92,14 @@ export function MenuItem(props: MenuItemProps) {
         return;
       }
 
+      // Directional movement between items is owned by the focus navigation
+      // controller (the MenuContent FocusScope is an ordered vertical scope).
       const keyCode = inputObject.KeyCode;
-      if (keyCode === Enum.KeyCode.Up || keyCode === Enum.KeyCode.Down) {
-        menuContext.moveSelection(keyCode === Enum.KeyCode.Up ? -1 : 1);
-        return;
-      }
-
       if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
         handleActivated();
       }
     },
-    [handleActivated, menuContext, props.disabled],
+    [handleActivated, props.disabled],
   );
 
   const handlePointerEnter = React.useCallback(() => setActive(true), []);

@@ -2,6 +2,19 @@ export type FocusRestoreSnapshot = {
   nodeId?: number;
 };
 
+// Directional navigation intent, expressed in screen-space cardinal directions.
+export type NavDirection = "up" | "down" | "left" | "right";
+
+// How a scope resolves a directional move between the nodes it owns.
+// - "ordered": step through nodes by registration order along the scope's
+//   primary axis (roving); cross-axis directions escape to the parent scope.
+// - "spatial": pick the nearest node in the pressed direction by geometry.
+export type NavStrategy = "ordered" | "spatial";
+
+// Primary axis for an ordered scope. "vertical" -> up/down step, "horizontal"
+// -> left/right step. Cross-axis directions escape.
+export type NavOrientation = "vertical" | "horizontal";
+
 export type FocusNodeRecord = {
   id: number;
   scopeId?: number;
@@ -11,6 +24,10 @@ export type FocusNodeRecord = {
   getDisabled: () => boolean;
   getVisible: () => boolean | undefined;
   getSyncToRoblox: () => boolean;
+  // When true for a direction, the focused widget consumes that directional
+  // input itself (text cursor, slider value) and the navigation controller
+  // passes the input through instead of moving focus.
+  getCapturesDirectional: (direction: NavDirection) => boolean;
 };
 
 export type FocusScopeRecord = {
@@ -26,6 +43,9 @@ export type FocusScopeRecord = {
   getTrapped: () => boolean;
   getRestoreFocus: () => boolean;
   getLayerOrder: () => number | undefined;
+  getNavStrategy: () => NavStrategy;
+  getNavOrientation: () => NavOrientation;
+  getNavWrap: () => boolean;
 };
 
 export type RegisterFocusNodeParams = {
@@ -34,6 +54,7 @@ export type RegisterFocusNodeParams = {
   getDisabled?: () => boolean;
   getVisible?: () => boolean | undefined;
   getSyncToRoblox?: () => boolean;
+  getCapturesDirectional?: (direction: NavDirection) => boolean;
 };
 
 export type RegisterFocusScopeParams = {
@@ -43,6 +64,9 @@ export type RegisterFocusScopeParams = {
   getTrapped: () => boolean;
   getRestoreFocus?: () => boolean;
   getLayerOrder?: () => number | undefined;
+  getNavStrategy?: () => NavStrategy;
+  getNavOrientation?: () => NavOrientation;
+  getNavWrap?: () => boolean;
 };
 
 export type ResolvedFocusNode = {

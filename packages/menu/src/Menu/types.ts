@@ -20,7 +20,6 @@ export type MenuContextValue = {
   contentRef: React.MutableRefObject<GuiObject | undefined>;
   registerItem: (item: MenuItemRegistration) => () => void;
   focusFirstItem: () => void;
-  moveSelection: (direction: -1 | 1) => void;
   restoreTriggerFocus: () => void;
 };
 

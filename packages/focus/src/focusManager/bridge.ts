@@ -16,9 +16,7 @@ export function withBridgeWrite<T>(callback: () => T) {
 
 export function syncRobloxSelection() {
   const resolvedFocusedNode =
-    focusState.currentFocusedNodeId !== undefined
-      ? getResolvedFocusNode(focusState.currentFocusedNodeId)
-      : undefined;
+    focusState.currentFocusedNodeId !== undefined ? getResolvedFocusNode(focusState.currentFocusedNodeId) : undefined;
   const nextSelectedObject = toSafeSelectedObject(
     resolvedFocusedNode && canSyncNodeToRoblox(resolvedFocusedNode) ? resolvedFocusedNode.guiObject : undefined,
   );

@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/core";
 import { useFocusScopeId } from "./context";
-import { registerFocusNode, unregisterFocusNode } from "./focusManager";
+import { type NavDirection, registerFocusNode, unregisterFocusNode } from "./focusManager";
 
 function useLatest<T>(value: T): React.MutableRefObject<T> {
   const ref = React.useRef(value);
@@ -17,6 +17,10 @@ export type UseFocusNodeOptions = {
   getDisabled?: () => boolean;
   getVisible?: () => boolean | undefined;
   syncToRoblox?: boolean;
+  // Return true for directions the focused widget consumes itself (text cursor,
+  // slider value). The navigation controller passes those inputs through
+  // instead of moving focus.
+  getCapturesDirectional?: (direction: NavDirection) => boolean;
 };
 
 export function useFocusNode(options: UseFocusNodeOptions): React.MutableRefObject<number | undefined> {
@@ -28,6 +32,7 @@ export function useFocusNode(options: UseFocusNodeOptions): React.MutableRefObje
   const getDisabledRef = useLatest(options.getDisabled);
   const getVisibleRef = useLatest(options.getVisible);
   const syncToRobloxRef = useLatest(options.syncToRoblox !== false);
+  const getCapturesDirectionalRef = useLatest(options.getCapturesDirectional);
 
   React.useEffect(() => {
     const nodeId = registerFocusNode({
@@ -36,6 +41,7 @@ export function useFocusNode(options: UseFocusNodeOptions): React.MutableRefObje
       getDisabled: () => disabledRef.current || getDisabledRef.current?.() === true,
       getVisible: () => getVisibleRef.current?.(),
       getSyncToRoblox: () => syncToRobloxRef.current,
+      getCapturesDirectional: (direction) => getCapturesDirectionalRef.current?.(direction) === true,
     });
 
     nodeIdRef.current = nodeId;
