@@ -176,10 +176,7 @@ for (const pkg of packages) {
  * Hand-maintained `paths` maps drift silently: a package missing from one still resolves locally
  * through its built `out/`, so only CI — which typechecks before building — sees the failure.
  */
-const pathMapFiles = [
-  "tsconfig.eslint.json",
-  ...apps.map((app) => path.join("apps", app.dirName, "tsconfig.json")),
-];
+const pathMapFiles = ["tsconfig.eslint.json", ...apps.map((app) => path.join("apps", app.dirName, "tsconfig.json"))];
 const expectedPathNames = packages
   .filter((pkg) => !isToolingPackage(policy, pkg.manifest.name))
   .map((pkg) => pkg.manifest.name);
