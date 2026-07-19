@@ -411,10 +411,26 @@ function AppContent(props: PlaygroundWorkspaceProps) {
   const headerHeight = 104;
   const navWidth = 280;
   const panelGap = theme.space[12];
+  // Full-bleed background ignores the topbar inset; offset the content by it so
+  // the header does not sit under the Roblox topbar. The inset is not always
+  // ready on the first render, so track it and react to topbar changes.
+  const [topInset, setTopInset] = React.useState(0);
+  React.useEffect(() => {
+    const guiService = game.GetService("GuiService");
+    const update = () => {
+      const [topLeftInset] = guiService.GetGuiInset();
+      setTopInset(topLeftInset.Y);
+    };
+    update();
+    const connection = guiService.GetPropertyChangedSignal("TopbarInset").Connect(update);
+    return () => {
+      connection.Disconnect();
+    };
+  }, []);
 
   return (
     <PortalProvider container={props.playerGui}>
-      <screengui IgnoreGuiInset={false} ResetOnSpawn={false}>
+      <screengui IgnoreGuiInset={true} ResetOnSpawn={false}>
         <frame
           BackgroundColor3={theme.colors.background}
           BorderSizePixel={0}
@@ -433,7 +449,7 @@ function AppContent(props: PlaygroundWorkspaceProps) {
 
           <frame
             {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
-              Position: UDim2.fromOffset(outerPadding, outerPadding),
+              Position: UDim2.fromOffset(outerPadding, outerPadding + topInset),
               Size: new UDim2(1, -outerPadding * 2, 0, headerHeight),
             }) as Record<string, unknown>)}
           >
@@ -525,8 +541,8 @@ function AppContent(props: PlaygroundWorkspaceProps) {
 
           <frame
             BackgroundTransparency={1}
-            Position={UDim2.fromOffset(outerPadding, outerPadding * 2 + headerHeight)}
-            Size={new UDim2(1, -outerPadding * 2, 1, -(outerPadding * 3 + headerHeight))}
+            Position={UDim2.fromOffset(outerPadding, outerPadding * 2 + headerHeight + topInset)}
+            Size={new UDim2(1, -outerPadding * 2, 1, -(outerPadding * 3 + headerHeight + topInset))}
           >
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
