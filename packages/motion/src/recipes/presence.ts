@@ -1,5 +1,5 @@
-import { motionTargets, type PresenceMotionConfig } from "../core/types";
 import { motionDuration, motionExitDuration, motionOffset } from "../core/tokens";
+import { motionTargets, type PresenceMotionConfig } from "../core/types";
 import type { MotionPlacement } from "../targets/offset";
 import { createPlacementOffset } from "../targets/offset";
 
@@ -147,7 +147,10 @@ export function createCanvasGroupPopperEntranceRecipe(
   };
 }
 
-export function createIndicatorRevealRecipe(size: UDim2, duration: number = motionDuration.reveal): PresenceMotionConfig {
+export function createIndicatorRevealRecipe(
+  size: UDim2,
+  duration: number = motionDuration.reveal,
+): PresenceMotionConfig {
   return {
     target: motionTargets.sizeWrapper("indicator reveal"),
     initial: {

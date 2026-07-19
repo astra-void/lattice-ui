@@ -1,5 +1,5 @@
-import { motionTargets, type ResponseMotionConfig } from "../core/types";
 import { motionDrag, motionSettle } from "../core/tokens";
+import { motionTargets, type ResponseMotionConfig } from "../core/types";
 
 export function createIndicatorSettleRecipe(duration: number = motionSettle.selection): ResponseMotionConfig {
   return {
