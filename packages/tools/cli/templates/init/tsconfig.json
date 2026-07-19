@@ -9,6 +9,7 @@
     "moduleResolution": "Node",
     "noLib": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "moduleDetection": "force",
