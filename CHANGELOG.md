@@ -7,9 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Make every primitive fully unstyled. Colors, fixed sizes, font sizes, literal text and decorative corner/stroke/padding children are gone; primitives now set behavior plus the minimum needed to neutralize Roblox instance defaults. Geometry computed from state — progress fill ratios, slider thumb travel, popper-driven position, scroll thumb size — stays owned by the primitive.
+- Forward unknown props from every part onto the instance it renders, so styling no longer requires `asChild`. Consumer props override the neutral defaults but never the behavior props, consumer event handlers compose with the primitive's instead of replacing them, and consumer refs compose with the primitive's own.
+- Check forwarded props against the instance each part renders. Passing a prop that element does not accept is now a compile error instead of being silently absorbed.
+- Ship no default motion. Presence timing is unchanged and content still stays mounted until an exit transition finishes, but an animation only runs when you pass `transition`.
+- Derive switch thumb travel from `AnchorPoint` and `Position` together, so it no longer depends on a declared `Size`. A thumb sized through a child element, a size constraint, or a layout previously parked itself off the right edge of the track.
+
+### Added
+
+- Expose the highlight state that used to only drive built-in colors: `useMenuItemContext`, `useContextMenuItemContext`, `useSelectItemContext` and `useComboboxItemContext` return `{ highlighted, disabled }`.
+
+### Removed
+
+- `Switch.Root` no longer accepts `trackColorMode`, `trackOnColor`, `trackOffColor` or `disabledTrackColor`, and the `SwitchTrackColorMode` type is gone. Style the track yourself.
+- `RadioGroup.Item` and `ToggleGroup.Item` no longer accept `transition`; it only fed the removed color animation.
+- `Select.Item` and `Combobox.Item` no longer render `textValue` as their label. Supply the label as a child. `textValue` still drives `Select.Value` and combobox filtering.
+- `Toast.Viewport` renders its children instead of the toast queue markup it used to hardcode. Map over `useToast().visibleToasts` yourself, as the `asChild` path already required.
+
 ### Fixed
 
 - Register the context-menu and motion packages in the CLI registry so `lattice add context-menu` and `lattice add motion` no longer fail with "Unknown component".
+- Map `@lattice-ui/react-context-menu` in the tsconfig paths that were missing it. Typecheck fell back to resolving the package's build output, which exists locally but not on a clean checkout.
 
 ## [0.6.2] - 2026-07-19
 
