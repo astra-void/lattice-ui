@@ -12,7 +12,7 @@ function ComboboxExample() {
   return (
     <frame BackgroundTransparency={1} Size={UDim2.fromScale(1, 1)}>
       <Combobox.Root>
-        <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 0)} Size={UDim2.fromOffset(240, 110)}>
+        <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 0)} Size={UDim2.fromOffset(240, 64)}>
           <Text
             BackgroundTransparency={1}
             Font={Enum.Font.GothamMedium}
@@ -23,46 +23,14 @@ function ComboboxExample() {
             TextXAlignment={Enum.TextXAlignment.Left}
           />
 
-          <Combobox.Trigger asChild>
-            <textbutton
-              AutoButtonColor={false}
-              BackgroundColor3={theme.colors.surfaceElevated}
-              BorderSizePixel={0}
-              Position={UDim2.fromOffset(0, 24)}
-              Size={UDim2.fromOffset(240, 40)}
-              Text=""
-            >
-              <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-              <uistroke Color={theme.colors.border} Thickness={1} />
-              <Combobox.Value asChild placeholder="Select framework">
-                <textlabel
-                  BackgroundTransparency={1}
-                  Position={UDim2.fromOffset(12, 0)}
-                  Size={UDim2.fromOffset(196, 40)}
-                  TextColor3={theme.colors.textPrimary}
-                  TextSize={theme.typography.labelSm.textSize}
-                  TextXAlignment={Enum.TextXAlignment.Left}
-                />
-              </Combobox.Value>
-              <Text
-                BackgroundTransparency={1}
-                Position={UDim2.fromOffset(212, 0)}
-                Size={UDim2.fromOffset(16, 40)}
-                Text="▾"
-                TextColor3={theme.colors.textSecondary}
-                TextSize={theme.typography.labelSm.textSize}
-              />
-            </textbutton>
-          </Combobox.Trigger>
-
           <Combobox.Input asChild placeholder="Search framework…">
             <textbox
               BackgroundColor3={theme.colors.surfaceElevated}
               BorderSizePixel={0}
               ClearTextOnFocus={false}
               PlaceholderColor3={theme.colors.textSecondary}
-              Position={UDim2.fromOffset(0, 72)}
-              Size={UDim2.fromOffset(240, 38)}
+              Position={UDim2.fromOffset(0, 24)}
+              Size={UDim2.fromOffset(240, 40)}
               Text=""
               TextColor3={theme.colors.textPrimary}
               TextSize={theme.typography.labelSm.textSize}
@@ -79,7 +47,8 @@ function ComboboxExample() {
           <Combobox.Content asChild placement="bottom" sideOffset={6}>
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
-                Size: UDim2.fromOffset(240, 184),
+                AutomaticSize: Enum.AutomaticSize.Y,
+                Size: UDim2.fromOffset(240, 0),
               }) as Record<string, unknown>)}
             >
               <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
