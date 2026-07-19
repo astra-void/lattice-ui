@@ -172,6 +172,36 @@ for (const pkg of packages) {
   }
 }
 
+/**
+ * Hand-maintained `paths` maps drift silently: a package missing from one still resolves locally
+ * through its built `out/`, so only CI — which typechecks before building — sees the failure.
+ */
+const pathMapFiles = [
+  "tsconfig.eslint.json",
+  ...apps.map((app) => path.join("apps", app.dirName, "tsconfig.json")),
+];
+const expectedPathNames = packages
+  .filter((pkg) => !isToolingPackage(policy, pkg.manifest.name))
+  .map((pkg) => pkg.manifest.name);
+
+for (const relativePath of pathMapFiles) {
+  const absolutePath = path.join(ROOT_DIR, relativePath);
+  if (!fileExists(absolutePath)) {
+    continue;
+  }
+
+  const config = readJson<{ compilerOptions?: { paths?: Record<string, unknown> } }>(absolutePath);
+  const paths = config.compilerOptions?.paths;
+  if (!paths) {
+    continue;
+  }
+
+  const missing = expectedPathNames.filter((name) => paths[name] === undefined);
+  if (missing.length > 0) {
+    errors.push(`${relativePath} is missing paths entries for: ${missing.join(", ")}.`);
+  }
+}
+
 const changesetConfigPath = path.join(ROOT_DIR, ".changeset", "config.json");
 if (!fileExists(changesetConfigPath)) {
   errors.push("Missing .changeset/config.json.");

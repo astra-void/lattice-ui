@@ -8,6 +8,7 @@
       "@lattice-ui/react-avatar": ["packages/react/avatar/src/index.ts"],
       "@lattice-ui/react-checkbox": ["packages/react/checkbox/src/index.ts"],
       "@lattice-ui/react-combobox": ["packages/react/combobox/src/index.ts"],
+      "@lattice-ui/react-context-menu": ["packages/react/context-menu/src/index.ts"],
       "@lattice-ui/react-runtime": ["packages/react/runtime/src/index.ts"],
       "@lattice-ui/react-dialog": ["packages/react/dialog/src/index.ts"],
       "@lattice-ui/react-layer": ["packages/react/layer/src/index.ts"],
