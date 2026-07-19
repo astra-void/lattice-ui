@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { parseJsonText } from "../../../packages/tools/cli/src/core/fs/json";
-import { mergeMissing, mergeStringArraysUnique, upsertDependencySpecs } from "../../../packages/tools/cli/src/core/fs/patch";
+import {
+  mergeMissing,
+  mergeStringArraysUnique,
+  upsertDependencySpecs,
+} from "../../../packages/tools/cli/src/core/fs/patch";
 
 describe("json patch helpers", () => {
   it("applies dependency updates idempotently", () => {
