@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, type Stats } from "node:fs";
 import * as path from "node:path";
 import { packageManagerFailedError, usageError } from "../core/errors";
 import { type CopyTemplateReport, copyTemplateSafe } from "../core/fs/copy";
@@ -8,7 +8,10 @@ import { resolveLatestVersions } from "../core/npm/latest";
 import { applyPinnedVersions, selectResolvablePackages } from "../core/npm/pins";
 import { resolveLocalLatticeCommand } from "../core/output";
 import { detectPackageManager } from "../core/pm/detect";
+import { planPackageManagerPin } from "../core/pm/devEngines";
 import type { PackageManagerName } from "../core/pm/types";
+import { readPackageJson } from "../core/project/readPackageJson";
+import { writePackageJson } from "../core/project/writePackageJson";
 import { type PromptRuntime, promptConfirm, promptInput, promptSelect } from "../core/prompt";
 
 export interface CreateCommandInput {
@@ -108,29 +111,47 @@ function normalizeProjectPath(projectPath: string): string {
   return normalized;
 }
 
-/** Resolves to true when the target directory had to be created. */
-async function ensureEmptyDirectory(targetRoot: string): Promise<boolean> {
+/**
+ * Rejects a target path that cannot hold a new project.
+ *
+ * Read-only, so it can run before the slow work without leaving anything behind. Resolves to true
+ * when the directory does not exist yet.
+ */
+async function assertUsableTargetDirectory(targetRoot: string): Promise<boolean> {
+  let stat: Stats;
   try {
-    const stat = await fs.stat(targetRoot);
-    if (!stat.isDirectory()) {
-      throw usageError(`Target path exists and is not a directory: ${targetRoot}`);
-    }
-
-    const entries = await fs.readdir(targetRoot);
-    if (entries.length > 0) {
-      throw usageError(`Target directory must be empty: ${targetRoot}`);
-    }
-
-    return false;
+    stat = await fs.stat(targetRoot);
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
-    if (nodeError.code !== "ENOENT") {
-      throw error;
+    if (nodeError.code === "ENOENT") {
+      return true;
     }
 
-    await fs.mkdir(targetRoot, { recursive: true });
-    return true;
+    throw error;
   }
+
+  if (!stat.isDirectory()) {
+    throw usageError(`Target path exists and is not a directory: ${targetRoot}`);
+  }
+
+  const entries = await fs.readdir(targetRoot);
+  if (entries.length > 0) {
+    throw usageError(`Target directory must be empty: ${targetRoot}`);
+  }
+
+  return false;
+}
+
+/**
+ * Creates the target directory as the first step of the scaffolding transaction.
+ *
+ * Package manager detection and version resolution both run before this, so a failure there leaves
+ * no directory behind at all. Resolves to true when the directory had to be created.
+ */
+async function createTargetDirectory(targetRoot: string): Promise<boolean> {
+  const created = await assertUsableTargetDirectory(targetRoot);
+  await fs.mkdir(targetRoot, { recursive: true });
+  return created;
 }
 
 /**
@@ -236,6 +257,19 @@ async function ensurePnpmNodeLinkerConfig(targetRoot: string, packageManager: Pa
   }
 }
 
+/**
+ * Pins the scaffolded project at the package manager that installed it.
+ *
+ * The lockfile and, for pnpm, the `.npmrc` node linker are both written for one manager, so a
+ * later install with another one would silently produce a second, inconsistent tree.
+ */
+async function ensurePackageManagerPin(targetRoot: string, packageManager: PackageManagerName): Promise<void> {
+  const plan = planPackageManagerPin(await readPackageJson(targetRoot), packageManager, { create: true });
+  if (plan.changed) {
+    await writePackageJson(targetRoot, plan.nextManifest);
+  }
+}
+
 async function selectTemplate(providedTemplate: string | undefined): Promise<string> {
   const normalized = normalizeTemplate(providedTemplate);
 
@@ -308,7 +342,7 @@ export async function runCreateCommand(
   const relativeProjectPath = normalizeProjectPath(providedProjectPath);
   const targetRoot = path.resolve(input.cwd, relativeProjectPath);
 
-  const createdTargetRoot = await ensureEmptyDirectory(targetRoot);
+  await assertUsableTargetDirectory(targetRoot);
 
   const logger = createLoggerFn({
     verbose: false,
@@ -361,7 +395,10 @@ export async function runCreateCommand(
   // Scaffolding, install and git init are one unit: a failure at any step discards the
   // whole target directory instead of leaving an unusable half-created project behind.
   let report: CopyTemplateReport;
+  let createdTargetRoot = false;
   try {
+    createdTargetRoot = await createTargetDirectory(targetRoot);
+
     const scaffoldSpinner = logger.spinner(`Scaffolding ${template} template...`);
     report = await copyTemplateSafe(templateDir, targetRoot, {
       dryRun: false,
@@ -405,6 +442,7 @@ export async function runCreateCommand(
     await ensureProjectDirectories(targetRoot);
     await ensureGitignoreExists(targetRoot);
     await ensurePnpmNodeLinkerConfig(targetRoot, resolvedPm.name);
+    await ensurePackageManagerPin(targetRoot, resolvedPm.name);
 
     logger.section("Installing");
     const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);

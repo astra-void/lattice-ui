@@ -44,6 +44,7 @@ interface ManifestPlan {
   addedScripts: string[];
   addedDependencies: string[];
   addedDevDependencies: string[];
+  pinnedTo?: PackageManagerName;
   repinnedFrom: PackageManagerPin[];
   legacyMigrations: LegacyPackageMigration[];
   unresolvedLegacyReplacements: string[];
@@ -259,7 +260,7 @@ function planManifestChanges(
     }
   }
 
-  const pinPlan = planPackageManagerPin(nextManifest, packageManager);
+  const pinPlan = planPackageManagerPin(nextManifest, packageManager, { create: true });
   if (pinPlan.changed) {
     nextManifest = pinPlan.nextManifest;
     changed = true;
@@ -271,6 +272,7 @@ function planManifestChanges(
     addedScripts: [...new Set(addedScripts)],
     addedDependencies: [...new Set(addedDependencies)],
     addedDevDependencies: [...new Set(addedDevDependencies)],
+    pinnedTo: pinPlan.changed && pinPlan.previous.length === 0 ? packageManager : undefined,
     repinnedFrom: pinPlan.previous,
     legacyMigrations: legacyPlan.migrations,
     unresolvedLegacyReplacements: legacyPlan.unresolved,
@@ -628,6 +630,10 @@ export async function runInitCommand(
     logger.warn(
       `Repinning ${describePackageManagerPin(pin)} to ${resolvedPm.name}; ${pin.name} would refuse to install.`,
     );
+  }
+
+  if (manifestPlan.pinnedTo) {
+    logger.kv("Package manager pin", `devEngines.packageManager (${manifestPlan.pinnedTo})`);
   }
 
   if (input.dryRun) {

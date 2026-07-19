@@ -73,34 +73,68 @@ export function readPackageManagerPins(manifest: PackageJson): PackageManagerPin
 }
 
 /**
- * Rewrites pins that point at another package manager so `target` can install the project.
+ * Writes `devEngines.packageManager` without a version range.
  *
- * The version range travels with the manager it was written for, so it is dropped rather than
- * carried over to a manager that would reject it.
+ * The range travels with the manager it was written for, so a repin drops it rather than carrying
+ * it over to a manager that would reject it. Leaving `onFail` unset keeps npm's default, which is
+ * to fail the install.
  */
-export function planPackageManagerPin(manifest: PackageJson, target: PackageManagerName): PackageManagerPinPlan {
-  const previous = readPackageManagerPins(manifest).filter((pin) => pin.name !== target);
+function withDevEnginesPin(manifest: PackageJson, target: PackageManagerName, onFail?: unknown): PackageJson {
+  const devEngines = { ...(manifest.devEngines as Record<string, unknown> | undefined) };
+  const entry: Record<string, unknown> = { name: target };
+  if (onFail !== undefined) {
+    entry.onFail = onFail;
+  }
+
+  devEngines.packageManager = entry;
+  return { ...manifest, devEngines };
+}
+
+export interface PlanPackageManagerPinOptions {
+  /**
+   * Adds a pin when the manifest carries none.
+   *
+   * Only the scaffolding commands set this: `create` and `init` decide how a project is set up, so
+   * they own the pin. `add`, `remove` and `upgrade` operate on projects they did not scaffold and
+   * stay repin-only, so they never introduce a pin a project never asked for.
+   */
+  create?: boolean;
+}
+
+/**
+ * Rewrites pins that point at another package manager so `target` can install the project, and
+ * optionally writes the initial pin for a project that has none.
+ */
+export function planPackageManagerPin(
+  manifest: PackageJson,
+  target: PackageManagerName,
+  options?: PlanPackageManagerPinOptions,
+): PackageManagerPinPlan {
+  const existing = readPackageManagerPins(manifest);
+  const previous = existing.filter((pin) => pin.name !== target);
+
   if (previous.length === 0) {
+    // A manifest that already pins `target` is left alone; only a pinless one is written to.
+    if (!options?.create || existing.length > 0) {
+      return {
+        changed: false,
+        nextManifest: manifest,
+        previous,
+      };
+    }
+
     return {
-      changed: false,
-      nextManifest: manifest,
+      changed: true,
+      nextManifest: withDevEnginesPin(manifest, target),
       previous,
     };
   }
 
-  const nextManifest: PackageJson = { ...manifest };
+  let nextManifest: PackageJson = { ...manifest };
 
   for (const pin of previous) {
     if (pin.field === "devEngines") {
-      const devEngines = { ...(nextManifest.devEngines as Record<string, unknown>) };
-      const entry = readDevEnginesEntry(manifest) ?? {};
-      const nextEntry: Record<string, unknown> = { name: target };
-      if (entry.onFail !== undefined) {
-        nextEntry.onFail = entry.onFail;
-      }
-
-      devEngines.packageManager = nextEntry;
-      nextManifest.devEngines = devEngines;
+      nextManifest = withDevEnginesPin(nextManifest, target, readDevEnginesEntry(manifest)?.onFail);
       continue;
     }
 
