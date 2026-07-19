@@ -92,6 +92,7 @@ export function ComboboxBasicScene() {
           TextColor3={theme.colors.textSecondary}
           TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
+          truncate
         />
 
         <Combobox.Root onInputValueChange={setQuery} onOpenChange={setOpen} onValueChange={setValue} value={value}>

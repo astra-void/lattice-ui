@@ -14,6 +14,7 @@ export function DialogModalBlockScene() {
         Text="Default modal dialog should block clicks on background controls while open."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
+        TextTruncate={Enum.TextTruncate.AtEnd}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
       <textbutton

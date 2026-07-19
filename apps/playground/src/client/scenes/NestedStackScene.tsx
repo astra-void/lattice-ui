@@ -14,6 +14,7 @@ export function NestedStackScene() {
         Text="Open Outer -> Open Inner. Outside click should dismiss the inner layer before the outer one."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
+        TextTruncate={Enum.TextTruncate.AtEnd}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
       <textbutton

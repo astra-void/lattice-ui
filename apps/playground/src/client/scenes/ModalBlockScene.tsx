@@ -14,6 +14,7 @@ export function ModalBlockScene() {
         Text="When modal is open, background button clicks should be blocked."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
+        TextTruncate={Enum.TextTruncate.AtEnd}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
       <textbutton

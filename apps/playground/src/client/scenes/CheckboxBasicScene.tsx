@@ -125,6 +125,7 @@ export function CheckboxBasicScene() {
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
+        truncate
       />
       <Text
         BackgroundTransparency={1}
@@ -253,7 +254,8 @@ export function CheckboxBasicScene() {
       <textbutton
         {...(mergeGuiProps(buttonRecipe({ intent: "primary", size: "sm" }, theme), {
           Position: UDim2.fromOffset(660, 68),
-          Size: UDim2.fromOffset(220, 36),
+          AutomaticSize: Enum.AutomaticSize.X,
+          Size: new UDim2(0, 0, 0, 36),
           Text: "Set Controlled Indeterminate",
           Event: {
             Activated: () => {
@@ -261,7 +263,9 @@ export function CheckboxBasicScene() {
             },
           },
         }) as Record<string, unknown>)}
-      />
+      >
+        <uipadding PaddingLeft={new UDim(0, theme.space[16])} PaddingRight={new UDim(0, theme.space[16])} />
+      </textbutton>
     </frame>
   );
 }

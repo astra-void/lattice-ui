@@ -27,10 +27,11 @@ export function LayerDismissScene() {
       />
       <textbutton
         AutoButtonColor={false}
+        AutomaticSize={Enum.AutomaticSize.X}
         BackgroundColor3={Color3.fromRGB(43, 105, 196)}
         BorderSizePixel={0}
         Position={UDim2.fromOffset(0, 72)}
-        Size={UDim2.fromOffset(200, 42)}
+        Size={new UDim2(0, 0, 0, 42)}
         Text={open ? "Layer Opened" : "Open Dismissable Layer"}
         TextColor3={Color3.fromRGB(240, 244, 250)}
         TextSize={16}
@@ -39,7 +40,9 @@ export function LayerDismissScene() {
             setOpen(true);
           },
         }}
-      />
+      >
+        <uipadding PaddingLeft={new UDim(0, 16)} PaddingRight={new UDim(0, 16)} />
+      </textbutton>
 
       {open ? (
         <DismissableLayer

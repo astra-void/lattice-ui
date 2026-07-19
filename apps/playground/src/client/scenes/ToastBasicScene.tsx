@@ -62,7 +62,7 @@ function ToastCard(props: ToastCardProps) {
             <Text
               BackgroundTransparency={1}
               Position={UDim2.fromOffset(0, 24)}
-              Size={UDim2.fromOffset(300, 18)}
+              Size={UDim2.fromOffset(330, 18)}
               Text={props.description ?? ""}
               TextColor3={theme.colors.textSecondary}
               TextSize={theme.typography.bodyMd.textSize}

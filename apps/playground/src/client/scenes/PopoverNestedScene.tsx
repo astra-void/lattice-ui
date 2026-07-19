@@ -14,6 +14,7 @@ export function PopoverNestedScene() {
         Text="Nested popover stacking: outside click closes the inner layer before the outer one."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
+        TextTruncate={Enum.TextTruncate.AtEnd}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 

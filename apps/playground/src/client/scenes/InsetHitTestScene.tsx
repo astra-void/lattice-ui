@@ -105,6 +105,7 @@ export function InsetHitTestScene() {
         Text="Inset Hit-Test: toggle IgnoreGuiInset and click around top bar/panel edges."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
+        TextTruncate={Enum.TextTruncate.AtEnd}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
       <textbutton

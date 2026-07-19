@@ -64,6 +64,7 @@ export function RadioGroupDisabledScene() {
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
+        truncate
       />
       <Text
         BackgroundTransparency={1}

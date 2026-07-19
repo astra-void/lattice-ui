@@ -150,6 +150,7 @@ function DensityCluster(props: { width: number }) {
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.labelSm.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
+        truncate
       />
     </frame>
   );
@@ -285,6 +286,7 @@ export function DensityScopeScene() {
           TextColor3={theme.colors.textPrimary}
           TextSize={theme.typography.titleMd.textSize - 2}
           TextXAlignment={Enum.TextXAlignment.Left}
+          truncate
         />
         <frame BackgroundTransparency={1} LayoutOrder={2} Size={UDim2.fromOffset(900, 34)}>
           <uilistlayout

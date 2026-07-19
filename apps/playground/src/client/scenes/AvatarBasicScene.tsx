@@ -117,6 +117,7 @@ export function AvatarBasicScene() {
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
+        truncate
       />
 
       <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 44)} Size={UDim2.fromOffset(940, 580)}>

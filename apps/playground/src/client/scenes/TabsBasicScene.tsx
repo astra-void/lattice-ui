@@ -58,6 +58,7 @@ export function TabsBasicScene() {
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
+        truncate
       />
       <Text
         BackgroundTransparency={1}
@@ -110,11 +111,15 @@ export function TabsBasicScene() {
                 <textbutton
                   {...(mergeGuiProps(buttonRecipe({ intent: "surface", size: "sm" }, theme), {
                     Active: false,
+                    AutomaticSize: Enum.AutomaticSize.X,
                     Selectable: false,
+                    Size: new UDim2(0, 0, 0, 34),
                     Text: "Settings (Disabled)",
                     TextColor3: theme.colors.textSecondary,
                   }) as Record<string, unknown>)}
-                />
+                >
+                  <uipadding PaddingLeft={new UDim(0, theme.space[12])} PaddingRight={new UDim(0, theme.space[12])} />
+                </textbutton>
               </Tabs.Trigger>
             </frame>
           </Tabs.List>

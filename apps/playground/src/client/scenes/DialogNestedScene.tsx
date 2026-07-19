@@ -14,6 +14,7 @@ export function DialogNestedScene() {
         Text="Open outer then inner. Click outside the inner dialog first, then outside the outer dialog."
         TextColor3={Color3.fromRGB(223, 229, 237)}
         TextSize={20}
+        TextTruncate={Enum.TextTruncate.AtEnd}
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
