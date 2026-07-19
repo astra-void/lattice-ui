@@ -3,6 +3,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import {
+  createTypecheckTsconfig,
   ensureDir,
   getInternalPackageNames,
   getLockedVersion,
@@ -15,15 +16,18 @@ import {
   writeJson,
 } from "./workspace-utils.ts";
 
+const LAYERS = ["react"] as const;
+
 function printUsage() {
   console.log(
-    "Usage: pnpm package:new --name <kebab-name> [--deps <a,b>] [--app-link <none|playground|test-harness|both>]",
+    `Usage: pnpm package:new --name <kebab-name> [--layer <${LAYERS.join("|")}>] [--deps <a,b>] [--app-link <none|playground|test-harness|both>]`,
   );
 }
 
 function parseArgs(argv: string[]) {
   const parsed = {
     name: "",
+    layer: "react",
     deps: "",
     appLink: "none",
   };
@@ -37,6 +41,16 @@ function parseArgs(argv: string[]) {
     }
     if (arg.startsWith("--name=")) {
       parsed.name = arg.slice("--name=".length);
+      continue;
+    }
+
+    if (arg === "--layer") {
+      parsed.layer = argv[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith("--layer=")) {
+      parsed.layer = arg.slice("--layer=".length);
       continue;
     }
 
@@ -73,6 +87,14 @@ function normalizeInternalName(name: string) {
   return name.startsWith("@lattice-ui/") ? name : `@lattice-ui/${name}`;
 }
 
+function canonicalLayer(value: string) {
+  const normalized = value.trim();
+  if (!(LAYERS as readonly string[]).includes(normalized)) {
+    throw new Error(`Invalid --layer value "${value}". Use ${LAYERS.join("|")}.`);
+  }
+  return normalized;
+}
+
 function canonicalAppLink(value: string) {
   const normalized = value.trim();
   const allowed = new Set(["none", "playground", "test-harness", "both"]);
@@ -93,7 +115,8 @@ if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(args.name)) {
 }
 
 const appLink = canonicalAppLink(args.appLink);
-const packageName = `@lattice-ui/${args.name}`;
+const layer = canonicalLayer(args.layer);
+const packageName = `@lattice-ui/${layer}-${args.name}`;
 const packages = listPackages();
 const apps = listApps();
 const policy = getPolicy();
@@ -103,7 +126,7 @@ if (existingPackageNames.has(packageName)) {
   throw new Error(`Package already exists: ${packageName}`);
 }
 
-const packageDir = `${ROOT_DIR}/packages/${args.name}`;
+const packageDir = `${ROOT_DIR}/packages/${layer}/${args.name}`;
 if (fs.existsSync(packageDir)) {
   throw new Error(`Directory already exists: ${packageDir}`);
 }
@@ -171,31 +194,24 @@ writeJson(`${packageDir}/default.project.json`, {
 });
 
 writeJson(`${packageDir}/tsconfig.json`, {
-  extends: "../../tsconfig.base.json",
+  extends: "../../../tsconfig.base.json",
   compilerOptions: {
     rootDir: "src",
     outDir: "out",
     declaration: true,
     typeRoots: [
       "./node_modules/@rbxts",
-      "../../node_modules/@rbxts",
+      "../../../node_modules/@rbxts",
       "./node_modules/@lattice-ui",
-      "../../node_modules/@lattice-ui",
+      "../../../node_modules/@lattice-ui",
     ],
     types: ["types", "compiler-types"],
   },
   include: ["src"],
 });
 
-writeJson(`${packageDir}/tsconfig.typecheck.json`, {
-  extends: "./tsconfig.json",
-  compilerOptions: {
-    noEmit: true,
-    baseUrl: "..",
-    rootDir: "..",
-    paths: {},
-  },
-});
+// Placeholder: workspace-sync rewrites this with the full workspace paths map below.
+writeJson(`${packageDir}/tsconfig.typecheck.json`, createTypecheckTsconfig([]));
 
 fs.writeFileSync(`${packageDir}/src/index.ts`, "export {};\n", "utf8");
 fs.writeFileSync(
@@ -237,6 +253,6 @@ if (linkedApps.length > 0) {
   console.log(`Linked in apps: ${linkedApps.join(", ")}`);
 }
 console.log("Next steps:");
-console.log("1. Implement package code in packages/<name>/src.");
+console.log(`1. Implement package code in packages/${layer}/${args.name}/src.`);
 console.log("2. Run pnpm workspace:check.");
 console.log("3. Add a changeset for public changes with pnpm changeset:add.");

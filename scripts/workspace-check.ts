@@ -2,7 +2,7 @@
 
 import * as path from "node:path";
 import {
-  createWorkspacePaths,
+  createTypecheckTsconfig,
   dependencyFields,
   fileExists,
   getInternalPackageNames,
@@ -46,7 +46,7 @@ const apps = listApps();
 const errors: string[] = [];
 
 if (packages.length === 0) {
-  errors.push("No packages were found in packages/*.");
+  errors.push("No packages were found in packages/*/*.");
 }
 
 const internalNames = getInternalPackageNames(packages);
@@ -56,15 +56,7 @@ const requiredFiles = policy.requiredFiles ?? ["src/index.ts", "tsconfig.json", 
 const defaultPeerDependencies = policy.defaultPeerDependencies ?? {};
 const requiredScripts = policy.packageDefaults?.scripts ?? {};
 const typecheckPathPackages = packages.filter((pkg) => !isToolingPackage(policy, pkg.manifest.name));
-const expectedTypecheckTsconfig = {
-  extends: "./tsconfig.json",
-  compilerOptions: {
-    noEmit: true,
-    baseUrl: "..",
-    rootDir: "..",
-    paths: createWorkspacePaths(typecheckPathPackages),
-  },
-};
+const expectedTypecheckTsconfig = createTypecheckTsconfig(typecheckPathPackages);
 
 const versionSet = new Set(
   packages

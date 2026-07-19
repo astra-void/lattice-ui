@@ -2,18 +2,18 @@ import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promise
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runAddCommand } from "../../../packages/cli/src/commands/add";
-import { runCreateCommand } from "../../../packages/cli/src/commands/create";
-import { runDoctorCommand } from "../../../packages/cli/src/commands/doctor";
-import { runInitCommand } from "../../../packages/cli/src/commands/init";
-import { runRemoveCommand } from "../../../packages/cli/src/commands/remove";
-import { runUpgradeCommand } from "../../../packages/cli/src/commands/upgrade";
-import type { Logger } from "../../../packages/cli/src/core/logger";
-import { detectPackageManager } from "../../../packages/cli/src/core/pm/detect";
-import type { PackageManager } from "../../../packages/cli/src/core/pm/types";
-import * as promptModule from "../../../packages/cli/src/core/prompt";
-import type { Registry } from "../../../packages/cli/src/core/registry/schema";
-import type { CliContext } from "../../../packages/cli/src/ctx";
+import { runAddCommand } from "../../../packages/tools/cli/src/commands/add";
+import { runCreateCommand } from "../../../packages/tools/cli/src/commands/create";
+import { runDoctorCommand } from "../../../packages/tools/cli/src/commands/doctor";
+import { runInitCommand } from "../../../packages/tools/cli/src/commands/init";
+import { runRemoveCommand } from "../../../packages/tools/cli/src/commands/remove";
+import { runUpgradeCommand } from "../../../packages/tools/cli/src/commands/upgrade";
+import type { Logger } from "../../../packages/tools/cli/src/core/logger";
+import { detectPackageManager } from "../../../packages/tools/cli/src/core/pm/detect";
+import type { PackageManager } from "../../../packages/tools/cli/src/core/pm/types";
+import * as promptModule from "../../../packages/tools/cli/src/core/prompt";
+import type { Registry } from "../../../packages/tools/cli/src/core/registry/schema";
+import type { CliContext } from "../../../packages/tools/cli/src/ctx";
 
 const tempDirs: string[] = [];
 
@@ -155,7 +155,7 @@ describe("command behavior", () => {
     expect(packageJson.version).toBe("0.1.0");
     expect(packageJson.dependencies["@rbxts/react"]).toBe("9.9.9");
     expect(packageJson.dependencies["@rbxts/react-roblox"]).toBe("9.9.9");
-    expect(packageJson.dependencies["@lattice-ui/style"]).toBe("9.9.9");
+    expect(packageJson.dependencies["@lattice-ui/react-style"]).toBe("9.9.9");
     expect(packageJson.devDependencies["lattice-ui"]).toBe("9.9.9");
     expect(packageJson.devDependencies["@eslint/eslintrc"]).toBe("9.9.9");
     expect(packageJson.devDependencies["eslint"]).toBe("9.9.9");
@@ -188,7 +188,7 @@ describe("command behavior", () => {
     expect(tsconfig.compilerOptions.target).toBe("esnext");
     expect(tsconfig.include).toEqual(["src"]);
     expect(tsconfig.rbxts).toBeUndefined();
-    expect(mainClient).toContain('import { defaultLightTheme, ThemeProvider } from "@lattice-ui/style";');
+    expect(mainClient).toContain('import { defaultLightTheme, ThemeProvider } from "@lattice-ui/react-style";');
     expect(mainClient).toContain("<ThemeProvider theme={defaultLightTheme}>");
     expect(packageJsonRaw.indexOf('"name"')).toBeLessThan(packageJsonRaw.indexOf('"version"'));
     expect(packageJsonRaw.indexOf('"version"')).toBeLessThan(packageJsonRaw.indexOf('"private"'));
@@ -654,7 +654,7 @@ describe("command behavior", () => {
             build: "custom-build",
           },
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
           },
         },
         null,
@@ -722,7 +722,7 @@ describe("command behavior", () => {
     expect(manifest.version).toBe("3.2.1");
     expect(manifest.scripts.build).toBe("custom-build");
     expect(manifest.scripts.watch).toBe("rbxtsc -p tsconfig.json -w");
-    expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
+    expect(manifest.dependencies["@lattice-ui/react-style"]).toBe("workspace:*");
     expect(manifest.dependencies["@rbxts/react"]).toBe("9.9.9");
     expect(manifest.devDependencies["lattice-ui"]).toBe("9.9.9");
     expect(defaultProject.name).toBe("existing-game");
@@ -748,7 +748,7 @@ describe("command behavior", () => {
     expect(defaultProject.tree.HttpService).toHaveProperty("$properties.HttpEnabled", true);
     expect(defaultProject.tree.SoundService).toHaveProperty("$properties.RespectFilteringEnabled", true);
     expect(await readFile(path.join(dir, "src", "client", "App.tsx"), "utf8")).toBe("export const App = 'existing';\n");
-    expect(mainClient).toContain('import { defaultLightTheme, ThemeProvider } from "@lattice-ui/style";');
+    expect(mainClient).toContain('import { defaultLightTheme, ThemeProvider } from "@lattice-ui/react-style";');
     expect(mergedTsconfig.compilerOptions.typeRoots).toEqual(["node_modules/@rbxts", "node_modules/@lattice-ui"]);
     expect(mergedTsconfig.rbxts).toBeUndefined();
     const gitignore = await readFile(path.join(dir, ".gitignore"), "utf8");
@@ -850,7 +850,7 @@ describe("command behavior", () => {
             typecheck: "custom-typecheck",
           },
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
             "@rbxts/react": "18.0.0",
             "@rbxts/react-roblox": "18.0.0",
           },
@@ -892,7 +892,7 @@ describe("command behavior", () => {
     expect(manifest.scripts.build).toBe("custom-build");
     expect(manifest.scripts.watch).toBe("custom-watch");
     expect(manifest.scripts.typecheck).toBe("custom-typecheck");
-    expect(manifest.dependencies["@lattice-ui/style"]).toBe("workspace:*");
+    expect(manifest.dependencies["@lattice-ui/react-style"]).toBe("workspace:*");
     expect(manifest.dependencies["@rbxts/react"]).toBe("18.0.0");
     expect(manifest.dependencies["@rbxts/react-roblox"]).toBe("18.0.0");
     expect(manifest.devDependencies["lattice-ui"]).toBe("workspace:*");
@@ -1046,9 +1046,9 @@ describe("command behavior", () => {
       registry: {
         packages: {
           popover: {
-            npm: "@lattice-ui/popover",
+            npm: "@lattice-ui/react-popover",
             peers: ["@rbxts/react", "@rbxts/react-roblox"],
-            providers: ["@lattice-ui/layer:PortalProvider?"],
+            providers: ["@lattice-ui/react-layer:PortalProvider?"],
           },
         },
         presets: {
@@ -1061,8 +1061,8 @@ describe("command behavior", () => {
 
     expect(add).toHaveBeenCalledTimes(1);
     const specs = ((add.mock.calls[0] as unknown as unknown[])?.[1] as unknown as string[]) ?? [];
-    expect(specs).toEqual(["@lattice-ui/popover", "@rbxts/react", "@rbxts/react-roblox"]);
-    expect(specs).not.toContain("@lattice-ui/layer");
+    expect(specs).toEqual(["@lattice-ui/react-popover", "@rbxts/react", "@rbxts/react-roblox"]);
+    expect(specs).not.toContain("@lattice-ui/react-layer");
   });
 
   it("add dry-run follows the compact output contract", async () => {
@@ -1077,7 +1077,7 @@ describe("command behavior", () => {
       registry: {
         packages: {
           style: {
-            npm: "@lattice-ui/style",
+            npm: "@lattice-ui/react-style",
           },
         },
         presets: {},
@@ -1106,7 +1106,7 @@ describe("command behavior", () => {
       registry: {
         packages: {
           style: {
-            npm: "@lattice-ui/style",
+            npm: "@lattice-ui/react-style",
           },
         },
         presets: {},
@@ -1124,7 +1124,7 @@ describe("command behavior", () => {
         {
           name: "tmp",
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
             "@rbxts/react": "17",
           },
         },
@@ -1140,8 +1140,8 @@ describe("command behavior", () => {
       pm: { name: "npm", remove },
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
-          dialog: { npm: "@lattice-ui/dialog" },
+          style: { npm: "@lattice-ui/react-style" },
+          dialog: { npm: "@lattice-ui/react-dialog" },
         },
         presets: {},
       },
@@ -1150,7 +1150,7 @@ describe("command behavior", () => {
     await runRemoveCommand(ctx, { names: ["style"], presets: [] });
 
     expect(remove).toHaveBeenCalledTimes(1);
-    expect(remove.mock.calls[0]).toEqual([["@lattice-ui/style"], dir]);
+    expect(remove.mock.calls[0]).toEqual([["@lattice-ui/react-style"], dir]);
   });
 
   it("remove dry-run follows the compact output contract", async () => {
@@ -1161,7 +1161,7 @@ describe("command behavior", () => {
         {
           name: "tmp",
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
           },
         },
         null,
@@ -1177,7 +1177,7 @@ describe("command behavior", () => {
       logger,
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
+          style: { npm: "@lattice-ui/react-style" },
         },
         presets: {},
       },
@@ -1190,7 +1190,7 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenNthCalledWith(3, "Dry Run");
     expect(logger.section).toHaveBeenNthCalledWith(4, "Result");
     expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
-    expect(logger.step).toHaveBeenCalledWith(expect.stringContaining("[dry-run] npm remove @lattice-ui/style"));
+    expect(logger.step).toHaveBeenCalledWith(expect.stringContaining("[dry-run] npm remove @lattice-ui/react-style"));
     expect(logger.step).toHaveBeenCalledWith("No files were changed.");
     expect(logger.step).toHaveBeenCalledWith("npx lattice doctor");
   });
@@ -1203,7 +1203,7 @@ describe("command behavior", () => {
         {
           name: "tmp",
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
           },
         },
         null,
@@ -1220,8 +1220,8 @@ describe("command behavior", () => {
       pm: { name: "npm", remove },
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
-          dialog: { npm: "@lattice-ui/dialog" },
+          style: { npm: "@lattice-ui/react-style" },
+          dialog: { npm: "@lattice-ui/react-dialog" },
         },
         presets: {},
       },
@@ -1230,7 +1230,7 @@ describe("command behavior", () => {
     await runRemoveCommand(ctx, { names: ["style", "dialog"], presets: [] });
 
     expect(remove).toHaveBeenCalledTimes(1);
-    expect(remove.mock.calls[0]).toEqual([["@lattice-ui/style"], dir]);
+    expect(remove.mock.calls[0]).toEqual([["@lattice-ui/react-style"], dir]);
     expect(logger.kv).toHaveBeenCalledWith("Missing selected", "1");
   });
 
@@ -1245,7 +1245,7 @@ describe("command behavior", () => {
       logger,
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
+          style: { npm: "@lattice-ui/react-style" },
         },
         presets: {},
       },
@@ -1267,8 +1267,8 @@ describe("command behavior", () => {
         {
           name: "tmp",
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
-            "@lattice-ui/dialog": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
+            "@lattice-ui/react-dialog": "workspace:*",
           },
         },
         null,
@@ -1285,9 +1285,9 @@ describe("command behavior", () => {
       pm: { name: "npm", remove },
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
-          dialog: { npm: "@lattice-ui/dialog" },
-          toast: { npm: "@lattice-ui/toast" },
+          style: { npm: "@lattice-ui/react-style" },
+          dialog: { npm: "@lattice-ui/react-dialog" },
+          toast: { npm: "@lattice-ui/react-toast" },
         },
         presets: {},
       },
@@ -1301,7 +1301,7 @@ describe("command behavior", () => {
       { label: "style", value: "style" },
     ]);
     expect(remove).toHaveBeenCalledTimes(1);
-    expect(remove.mock.calls[0]).toEqual([["@lattice-ui/dialog"], dir]);
+    expect(remove.mock.calls[0]).toEqual([["@lattice-ui/react-dialog"], dir]);
     promptSpy.mockRestore();
   });
 
@@ -1313,10 +1313,10 @@ describe("command behavior", () => {
         {
           name: "tmp",
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
           },
           devDependencies: {
-            "@lattice-ui/popover": "workspace:*",
+            "@lattice-ui/react-popover": "workspace:*",
           },
         },
         null,
@@ -1331,8 +1331,8 @@ describe("command behavior", () => {
       pm: { name: "npm", add },
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
-          popover: { npm: "@lattice-ui/popover" },
+          style: { npm: "@lattice-ui/react-style" },
+          popover: { npm: "@lattice-ui/react-popover" },
         },
         presets: {},
       },
@@ -1341,8 +1341,8 @@ describe("command behavior", () => {
     await runUpgradeCommand(ctx, { names: [], presets: [] });
 
     expect(add).toHaveBeenCalledTimes(2);
-    expect(add.mock.calls[0]).toEqual([false, ["@lattice-ui/style@latest"], dir]);
-    expect(add.mock.calls[1]).toEqual([true, ["@lattice-ui/popover@latest"], dir]);
+    expect(add.mock.calls[0]).toEqual([false, ["@lattice-ui/react-style@latest"], dir]);
+    expect(add.mock.calls[1]).toEqual([true, ["@lattice-ui/react-popover@latest"], dir]);
   });
 
   it("upgrade dry-run follows the compact output contract", async () => {
@@ -1353,7 +1353,7 @@ describe("command behavior", () => {
         {
           name: "tmp",
           dependencies: {
-            "@lattice-ui/style": "workspace:*",
+            "@lattice-ui/react-style": "workspace:*",
           },
         },
         null,
@@ -1369,7 +1369,7 @@ describe("command behavior", () => {
       logger,
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
+          style: { npm: "@lattice-ui/react-style" },
         },
         presets: {},
       },
@@ -1382,7 +1382,7 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenNthCalledWith(3, "Dry Run");
     expect(logger.section).toHaveBeenNthCalledWith(4, "Result");
     expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
-    expect(logger.step).toHaveBeenCalledWith(expect.stringContaining("[dry-run] npm add @lattice-ui/style@latest"));
+    expect(logger.step).toHaveBeenCalledWith(expect.stringContaining("[dry-run] npm add @lattice-ui/react-style@latest"));
     expect(logger.step).toHaveBeenCalledWith("No files were changed.");
     expect(logger.step).toHaveBeenCalledWith("npx lattice doctor");
   });
@@ -1432,7 +1432,7 @@ describe("command behavior", () => {
       logger,
       registry: {
         packages: {
-          style: { npm: "@lattice-ui/style" },
+          style: { npm: "@lattice-ui/react-style" },
         },
         presets: {},
       },
@@ -1512,7 +1512,7 @@ describe("command behavior", () => {
         {
           name: "tmp",
           dependencies: {
-            "@lattice-ui/popover": "^0.1.0",
+            "@lattice-ui/react-popover": "^0.1.0",
             "@rbxts/react": "17",
             "@rbxts/react-roblox": "17",
           },
@@ -1528,9 +1528,9 @@ describe("command behavior", () => {
       registry: {
         packages: {
           popover: {
-            npm: "@lattice-ui/popover",
+            npm: "@lattice-ui/react-popover",
             peers: ["@rbxts/react", "@rbxts/react-roblox"],
-            providers: ["@lattice-ui/layer:PortalProvider?"],
+            providers: ["@lattice-ui/react-layer:PortalProvider?"],
           },
         },
         presets: {},
@@ -1544,9 +1544,9 @@ describe("command behavior", () => {
       registry: {
         packages: {
           popover: {
-            npm: "@lattice-ui/popover",
+            npm: "@lattice-ui/react-popover",
             peers: ["@rbxts/react", "@rbxts/react-roblox"],
-            providers: ["@lattice-ui/layer:PortalProvider"],
+            providers: ["@lattice-ui/react-layer:PortalProvider"],
           },
         },
         presets: {},

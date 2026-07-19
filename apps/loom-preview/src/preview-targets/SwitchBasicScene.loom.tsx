@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { SwitchBasicScene } from "../../../playground/src/client/scenes/SwitchBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Switch } from "@lattice-ui/switch";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { Switch } from "@lattice-ui/react-switch";
 
 import { panelRecipe } from "../theme/recipes";
 

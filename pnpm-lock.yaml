@@ -27,51 +27,51 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.2.0(jiti@2.6.1))
-      '@lattice-ui/checkbox':
+      '@lattice-ui/react-checkbox':
         specifier: workspace:*
-        version: link:packages/checkbox
-      '@lattice-ui/core':
+        version: link:packages/react/checkbox
+      '@lattice-ui/react-dialog':
         specifier: workspace:*
-        version: link:packages/core
-      '@lattice-ui/dialog':
+        version: link:packages/react/dialog
+      '@lattice-ui/react-focus':
         specifier: workspace:*
-        version: link:packages/dialog
-      '@lattice-ui/focus':
+        version: link:packages/react/focus
+      '@lattice-ui/react-layer':
         specifier: workspace:*
-        version: link:packages/focus
-      '@lattice-ui/layer':
+        version: link:packages/react/layer
+      '@lattice-ui/react-menu':
         specifier: workspace:*
-        version: link:packages/layer
-      '@lattice-ui/menu':
+        version: link:packages/react/menu
+      '@lattice-ui/react-popover':
         specifier: workspace:*
-        version: link:packages/menu
-      '@lattice-ui/popover':
+        version: link:packages/react/popover
+      '@lattice-ui/react-popper':
         specifier: workspace:*
-        version: link:packages/popover
-      '@lattice-ui/popper':
+        version: link:packages/react/popper
+      '@lattice-ui/react-radio-group':
         specifier: workspace:*
-        version: link:packages/popper
-      '@lattice-ui/radio-group':
+        version: link:packages/react/radio-group
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:packages/radio-group
-      '@lattice-ui/style':
+        version: link:packages/react/runtime
+      '@lattice-ui/react-style':
         specifier: workspace:*
-        version: link:packages/style
-      '@lattice-ui/switch':
+        version: link:packages/react/style
+      '@lattice-ui/react-switch':
         specifier: workspace:*
-        version: link:packages/switch
-      '@lattice-ui/system':
+        version: link:packages/react/switch
+      '@lattice-ui/react-system':
         specifier: workspace:*
-        version: link:packages/system
-      '@lattice-ui/tabs':
+        version: link:packages/react/system
+      '@lattice-ui/react-tabs':
         specifier: workspace:*
-        version: link:packages/tabs
-      '@lattice-ui/toggle-group':
+        version: link:packages/react/tabs
+      '@lattice-ui/react-toggle-group':
         specifier: workspace:*
-        version: link:packages/toggle-group
-      '@lattice-ui/tooltip':
+        version: link:packages/react/toggle-group
+      '@lattice-ui/react-tooltip':
         specifier: workspace:*
-        version: link:packages/tooltip
+        version: link:packages/react/tooltip
       '@rbxts/compiler-types':
         specifier: 3.0.0-types.0
         version: 3.0.0-types.0
@@ -141,156 +141,156 @@ importers:
 
   apps/loom-preview:
     dependencies:
-      '@lattice-ui/accordion':
+      '@lattice-ui/react-accordion':
         specifier: workspace:*
-        version: link:../../packages/accordion
-      '@lattice-ui/avatar':
+        version: link:../../packages/react/accordion
+      '@lattice-ui/react-avatar':
         specifier: workspace:*
-        version: link:../../packages/avatar
-      '@lattice-ui/checkbox':
+        version: link:../../packages/react/avatar
+      '@lattice-ui/react-checkbox':
         specifier: workspace:*
-        version: link:../../packages/checkbox
-      '@lattice-ui/combobox':
+        version: link:../../packages/react/checkbox
+      '@lattice-ui/react-combobox':
         specifier: workspace:*
-        version: link:../../packages/combobox
-      '@lattice-ui/core':
+        version: link:../../packages/react/combobox
+      '@lattice-ui/react-dialog':
         specifier: workspace:*
-        version: link:../../packages/core
-      '@lattice-ui/dialog':
+        version: link:../../packages/react/dialog
+      '@lattice-ui/react-layer':
         specifier: workspace:*
-        version: link:../../packages/dialog
-      '@lattice-ui/layer':
+        version: link:../../packages/react/layer
+      '@lattice-ui/react-popover':
         specifier: workspace:*
-        version: link:../../packages/layer
-      '@lattice-ui/popover':
+        version: link:../../packages/react/popover
+      '@lattice-ui/react-progress':
         specifier: workspace:*
-        version: link:../../packages/popover
-      '@lattice-ui/progress':
+        version: link:../../packages/react/progress
+      '@lattice-ui/react-radio-group':
         specifier: workspace:*
-        version: link:../../packages/progress
-      '@lattice-ui/radio-group':
+        version: link:../../packages/react/radio-group
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../../packages/radio-group
-      '@lattice-ui/scroll-area':
+        version: link:../../packages/react/runtime
+      '@lattice-ui/react-scroll-area':
         specifier: workspace:*
-        version: link:../../packages/scroll-area
-      '@lattice-ui/select':
+        version: link:../../packages/react/scroll-area
+      '@lattice-ui/react-select':
         specifier: workspace:*
-        version: link:../../packages/select
-      '@lattice-ui/slider':
+        version: link:../../packages/react/select
+      '@lattice-ui/react-slider':
         specifier: workspace:*
-        version: link:../../packages/slider
-      '@lattice-ui/style':
+        version: link:../../packages/react/slider
+      '@lattice-ui/react-style':
         specifier: workspace:*
-        version: link:../../packages/style
-      '@lattice-ui/switch':
+        version: link:../../packages/react/style
+      '@lattice-ui/react-switch':
         specifier: workspace:*
-        version: link:../../packages/switch
-      '@lattice-ui/system':
+        version: link:../../packages/react/switch
+      '@lattice-ui/react-system':
         specifier: workspace:*
-        version: link:../../packages/system
-      '@lattice-ui/tabs':
+        version: link:../../packages/react/system
+      '@lattice-ui/react-tabs':
         specifier: workspace:*
-        version: link:../../packages/tabs
-      '@lattice-ui/text-field':
+        version: link:../../packages/react/tabs
+      '@lattice-ui/react-text-field':
         specifier: workspace:*
-        version: link:../../packages/text-field
-      '@lattice-ui/textarea':
+        version: link:../../packages/react/text-field
+      '@lattice-ui/react-textarea':
         specifier: workspace:*
-        version: link:../../packages/textarea
-      '@lattice-ui/toast':
+        version: link:../../packages/react/textarea
+      '@lattice-ui/react-toast':
         specifier: workspace:*
-        version: link:../../packages/toast
-      '@lattice-ui/toggle-group':
+        version: link:../../packages/react/toast
+      '@lattice-ui/react-toggle-group':
         specifier: workspace:*
-        version: link:../../packages/toggle-group
-      '@lattice-ui/tooltip':
+        version: link:../../packages/react/toggle-group
+      '@lattice-ui/react-tooltip':
         specifier: workspace:*
-        version: link:../../packages/tooltip
+        version: link:../../packages/react/tooltip
 
   apps/playground:
     dependencies:
-      '@lattice-ui/accordion':
+      '@lattice-ui/react-accordion':
         specifier: workspace:*
-        version: link:../../packages/accordion
-      '@lattice-ui/avatar':
+        version: link:../../packages/react/accordion
+      '@lattice-ui/react-avatar':
         specifier: workspace:*
-        version: link:../../packages/avatar
-      '@lattice-ui/checkbox':
+        version: link:../../packages/react/avatar
+      '@lattice-ui/react-checkbox':
         specifier: workspace:*
-        version: link:../../packages/checkbox
-      '@lattice-ui/combobox':
+        version: link:../../packages/react/checkbox
+      '@lattice-ui/react-combobox':
         specifier: workspace:*
-        version: link:../../packages/combobox
-      '@lattice-ui/context-menu':
+        version: link:../../packages/react/combobox
+      '@lattice-ui/react-context-menu':
         specifier: workspace:*
-        version: link:../../packages/context-menu
-      '@lattice-ui/core':
+        version: link:../../packages/react/context-menu
+      '@lattice-ui/react-dialog':
         specifier: workspace:*
-        version: link:../../packages/core
-      '@lattice-ui/dialog':
+        version: link:../../packages/react/dialog
+      '@lattice-ui/react-focus':
         specifier: workspace:*
-        version: link:../../packages/dialog
-      '@lattice-ui/focus':
+        version: link:../../packages/react/focus
+      '@lattice-ui/react-layer':
         specifier: workspace:*
-        version: link:../../packages/focus
-      '@lattice-ui/layer':
+        version: link:../../packages/react/layer
+      '@lattice-ui/react-menu':
         specifier: workspace:*
-        version: link:../../packages/layer
-      '@lattice-ui/menu':
+        version: link:../../packages/react/menu
+      '@lattice-ui/react-motion':
         specifier: workspace:*
-        version: link:../../packages/menu
-      '@lattice-ui/motion':
+        version: link:../../packages/react/motion
+      '@lattice-ui/react-popover':
         specifier: workspace:*
-        version: link:../../packages/motion
-      '@lattice-ui/popover':
+        version: link:../../packages/react/popover
+      '@lattice-ui/react-popper':
         specifier: workspace:*
-        version: link:../../packages/popover
-      '@lattice-ui/popper':
+        version: link:../../packages/react/popper
+      '@lattice-ui/react-progress':
         specifier: workspace:*
-        version: link:../../packages/popper
-      '@lattice-ui/progress':
+        version: link:../../packages/react/progress
+      '@lattice-ui/react-radio-group':
         specifier: workspace:*
-        version: link:../../packages/progress
-      '@lattice-ui/radio-group':
+        version: link:../../packages/react/radio-group
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../../packages/radio-group
-      '@lattice-ui/scroll-area':
+        version: link:../../packages/react/runtime
+      '@lattice-ui/react-scroll-area':
         specifier: workspace:*
-        version: link:../../packages/scroll-area
-      '@lattice-ui/select':
+        version: link:../../packages/react/scroll-area
+      '@lattice-ui/react-select':
         specifier: workspace:*
-        version: link:../../packages/select
-      '@lattice-ui/slider':
+        version: link:../../packages/react/select
+      '@lattice-ui/react-slider':
         specifier: workspace:*
-        version: link:../../packages/slider
-      '@lattice-ui/style':
+        version: link:../../packages/react/slider
+      '@lattice-ui/react-style':
         specifier: workspace:*
-        version: link:../../packages/style
-      '@lattice-ui/switch':
+        version: link:../../packages/react/style
+      '@lattice-ui/react-switch':
         specifier: workspace:*
-        version: link:../../packages/switch
-      '@lattice-ui/system':
+        version: link:../../packages/react/switch
+      '@lattice-ui/react-system':
         specifier: workspace:*
-        version: link:../../packages/system
-      '@lattice-ui/tabs':
+        version: link:../../packages/react/system
+      '@lattice-ui/react-tabs':
         specifier: workspace:*
-        version: link:../../packages/tabs
-      '@lattice-ui/text-field':
+        version: link:../../packages/react/tabs
+      '@lattice-ui/react-text-field':
         specifier: workspace:*
-        version: link:../../packages/text-field
-      '@lattice-ui/textarea':
+        version: link:../../packages/react/text-field
+      '@lattice-ui/react-textarea':
         specifier: workspace:*
-        version: link:../../packages/textarea
-      '@lattice-ui/toast':
+        version: link:../../packages/react/textarea
+      '@lattice-ui/react-toast':
         specifier: workspace:*
-        version: link:../../packages/toast
-      '@lattice-ui/toggle-group':
+        version: link:../../packages/react/toast
+      '@lattice-ui/react-toggle-group':
         specifier: workspace:*
-        version: link:../../packages/toggle-group
-      '@lattice-ui/tooltip':
+        version: link:../../packages/react/toggle-group
+      '@lattice-ui/react-tooltip':
         specifier: workspace:*
-        version: link:../../packages/tooltip
+        version: link:../../packages/react/tooltip
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -301,87 +301,87 @@ importers:
 
   apps/test-harness:
     dependencies:
-      '@lattice-ui/accordion':
+      '@lattice-ui/react-accordion':
         specifier: workspace:*
-        version: link:../../packages/accordion
-      '@lattice-ui/avatar':
+        version: link:../../packages/react/accordion
+      '@lattice-ui/react-avatar':
         specifier: workspace:*
-        version: link:../../packages/avatar
-      '@lattice-ui/checkbox':
+        version: link:../../packages/react/avatar
+      '@lattice-ui/react-checkbox':
         specifier: workspace:*
-        version: link:../../packages/checkbox
-      '@lattice-ui/combobox':
+        version: link:../../packages/react/checkbox
+      '@lattice-ui/react-combobox':
         specifier: workspace:*
-        version: link:../../packages/combobox
-      '@lattice-ui/context-menu':
+        version: link:../../packages/react/combobox
+      '@lattice-ui/react-context-menu':
         specifier: workspace:*
-        version: link:../../packages/context-menu
-      '@lattice-ui/core':
+        version: link:../../packages/react/context-menu
+      '@lattice-ui/react-dialog':
         specifier: workspace:*
-        version: link:../../packages/core
-      '@lattice-ui/dialog':
+        version: link:../../packages/react/dialog
+      '@lattice-ui/react-focus':
         specifier: workspace:*
-        version: link:../../packages/dialog
-      '@lattice-ui/focus':
+        version: link:../../packages/react/focus
+      '@lattice-ui/react-layer':
         specifier: workspace:*
-        version: link:../../packages/focus
-      '@lattice-ui/layer':
+        version: link:../../packages/react/layer
+      '@lattice-ui/react-menu':
         specifier: workspace:*
-        version: link:../../packages/layer
-      '@lattice-ui/menu':
+        version: link:../../packages/react/menu
+      '@lattice-ui/react-motion':
         specifier: workspace:*
-        version: link:../../packages/menu
-      '@lattice-ui/motion':
+        version: link:../../packages/react/motion
+      '@lattice-ui/react-popover':
         specifier: workspace:*
-        version: link:../../packages/motion
-      '@lattice-ui/popover':
+        version: link:../../packages/react/popover
+      '@lattice-ui/react-popper':
         specifier: workspace:*
-        version: link:../../packages/popover
-      '@lattice-ui/popper':
+        version: link:../../packages/react/popper
+      '@lattice-ui/react-progress':
         specifier: workspace:*
-        version: link:../../packages/popper
-      '@lattice-ui/progress':
+        version: link:../../packages/react/progress
+      '@lattice-ui/react-radio-group':
         specifier: workspace:*
-        version: link:../../packages/progress
-      '@lattice-ui/radio-group':
+        version: link:../../packages/react/radio-group
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../../packages/radio-group
-      '@lattice-ui/scroll-area':
+        version: link:../../packages/react/runtime
+      '@lattice-ui/react-scroll-area':
         specifier: workspace:*
-        version: link:../../packages/scroll-area
-      '@lattice-ui/select':
+        version: link:../../packages/react/scroll-area
+      '@lattice-ui/react-select':
         specifier: workspace:*
-        version: link:../../packages/select
-      '@lattice-ui/slider':
+        version: link:../../packages/react/select
+      '@lattice-ui/react-slider':
         specifier: workspace:*
-        version: link:../../packages/slider
-      '@lattice-ui/style':
+        version: link:../../packages/react/slider
+      '@lattice-ui/react-style':
         specifier: workspace:*
-        version: link:../../packages/style
-      '@lattice-ui/switch':
+        version: link:../../packages/react/style
+      '@lattice-ui/react-switch':
         specifier: workspace:*
-        version: link:../../packages/switch
-      '@lattice-ui/system':
+        version: link:../../packages/react/switch
+      '@lattice-ui/react-system':
         specifier: workspace:*
-        version: link:../../packages/system
-      '@lattice-ui/tabs':
+        version: link:../../packages/react/system
+      '@lattice-ui/react-tabs':
         specifier: workspace:*
-        version: link:../../packages/tabs
-      '@lattice-ui/text-field':
+        version: link:../../packages/react/tabs
+      '@lattice-ui/react-text-field':
         specifier: workspace:*
-        version: link:../../packages/text-field
-      '@lattice-ui/textarea':
+        version: link:../../packages/react/text-field
+      '@lattice-ui/react-textarea':
         specifier: workspace:*
-        version: link:../../packages/textarea
-      '@lattice-ui/toast':
+        version: link:../../packages/react/textarea
+      '@lattice-ui/react-toast':
         specifier: workspace:*
-        version: link:../../packages/toast
-      '@lattice-ui/toggle-group':
+        version: link:../../packages/react/toast
+      '@lattice-ui/react-toggle-group':
         specifier: workspace:*
-        version: link:../../packages/toggle-group
-      '@lattice-ui/tooltip':
+        version: link:../../packages/react/toggle-group
+      '@lattice-ui/react-tooltip':
         specifier: workspace:*
-        version: link:../../packages/tooltip
+        version: link:../../packages/react/tooltip
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -393,20 +393,20 @@ importers:
         specifier: 0.4.2-ts.0
         version: 0.4.2-ts.0
 
-  packages/accordion:
+  packages/react/accordion:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -415,11 +415,11 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/avatar:
+  packages/react/avatar:
     dependencies:
-      '@lattice-ui/core':
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../core
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -428,17 +428,17 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/checkbox:
+  packages/react/checkbox:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -447,22 +447,20 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/cli: {}
-
-  packages/combobox:
+  packages/react/combobox:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
-      '@lattice-ui/popper':
+      '@lattice-ui/react-popper':
         specifier: workspace:*
         version: link:../popper
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -471,51 +469,42 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/context-menu:
+  packages/react/context-menu:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
-      '@lattice-ui/popper':
+      '@lattice-ui/react-popper':
         specifier: workspace:*
         version: link:../popper
-    devDependencies:
-      '@rbxts/react':
-        specifier: 17.3.7-ts.1
-        version: 17.3.7-ts.1
-      '@rbxts/react-roblox':
-        specifier: 17.3.7-ts.1
-        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
-
-  packages/core:
-    devDependencies:
-      '@rbxts/react':
-        specifier: 17.3.7-ts.1
-        version: 17.3.7-ts.1
-      '@rbxts/react-roblox':
-        specifier: 17.3.7-ts.1
-        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
-
-  packages/dialog:
-    dependencies:
-      '@lattice-ui/core':
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+        version: link:../runtime
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/react/dialog:
+    dependencies:
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -524,11 +513,11 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/focus:
+  packages/react/focus:
     dependencies:
-      '@lattice-ui/core':
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../core
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -537,14 +526,14 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/layer:
+  packages/react/layer:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -553,23 +542,23 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/menu:
+  packages/react/menu:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
-      '@lattice-ui/popper':
+      '@lattice-ui/react-popper':
         specifier: workspace:*
         version: link:../popper
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -578,11 +567,11 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/motion:
+  packages/react/motion:
     dependencies:
-      '@lattice-ui/core':
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../core
+        version: link:../runtime
       '@rbxts/services':
         specifier: ^1.6.0
         version: 1.6.0
@@ -594,23 +583,23 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/popover:
+  packages/react/popover:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
-      '@lattice-ui/popper':
+      '@lattice-ui/react-popper':
         specifier: workspace:*
         version: link:../popper
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -619,14 +608,14 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/popper:
+  packages/react/popper:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -635,14 +624,14 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/progress:
+  packages/react/progress:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -651,20 +640,20 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/radio-group:
+  packages/react/radio-group:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -673,11 +662,7 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/scroll-area:
-    dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
+  packages/react/runtime:
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -686,23 +671,36 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/select:
+  packages/react/scroll-area:
     dependencies:
-      '@lattice-ui/core':
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+        version: link:../runtime
+    devDependencies:
+      '@rbxts/react':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1
+      '@rbxts/react-roblox':
+        specifier: 17.3.7-ts.1
+        version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/react/select:
+    dependencies:
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
-      '@lattice-ui/popper':
+      '@lattice-ui/react-popper':
         specifier: workspace:*
         version: link:../popper
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -711,17 +709,17 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/slider:
+  packages/react/slider:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -730,11 +728,11 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/style:
+  packages/react/style:
     dependencies:
-      '@lattice-ui/core':
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../core
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -743,14 +741,14 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/switch:
+  packages/react/switch:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -759,12 +757,12 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/system:
+  packages/react/system:
     dependencies:
-      '@lattice-ui/core':
+      '@lattice-ui/react-runtime':
         specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/style':
+        version: link:../runtime
+      '@lattice-ui/react-style':
         specifier: workspace:*
         version: link:../style
       '@rbxts/react':
@@ -774,20 +772,20 @@ importers:
         specifier: ^17
         version: 17.2.3
 
-  packages/tabs:
+  packages/react/tabs:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -796,17 +794,17 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/text-field:
+  packages/react/text-field:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -815,17 +813,17 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/textarea:
+  packages/react/textarea:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -834,17 +832,17 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/toast:
+  packages/react/toast:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -853,17 +851,17 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/toggle-group:
+  packages/react/toggle-group:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/focus':
+      '@lattice-ui/react-focus':
         specifier: workspace:*
         version: link:../focus
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -872,20 +870,20 @@ importers:
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
 
-  packages/tooltip:
+  packages/react/tooltip:
     dependencies:
-      '@lattice-ui/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lattice-ui/layer':
+      '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer
-      '@lattice-ui/motion':
+      '@lattice-ui/react-motion':
         specifier: workspace:*
         version: link:../motion
-      '@lattice-ui/popper':
+      '@lattice-ui/react-popper':
         specifier: workspace:*
         version: link:../popper
+      '@lattice-ui/react-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@rbxts/react':
         specifier: 17.3.7-ts.1
@@ -893,6 +891,8 @@ importers:
       '@rbxts/react-roblox':
         specifier: 17.3.7-ts.1
         version: 17.3.7-ts.1(@rbxts/react@17.3.7-ts.1)
+
+  packages/tools/cli: {}
 
 packages:
 

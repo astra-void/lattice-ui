@@ -1,0 +1,91 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": "../..",
+    "rootDir": "../..",
+    "paths": {
+      "@lattice-ui/react-accordion": [
+        "react/accordion/src/index.ts"
+      ],
+      "@lattice-ui/react-avatar": [
+        "react/avatar/src/index.ts"
+      ],
+      "@lattice-ui/react-checkbox": [
+        "react/checkbox/src/index.ts"
+      ],
+      "@lattice-ui/react-combobox": [
+        "react/combobox/src/index.ts"
+      ],
+      "@lattice-ui/react-context-menu": [
+        "react/context-menu/src/index.ts"
+      ],
+      "@lattice-ui/react-dialog": [
+        "react/dialog/src/index.ts"
+      ],
+      "@lattice-ui/react-focus": [
+        "react/focus/src/index.ts"
+      ],
+      "@lattice-ui/react-layer": [
+        "react/layer/src/index.ts"
+      ],
+      "@lattice-ui/react-menu": [
+        "react/menu/src/index.ts"
+      ],
+      "@lattice-ui/react-motion": [
+        "react/motion/src/index.ts"
+      ],
+      "@lattice-ui/react-popover": [
+        "react/popover/src/index.ts"
+      ],
+      "@lattice-ui/react-popper": [
+        "react/popper/src/index.ts"
+      ],
+      "@lattice-ui/react-progress": [
+        "react/progress/src/index.ts"
+      ],
+      "@lattice-ui/react-radio-group": [
+        "react/radio-group/src/index.ts"
+      ],
+      "@lattice-ui/react-runtime": [
+        "react/runtime/src/index.ts"
+      ],
+      "@lattice-ui/react-scroll-area": [
+        "react/scroll-area/src/index.ts"
+      ],
+      "@lattice-ui/react-select": [
+        "react/select/src/index.ts"
+      ],
+      "@lattice-ui/react-slider": [
+        "react/slider/src/index.ts"
+      ],
+      "@lattice-ui/react-style": [
+        "react/style/src/index.ts"
+      ],
+      "@lattice-ui/react-switch": [
+        "react/switch/src/index.ts"
+      ],
+      "@lattice-ui/react-system": [
+        "react/system/src/index.ts"
+      ],
+      "@lattice-ui/react-tabs": [
+        "react/tabs/src/index.ts"
+      ],
+      "@lattice-ui/react-text-field": [
+        "react/text-field/src/index.ts"
+      ],
+      "@lattice-ui/react-textarea": [
+        "react/textarea/src/index.ts"
+      ],
+      "@lattice-ui/react-toast": [
+        "react/toast/src/index.ts"
+      ],
+      "@lattice-ui/react-toggle-group": [
+        "react/toggle-group/src/index.ts"
+      ],
+      "@lattice-ui/react-tooltip": [
+        "react/tooltip/src/index.ts"
+      ]
+    }
+  }
+}

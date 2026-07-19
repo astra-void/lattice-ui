@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Popover } from "@lattice-ui/popover";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { Popover } from "@lattice-ui/react-popover";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 import { buttonRecipe, panelRecipe } from "../../../playground/src/client/theme/recipes";
 import { DocExampleShell } from "./DocExampleShell";
 

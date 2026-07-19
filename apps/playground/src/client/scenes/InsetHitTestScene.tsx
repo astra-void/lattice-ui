@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 
 const Players = game.GetService("Players");
 const GuiService = game.GetService("GuiService");

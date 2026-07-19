@@ -11,9 +11,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mocked Slot records the props the primitive forwards to an asChild child, so
 // we can read `Selectable`/`Active` and invoke the composed `Event` handlers.
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
-  const strictContext = await import("../../../packages/core/src/context");
+  const strictContext = await import("../../../packages/react/runtime/src/context");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
     const { children, ...slotProps } = props;
@@ -35,23 +35,23 @@ vi.mock("@lattice-ui/core", async () => {
 
 // Use the real activation guard; stub the focus-node registration (it reaches
 // into GuiService, which is irrelevant to activation dispatch).
-vi.mock("@lattice-ui/focus", async () => {
-  const guard = await import("../../../packages/focus/src/useActivationGuard");
+vi.mock("@lattice-ui/react-focus", async () => {
+  const guard = await import("../../../packages/react/focus/src/useActivationGuard");
   return {
     useActivationGuard: guard.useActivationGuard,
     useFocusNode: () => ({ current: undefined }),
   };
 });
 
-vi.mock("@lattice-ui/motion", () => ({
+vi.mock("@lattice-ui/react-motion", () => ({
   createSelectionResponseRecipe: () => ({}),
   useResponseMotion: () => ({ current: undefined }),
 }));
 
-import { SelectContextProvider } from "../../../packages/select/src/Select/context";
-import { SelectItem } from "../../../packages/select/src/Select/SelectItem";
-import { SelectTrigger } from "../../../packages/select/src/Select/SelectTrigger";
-import type { SelectContextValue } from "../../../packages/select/src/Select/types";
+import { SelectContextProvider } from "../../../packages/react/select/src/Select/context";
+import { SelectItem } from "../../../packages/react/select/src/Select/SelectItem";
+import { SelectTrigger } from "../../../packages/react/select/src/Select/SelectTrigger";
+import type { SelectContextValue } from "../../../packages/react/select/src/Select/types";
 
 afterEach(() => {
   cleanup();

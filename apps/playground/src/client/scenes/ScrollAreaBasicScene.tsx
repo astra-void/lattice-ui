@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { ScrollArea } from "@lattice-ui/scroll-area";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { React } from "@lattice-ui/react-runtime";
+import { ScrollArea } from "@lattice-ui/react-scroll-area";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 import { panelRecipe } from "../theme/recipes";
 
 function SectionHeader(props: { title: string; hint: string; layoutOrder: number }) {

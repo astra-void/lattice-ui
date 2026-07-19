@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextAccordionValues, normalizeAccordionValue } from "../../../packages/accordion/src/Accordion/state";
+import { nextAccordionValues, normalizeAccordionValue } from "../../../packages/react/accordion/src/Accordion/state";
 
 describe("accordion state", () => {
   it("normalizes single and multiple values", () => {

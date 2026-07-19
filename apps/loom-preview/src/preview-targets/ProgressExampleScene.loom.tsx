@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Progress } from "@lattice-ui/progress";
-import { Text, useTheme } from "@lattice-ui/style";
+import { Progress } from "@lattice-ui/react-progress";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
 import { DocExampleShell } from "./DocExampleShell";
 
 function ProgressExample() {

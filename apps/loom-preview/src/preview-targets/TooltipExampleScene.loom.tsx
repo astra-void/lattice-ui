@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Tooltip } from "@lattice-ui/tooltip";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { Tooltip } from "@lattice-ui/react-tooltip";
 import { buttonRecipe } from "../../../playground/src/client/theme/recipes";
 import { DocExampleShell } from "./DocExampleShell";
 

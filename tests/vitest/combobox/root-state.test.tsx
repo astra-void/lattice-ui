@@ -9,10 +9,10 @@ import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
-  const controllable = await import("../../../packages/core/src/useControllableState");
-  const strictContext = await import("../../../packages/core/src/context");
+  const controllable = await import("../../../packages/react/runtime/src/useControllableState");
+  const strictContext = await import("../../../packages/react/runtime/src/context");
 
   return {
     React: react.default,
@@ -21,9 +21,9 @@ vi.mock("@lattice-ui/core", async () => {
   };
 });
 
-import { ComboboxRoot } from "../../../packages/combobox/src/Combobox/ComboboxRoot";
-import { useComboboxContext } from "../../../packages/combobox/src/Combobox/context";
-import type { ComboboxContextValue } from "../../../packages/combobox/src/Combobox/types";
+import { ComboboxRoot } from "../../../packages/react/combobox/src/Combobox/ComboboxRoot";
+import { useComboboxContext } from "../../../packages/react/combobox/src/Combobox/context";
+import type { ComboboxContextValue } from "../../../packages/react/combobox/src/Combobox/types";
 
 afterEach(() => {
   cleanup();

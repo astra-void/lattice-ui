@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Text, useTheme } from "@lattice-ui/style";
-import { Grid, Surface } from "@lattice-ui/system";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
+import { Grid, Surface } from "@lattice-ui/react-system";
 
 type TileProps = {
   label: string;

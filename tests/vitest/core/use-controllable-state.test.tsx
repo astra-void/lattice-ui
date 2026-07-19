@@ -4,7 +4,7 @@ import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 // Import the module directly: the package index re-exports `react.ts`, whose
 // `import = require` syntax does not survive the vitest ESM transform.
-import { useControllableState } from "../../../packages/core/src/useControllableState";
+import { useControllableState } from "../../../packages/react/runtime/src/useControllableState";
 
 describe("useControllableState", () => {
   it("updates state and fires onChange when uncontrolled", () => {

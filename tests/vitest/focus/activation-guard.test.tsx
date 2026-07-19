@@ -9,14 +9,14 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// useActivationGuard pulls React from the @lattice-ui/core entry; mock it to the
+// useActivationGuard pulls React from the @lattice-ui/react-runtime entry; mock it to the
 // real react module so we don't drag in the roblox-only re-export shims.
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
   return { React: react.default };
 });
 
-import { useActivationGuard } from "../../../packages/focus/src/useActivationGuard";
+import { useActivationGuard } from "../../../packages/react/focus/src/useActivationGuard";
 
 afterEach(() => {
   cleanup();

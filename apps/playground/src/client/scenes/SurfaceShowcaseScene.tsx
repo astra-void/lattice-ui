@@ -1,7 +1,7 @@
-import { React } from "@lattice-ui/core";
-import { Text, useTheme } from "@lattice-ui/style";
-import type { SurfaceToken } from "@lattice-ui/system";
-import { Surface, useDensity } from "@lattice-ui/system";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
+import type { SurfaceToken } from "@lattice-ui/react-system";
+import { Surface, useDensity } from "@lattice-ui/react-system";
 
 function SectionHeader(props: { title: string; hint: string; layoutOrder: number }) {
   const { theme } = useTheme();

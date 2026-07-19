@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { SelectBasicScene } from "../../../playground/src/client/scenes/SelectBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

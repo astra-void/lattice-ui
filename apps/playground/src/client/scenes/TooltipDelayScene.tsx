@@ -1,8 +1,8 @@
-import { React } from "@lattice-ui/core";
-import type { PopperPlacement } from "@lattice-ui/popper";
-import type { Theme } from "@lattice-ui/style";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Tooltip } from "@lattice-ui/tooltip";
+import type { PopperPlacement } from "@lattice-ui/react-popper";
+import { React } from "@lattice-ui/react-runtime";
+import type { Theme } from "@lattice-ui/react-style";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { Tooltip } from "@lattice-ui/react-tooltip";
 
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 

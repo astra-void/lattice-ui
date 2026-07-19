@@ -6,7 +6,8 @@ This repository is the Lattice UI monorepo.
 
 It contains:
 
-- publishable UI packages under `packages/*`
+- publishable UI packages under `packages/<layer>/<name>`, where `<layer>` is the target framework
+  (currently only `react`; the CLI lives outside that axis under `packages/tools/cli`)
 - app workspaces under `apps/*`
   - `apps/playground`: Roblox playground for manual UI verification
   - `apps/loom-preview`: typecheck-only preview integration workspace
@@ -52,7 +53,7 @@ When making changes:
 
 ## Where to make changes
 
-- Package source code lives in `packages/<name>/src`.
+- Package source code lives in `packages/<layer>/<name>/src`.
 - Package public exports should be driven from each package's `src/index.ts`.
 - Roblox playground scenes live in `apps/playground/src/client/scenes`.
 - Loom preview targets live in `apps/loom-preview/src/preview-targets`.
@@ -93,11 +94,11 @@ Import and module safety:
 
 ## Motion guidance
 
-This repository uses React for state and composition, but animation and motion behavior should flow through `@lattice-ui/motion`.
+This repository uses React for state and composition, but animation and motion behavior should flow through `@lattice-ui/react-motion`.
 
 Agent guidance for motion-related changes:
 
-- Use `@lattice-ui/motion` for animation, presence, feedback, and response motion in package and app components.
+- Use `@lattice-ui/react-motion` for animation, presence, feedback, and response motion in package and app components.
 - Prefer existing motion recipes and hooks such as `usePresenceMotion`, `useResponseMotion`, and `useFeedbackEffect`.
 - Do not add direct Roblox animation service usage, custom schedulers, per-frame interpolation, or render-loop animation logic in consuming packages.
 - Use React state for semantic UI state such as open/closed, active/inactive, checked/unchecked, or present/absent.
@@ -105,19 +106,19 @@ Agent guidance for motion-related changes:
 
 Practical expectations:
 
-- `packages/motion` owns the motion runtime, scheduler, instance property interpolation, and motion policy behavior.
-- Motion disabling or reduced-motion behavior should be handled through `@lattice-ui/motion` policy and APIs.
-- If a primitive needs new motion behavior, extend `packages/motion` recipes, hooks, or public APIs instead of adding one-off animation logic in the primitive.
+- `packages/react/motion` owns the motion runtime, scheduler, instance property interpolation, and motion policy behavior.
+- Motion disabling or reduced-motion behavior should be handled through `@lattice-ui/react-motion` policy and APIs.
+- If a primitive needs new motion behavior, extend `packages/react/motion` recipes, hooks, or public APIs instead of adding one-off animation logic in the primitive.
 - Be especially careful with position, size, transparency, and color props that may be controlled by motion APIs.
 
 ## Navigation and focus guidance
 
 Lattice ships its own directional-navigation system and does **not** use Roblox's native GUI
 selection navigation. All keyboard, gamepad, and programmatic focus movement flows through
-`@lattice-ui/focus`. Do not reimplement or fall back to native navigation in consumer
+`@lattice-ui/react-focus`. Do not reimplement or fall back to native navigation in consumer
 packages, playground scenes, or app code.
 
-How the custom navigation works (`packages/focus/src/focusManager/navigation/`):
+How the custom navigation works (`packages/react/focus/src/focusManager/navigation/`):
 
 - A single controller drives navigation. It binds input via
   `ContextActionService.BindActionAtPriority` (keyboard arrows + Tab, gamepad D-pad +
@@ -141,9 +142,9 @@ Hard rules:
   `NextSelectionDown`, `NextSelectionLeft`, `NextSelectionRight`, `SelectionGroup`, or
   `GuiService.AutoSelectGuiEnabled` to drive navigation.
 - Do not read or write `GuiService.SelectedObject` from consumer packages, scenes, or app
-  code, and do not treat it as an input - it is an output that `@lattice-ui/focus` owns.
+  code, and do not treat it as an input - it is an output that `@lattice-ui/react-focus` owns.
 - Do not bind `ContextActionService` / `UserInputService` for focus movement outside
-  `@lattice-ui/focus`. The navigation controller is the single owner of directional input while
+  `@lattice-ui/react-focus`. The navigation controller is the single owner of directional input while
   a scope is active.
 
 Do instead:
@@ -248,7 +249,7 @@ Prefer root workspace commands unless the task is explicitly package-local.
 
 ## Package conventions
 
-For publishable packages under `packages/*`:
+For publishable packages under `packages/<layer>/<name>`:
 
 - preserve `main`, `types`, and `source` conventions
 - preserve required files and standard scripts
@@ -307,7 +308,7 @@ Commit messages:
 
 Changesets:
 
-- Any user-facing change to a publishable package under `packages/*` needs a changeset
+- Any user-facing change to a publishable package under `packages/<layer>/<name>` needs a changeset
   (`pnpm run changeset:add`). Internal-only, scene-only, tooling, or docs changes usually do not.
 - Do not hand-edit versions; let the changeset/release flow own version bumps.
 
@@ -329,7 +330,7 @@ If unsure:
 
 - prefer root `typecheck` over package-local guessing
 - prefer package fixes over playground-only patches
-- prefer `@lattice-ui/focus` over any native Roblox selection navigation
+- prefer `@lattice-ui/react-focus` over any native Roblox selection navigation
 - prefer minimal diffs
 - prefer running `lint:fix` + `typecheck` before committing
 - prefer adding or updating tests when behavior changes

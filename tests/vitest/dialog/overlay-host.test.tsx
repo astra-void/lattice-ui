@@ -9,10 +9,10 @@ import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
-  const controllable = await import("../../../packages/core/src/useControllableState");
-  const strictContext = await import("../../../packages/core/src/context");
+  const controllable = await import("../../../packages/react/runtime/src/useControllableState");
+  const strictContext = await import("../../../packages/react/runtime/src/context");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
     const { children, ...slotProps } = props;
@@ -34,7 +34,7 @@ vi.mock("@lattice-ui/core", async () => {
   };
 });
 
-vi.mock("@lattice-ui/motion", () => ({
+vi.mock("@lattice-ui/react-motion", () => ({
   createOverlayFadeRecipe: () => ({}),
   usePresenceMotionController: () => ({
     mounted: true,
@@ -44,9 +44,9 @@ vi.mock("@lattice-ui/motion", () => ({
   }),
 }));
 
-vi.mock("@lattice-ui/layer", async () => {
+vi.mock("@lattice-ui/react-layer", async () => {
   const react = await import("react");
-  const presence = await import("../../../packages/layer/src/presence/Presence");
+  const presence = await import("../../../packages/react/layer/src/presence/Presence");
 
   return {
     Presence: presence.Presence,
@@ -55,8 +55,8 @@ vi.mock("@lattice-ui/layer", async () => {
   };
 });
 
-import { DialogOverlay } from "../../../packages/dialog/src/Dialog/DialogOverlay";
-import { DialogContextProvider } from "../../../packages/dialog/src/Dialog/context";
+import { DialogOverlay } from "../../../packages/react/dialog/src/Dialog/DialogOverlay";
+import { DialogContextProvider } from "../../../packages/react/dialog/src/Dialog/context";
 
 afterEach(() => {
   cleanup();

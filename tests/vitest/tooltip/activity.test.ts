@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE,
   updateTooltipTriggerActivity,
-} from "../../../packages/tooltip/src/Tooltip/activity";
+} from "../../../packages/react/tooltip/src/Tooltip/activity";
 
 describe("tooltip trigger activity", () => {
   it("opens on the first hover activation and closes after the last activity ends", () => {

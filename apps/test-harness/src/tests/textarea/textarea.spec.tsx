@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Textarea } from "@lattice-ui/textarea";
+import { React } from "@lattice-ui/react-runtime";
+import { Textarea } from "@lattice-ui/react-textarea";
 import { findFirstDescendant } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

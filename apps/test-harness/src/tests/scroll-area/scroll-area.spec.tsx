@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { ScrollArea } from "@lattice-ui/scroll-area";
+import { React } from "@lattice-ui/react-runtime";
+import { ScrollArea } from "@lattice-ui/react-scroll-area";
 import { findFirstDescendant } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

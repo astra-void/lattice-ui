@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { PopoverBasicScene } from "../../../playground/src/client/scenes/PopoverBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

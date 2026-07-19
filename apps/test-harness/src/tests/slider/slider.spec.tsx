@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Slider } from "@lattice-ui/slider";
+import { React } from "@lattice-ui/react-runtime";
+import { Slider } from "@lattice-ui/react-slider";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

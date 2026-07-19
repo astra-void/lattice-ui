@@ -13,13 +13,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // syntax does not survive the vitest ESM transform. Presence only needs the
 // React re-export, so map it to the aliased react module; everything under
 // test here (Presence, constants) is the real implementation.
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
   return { React: react.default };
 });
 
-import { Presence } from "../../../packages/layer/src/presence/Presence";
-import { DEFAULT_PRESENCE_EXIT_FALLBACK_MS } from "../../../packages/layer/src/internals/constants";
+import { Presence } from "../../../packages/react/layer/src/presence/Presence";
+import { DEFAULT_PRESENCE_EXIT_FALLBACK_MS } from "../../../packages/react/layer/src/internals/constants";
 
 const LONGEST_DEFAULT_EXIT_MS = 300;
 

@@ -1,8 +1,8 @@
-import { React } from "@lattice-ui/core";
-import { PortalProvider } from "@lattice-ui/layer";
-import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text } from "@lattice-ui/style";
-import type { DensityToken } from "@lattice-ui/system";
-import { SystemProvider, useSystemTheme } from "@lattice-ui/system";
+import { PortalProvider } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
+import { defaultDarkTheme, defaultLightTheme, mergeGuiProps, Text } from "@lattice-ui/react-style";
+import type { DensityToken } from "@lattice-ui/react-system";
+import { SystemProvider, useSystemTheme } from "@lattice-ui/react-system";
 import { AccordionBasicScene } from "./scenes/AccordionBasicScene";
 import { AvatarBasicScene } from "./scenes/AvatarBasicScene";
 import { CheckboxBasicScene } from "./scenes/CheckboxBasicScene";

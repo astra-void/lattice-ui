@@ -1,13 +1,13 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../packages/motion/src/runtime/scheduler", () => ({
+vi.mock("../../../packages/react/motion/src/runtime/scheduler", () => ({
   scheduleHost: () => {},
   unscheduleHost: () => {},
 }));
 
-import { motionTargets } from "../../../packages/motion/src/core/types";
-import { MotionHost } from "../../../packages/motion/src/runtime/host";
+import { motionTargets } from "../../../packages/react/motion/src/core/types";
+import { MotionHost } from "../../../packages/react/motion/src/runtime/host";
 
 function makeGuiStub(position: UDim2) {
   return {

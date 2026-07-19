@@ -46,11 +46,11 @@ const { guiService } = vi.hoisted(() => {
   return { guiService };
 });
 
-vi.mock("@lattice-ui/core", () => ({
+vi.mock("@lattice-ui/react-runtime", () => ({
   React: require("react"),
 }));
 
-import { MotionProvider, useMotionPolicy } from "@lattice-ui/motion";
+import { MotionProvider, useMotionPolicy } from "@lattice-ui/react-motion";
 
 function PolicyProbe(props: { onPolicy: (policy: ReturnType<typeof useMotionPolicy>) => void }) {
   const policy = useMotionPolicy();

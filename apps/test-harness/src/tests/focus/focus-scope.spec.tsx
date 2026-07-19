@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { FocusScope } from "@lattice-ui/focus";
+import { FocusScope } from "@lattice-ui/react-focus";
+import { React } from "@lattice-ui/react-runtime";
 import { findTextButtonByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

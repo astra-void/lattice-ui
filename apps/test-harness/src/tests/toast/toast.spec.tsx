@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Toast } from "@lattice-ui/toast";
+import { React } from "@lattice-ui/react-runtime";
+import { Toast } from "@lattice-ui/react-toast";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

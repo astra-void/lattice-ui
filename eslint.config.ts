@@ -18,7 +18,7 @@ export default defineConfig([
   globalIgnores(["**/node_modules/**", "**/out/**", "**/dist/**", "**/include/**"]),
   {
     files: ["{packages,apps}/**/*.{ts,tsx}"],
-    ignores: ["packages/cli/**"],
+    ignores: ["packages/tools/cli/**"],
     extends: compat.extends("plugin:roblox-ts/recommended-legacy"),
 
     plugins: {

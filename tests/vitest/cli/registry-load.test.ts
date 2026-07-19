@@ -2,8 +2,8 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { loadRegistry } from "../../../packages/cli/src/core/registry/load";
-import { validateRegistry } from "../../../packages/cli/src/core/registry/schema";
+import { loadRegistry } from "../../../packages/tools/cli/src/core/registry/load";
+import { validateRegistry } from "../../../packages/tools/cli/src/core/registry/schema";
 
 const tempDirs: string[] = [];
 
@@ -26,9 +26,9 @@ describe("registry loading", () => {
         {
           packages: {
             popover: {
-              npm: "@lattice-ui/popover",
+              npm: "@lattice-ui/react-popover",
               peers: ["@rbxts/react", "@rbxts/react-roblox"],
-              providers: ["@lattice-ui/layer:PortalProvider?"],
+              providers: ["@lattice-ui/react-layer:PortalProvider?"],
             },
           },
         },
@@ -53,7 +53,7 @@ describe("registry loading", () => {
     );
 
     const registry = await loadRegistry(dir);
-    expect(registry.packages.popover.npm).toBe("@lattice-ui/popover");
+    expect(registry.packages.popover.npm).toBe("@lattice-ui/react-popover");
     expect(registry.presets.overlay).toEqual(["popover"]);
   });
 
@@ -62,7 +62,7 @@ describe("registry loading", () => {
       validateRegistry(
         {
           packages: {
-            style: { npm: "@lattice-ui/style" },
+            style: { npm: "@lattice-ui/react-style" },
           },
         },
         {

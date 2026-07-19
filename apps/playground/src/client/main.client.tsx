@@ -1,4 +1,4 @@
-import { React, ReactRoblox } from "@lattice-ui/core";
+import { React, ReactRoblox } from "@lattice-ui/react-runtime";
 import { PlaygroundWorkspace } from "./PlaygroundWorkspace";
 
 const Players = game.GetService("Players");

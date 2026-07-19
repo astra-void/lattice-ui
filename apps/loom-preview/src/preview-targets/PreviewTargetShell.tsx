@@ -1,7 +1,7 @@
-import { React } from "@lattice-ui/core";
-import { PortalProvider } from "@lattice-ui/layer";
-import { defaultDarkTheme } from "@lattice-ui/style";
-import { SystemProvider } from "@lattice-ui/system";
+import { PortalProvider } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
+import { defaultDarkTheme } from "@lattice-ui/react-style";
+import { SystemProvider } from "@lattice-ui/react-system";
 
 type PreviewTargetShellProps = {
   children: React.ReactNode;

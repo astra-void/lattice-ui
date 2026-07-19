@@ -1,4 +1,4 @@
-import { React, useControllableState } from "@lattice-ui/core";
+import { React, useControllableState } from "@lattice-ui/react-runtime";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

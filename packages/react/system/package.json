@@ -1,0 +1,33 @@
+{
+  "name": "@lattice-ui/react-system",
+  "version": "0.6.0",
+  "private": false,
+  "main": "out/init.luau",
+  "types": "out/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "default.project.json",
+    "out",
+    "src",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/astra-void/lattice-ui.git"
+  },
+  "scripts": {
+    "build": "rbxtsc -p tsconfig.json",
+    "lint": "biome check src",
+    "lint:fix": "biome check src --write --unsafe",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "watch": "rbxtsc -p tsconfig.json -w"
+  },
+  "dependencies": {
+    "@lattice-ui/react-runtime": "workspace:*",
+    "@lattice-ui/react-style": "workspace:*"
+  },
+  "peerDependencies": {
+    "@rbxts/react": "^17",
+    "@rbxts/react-roblox": "^17"
+  }
+}

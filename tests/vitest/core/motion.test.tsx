@@ -51,11 +51,11 @@ const { runService } = vi.hoisted(() => {
   return { runService };
 });
 
-vi.mock("@lattice-ui/core", () => ({
+vi.mock("@lattice-ui/react-runtime", () => ({
   React: require("react"),
 }));
 
-import { createSurfaceRevealRecipe, MotionProvider, usePresenceMotion, useResponseMotion } from "@lattice-ui/motion";
+import { createSurfaceRevealRecipe, MotionProvider, usePresenceMotion, useResponseMotion } from "@lattice-ui/react-motion";
 
 function PresenceHarness(props: {
   present: boolean;

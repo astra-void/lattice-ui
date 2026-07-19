@@ -12,7 +12,7 @@ function main() {
   const args = [
     "-r",
     "--filter",
-    "./packages/*",
+    "./packages/*/*",
     "publish",
     "--access",
     "public",

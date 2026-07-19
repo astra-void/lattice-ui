@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveAvatarFallbackVisible } from "../../../packages/avatar/src/Avatar/state";
+import { resolveAvatarFallbackVisible } from "../../../packages/react/avatar/src/Avatar/state";
 
 describe("avatar fallback state", () => {
   it("hides fallback for loaded status", () => {

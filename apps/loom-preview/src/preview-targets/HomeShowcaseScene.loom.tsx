@@ -1,10 +1,10 @@
-import { Avatar } from "@lattice-ui/avatar";
-import { React } from "@lattice-ui/core";
-import { Dialog } from "@lattice-ui/dialog";
-import { Slider } from "@lattice-ui/slider";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Switch } from "@lattice-ui/switch";
-import { Toast, useToast } from "@lattice-ui/toast";
+import { Avatar } from "@lattice-ui/react-avatar";
+import { Dialog } from "@lattice-ui/react-dialog";
+import { React } from "@lattice-ui/react-runtime";
+import { Slider } from "@lattice-ui/react-slider";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { Switch } from "@lattice-ui/react-switch";
+import { Toast, useToast } from "@lattice-ui/react-toast";
 import { buttonRecipe, panelRecipe } from "../../../playground/src/client/theme/recipes";
 import { DocExampleShell } from "./DocExampleShell";
 

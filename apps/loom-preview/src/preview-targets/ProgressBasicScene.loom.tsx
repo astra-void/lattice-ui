@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { ProgressBasicScene } from "../../../playground/src/client/scenes/ProgressBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

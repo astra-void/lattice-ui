@@ -4,7 +4,7 @@ import {
   filterComboboxOptions,
   resolveComboboxInputValue,
   resolveForcedComboboxValue,
-} from "../../../packages/combobox/src/Combobox/logic";
+} from "../../../packages/react/combobox/src/Combobox/logic";
 
 describe("combobox logic", () => {
   it("filters options by query", () => {

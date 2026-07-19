@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { StackShowcaseScene } from "../../../playground/src/client/scenes/StackShowcaseScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

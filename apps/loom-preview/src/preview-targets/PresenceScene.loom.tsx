@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { PresenceScene } from "../../../playground/src/client/scenes/PresenceScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

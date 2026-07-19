@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { SliderBasicScene } from "../../../playground/src/client/scenes/SliderBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

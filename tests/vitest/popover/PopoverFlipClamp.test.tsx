@@ -32,9 +32,9 @@ globalThis.game = {
   },
 };
 
-vi.mock("@lattice-ui/core", () => ({ React: require("react") }));
+vi.mock("@lattice-ui/react-runtime", () => ({ React: require("react") }));
 
-import { usePopper } from "../../../packages/popper/src/usePopper";
+import { usePopper } from "../../../packages/react/popper/src/usePopper";
 
 describe("Popover flip and clamp regression (consumer level)", () => {
   it("propagates resolved placement with side/align offsets through consumer state", () => {

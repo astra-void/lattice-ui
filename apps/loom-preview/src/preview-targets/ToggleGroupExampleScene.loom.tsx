@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Text, useTheme } from "@lattice-ui/style";
-import { ToggleGroup } from "@lattice-ui/toggle-group";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
+import { ToggleGroup } from "@lattice-ui/react-toggle-group";
 import { DocExampleShell } from "./DocExampleShell";
 
 function ToggleGroupExample() {

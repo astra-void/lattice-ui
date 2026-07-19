@@ -1,6 +1,6 @@
-import { ContextMenu } from "@lattice-ui/context-menu";
-import { React } from "@lattice-ui/core";
-import { PortalProvider } from "@lattice-ui/layer";
+import { ContextMenu } from "@lattice-ui/react-context-menu";
+import { PortalProvider } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

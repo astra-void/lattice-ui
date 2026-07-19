@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveGridCellWidth, resolveGridColumns } from "../../../packages/system/src/layout/gridMath";
+import { resolveGridCellWidth, resolveGridColumns } from "../../../packages/react/system/src/layout/gridMath";
 
 describe("system grid math", () => {
   it("prefers explicit columns", () => {

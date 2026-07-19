@@ -1,0 +1,118 @@
+{
+  "packages": {
+    "accordion": {
+      "npm": "@lattice-ui/react-accordion",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "avatar": {
+      "npm": "@lattice-ui/react-avatar",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "checkbox": {
+      "npm": "@lattice-ui/react-checkbox",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "combobox": {
+      "npm": "@lattice-ui/react-combobox",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["Combobox content can be portal-mounted via PortalProvider."]
+    },
+    "dialog": {
+      "npm": "@lattice-ui/react-dialog",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["Dialog.Content can use PortalProvider for predictable layering."]
+    },
+    "focus": {
+      "npm": "@lattice-ui/react-focus",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "layer": {
+      "npm": "@lattice-ui/react-layer",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "menu": {
+      "npm": "@lattice-ui/react-menu",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["Menu.Content can use PortalProvider for display order control."]
+    },
+    "popover": {
+      "npm": "@lattice-ui/react-popover",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["Popover.Content can safely manage displayOrder with PortalProvider."]
+    },
+    "popper": {
+      "npm": "@lattice-ui/react-popper",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "progress": {
+      "npm": "@lattice-ui/react-progress",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "radio-group": {
+      "npm": "@lattice-ui/react-radio-group",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "runtime": {
+      "npm": "@lattice-ui/react-runtime",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "scroll-area": {
+      "npm": "@lattice-ui/react-scroll-area",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "select": {
+      "npm": "@lattice-ui/react-select",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["Select.Content can use PortalProvider for robust overlays."]
+    },
+    "slider": {
+      "npm": "@lattice-ui/react-slider",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "style": {
+      "npm": "@lattice-ui/react-style",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "switch": {
+      "npm": "@lattice-ui/react-switch",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "system": {
+      "npm": "@lattice-ui/react-system",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "tabs": {
+      "npm": "@lattice-ui/react-tabs",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "text-field": {
+      "npm": "@lattice-ui/react-text-field",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "textarea": {
+      "npm": "@lattice-ui/react-textarea",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "toast": {
+      "npm": "@lattice-ui/react-toast",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["Toast viewport can be mounted with PortalProvider for layering."]
+    },
+    "toggle-group": {
+      "npm": "@lattice-ui/react-toggle-group",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"]
+    },
+    "tooltip": {
+      "npm": "@lattice-ui/react-tooltip",
+      "peers": ["@rbxts/react", "@rbxts/react-roblox"],
+      "providers": ["@lattice-ui/react-layer:PortalProvider?"],
+      "notes": ["Tooltip content can be portal-mounted for better overlap behavior."]
+    }
+  }
+}

@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Switch } from "@lattice-ui/switch";
+import { React } from "@lattice-ui/react-runtime";
+import { Switch } from "@lattice-ui/react-switch";
 import { findFirstDescendant } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

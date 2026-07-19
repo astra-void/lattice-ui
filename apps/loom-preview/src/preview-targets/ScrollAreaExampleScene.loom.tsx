@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { ScrollArea } from "@lattice-ui/scroll-area";
-import { Text, useTheme } from "@lattice-ui/style";
+import { React } from "@lattice-ui/react-runtime";
+import { ScrollArea } from "@lattice-ui/react-scroll-area";
+import { Text, useTheme } from "@lattice-ui/react-style";
 import { DocExampleShell } from "./DocExampleShell";
 
 function ScrollAreaExample() {

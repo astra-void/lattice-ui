@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { ToggleGroup } from "@lattice-ui/toggle-group";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { ToggleGroup } from "@lattice-ui/react-toggle-group";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 function formatSingleValue(value: string | undefined) {

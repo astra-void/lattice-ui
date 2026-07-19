@@ -1,6 +1,6 @@
-import { Accordion } from "@lattice-ui/accordion";
-import { React } from "@lattice-ui/core";
-import type { PresenceMotionConfig } from "@lattice-ui/motion";
+import { Accordion } from "@lattice-ui/react-accordion";
+import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
+import { React } from "@lattice-ui/react-runtime";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

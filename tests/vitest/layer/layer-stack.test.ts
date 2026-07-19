@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type LayerStackModule = typeof import("../../../packages/layer/src/dismissable/layerStack");
+type LayerStackModule = typeof import("../../../packages/react/layer/src/dismissable/layerStack");
 
 type LayerStackHarness = {
   layerStack: LayerStackModule;
@@ -32,7 +32,7 @@ async function createLayerStackHarness(): Promise<LayerStackHarness> {
 
   const inputConnections = new Set<(inputObject: unknown, gameProcessedEvent: boolean) => void>();
 
-  vi.doMock("../../../packages/layer/src/internals/env", () => {
+  vi.doMock("../../../packages/react/layer/src/internals/env", () => {
     let selectedObject: unknown;
 
     return {
@@ -63,7 +63,7 @@ async function createLayerStackHarness(): Promise<LayerStackHarness> {
     };
   });
 
-  const layerStack = await import("../../../packages/layer/src/dismissable/layerStack");
+  const layerStack = await import("../../../packages/react/layer/src/dismissable/layerStack");
 
   return {
     layerStack,

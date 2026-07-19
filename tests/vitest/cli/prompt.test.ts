@@ -1,6 +1,6 @@
 import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
-import { promptConfirm, promptMultiSelect, promptSelect } from "../../../packages/cli/src/core/prompt";
+import { promptConfirm, promptMultiSelect, promptSelect } from "../../../packages/tools/cli/src/core/prompt";
 
 function createPromptRuntime(input: string, isTTY: boolean) {
   const stdin = new PassThrough();

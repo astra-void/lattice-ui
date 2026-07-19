@@ -34,6 +34,7 @@ export interface PackageManifest {
 }
 
 export interface WorkspaceEntry {
+  /** Path relative to the workspace root directory. Packages are nested one level (`react/checkbox`). */
   dirName: string;
   dirPath: string;
   manifestPath: string;
@@ -129,36 +130,41 @@ function readPackageManifest(manifestPath: string): PackageManifest {
   return manifest as PackageManifest;
 }
 
-function listWorkspaceEntries(rootDir: string): WorkspaceEntry[] {
+function listWorkspaceEntries(rootDir: string, depth: number): WorkspaceEntry[] {
   if (!fileExists(rootDir)) {
     return [];
   }
 
   const entries = fs
     .readdirSync(rootDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => {
-      const dirName = entry.name;
-      const dirPath = path.join(rootDir, dirName);
-      const manifestPath = path.join(dirPath, "package.json");
-      if (!fileExists(manifestPath)) {
-        return null;
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .flatMap((entry) => {
+      const dirPath = path.join(rootDir, entry.name);
+      if (depth > 1) {
+        return listWorkspaceEntries(dirPath, depth - 1).map((nested) => ({
+          ...nested,
+          dirName: path.posix.join(entry.name, nested.dirName),
+        }));
       }
 
-      const manifest = readPackageManifest(manifestPath);
-      return { dirName, dirPath, manifestPath, manifest };
-    })
-    .filter((entry): entry is WorkspaceEntry => entry !== null);
+      const manifestPath = path.join(dirPath, "package.json");
+      if (!fileExists(manifestPath)) {
+        return [];
+      }
+
+      return [{ dirName: entry.name, dirPath, manifestPath, manifest: readPackageManifest(manifestPath) }];
+    });
 
   return entries.sort((left, right) => left.manifest.name.localeCompare(right.manifest.name));
 }
 
+/** Packages live one level deep under a framework layer directory: `packages/<layer>/<name>`. */
 export function listPackages(): WorkspaceEntry[] {
-  return listWorkspaceEntries(PACKAGE_ROOT);
+  return listWorkspaceEntries(PACKAGE_ROOT, 2);
 }
 
 export function listApps(): WorkspaceEntry[] {
-  return listWorkspaceEntries(APP_ROOT);
+  return listWorkspaceEntries(APP_ROOT, 1);
 }
 
 export function getPolicy(): WorkspacePolicy {
@@ -206,6 +212,22 @@ export function createWorkspacePaths(packages: WorkspaceEntry[]): Record<string,
     .map((pkg): [string, string[]] => [pkg.manifest.name, [`${pkg.dirName}/src/index.ts`]])
     .sort(([left], [right]) => left.localeCompare(right));
   return Object.fromEntries(pairs);
+}
+
+/**
+ * Canonical `tsconfig.typecheck.json` contents. `baseUrl`/`rootDir` resolve to `packages/`, which is
+ * two levels up from a package directory (`packages/<layer>/<name>`), matching `dirName` in the paths map.
+ */
+export function createTypecheckTsconfig(packages: WorkspaceEntry[]): Record<string, unknown> {
+  return {
+    extends: "./tsconfig.json",
+    compilerOptions: {
+      noEmit: true,
+      baseUrl: "../..",
+      rootDir: "../..",
+      paths: createWorkspacePaths(packages),
+    },
+  };
 }
 
 export function coerceInternalDependencySpec(

@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { CheckboxBasicScene } from "../../../playground/src/client/scenes/CheckboxBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

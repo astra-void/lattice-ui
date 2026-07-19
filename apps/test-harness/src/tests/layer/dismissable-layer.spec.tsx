@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { DismissableLayer, PortalProvider } from "@lattice-ui/layer";
+import { DismissableLayer, PortalProvider } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
 import { findFirstDescendant } from "../../test-utils/guiFind";
 import { isOutsidePointerEvent } from "../../test-utils/outsidePointer";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";

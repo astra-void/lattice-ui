@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { TextField } from "@lattice-ui/text-field";
+import { React } from "@lattice-ui/react-runtime";
+import { TextField } from "@lattice-ui/react-text-field";
 import { findFirstDescendant, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

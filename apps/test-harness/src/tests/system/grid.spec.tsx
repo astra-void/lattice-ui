@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Grid } from "@lattice-ui/system";
+import { React } from "@lattice-ui/react-runtime";
+import { Grid } from "@lattice-ui/react-system";
 import { findFirstDescendant } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

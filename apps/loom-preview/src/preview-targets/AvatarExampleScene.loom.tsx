@@ -1,6 +1,6 @@
-import { Avatar } from "@lattice-ui/avatar";
-import { React } from "@lattice-ui/core";
-import { Text, useTheme } from "@lattice-ui/style";
+import { Avatar } from "@lattice-ui/react-avatar";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
 import { DocExampleShell } from "./DocExampleShell";
 
 type Member = {

@@ -9,7 +9,7 @@ Lattice UI ships composable primitives that own interaction, focus flow, layerin
 - **Headless-first** — primitives own behavior and state orchestration, not opinionated visuals.
 - **Composable** — small wrappers and slotting patterns over monolithic components.
 - **Focus & layering** — deliberate focus restoration, ordered navigation, trapping, portals, and overlay stacking.
-- **Motion built in** — presence, feedback, and response motion flow through `@lattice-ui/motion`, with reduced-motion policy support.
+- **Motion built in** — presence, feedback, and response motion flow through `@lattice-ui/react-motion`, with reduced-motion policy support.
 - **Controlled & uncontrolled** — consistent state semantics across primitives.
 
 ## Installation
@@ -28,26 +28,26 @@ npx lattice-ui add dialog tooltip toast
 Packages can also be installed directly:
 
 ```bash
-npm install @lattice-ui/core @lattice-ui/dialog
+npm install @lattice-ui/react-runtime @lattice-ui/react-dialog
 ```
 
 All primitives depend on `@rbxts/react` and `@rbxts/react-roblox` (React 17) as peer dependencies.
 
-See the [CLI reference](packages/cli/README.md) for the full command set (`create`, `init`, `add`, `remove`, `upgrade`, `doctor`).
+See the [CLI reference](packages/tools/cli/README.md) for the full command set (`create`, `init`, `add`, `remove`, `upgrade`, `doctor`).
 
 ## Packages
 
 ### Foundations
 
-`core`, `focus`, `layer`, `motion`, `style`, `system`
+`react-runtime`, `react-focus`, `react-layer`, `react-motion`, `react-style`, `react-system`
 
 ### UI primitives
 
-`accordion`, `avatar`, `checkbox`, `combobox`, `dialog`, `menu`, `popover`, `popper`, `progress`, `radio-group`, `scroll-area`, `select`, `slider`, `switch`, `tabs`, `text-field`, `textarea`, `toast`, `toggle-group`, `tooltip`
+`react-accordion`, `react-avatar`, `react-checkbox`, `react-combobox`, `react-context-menu`, `react-dialog`, `react-menu`, `react-popover`, `react-popper`, `react-progress`, `react-radio-group`, `react-scroll-area`, `react-select`, `react-slider`, `react-switch`, `react-tabs`, `react-text-field`, `react-textarea`, `react-toast`, `react-toggle-group`, `react-tooltip`
 
 ### Tooling
 
-`cli`
+`cli` (published as `lattice-ui`)
 
 ## Development
 
@@ -64,7 +64,8 @@ pnpm run check      # workspace check + lint + typecheck + tests
 
 Workspaces:
 
-- `packages/*` — publishable UI packages and the CLI.
+- `packages/react/*` — publishable React packages (`@lattice-ui/react-<name>`).
+- `packages/tools/cli` — the `lattice-ui` CLI.
 - `apps/playground` — Roblox playground for manual UI verification.
 - `apps/test-harness` — Roblox TestEZ harness for package-level behavior checks.
 - `apps/loom-preview` — typecheck-only preview integration workspace.
@@ -82,7 +83,7 @@ In practice, this means the version number alone should not be read as a guarant
 
 These packages represent the long-term stable direction of Lattice UI and are the main path toward `v1.0`:
 
-- foundations: `core`, `focus`, `layer`, `motion`, `style`, `system`
+- foundations: `react-runtime`, `react-focus`, `react-layer`, `react-motion`, `react-style`, `react-system`
 - primary UI packages: `accordion`, `avatar`, `checkbox`, `combobox`, `dialog`, `menu`, `popover`, `progress`, `radio-group`, `scroll-area`, `switch`, `tabs`, `text-field`, `textarea`, `toast`, `toggle-group`, `tooltip`
 
 ### Experimental or feature-limited

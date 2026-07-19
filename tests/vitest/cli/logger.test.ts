@@ -1,6 +1,6 @@
 import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
-import { createLogger } from "../../../packages/cli/src/core/logger";
+import { createLogger } from "../../../packages/tools/cli/src/core/logger";
 
 function createReadStream(isTTY: boolean) {
   const stream = new PassThrough();

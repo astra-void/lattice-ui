@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runCli } from "../../../packages/cli/src/cli";
+import { runCli } from "../../../packages/tools/cli/src/cli";
 
 describe("runCli", () => {
   it("rejects positional arguments for init", async () => {

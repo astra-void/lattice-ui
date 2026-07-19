@@ -1,6 +1,6 @@
-import type { Sx } from "@lattice-ui/style";
-import { createRecipe, mergeSx } from "@lattice-ui/style";
-import { surface } from "@lattice-ui/system";
+import type { Sx } from "@lattice-ui/react-style";
+import { createRecipe, mergeSx } from "@lattice-ui/react-style";
+import { surface } from "@lattice-ui/react-system";
 import type React from "@rbxts/react";
 
 type StyleProps = React.Attributes & Record<string, unknown>;

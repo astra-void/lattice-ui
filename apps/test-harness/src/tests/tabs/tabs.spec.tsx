@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import type { PresenceMotionConfig } from "@lattice-ui/motion";
-import { Tabs } from "@lattice-ui/tabs";
+import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
+import { React } from "@lattice-ui/react-runtime";
+import { Tabs } from "@lattice-ui/react-tabs";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

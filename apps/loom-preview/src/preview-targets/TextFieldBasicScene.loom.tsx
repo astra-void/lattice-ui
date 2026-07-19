@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { TextFieldBasicScene } from "../../../playground/src/client/scenes/TextFieldBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

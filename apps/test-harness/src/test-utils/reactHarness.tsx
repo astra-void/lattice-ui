@@ -1,5 +1,5 @@
-import { React, ReactRoblox } from "@lattice-ui/core";
-import { SystemProvider } from "@lattice-ui/system";
+import { React, ReactRoblox } from "@lattice-ui/react-runtime";
+import { SystemProvider } from "@lattice-ui/react-system";
 import { createTestContainer, getLocalPlayerGui } from "./playerGui";
 
 const GuiService = game.GetService("GuiService");

@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Presence } from "@lattice-ui/layer";
+import { Presence } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { createReactHarness, waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

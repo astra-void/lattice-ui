@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { GridShowcaseScene } from "../../../playground/src/client/scenes/GridShowcaseScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

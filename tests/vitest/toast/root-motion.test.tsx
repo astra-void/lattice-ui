@@ -16,7 +16,7 @@ const { usePresenceMotionController, createToastRevealRecipe, defaultRecipe, slo
   };
 });
 
-vi.mock("@lattice-ui/core", () => {
+vi.mock("@lattice-ui/react-runtime", () => {
   const React = require("react");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
@@ -37,12 +37,12 @@ vi.mock("@lattice-ui/core", () => {
   };
 });
 
-vi.mock("@lattice-ui/motion", () => ({
+vi.mock("@lattice-ui/react-motion", () => ({
   usePresenceMotionController,
   createToastRevealRecipe,
 }));
 
-import { ToastRoot } from "../../../packages/toast/src/Toast/ToastRoot";
+import { ToastRoot } from "../../../packages/react/toast/src/Toast/ToastRoot";
 
 function controller(overrides = {}) {
   return {

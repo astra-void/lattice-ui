@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveAutoResizeSize, resolveTextareaHeight } from "../../../packages/textarea/src/Textarea/autoResize";
+import { resolveAutoResizeSize, resolveTextareaHeight } from "../../../packages/react/textarea/src/Textarea/autoResize";
 
 describe("textarea auto-resize", () => {
   it("honors minRows", () => {

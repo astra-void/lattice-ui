@@ -6,7 +6,7 @@ import {
   resolveFeedbackDriver,
   resolvePresenceDriver,
   resolveResponseDriver,
-} from "../../../packages/motion/src/runtime/spec";
+} from "../../../packages/react/motion/src/runtime/spec";
 
 describe("applyMotionCurve", () => {
   it("treats linear as identity", () => {

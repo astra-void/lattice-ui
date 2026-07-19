@@ -48,7 +48,7 @@ const { runService } = vi.hoisted(() => {
   return { runService };
 });
 
-vi.mock("@lattice-ui/core", () => {
+vi.mock("@lattice-ui/react-runtime", () => {
   const React = require("react");
 
   function Slot(props: { children?: React.ReactNode; ref?: React.Ref<unknown> } & Record<string, unknown>) {
@@ -109,11 +109,11 @@ vi.mock("@lattice-ui/core", () => {
   };
 });
 
-vi.mock("@lattice-ui/focus", () => ({
+vi.mock("@lattice-ui/react-focus", () => ({
   FocusScope: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
 }));
 
-vi.mock("@lattice-ui/layer", () => {
+vi.mock("@lattice-ui/react-layer", () => {
   const React = require("react");
 
   function Presence(props: {
@@ -152,8 +152,8 @@ vi.mock("@lattice-ui/layer", () => {
   };
 });
 
-import { Dialog } from "@lattice-ui/dialog";
-import type { PresenceMotionConfig } from "@lattice-ui/motion";
+import { Dialog } from "@lattice-ui/react-dialog";
+import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
 
 beforeEach(() => {
   runService.reset();

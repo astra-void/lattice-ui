@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { DensityScopeScene } from "../../../playground/src/client/scenes/DensityScopeScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { detectPackageManager } from "../../../packages/cli/src/core/pm/detect";
+import { detectPackageManager } from "../../../packages/tools/cli/src/core/pm/detect";
 
 const tempDirs: string[] = [];
 

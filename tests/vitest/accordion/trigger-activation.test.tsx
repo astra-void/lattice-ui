@@ -10,9 +10,9 @@ import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
-  const strictContext = await import("../../../packages/core/src/context");
+  const strictContext = await import("../../../packages/react/runtime/src/context");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
     const { children, ...slotProps } = props;
@@ -32,25 +32,25 @@ vi.mock("@lattice-ui/core", async () => {
   };
 });
 
-vi.mock("@lattice-ui/focus", async () => {
-  const guard = await import("../../../packages/focus/src/useActivationGuard");
+vi.mock("@lattice-ui/react-focus", async () => {
+  const guard = await import("../../../packages/react/focus/src/useActivationGuard");
   return {
     useActivationGuard: guard.useActivationGuard,
     useFocusNode: () => ({ current: undefined }),
   };
 });
 
-vi.mock("@lattice-ui/motion", () => ({
+vi.mock("@lattice-ui/react-motion", () => ({
   createSelectionResponseRecipe: () => ({}),
   useResponseMotion: () => ({ current: undefined }),
 }));
 
-import { AccordionTrigger } from "../../../packages/accordion/src/Accordion/AccordionTrigger";
+import { AccordionTrigger } from "../../../packages/react/accordion/src/Accordion/AccordionTrigger";
 import {
   AccordionContextProvider,
   AccordionItemContextProvider,
-} from "../../../packages/accordion/src/Accordion/context";
-import type { AccordionContextValue, AccordionItemContextValue } from "../../../packages/accordion/src/Accordion/types";
+} from "../../../packages/react/accordion/src/Accordion/context";
+import type { AccordionContextValue, AccordionItemContextValue } from "../../../packages/react/accordion/src/Accordion/types";
 
 afterEach(() => {
   cleanup();

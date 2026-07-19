@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Slider } from "@lattice-ui/slider";
-import { Text, useTheme } from "@lattice-ui/style";
+import { React } from "@lattice-ui/react-runtime";
+import { Slider } from "@lattice-ui/react-slider";
+import { Text, useTheme } from "@lattice-ui/react-style";
 import { DocExampleShell } from "./DocExampleShell";
 
 function SliderRow(props: { label: string; layoutOrder: number; value: number; onChange: (next: number) => void }) {

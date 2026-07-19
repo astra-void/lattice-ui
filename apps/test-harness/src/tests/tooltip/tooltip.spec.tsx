@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { PortalProvider } from "@lattice-ui/layer";
-import { Tooltip } from "@lattice-ui/tooltip";
+import { PortalProvider } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
+import { Tooltip } from "@lattice-ui/react-tooltip";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

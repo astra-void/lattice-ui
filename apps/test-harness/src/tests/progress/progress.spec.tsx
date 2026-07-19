@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Progress } from "@lattice-ui/progress";
+import { Progress } from "@lattice-ui/react-progress";
+import { React } from "@lattice-ui/react-runtime";
 import { findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

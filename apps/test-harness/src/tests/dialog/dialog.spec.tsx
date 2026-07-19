@@ -1,7 +1,7 @@
-import { React } from "@lattice-ui/core";
-import { Dialog } from "@lattice-ui/dialog";
-import { PortalProvider } from "@lattice-ui/layer";
-import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/motion";
+import { Dialog } from "@lattice-ui/react-dialog";
+import { PortalProvider } from "@lattice-ui/react-layer";
+import type { PresenceMotionConfig as MotionConfig } from "@lattice-ui/react-motion";
+import { React } from "@lattice-ui/react-runtime";
 import { findFirstDescendant, findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { isOutsidePointerEvent } from "../../test-utils/outsidePointer";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";

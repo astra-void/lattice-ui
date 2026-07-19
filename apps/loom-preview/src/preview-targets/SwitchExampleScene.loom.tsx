@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Text, useTheme } from "@lattice-ui/style";
-import { Switch } from "@lattice-ui/switch";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
+import { Switch } from "@lattice-ui/react-switch";
 import { DocExampleShell } from "./DocExampleShell";
 
 type SettingRow = {

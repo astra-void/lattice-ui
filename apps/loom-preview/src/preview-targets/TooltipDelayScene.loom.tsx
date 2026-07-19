@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { TooltipDelayScene } from "../../../playground/src/client/scenes/TooltipDelayScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

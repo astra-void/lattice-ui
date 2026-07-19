@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Popover } from "@lattice-ui/popover";
+import { Popover } from "@lattice-ui/react-popover";
+import { React } from "@lattice-ui/react-runtime";
 
 export function PopoverNestedScene() {
   const [outerOpen, setOuterOpen] = React.useState(false);

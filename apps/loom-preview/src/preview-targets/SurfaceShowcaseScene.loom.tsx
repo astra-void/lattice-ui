@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { SurfaceShowcaseScene } from "../../../playground/src/client/scenes/SurfaceShowcaseScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

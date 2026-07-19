@@ -13,7 +13,7 @@
 // popover/tooltip collision rect down by the topbar inset (36px).
 
 import { describe, expect, it } from "vitest";
-import { resolveScreenGuiViewportRect } from "../../../packages/popper/src/usePopper";
+import { resolveScreenGuiViewportRect } from "../../../packages/react/popper/src/usePopper";
 
 const INSET = new Vector2(0, 36);
 const FULL_SCREEN = new Vector2(1920, 1080);

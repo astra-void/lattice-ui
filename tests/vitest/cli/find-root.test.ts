@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { findRoot } from "../../../packages/cli/src/core/project/findRoot";
+import { findRoot } from "../../../packages/tools/cli/src/core/project/findRoot";
 
 const tempDirs: string[] = [];
 

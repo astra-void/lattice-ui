@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { NestedStackScene } from "../../../playground/src/client/scenes/NestedStackScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

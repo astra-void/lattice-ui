@@ -87,7 +87,7 @@ const DialogModalBlockScene = () => null;
 const RadioGroupDisabledScene = () => null;
 const ScrollAreaBasicScene = () => null;
 
-vi.mock("@lattice-ui/core", () => ({
+vi.mock("@lattice-ui/react-runtime", () => ({
   React,
 }));
 

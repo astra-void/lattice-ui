@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computePopper } from "../../../packages/popper/src/compute";
+import { computePopper } from "../../../packages/react/popper/src/compute";
 
 function vector2(x: number, y: number) {
   return new Vector2(x, y);

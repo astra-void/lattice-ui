@@ -6,7 +6,7 @@ import {
   canInterpolateMotionValue,
   interpolateMotionValue,
   isMotionValueSettled,
-} from "../../../packages/motion/src/targets/instance";
+} from "../../../packages/react/motion/src/targets/instance";
 
 describe("areMotionValuesEqual", () => {
   it("returns true for identical references", () => {

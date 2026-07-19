@@ -10,9 +10,9 @@ import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
-  const strictContext = await import("../../../packages/core/src/context");
+  const strictContext = await import("../../../packages/react/runtime/src/context");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
     const { children, ...slotProps } = props;
@@ -32,22 +32,22 @@ vi.mock("@lattice-ui/core", async () => {
   };
 });
 
-vi.mock("@lattice-ui/focus", async () => {
-  const guard = await import("../../../packages/focus/src/useActivationGuard");
+vi.mock("@lattice-ui/react-focus", async () => {
+  const guard = await import("../../../packages/react/focus/src/useActivationGuard");
   return {
     useActivationGuard: guard.useActivationGuard,
     useFocusNode: () => ({ current: undefined }),
   };
 });
 
-vi.mock("@lattice-ui/motion", () => ({
+vi.mock("@lattice-ui/react-motion", () => ({
   createSelectionResponseRecipe: () => ({}),
   useResponseMotion: () => ({ current: undefined }),
 }));
 
-import { ToggleGroupContextProvider } from "../../../packages/toggle-group/src/ToggleGroup/context";
-import { ToggleGroupItem } from "../../../packages/toggle-group/src/ToggleGroup/ToggleGroupItem";
-import type { ToggleGroupContextValue } from "../../../packages/toggle-group/src/ToggleGroup/types";
+import { ToggleGroupContextProvider } from "../../../packages/react/toggle-group/src/ToggleGroup/context";
+import { ToggleGroupItem } from "../../../packages/react/toggle-group/src/ToggleGroup/ToggleGroupItem";
+import type { ToggleGroupContextValue } from "../../../packages/react/toggle-group/src/ToggleGroup/types";
 
 afterEach(() => {
   cleanup();

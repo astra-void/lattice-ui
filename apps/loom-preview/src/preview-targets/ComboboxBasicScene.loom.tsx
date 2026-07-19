@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { ComboboxBasicScene } from "../../../playground/src/client/scenes/ComboboxBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

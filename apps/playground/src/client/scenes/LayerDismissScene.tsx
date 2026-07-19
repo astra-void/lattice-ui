@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { DismissableLayer } from "@lattice-ui/layer";
+import { DismissableLayer } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
 
 export function LayerDismissScene() {
   const [open, setOpen] = React.useState(false);

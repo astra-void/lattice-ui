@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { RadioGroup } from "@lattice-ui/radio-group";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { RadioGroup } from "@lattice-ui/react-radio-group";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 type DensityOption = {

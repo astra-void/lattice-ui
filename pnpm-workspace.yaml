@@ -1,5 +1,5 @@
 packages:
-  - packages/*
+  - packages/*/*
   - apps/*
 
 # Security overrides: force patched versions of dev-only transitive deps

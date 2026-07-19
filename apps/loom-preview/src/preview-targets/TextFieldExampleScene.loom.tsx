@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { TextField } from "@lattice-ui/text-field";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { TextField } from "@lattice-ui/react-text-field";
 import { buttonRecipe } from "../../../playground/src/client/theme/recipes";
 import { DocExampleShell } from "./DocExampleShell";
 

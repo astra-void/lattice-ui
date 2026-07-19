@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type LayerEventsModule = typeof import("../../../packages/layer/src/dismissable/events");
+type LayerEventsModule = typeof import("../../../packages/react/layer/src/dismissable/events");
 
 type GuiNode = {
   Name: string;
@@ -30,11 +30,11 @@ function createGuiNode(name: string, parent?: GuiNode): GuiNode {
 async function loadLayerEvents() {
   vi.resetModules();
 
-  vi.doMock("../../../packages/layer/src/internals/env", () => ({
+  vi.doMock("../../../packages/react/layer/src/internals/env", () => ({
     getGuiInsetTopLeft: () => new Vector2(0, 0),
   }));
 
-  return import("../../../packages/layer/src/dismissable/events") as Promise<LayerEventsModule>;
+  return import("../../../packages/react/layer/src/dismissable/events") as Promise<LayerEventsModule>;
 }
 
 beforeEach(() => {

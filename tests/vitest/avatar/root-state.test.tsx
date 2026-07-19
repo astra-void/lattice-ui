@@ -11,9 +11,9 @@ import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
-  const strictContext = await import("../../../packages/core/src/context");
+  const strictContext = await import("../../../packages/react/runtime/src/context");
 
   return {
     React: react.default,
@@ -21,9 +21,9 @@ vi.mock("@lattice-ui/core", async () => {
   };
 });
 
-import { AvatarRoot } from "../../../packages/avatar/src/Avatar/AvatarRoot";
-import { useAvatarContext } from "../../../packages/avatar/src/Avatar/context";
-import type { AvatarContextValue } from "../../../packages/avatar/src/Avatar/types";
+import { AvatarRoot } from "../../../packages/react/avatar/src/Avatar/AvatarRoot";
+import { useAvatarContext } from "../../../packages/react/avatar/src/Avatar/context";
+import type { AvatarContextValue } from "../../../packages/react/avatar/src/Avatar/types";
 
 afterEach(() => {
   cleanup();

@@ -1,6 +1,6 @@
-import { Combobox } from "@lattice-ui/combobox";
-import { React } from "@lattice-ui/core";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { Combobox } from "@lattice-ui/react-combobox";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 import { menuItemRecipe, panelRecipe } from "../../../playground/src/client/theme/recipes";
 import { DocExampleShell } from "./DocExampleShell";
 

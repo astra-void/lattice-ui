@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { ToastBasicScene } from "../../../playground/src/client/scenes/ToastBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

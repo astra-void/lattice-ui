@@ -1,11 +1,11 @@
-import { React } from "@lattice-ui/core";
-import { RadioGroup } from "@lattice-ui/radio-group";
-import { Select } from "@lattice-ui/select";
-import { Slider } from "@lattice-ui/slider";
-import type { Theme } from "@lattice-ui/style";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Switch } from "@lattice-ui/switch";
-import { TextField } from "@lattice-ui/text-field";
+import { RadioGroup } from "@lattice-ui/react-radio-group";
+import { React } from "@lattice-ui/react-runtime";
+import { Select } from "@lattice-ui/react-select";
+import { Slider } from "@lattice-ui/react-slider";
+import type { Theme } from "@lattice-ui/react-style";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { Switch } from "@lattice-ui/react-switch";
+import { TextField } from "@lattice-ui/react-text-field";
 
 import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 

@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { ToggleGroupBasicScene } from "../../../playground/src/client/scenes/ToggleGroupBasicScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

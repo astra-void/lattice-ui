@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { InsetHitTestScene } from "../../../playground/src/client/scenes/InsetHitTestScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

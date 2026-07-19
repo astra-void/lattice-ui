@@ -1,6 +1,6 @@
-import { Accordion } from "@lattice-ui/accordion";
-import { React } from "@lattice-ui/core";
-import { Text, useTheme } from "@lattice-ui/style";
+import { Accordion } from "@lattice-ui/react-accordion";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
 import { DocExampleShell } from "./DocExampleShell";
 
 function AccordionExample() {

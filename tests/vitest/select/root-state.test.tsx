@@ -8,10 +8,10 @@ import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@lattice-ui/core", async () => {
+vi.mock("@lattice-ui/react-runtime", async () => {
   const react = await import("react");
-  const controllable = await import("../../../packages/core/src/useControllableState");
-  const strictContext = await import("../../../packages/core/src/context");
+  const controllable = await import("../../../packages/react/runtime/src/useControllableState");
+  const strictContext = await import("../../../packages/react/runtime/src/context");
 
   return {
     React: react.default,
@@ -20,9 +20,9 @@ vi.mock("@lattice-ui/core", async () => {
   };
 });
 
-import { SelectRoot } from "../../../packages/select/src/Select/SelectRoot";
-import { useSelectContext } from "../../../packages/select/src/Select/context";
-import type { SelectContextValue } from "../../../packages/select/src/Select/types";
+import { SelectRoot } from "../../../packages/react/select/src/Select/SelectRoot";
+import { useSelectContext } from "../../../packages/react/select/src/Select/context";
+import type { SelectContextValue } from "../../../packages/react/select/src/Select/types";
 
 afterEach(() => {
   cleanup();

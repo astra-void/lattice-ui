@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-// Tests the REAL Slot implementation (no @lattice-ui/core mock). At Roblox
+// Tests the REAL Slot implementation (no @lattice-ui/react-runtime mock). At Roblox
 // runtime, @rbxts/react's patched createElement normalizes a host child's
 // Event/Change tables into tag-keyed props (props[React.Event[name]]) and
 // clears props.Event before Slot ever sees the element. We emulate that here
@@ -10,8 +10,8 @@
 import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Slot } from "../../../packages/core/src/slot";
-import { getElementRef, toRef } from "../../../packages/core/src/refs";
+import { Slot } from "../../../packages/react/runtime/src/slot";
+import { getElementRef, toRef } from "../../../packages/react/runtime/src/refs";
 
 const EVENT_ACTIVATED = "__REACT_EVENT_Activated";
 const CHANGE_ABSOLUTE_SIZE = "__REACT_CHANGE_AbsoluteSize";

@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Presence } from "@lattice-ui/layer";
+import { Presence } from "@lattice-ui/react-layer";
+import { React } from "@lattice-ui/react-runtime";
 
 type ExitCardProps = {
   isPresent: boolean;

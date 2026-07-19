@@ -1,6 +1,6 @@
-import { ContextMenu } from "@lattice-ui/context-menu";
-import { React } from "@lattice-ui/core";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { ContextMenu } from "@lattice-ui/react-context-menu";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 
 import { menuItemRecipe, panelRecipe } from "../theme/recipes";
 

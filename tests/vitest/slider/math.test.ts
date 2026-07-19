@@ -5,7 +5,7 @@ import {
   pointerPositionToValue,
   snapValueToStep,
   valueToPercent,
-} from "../../../packages/slider/src/Slider/internals/math";
+} from "../../../packages/react/slider/src/Slider/internals/math";
 
 function vector2(x: number, y: number) {
   return new Vector2(x, y);

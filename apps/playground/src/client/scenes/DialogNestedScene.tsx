@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { Dialog } from "@lattice-ui/dialog";
+import { Dialog } from "@lattice-ui/react-dialog";
+import { React } from "@lattice-ui/react-runtime";
 
 export function DialogNestedScene() {
   const [outerOpen, setOuterOpen] = React.useState(false);

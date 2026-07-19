@@ -13,7 +13,7 @@ let capturedLayerProps: Record<string, unknown> | undefined;
   },
 };
 
-vi.mock("@lattice-ui/core", () => {
+vi.mock("@lattice-ui/react-runtime", () => {
   const React = require("react");
 
   function useControllableState<T>(options: { value?: T; defaultValue?: T; onChange?: (value: T) => void }) {
@@ -81,11 +81,11 @@ vi.mock("@lattice-ui/core", () => {
   };
 });
 
-vi.mock("@lattice-ui/focus", () => ({
+vi.mock("@lattice-ui/react-focus", () => ({
   FocusScope: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
 }));
 
-vi.mock("@lattice-ui/layer", () => ({
+vi.mock("@lattice-ui/react-layer", () => ({
   DismissableLayer: (props: Record<string, unknown>) => {
     capturedLayerProps = props;
     return React.createElement(React.Fragment, null, props.children);
@@ -96,7 +96,7 @@ vi.mock("@lattice-ui/layer", () => ({
   }) => props.render({ isPresent: props.present, onExitComplete: () => undefined }),
 }));
 
-vi.mock("@lattice-ui/motion", () => ({
+vi.mock("@lattice-ui/react-motion", () => ({
   createCanvasGroupPopperEntranceRecipe: () => ({
     initial: {},
     reveal: { values: {}, intent: {} },
@@ -114,7 +114,7 @@ vi.mock("@lattice-ui/motion", () => ({
   }),
 }));
 
-vi.mock("@lattice-ui/popper", () => ({
+vi.mock("@lattice-ui/react-popper", () => ({
   usePopper: () => ({
     anchorPoint: new Vector2(0, 0),
     contentSize: new Vector2(0, 0),
@@ -125,7 +125,7 @@ vi.mock("@lattice-ui/popper", () => ({
   }),
 }));
 
-import { Popover } from "@lattice-ui/popover";
+import { Popover } from "@lattice-ui/react-popover";
 
 afterEach(() => {
   cleanup();

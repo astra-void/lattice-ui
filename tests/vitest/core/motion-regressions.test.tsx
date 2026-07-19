@@ -5,7 +5,7 @@ import { act, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@lattice-ui/core", () => ({
+vi.mock("@lattice-ui/react-runtime", () => ({
   React: require("react"),
   createStrictContext: <T,>(_name: string) => {
     const React = require("react");
@@ -22,7 +22,7 @@ vi.mock("@lattice-ui/core", () => ({
   },
 }));
 
-import { Presence } from "@lattice-ui/layer";
+import { Presence } from "@lattice-ui/react-layer";
 
 function PresenceHarness(props: {
   present: boolean;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampProgressValue, resolveProgressRatio } from "../../../packages/progress/src/Progress/math";
+import { clampProgressValue, resolveProgressRatio } from "../../../packages/react/progress/src/Progress/math";
 
 describe("progress math", () => {
   it("clamps value within [0, max]", () => {

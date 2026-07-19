@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Select } from "@lattice-ui/select";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { React } from "@lattice-ui/react-runtime";
+import { Select } from "@lattice-ui/react-select";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 
 import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 

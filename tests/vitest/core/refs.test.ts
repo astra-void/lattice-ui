@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { describe, expect, it } from "vitest";
-import { getElementRef } from "../../../packages/core/src/refs";
+import { getElementRef } from "../../../packages/react/runtime/src/refs";
 
 describe("core ref helpers", () => {
   it("resolves refs from props first and falls back to the element ref field", () => {

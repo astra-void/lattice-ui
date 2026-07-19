@@ -98,7 +98,7 @@ function clearGuiDefaults() {
   delete prototype.GroupTransparency;
 }
 
-vi.mock("@lattice-ui/core", () => {
+vi.mock("@lattice-ui/react-runtime", () => {
   const React = require("react");
   const createElement = React.createElement.bind(React);
 
@@ -178,11 +178,11 @@ vi.mock("@lattice-ui/core", () => {
   };
 });
 
-vi.mock("@lattice-ui/focus", () => ({
+vi.mock("@lattice-ui/react-focus", () => ({
   FocusScope: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
 }));
 
-vi.mock("@lattice-ui/layer", () => {
+vi.mock("@lattice-ui/react-layer", () => {
   const React = require("react");
 
   function Presence(props: {
@@ -221,11 +221,11 @@ vi.mock("@lattice-ui/layer", () => {
   };
 });
 
-vi.mock("@lattice-ui/popper", () => ({
+vi.mock("@lattice-ui/react-popper", () => ({
   usePopper: () => mockPopperResult,
 }));
 
-import { Popover } from "@lattice-ui/popover";
+import { Popover } from "@lattice-ui/react-popover";
 
 beforeEach(() => {
   capturedFrameProps = [];

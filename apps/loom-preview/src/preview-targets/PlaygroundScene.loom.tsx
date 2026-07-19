@@ -17,32 +17,32 @@
  * The compiled module may export either `preview` (`{ render() }`, the scene
  * convention used across this folder) or a default component.
  */
-import * as Accordion from "@lattice-ui/accordion";
-import * as Avatar from "@lattice-ui/avatar";
-import * as Checkbox from "@lattice-ui/checkbox";
-import * as Combobox from "@lattice-ui/combobox";
-import * as Core from "@lattice-ui/core";
-import { React } from "@lattice-ui/core";
-import * as Dialog from "@lattice-ui/dialog";
-import * as Layer from "@lattice-ui/layer";
-import { PortalProvider } from "@lattice-ui/layer";
-import * as Popover from "@lattice-ui/popover";
-import * as Progress from "@lattice-ui/progress";
-import * as RadioGroup from "@lattice-ui/radio-group";
-import * as ScrollArea from "@lattice-ui/scroll-area";
-import * as Select from "@lattice-ui/select";
-import * as Slider from "@lattice-ui/slider";
-import * as Style from "@lattice-ui/style";
-import { Text } from "@lattice-ui/style";
-import * as Switch from "@lattice-ui/switch";
-import * as System from "@lattice-ui/system";
-import { SystemProvider } from "@lattice-ui/system";
-import * as Tabs from "@lattice-ui/tabs";
-import * as TextField from "@lattice-ui/text-field";
-import * as Textarea from "@lattice-ui/textarea";
-import * as Toast from "@lattice-ui/toast";
-import * as ToggleGroup from "@lattice-ui/toggle-group";
-import * as Tooltip from "@lattice-ui/tooltip";
+import * as Accordion from "@lattice-ui/react-accordion";
+import * as Avatar from "@lattice-ui/react-avatar";
+import * as Checkbox from "@lattice-ui/react-checkbox";
+import * as Combobox from "@lattice-ui/react-combobox";
+import * as Dialog from "@lattice-ui/react-dialog";
+import * as Layer from "@lattice-ui/react-layer";
+import { PortalProvider } from "@lattice-ui/react-layer";
+import * as Popover from "@lattice-ui/react-popover";
+import * as Progress from "@lattice-ui/react-progress";
+import * as RadioGroup from "@lattice-ui/react-radio-group";
+import * as Core from "@lattice-ui/react-runtime";
+import { React } from "@lattice-ui/react-runtime";
+import * as ScrollArea from "@lattice-ui/react-scroll-area";
+import * as Select from "@lattice-ui/react-select";
+import * as Slider from "@lattice-ui/react-slider";
+import * as Style from "@lattice-ui/react-style";
+import { Text } from "@lattice-ui/react-style";
+import * as Switch from "@lattice-ui/react-switch";
+import * as System from "@lattice-ui/react-system";
+import { SystemProvider } from "@lattice-ui/react-system";
+import * as Tabs from "@lattice-ui/react-tabs";
+import * as TextField from "@lattice-ui/react-text-field";
+import * as Textarea from "@lattice-ui/react-textarea";
+import * as Toast from "@lattice-ui/react-toast";
+import * as ToggleGroup from "@lattice-ui/react-toggle-group";
+import * as Tooltip from "@lattice-ui/react-tooltip";
 import * as Recipes from "../../../playground/src/client/theme/recipes";
 import * as DocShell from "./DocExampleShell";
 import { getDocPortalContainer, useDocTheme } from "./DocExampleShell";
@@ -55,28 +55,28 @@ import { getDocPortalContainer, useDocTheme } from "./DocExampleShell";
  */
 const PLAYGROUND_MODULES: Record<string, unknown> = {
   "../../../playground/src/client/theme/recipes": Recipes,
-  "@lattice-ui/accordion": Accordion,
-  "@lattice-ui/avatar": Avatar,
-  "@lattice-ui/checkbox": Checkbox,
-  "@lattice-ui/combobox": Combobox,
-  "@lattice-ui/core": Core,
-  "@lattice-ui/dialog": Dialog,
-  "@lattice-ui/layer": Layer,
-  "@lattice-ui/popover": Popover,
-  "@lattice-ui/progress": Progress,
-  "@lattice-ui/radio-group": RadioGroup,
-  "@lattice-ui/scroll-area": ScrollArea,
-  "@lattice-ui/select": Select,
-  "@lattice-ui/slider": Slider,
-  "@lattice-ui/style": Style,
-  "@lattice-ui/switch": Switch,
-  "@lattice-ui/system": System,
-  "@lattice-ui/tabs": Tabs,
-  "@lattice-ui/text-field": TextField,
-  "@lattice-ui/textarea": Textarea,
-  "@lattice-ui/toast": Toast,
-  "@lattice-ui/toggle-group": ToggleGroup,
-  "@lattice-ui/tooltip": Tooltip,
+  "@lattice-ui/react-accordion": Accordion,
+  "@lattice-ui/react-avatar": Avatar,
+  "@lattice-ui/react-checkbox": Checkbox,
+  "@lattice-ui/react-combobox": Combobox,
+  "@lattice-ui/react-runtime": Core,
+  "@lattice-ui/react-dialog": Dialog,
+  "@lattice-ui/react-layer": Layer,
+  "@lattice-ui/react-popover": Popover,
+  "@lattice-ui/react-progress": Progress,
+  "@lattice-ui/react-radio-group": RadioGroup,
+  "@lattice-ui/react-scroll-area": ScrollArea,
+  "@lattice-ui/react-select": Select,
+  "@lattice-ui/react-slider": Slider,
+  "@lattice-ui/react-style": Style,
+  "@lattice-ui/react-switch": Switch,
+  "@lattice-ui/react-system": System,
+  "@lattice-ui/react-tabs": Tabs,
+  "@lattice-ui/react-text-field": TextField,
+  "@lattice-ui/react-textarea": Textarea,
+  "@lattice-ui/react-toast": Toast,
+  "@lattice-ui/react-toggle-group": ToggleGroup,
+  "@lattice-ui/react-tooltip": Tooltip,
   "./DocExampleShell": DocShell,
 };
 

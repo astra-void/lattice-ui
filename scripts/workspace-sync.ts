@@ -3,7 +3,7 @@
 import * as path from "node:path";
 import {
   coerceInternalDependencySpec,
-  createWorkspacePaths,
+  createTypecheckTsconfig,
   dependencyFields,
   ensureDir,
   fileExists,
@@ -152,16 +152,7 @@ for (const pkg of packages) {
 }
 
 const typecheckPathPackages = packages.filter((pkg) => !isToolingPackage(policy, pkg.manifest.name));
-const expectedPaths = createWorkspacePaths(typecheckPathPackages);
-const expectedTypecheckTsconfig = {
-  extends: "./tsconfig.json",
-  compilerOptions: {
-    noEmit: true,
-    baseUrl: "..",
-    rootDir: "..",
-    paths: expectedPaths,
-  },
-};
+const expectedTypecheckTsconfig = createTypecheckTsconfig(typecheckPathPackages);
 
 let typecheckUpdates = 0;
 for (const pkg of packages) {

@@ -1,7 +1,7 @@
-import type { CheckedState } from "@lattice-ui/checkbox";
-import { Checkbox } from "@lattice-ui/checkbox";
-import { React } from "@lattice-ui/core";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import type { CheckedState } from "@lattice-ui/react-checkbox";
+import { Checkbox } from "@lattice-ui/react-checkbox";
+import { React } from "@lattice-ui/react-runtime";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 

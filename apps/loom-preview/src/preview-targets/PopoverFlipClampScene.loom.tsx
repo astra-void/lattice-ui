@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { PopoverFlipClampScene } from "../../../playground/src/client/scenes/PopoverFlipClampScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

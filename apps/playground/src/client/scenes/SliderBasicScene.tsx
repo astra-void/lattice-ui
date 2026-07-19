@@ -1,6 +1,6 @@
-import { React } from "@lattice-ui/core";
-import { Slider } from "@lattice-ui/slider";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
+import { React } from "@lattice-ui/react-runtime";
+import { Slider } from "@lattice-ui/react-slider";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 
 const LEFT_X = 12;

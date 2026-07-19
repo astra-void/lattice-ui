@@ -7,7 +7,7 @@ import {
   getVisibleToasts,
   pruneExpiredToasts,
   TOAST_EXIT_TIMEOUT_MS,
-} from "../../../packages/toast/src/Toast/queue";
+} from "../../../packages/react/toast/src/Toast/queue";
 
 describe("toast queue", () => {
   it("enqueues and dequeues items", () => {

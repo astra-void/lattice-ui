@@ -1,7 +1,7 @@
-import { React } from "@lattice-ui/core";
-import type { Theme } from "@lattice-ui/style";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Toast } from "@lattice-ui/toast";
+import { React } from "@lattice-ui/react-runtime";
+import type { Theme } from "@lattice-ui/react-style";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { Toast } from "@lattice-ui/react-toast";
 
 import { buttonRecipe, panelRecipe } from "../theme/recipes";
 

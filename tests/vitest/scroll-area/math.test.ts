@@ -6,7 +6,7 @@ import {
   resolveThumbOffsetFromPointerDelta,
   resolveThumbOffsetFromTrackPosition,
   resolveThumbSize,
-} from "../../../packages/scroll-area/src/ScrollArea/scrollMath";
+} from "../../../packages/react/scroll-area/src/ScrollArea/scrollMath";
 
 describe("scroll-area math", () => {
   it("computes thumb size proportionally", () => {

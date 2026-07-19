@@ -1,7 +1,7 @@
-import { React } from "@lattice-ui/core";
-import { Text, useTheme } from "@lattice-ui/style";
-import type { SpaceValue, StackAlign, StackJustify } from "@lattice-ui/system";
-import { Row, Stack, Surface } from "@lattice-ui/system";
+import { React } from "@lattice-ui/react-runtime";
+import { Text, useTheme } from "@lattice-ui/react-style";
+import type { SpaceValue, StackAlign, StackJustify } from "@lattice-ui/react-system";
+import { Row, Stack, Surface } from "@lattice-ui/react-system";
 
 type DemoTileProps = {
   label: string;

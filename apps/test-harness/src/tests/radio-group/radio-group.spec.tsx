@@ -1,5 +1,5 @@
-import { React } from "@lattice-ui/core";
-import { RadioGroup } from "@lattice-ui/radio-group";
+import { RadioGroup } from "@lattice-ui/react-radio-group";
+import { React } from "@lattice-ui/react-runtime";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 

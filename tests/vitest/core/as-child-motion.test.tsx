@@ -54,7 +54,7 @@ const { runService } = vi.hoisted(() => {
   },
 };
 
-vi.mock("@lattice-ui/core", () => {
+vi.mock("@lattice-ui/react-runtime", () => {
   const React = require("react");
 
   function Slot(props: { children?: React.ReactNode; ref?: React.Ref<unknown> } & Record<string, unknown>) {
@@ -135,8 +135,8 @@ vi.mock("@lattice-ui/core", () => {
   };
 });
 
-import { Progress } from "@lattice-ui/progress";
-import { Switch } from "@lattice-ui/switch";
+import { Progress } from "@lattice-ui/react-progress";
+import { Switch } from "@lattice-ui/react-switch";
 
 function setGuiDefaults() {
   const prototype = HTMLElement.prototype as Record<string, unknown>;

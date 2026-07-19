@@ -1,24 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { parseJsonText } from "../../../packages/cli/src/core/fs/json";
-import { mergeMissing, mergeStringArraysUnique, upsertDependencySpecs } from "../../../packages/cli/src/core/fs/patch";
+import { parseJsonText } from "../../../packages/tools/cli/src/core/fs/json";
+import { mergeMissing, mergeStringArraysUnique, upsertDependencySpecs } from "../../../packages/tools/cli/src/core/fs/patch";
 
 describe("json patch helpers", () => {
   it("applies dependency updates idempotently", () => {
     const manifest: Record<string, unknown> = {
       dependencies: {
-        "@lattice-ui/style": "^0.1.0",
+        "@lattice-ui/react-style": "^0.1.0",
       },
     };
 
-    const first = upsertDependencySpecs(manifest, "dependencies", ["@lattice-ui/popover@latest"]);
+    const first = upsertDependencySpecs(manifest, "dependencies", ["@lattice-ui/react-popover@latest"]);
     expect(first.changed).toBe(true);
 
-    const second = upsertDependencySpecs(manifest, "dependencies", ["@lattice-ui/popover@latest"]);
+    const second = upsertDependencySpecs(manifest, "dependencies", ["@lattice-ui/react-popover@latest"]);
     expect(second.changed).toBe(false);
 
     expect(manifest.dependencies).toEqual({
-      "@lattice-ui/popover": "@lattice-ui/popover@latest",
-      "@lattice-ui/style": "^0.1.0",
+      "@lattice-ui/react-popover": "@lattice-ui/react-popover@latest",
+      "@lattice-ui/react-style": "^0.1.0",
     });
   });
 

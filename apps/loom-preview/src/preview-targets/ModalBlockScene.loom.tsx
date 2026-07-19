@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/core";
+import { React } from "@lattice-ui/react-runtime";
 import { ModalBlockScene } from "../../../playground/src/client/scenes/ModalBlockScene";
 import { PreviewTargetShell } from "./PreviewTargetShell";
 

@@ -1,9 +1,9 @@
-import { Avatar } from "@lattice-ui/avatar";
-import { React } from "@lattice-ui/core";
-import { Popover } from "@lattice-ui/popover";
-import type { Theme } from "@lattice-ui/style";
-import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
-import { Switch } from "@lattice-ui/switch";
+import { Avatar } from "@lattice-ui/react-avatar";
+import { Popover } from "@lattice-ui/react-popover";
+import { React } from "@lattice-ui/react-runtime";
+import type { Theme } from "@lattice-ui/react-style";
+import { mergeGuiProps, Text, useTheme } from "@lattice-ui/react-style";
+import { Switch } from "@lattice-ui/react-switch";
 
 import { menuItemRecipe, panelRecipe } from "../theme/recipes";
 
