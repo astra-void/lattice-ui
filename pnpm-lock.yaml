@@ -153,6 +153,9 @@ importers:
       '@lattice-ui/react-combobox':
         specifier: workspace:*
         version: link:../../packages/react/combobox
+      '@lattice-ui/react-context-menu':
+        specifier: workspace:*
+        version: link:../../packages/react/context-menu
       '@lattice-ui/react-dialog':
         specifier: workspace:*
         version: link:../../packages/react/dialog

@@ -14,6 +14,7 @@
     "@lattice-ui/react-avatar": "workspace:*",
     "@lattice-ui/react-checkbox": "workspace:*",
     "@lattice-ui/react-combobox": "workspace:*",
+    "@lattice-ui/react-context-menu": "workspace:*",
     "@lattice-ui/react-runtime": "workspace:*",
     "@lattice-ui/react-dialog": "workspace:*",
     "@lattice-ui/react-layer": "workspace:*",
