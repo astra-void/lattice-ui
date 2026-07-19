@@ -2,9 +2,10 @@ import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { packageManagerFailedError, usageError } from "../core/errors";
-import { copyTemplateSafe } from "../core/fs/copy";
+import { type CopyTemplateReport, copyTemplateSafe } from "../core/fs/copy";
 import { createLogger } from "../core/logger";
 import { resolveLatestVersions } from "../core/npm/latest";
+import { applyPinnedVersions, selectResolvablePackages } from "../core/npm/pins";
 import { resolveLocalLatticeCommand } from "../core/output";
 import { detectPackageManager } from "../core/pm/detect";
 import type { PackageManagerName } from "../core/pm/types";
@@ -107,7 +108,8 @@ function normalizeProjectPath(projectPath: string): string {
   return normalized;
 }
 
-async function ensureEmptyDirectory(targetRoot: string): Promise<void> {
+/** Resolves to true when the target directory had to be created. */
+async function ensureEmptyDirectory(targetRoot: string): Promise<boolean> {
   try {
     const stat = await fs.stat(targetRoot);
     if (!stat.isDirectory()) {
@@ -118,6 +120,8 @@ async function ensureEmptyDirectory(targetRoot: string): Promise<void> {
     if (entries.length > 0) {
       throw usageError(`Target directory must be empty: ${targetRoot}`);
     }
+
+    return false;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code !== "ENOENT") {
@@ -125,6 +129,25 @@ async function ensureEmptyDirectory(targetRoot: string): Promise<void> {
     }
 
     await fs.mkdir(targetRoot, { recursive: true });
+    return true;
+  }
+}
+
+/**
+ * The target directory was empty or created by this command, so everything inside it is
+ * ours to discard when scaffolding fails partway through.
+ */
+async function discardTargetRoot(targetRoot: string, createdTargetRoot: boolean): Promise<void> {
+  try {
+    if (createdTargetRoot) {
+      await fs.rm(targetRoot, { recursive: true, force: true });
+      return;
+    }
+
+    const entries = await fs.readdir(targetRoot);
+    await Promise.all(entries.map((entry) => fs.rm(path.join(targetRoot, entry), { recursive: true, force: true })));
+  } catch {
+    // Cleanup must not mask the original failure.
   }
 }
 
@@ -285,7 +308,7 @@ export async function runCreateCommand(
   const relativeProjectPath = normalizeProjectPath(providedProjectPath);
   const targetRoot = path.resolve(input.cwd, relativeProjectPath);
 
-  await ensureEmptyDirectory(targetRoot);
+  const createdTargetRoot = await ensureEmptyDirectory(targetRoot);
 
   const logger = createLoggerFn({
     verbose: false,
@@ -303,6 +326,9 @@ export async function runCreateCommand(
       break;
     case "lockfile":
       packageManagerSourceLabel = "lockfile";
+      break;
+    case "manifest":
+      packageManagerSourceLabel = "package.json package manager pin";
       break;
     case "installed":
       packageManagerSourceLabel = "only installed package manager";
@@ -322,69 +348,84 @@ export async function runCreateCommand(
 
   logger.section("Resolving");
   const versionSpinner = logger.spinner("Resolving latest package versions...");
-  const packagesToResolve = [
+  const packagesToResolve = selectResolvablePackages([
     ...Object.values(CORE_VERSION_PACKAGES),
     ...(lintEnabled ? Object.values(LINT_VERSION_PACKAGES) : []),
-  ];
-  const versions = await resolveLatestVersionsFn(packagesToResolve);
+  ]);
+  const versions = applyPinnedVersions(await resolveLatestVersionsFn(packagesToResolve));
   versionSpinner.succeed("Package versions resolved.");
 
   const templateDir = path.resolve(__dirname, "../../templates/init");
   logger.section("Scaffolding");
-  const scaffoldSpinner = logger.spinner(`Scaffolding ${template} template...`);
-  const report = await copyTemplateSafe(templateDir, targetRoot, {
-    dryRun: false,
-    logger,
-    replacements: {
-      __PROJECT_NAME__: inferPackageName(targetRoot),
-      __LATTICE_STYLE_VERSION__: versions[CORE_VERSION_PACKAGES.latticeStyle],
-      __LATTICE_CLI_VERSION__: versions[CORE_VERSION_PACKAGES.latticeCli],
-      __RBXTS_REACT_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsReact],
-      __RBXTS_REACT_ROBLOX_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsReactRoblox],
-      __RBXTS_COMPILER_TYPES_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsCompilerTypes],
-      __RBXTS_TYPES_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsTypes],
-      __ROBLOX_TS_VERSION__: versions[CORE_VERSION_PACKAGES.robloxTs],
-      __TYPESCRIPT_VERSION__: versions[CORE_VERSION_PACKAGES.typescript],
-    },
-  });
-  scaffoldSpinner.succeed(`Scaffold complete (${report.created.length} created, ${report.merged.length} merged).`);
 
-  if (lintEnabled) {
-    logger.section("Configuring");
-    const lintTemplateDir = path.resolve(__dirname, "../../templates/init-lint");
-    const lintSpinner = logger.spinner("Applying ESLint + Prettier configuration...");
-    await copyTemplateSafe(lintTemplateDir, targetRoot, {
+  // Scaffolding, install and git init are one unit: a failure at any step discards the
+  // whole target directory instead of leaving an unusable half-created project behind.
+  let report: CopyTemplateReport;
+  try {
+    const scaffoldSpinner = logger.spinner(`Scaffolding ${template} template...`);
+    report = await copyTemplateSafe(templateDir, targetRoot, {
       dryRun: false,
       logger,
       replacements: {
-        __ESLINT_VERSION__: versions[LINT_VERSION_PACKAGES.eslint],
-        __ESLINT_ESLINTRC_VERSION__: versions[LINT_VERSION_PACKAGES.eslintEslintrc],
-        __ESLINT_JS_VERSION__: versions[LINT_VERSION_PACKAGES.eslintJs],
-        __ESLINT_CONFIG_PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.eslintConfigPrettier],
-        __ESLINT_PLUGIN_PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.eslintPluginPrettier],
-        __ESLINT_PLUGIN_ROBLOX_TS_VERSION__: versions[LINT_VERSION_PACKAGES.eslintPluginRobloxTs],
-        __TYPESCRIPT_ESLINT_PLUGIN_VERSION__: versions[LINT_VERSION_PACKAGES.typescriptEslintPlugin],
-        __TYPESCRIPT_ESLINT_PARSER_VERSION__: versions[LINT_VERSION_PACKAGES.typescriptEslintParser],
-        __PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.prettier],
+        __PROJECT_NAME__: inferPackageName(targetRoot),
+        __LATTICE_STYLE_VERSION__: versions[CORE_VERSION_PACKAGES.latticeStyle],
+        __LATTICE_CLI_VERSION__: versions[CORE_VERSION_PACKAGES.latticeCli],
+        __RBXTS_REACT_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsReact],
+        __RBXTS_REACT_ROBLOX_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsReactRoblox],
+        __RBXTS_COMPILER_TYPES_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsCompilerTypes],
+        __RBXTS_TYPES_VERSION__: versions[CORE_VERSION_PACKAGES.rbxtsTypes],
+        __ROBLOX_TS_VERSION__: versions[CORE_VERSION_PACKAGES.robloxTs],
+        __TYPESCRIPT_VERSION__: versions[CORE_VERSION_PACKAGES.typescript],
       },
     });
-    lintSpinner.succeed("Lint and format configuration applied.");
-  }
+    scaffoldSpinner.succeed(`Scaffold complete (${report.created.length} created, ${report.merged.length} merged).`);
 
-  await ensureProjectDirectories(targetRoot);
-  await ensureGitignoreExists(targetRoot);
-  await ensurePnpmNodeLinkerConfig(targetRoot, resolvedPm.name);
+    if (lintEnabled) {
+      logger.section("Configuring");
+      const lintTemplateDir = path.resolve(__dirname, "../../templates/init-lint");
+      const lintSpinner = logger.spinner("Applying ESLint + Prettier configuration...");
+      await copyTemplateSafe(lintTemplateDir, targetRoot, {
+        dryRun: false,
+        logger,
+        replacements: {
+          __ESLINT_VERSION__: versions[LINT_VERSION_PACKAGES.eslint],
+          __ESLINT_ESLINTRC_VERSION__: versions[LINT_VERSION_PACKAGES.eslintEslintrc],
+          __ESLINT_JS_VERSION__: versions[LINT_VERSION_PACKAGES.eslintJs],
+          __ESLINT_CONFIG_PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.eslintConfigPrettier],
+          __ESLINT_PLUGIN_PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.eslintPluginPrettier],
+          __ESLINT_PLUGIN_ROBLOX_TS_VERSION__: versions[LINT_VERSION_PACKAGES.eslintPluginRobloxTs],
+          __TYPESCRIPT_ESLINT_PLUGIN_VERSION__: versions[LINT_VERSION_PACKAGES.typescriptEslintPlugin],
+          __TYPESCRIPT_ESLINT_PARSER_VERSION__: versions[LINT_VERSION_PACKAGES.typescriptEslintParser],
+          __PRETTIER_VERSION__: versions[LINT_VERSION_PACKAGES.prettier],
+        },
+      });
+      lintSpinner.succeed("Lint and format configuration applied.");
+    }
 
-  logger.section("Installing");
-  const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
-  await resolvedPm.manager.install(targetRoot);
-  installSpinner.succeed("Dependencies installed.");
+    await ensureProjectDirectories(targetRoot);
+    await ensureGitignoreExists(targetRoot);
+    await ensurePnpmNodeLinkerConfig(targetRoot, resolvedPm.name);
 
-  if (gitEnabled) {
-    logger.section("Git");
-    const gitSpinner = logger.spinner("Initializing git repository...");
-    await runProcessFn("git", ["init"], targetRoot);
-    gitSpinner.succeed("Git repository initialized.");
+    logger.section("Installing");
+    const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
+    try {
+      await resolvedPm.manager.install(targetRoot);
+    } catch (error) {
+      installSpinner.fail("Dependency installation failed.");
+      throw error;
+    }
+    installSpinner.succeed("Dependencies installed.");
+
+    if (gitEnabled) {
+      logger.section("Git");
+      const gitSpinner = logger.spinner("Initializing git repository...");
+      await runProcessFn("git", ["init"], targetRoot);
+      gitSpinner.succeed("Git repository initialized.");
+    }
+  } catch (error) {
+    await discardTargetRoot(targetRoot, createdTargetRoot);
+    logger.warn(`Create failed; discarded the partially scaffolded project at ${targetRoot}.`);
+    throw error;
   }
 
   logger.success(`Success! Created ${path.basename(targetRoot)} at ${targetRoot}`);

@@ -71,6 +71,7 @@ function createContext(params: {
   pm?: Partial<PackageManager>;
   logger?: Logger;
   detectedLockfiles?: CliContext["detectedLockfiles"];
+  pins?: CliContext["pins"];
 }): CliContext {
   const pm = createPackageManager(params.pm);
 
@@ -92,6 +93,7 @@ function createContext(params: {
     detectedLockfiles: params.detectedLockfiles ?? ["npm"],
     installedPackageManagers: [pm.name],
     pmResolutionSource: (params.detectedLockfiles ?? ["npm"]).length > 0 ? "lockfile" : "installed",
+    pins: params.pins ?? [],
     registry: params.registry,
   };
 }
@@ -118,6 +120,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: ["npm"],
           source: "override" as const,
+          pins: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "9.9.9"])),
@@ -233,6 +236,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: ["npm"],
           source: "override" as const,
+          pins: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -267,6 +271,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: ["pnpm"],
           source: "override" as const,
+          pins: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -340,6 +345,7 @@ describe("command behavior", () => {
             lockfiles: [],
             installed: ["npm"],
             source: "override" as const,
+            pins: [],
           })),
           resolveLatestVersionsFn: vi.fn(async () => {
             throw new Error("registry unavailable");
@@ -370,6 +376,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: ["npm"],
           source: "override" as const,
+          pins: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -411,6 +418,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: ["npm"],
           source: "override" as const,
+          pins: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -446,6 +454,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: ["npm"],
           source: "override" as const,
+          pins: [],
         })),
         resolveLatestVersionsFn: vi.fn(async (packages) =>
           Object.fromEntries(packages.map((packageName: string) => [packageName, "1.0.0"])),
@@ -459,7 +468,7 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenCalledWith("Configuring");
     expect(logger.section).toHaveBeenCalledWith("Installing");
     expect(logger.section).toHaveBeenCalledWith("Next Steps");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice add --preset form");
+    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui add --preset form");
   });
 
   it("create auto-selects the only installed package manager without prompting", async () => {
@@ -504,6 +513,163 @@ describe("command behavior", () => {
     expect(install).toHaveBeenCalledWith(projectRoot);
   });
 
+  it("init pins typescript instead of resolving it from the registry", async () => {
+    const dir = await createTempDir();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp" }, null, 2), "utf8");
+
+    const resolveLatestVersionsFn = createResolvedVersions("9.9.9");
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        pm: "npm",
+        yes: true,
+        dryRun: false,
+        lint: true,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "npm" as const,
+          manager: createPackageManager(),
+          lockfiles: [],
+          installed: ["npm" as const],
+          source: "override" as const,
+          pins: [],
+        })),
+        resolveLatestVersionsFn,
+      },
+    );
+
+    const manifest = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+
+    expect(manifest.devDependencies.typescript).toBe("5.5.3");
+    expect(resolveLatestVersionsFn.mock.calls[0][0]).not.toContain("typescript");
+  });
+
+  it("init replaces renamed lattice packages with their current names", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "tmp",
+          dependencies: {
+            "@lattice-ui/style": "0.6.0",
+            "@lattice-ui/core": "0.6.0",
+            "@rbxts/react": "17.3.7-ts.2",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const resolveLatestVersionsFn = createResolvedVersions("1.2.3");
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        pm: "npm",
+        yes: true,
+        dryRun: false,
+        lint: false,
+      },
+      {
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "npm" as const,
+          manager: createPackageManager(),
+          lockfiles: [],
+          installed: ["npm" as const],
+          source: "override" as const,
+          pins: [],
+        })),
+        resolveLatestVersionsFn,
+      },
+    );
+
+    const manifest = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+
+    expect(manifest.dependencies["@lattice-ui/style"]).toBeUndefined();
+    expect(manifest.dependencies["@lattice-ui/core"]).toBeUndefined();
+    expect(manifest.dependencies["@lattice-ui/react-style"]).toBe("1.2.3");
+    expect(manifest.dependencies["@lattice-ui/react-runtime"]).toBe("1.2.3");
+    expect(resolveLatestVersionsFn.mock.calls[0][0]).toContain("@lattice-ui/react-runtime");
+  });
+
+  it("init rolls back every file change when the install fails", async () => {
+    const dir = await createTempDir();
+    const originalManifest = JSON.stringify({ name: "tmp" }, null, 2);
+    await writeFile(path.join(dir, "package.json"), originalManifest, "utf8");
+
+    const install = vi.fn(async () => {
+      throw new Error("npm install exited with code 1.");
+    });
+
+    await expect(
+      runInitCommand(
+        {
+          cwd: dir,
+          pm: "npm",
+          yes: true,
+          dryRun: false,
+          lint: false,
+        },
+        {
+          detectPackageManagerFn: vi.fn(async () => ({
+            name: "npm" as const,
+            manager: createPackageManager({ install }),
+            lockfiles: [],
+            installed: ["npm" as const],
+            source: "override" as const,
+            pins: [],
+          })),
+          resolveLatestVersionsFn: createResolvedVersions(),
+        },
+      ),
+    ).rejects.toThrow(/npm install exited with code 1/);
+
+    expect(await readFile(path.join(dir, "package.json"), "utf8")).toBe(originalManifest);
+    await expect(access(path.join(dir, "default.project.json"))).rejects.toThrow();
+    await expect(access(path.join(dir, "src"))).rejects.toThrow();
+    await expect(access(path.join(dir, "out"))).rejects.toThrow();
+  });
+
+  it("create discards the project directory when the install fails", async () => {
+    const dir = await createTempDir();
+    const projectRoot = path.join(dir, "my-game");
+
+    const install = vi.fn(async () => {
+      throw new Error("npm install exited with code 1.");
+    });
+
+    await expect(
+      runCreateCommand(
+        {
+          cwd: dir,
+          projectPath: "my-game",
+          yes: true,
+          pm: "npm",
+          template: "rbxts",
+          git: false,
+        },
+        {
+          detectPackageManagerFn: vi.fn(async () => ({
+            name: "npm" as const,
+            manager: createPackageManager({ install }),
+            lockfiles: [],
+            installed: ["npm" as const],
+            source: "override" as const,
+            pins: [],
+          })),
+          resolveLatestVersionsFn: createResolvedVersions(),
+        },
+      ),
+    ).rejects.toThrow(/npm install exited with code 1/);
+
+    await expect(access(projectRoot)).rejects.toThrow();
+  });
+
   it("init fails when package.json cannot be found", async () => {
     const dir = await createTempDir();
 
@@ -514,6 +680,52 @@ describe("command behavior", () => {
         dryRun: false,
       }),
     ).rejects.toThrow(/could not find package\.json/i);
+  });
+
+  it("init repins a pnpm-scaffolded project when npm is selected", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "tmp",
+          devEngines: { packageManager: { name: "pnpm", version: "^11.10.0", onFail: "download" } },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const install = vi.fn(async () => undefined);
+
+    await runInitCommand(
+      {
+        cwd: dir,
+        pm: "npm",
+        yes: true,
+        dryRun: false,
+      },
+      {
+        detectPackageManagerFn: async (cwd, override, options) => {
+          const result = await detectPackageManager(cwd, override, {
+            ...options,
+            detectInstalledPackageManagersFn: async () => ["npm", "pnpm"],
+          });
+
+          return {
+            ...result,
+            manager: createPackageManager({ name: result.name, install }),
+          };
+        },
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    const manifest = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+
+    expect(manifest.devEngines).toEqual({ packageManager: { name: "npm", onFail: "download" } });
+    expect(install).toHaveBeenCalledWith(dir);
   });
 
   it("init uses defaults in --yes mode without prompts", async () => {
@@ -542,6 +754,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },
@@ -629,6 +842,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },
@@ -691,6 +905,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions("9.9.9"),
       },
@@ -805,6 +1020,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
       },
@@ -879,6 +1095,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
       },
@@ -919,6 +1136,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "pnpm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions("1.2.3"),
       },
@@ -951,6 +1169,7 @@ describe("command behavior", () => {
       lockfiles: [],
       installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
       source: override ? ("override" as const) : ("installed" as const),
+      pins: [],
     }));
 
     await runInitCommand(
@@ -1005,6 +1224,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },
@@ -1026,6 +1246,7 @@ describe("command behavior", () => {
           lockfiles: [],
           installed: [(override ?? "npm") as "npm" | "pnpm" | "yarn"],
           source: override ? ("override" as const) : ("installed" as const),
+          pins: [],
         })),
         resolveLatestVersionsFn: createResolvedVersions(),
       },
@@ -1093,7 +1314,7 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
     expect(logger.step).toHaveBeenCalledWith(expect.stringMatching(/^\[dry-run\] npm add/));
     expect(logger.step).toHaveBeenCalledWith("No files were changed.");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice doctor");
+    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
   });
 
   it("add requires explicit selection in --yes mode", async () => {
@@ -1192,7 +1413,7 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
     expect(logger.step).toHaveBeenCalledWith(expect.stringContaining("[dry-run] npm remove @lattice-ui/react-style"));
     expect(logger.step).toHaveBeenCalledWith("No files were changed.");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice doctor");
+    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
   });
 
   it("remove skips requested components that are not installed", async () => {
@@ -1256,7 +1477,7 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenCalledWith("Result");
     expect(logger.warn).toHaveBeenCalledWith("No installed registry components found to remove.");
     expect(logger.section).toHaveBeenCalledWith("Next Steps");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice doctor");
+    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
   });
 
   it("remove interactive no-arg path selects from installed components", async () => {
@@ -1382,9 +1603,11 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenNthCalledWith(3, "Dry Run");
     expect(logger.section).toHaveBeenNthCalledWith(4, "Result");
     expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
-    expect(logger.step).toHaveBeenCalledWith(expect.stringContaining("[dry-run] npm add @lattice-ui/react-style@latest"));
+    expect(logger.step).toHaveBeenCalledWith(
+      expect.stringContaining("[dry-run] npm add @lattice-ui/react-style@latest"),
+    );
     expect(logger.step).toHaveBeenCalledWith("No files were changed.");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice doctor");
+    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
   });
 
   it("upgrade summarizes long selection lists with overflow count", async () => {
@@ -1443,7 +1666,7 @@ describe("command behavior", () => {
     expect(logger.section).toHaveBeenCalledWith("Result");
     expect(logger.warn).toHaveBeenCalledWith("No installed @lattice-ui/* package matched upgrade selection.");
     expect(logger.section).toHaveBeenCalledWith("Next Steps");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice doctor");
+    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
   });
 
   it("doctor recommends local package-manager aware commands", async () => {
@@ -1502,6 +1725,112 @@ describe("command behavior", () => {
 
     expect(listedMessages).not.toContain("lattice-ui is installed but not found in CLI registry.");
     expect(listedMessages).toContain("No @lattice-ui component packages are installed.");
+  });
+
+  it("doctor warns when typescript is on an unsupported major", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "tmp",
+          dependencies: { "@lattice-ui/react-style": "0.6.1" },
+          devDependencies: { typescript: "7.0.2" },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const logger = createLogger();
+    const ctx = createContext({
+      projectRoot: dir,
+      logger,
+      registry: {
+        packages: { style: { npm: "@lattice-ui/react-style" } },
+        presets: {},
+      },
+    });
+
+    await expect(runDoctorCommand(ctx)).resolves.toBeUndefined();
+
+    const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
+    const listedMessages = listCalls.flatMap((call) => call[0]);
+
+    expect(listedMessages).toContain("typescript is pinned to 7.0.2, but roblox-ts compiles with 5.5.3.");
+    expect(listedMessages).toContain("npm install -D typescript@5.5.3");
+  });
+
+  it("doctor accepts a supported typescript range", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "tmp",
+          dependencies: { "@lattice-ui/react-style": "0.6.1" },
+          devDependencies: { typescript: "^5.5.3" },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const logger = createLogger();
+    const ctx = createContext({
+      projectRoot: dir,
+      logger,
+      registry: {
+        packages: { style: { npm: "@lattice-ui/react-style" } },
+        presets: {},
+      },
+    });
+
+    await expect(runDoctorCommand(ctx)).resolves.toBeUndefined();
+
+    const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
+    const listedMessages = listCalls.flatMap((call) => call[0]);
+
+    expect(listedMessages.some((message) => message.includes("roblox-ts compiles with"))).toBe(false);
+  });
+
+  it("doctor reports renamed lattice packages as errors", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "tmp",
+          dependencies: {
+            "@lattice-ui/style": "0.6.0",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const logger = createLogger();
+    const ctx = createContext({
+      projectRoot: dir,
+      logger,
+      registry: {
+        packages: {},
+        presets: {},
+      },
+    });
+
+    await expect(runDoctorCommand(ctx)).rejects.toThrow(/1 error/);
+
+    const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
+    const listedMessages = listCalls.flatMap((call) => call[0]);
+
+    expect(listedMessages).toContain(
+      "@lattice-ui/style was renamed to @lattice-ui/react-style; the old name no longer receives releases.",
+    );
   });
 
   it("doctor throws on required provider errors but not warnings", async () => {

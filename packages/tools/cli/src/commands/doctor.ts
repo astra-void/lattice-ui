@@ -1,7 +1,9 @@
 import { validationError } from "../core/errors";
-import { getDependencyNames } from "../core/fs/patch";
+import { getDependencyNames, type PackageJsonLike } from "../core/fs/patch";
+import { PINNED_VERSIONS } from "../core/npm/pins";
 import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
 import type { PackageManagerName } from "../core/pm/types";
+import { LEGACY_PACKAGE_RENAMES } from "../core/project/legacyPackages";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { parseProviderRequirement } from "../core/registry/schema";
 import type { CliContext } from "../ctx";
@@ -13,6 +15,8 @@ type IssueCode =
   | "multiple-lockfiles"
   | "package-manager-mismatch"
   | "missing-lattice-packages"
+  | "legacy-lattice-package"
+  | "unsupported-typescript"
   | "unknown-lattice-package"
   | "missing-peer"
   | "missing-optional-provider"
@@ -25,6 +29,23 @@ type Issue = {
 };
 
 const LATTICE_TOOLING_PACKAGES = new Set<string>(["lattice-ui"]);
+
+/**
+ * roblox-ts compiles with an exact TypeScript version, so a project on a different major
+ * type-checks against a compiler its build never uses — and npm refuses to install the
+ * lint preset at all once the major moves past the @typescript-eslint peer range.
+ */
+function findUnsupportedTypescript(manifest: PackageJsonLike): string | undefined {
+  const spec = manifest.dependencies?.typescript ?? manifest.devDependencies?.typescript;
+  if (spec === undefined) {
+    return undefined;
+  }
+
+  const supportedMajor = PINNED_VERSIONS.typescript.split(".")[0];
+  const listedMajor = spec.replace(/^[\^~>=<\s]*/, "").split(".")[0];
+
+  return listedMajor === supportedMajor ? undefined : spec;
+}
 
 function collectRecommendations(issues: Issue[], pmName: PackageManagerName): string[] {
   const recommendationSet = new Set<string>();
@@ -43,6 +64,12 @@ function collectRecommendations(issues: Issue[], pmName: PackageManagerName): st
         break;
       case "missing-lattice-packages":
         recommendationSet.add(`${localLattice} add <component>`);
+        break;
+      case "legacy-lattice-package":
+        recommendationSet.add(`${localLattice} init`);
+        break;
+      case "unsupported-typescript":
+        recommendationSet.add(`${pmName} install -D typescript@${PINNED_VERSIONS.typescript}`);
         break;
       case "unknown-lattice-package":
         recommendationSet.add(`${localLattice} upgrade`);
@@ -99,6 +126,15 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
     }
   }
 
+  const unsupportedTypescript = findUnsupportedTypescript(manifest);
+  if (unsupportedTypescript !== undefined) {
+    issues.push({
+      code: "unsupported-typescript",
+      level: "warn",
+      message: `typescript is pinned to ${unsupportedTypescript}, but roblox-ts compiles with ${PINNED_VERSIONS.typescript}.`,
+    });
+  }
+
   const installedLattice = [...installedDependencies]
     .filter((name) => name.startsWith("@lattice-ui/"))
     .sort((left, right) => left.localeCompare(right));
@@ -118,6 +154,16 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
   }
 
   for (const npmPackage of installedLatticeComponents) {
+    const replacement = LEGACY_PACKAGE_RENAMES[npmPackage];
+    if (replacement !== undefined) {
+      issues.push({
+        code: "legacy-lattice-package",
+        level: "error",
+        message: `${npmPackage} was renamed to ${replacement}; the old name no longer receives releases.`,
+      });
+      continue;
+    }
+
     const componentName = componentByNpm.get(npmPackage);
     if (!componentName) {
       issues.push({

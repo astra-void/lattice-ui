@@ -1,8 +1,10 @@
 import { usageError } from "../core/errors";
 import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
+import { LEGACY_PACKAGE_RENAMES } from "../core/project/legacyPackages";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
+import { applyPackageManagerPin } from "./pin";
 import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 function getSelectedRegistryPackages(ctx: CliContext, input: SelectionInput): string[] {
@@ -19,9 +21,12 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
   const dependencies = packageJson.dependencies ?? {};
   const devDependencies = packageJson.devDependencies ?? {};
 
-  const installedLattice = normalizeList(
-    [...Object.keys(dependencies), ...Object.keys(devDependencies)].filter((name) => name.startsWith("@lattice-ui/")),
+  const installedNames = [...Object.keys(dependencies), ...Object.keys(devDependencies)].filter((name) =>
+    name.startsWith("@lattice-ui/"),
   );
+  // Renamed packages have no newer release under the old name; `init` migrates them.
+  const legacyInstalled = normalizeList(installedNames.filter((name) => LEGACY_PACKAGE_RENAMES[name] !== undefined));
+  const installedLattice = normalizeList(installedNames.filter((name) => LEGACY_PACKAGE_RENAMES[name] === undefined));
 
   let targets: string[];
   let missingRequested: string[] = [];
@@ -50,6 +55,12 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
 
   ctx.logger.section("Selecting");
   ctx.logger.kv("Project", ctx.projectRoot);
+
+  for (const name of legacyInstalled) {
+    ctx.logger.warn(
+      `${name} was renamed to ${LEGACY_PACKAGE_RENAMES[name]}; skipping. Run \`${localLattice} init\` to migrate it.`,
+    );
+  }
 
   let dependencySpecs: string[] = [];
   let devDependencySpecs: string[] = [];
@@ -99,6 +110,10 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
     if (devDependencySummary.hidden > 0) {
       ctx.logger.step(`...and ${devDependencySummary.hidden} more`);
     }
+  }
+
+  if (dependencySpecs.length > 0 || devDependencySpecs.length > 0) {
+    await applyPackageManagerPin(ctx);
   }
 
   if (ctx.options.dryRun) {

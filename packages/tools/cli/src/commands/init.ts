@@ -2,12 +2,20 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { projectNotFoundError, usageError } from "../core/errors";
 import { type CopyTemplateReport, copyTemplateSafe } from "../core/fs/copy";
+import { restoreDirectories, restoreFiles, snapshotDirectories, snapshotFiles } from "../core/fs/transaction";
 import { createLogger } from "../core/logger";
 import { resolveLatestVersions } from "../core/npm/latest";
+import { applyPinnedVersions, selectResolvablePackages } from "../core/npm/pins";
 import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
 import { detectPackageManager } from "../core/pm/detect";
+import { describePackageManagerPin, type PackageManagerPin, planPackageManagerPin } from "../core/pm/devEngines";
 import type { PackageManagerName } from "../core/pm/types";
 import { findRoot } from "../core/project/findRoot";
+import {
+  type LegacyPackageMigration,
+  planLegacyPackageMigration,
+  resolveLegacyReplacements,
+} from "../core/project/legacyPackages";
 import type { PackageJson } from "../core/project/readPackageJson";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { writePackageJson } from "../core/project/writePackageJson";
@@ -36,6 +44,9 @@ interface ManifestPlan {
   addedScripts: string[];
   addedDependencies: string[];
   addedDevDependencies: string[];
+  repinnedFrom: PackageManagerPin[];
+  legacyMigrations: LegacyPackageMigration[];
+  unresolvedLegacyReplacements: string[];
 }
 
 interface GitignorePlan {
@@ -194,12 +205,25 @@ function mergeMissingRecord(
   };
 }
 
-function planManifestChanges(currentManifest: PackageJson, templates: PackageJson[]): ManifestPlan {
+function planManifestChanges(
+  currentManifest: PackageJson,
+  templates: PackageJson[],
+  packageManager: PackageManagerName,
+  versions: Record<string, string>,
+): ManifestPlan {
   let nextManifest: PackageJson = { ...currentManifest };
   const addedScripts: string[] = [];
   const addedDependencies: string[] = [];
   const addedDevDependencies: string[] = [];
   let changed = false;
+
+  // Renamed packages must be dropped before the template merge, otherwise the old and the
+  // new name both end up in the manifest and npm fails to resolve their peers.
+  const legacyPlan = planLegacyPackageMigration(nextManifest, versions);
+  if (legacyPlan.changed) {
+    nextManifest = legacyPlan.nextManifest;
+    changed = true;
+  }
 
   for (const template of templates) {
     const scripts = mergeMissingRecord(nextManifest.scripts, template.scripts);
@@ -235,12 +259,21 @@ function planManifestChanges(currentManifest: PackageJson, templates: PackageJso
     }
   }
 
+  const pinPlan = planPackageManagerPin(nextManifest, packageManager);
+  if (pinPlan.changed) {
+    nextManifest = pinPlan.nextManifest;
+    changed = true;
+  }
+
   return {
     changed,
     nextManifest,
     addedScripts: [...new Set(addedScripts)],
     addedDependencies: [...new Set(addedDependencies)],
     addedDevDependencies: [...new Set(addedDevDependencies)],
+    repinnedFrom: pinPlan.previous,
+    legacyMigrations: legacyPlan.migrations,
+    unresolvedLegacyReplacements: legacyPlan.unresolved,
   };
 }
 
@@ -480,6 +513,9 @@ export async function runInitCommand(
     case "lockfile":
       packageManagerSourceLabel = "lockfile";
       break;
+    case "manifest":
+      packageManagerSourceLabel = "package.json package manager pin";
+      break;
     case "installed":
       packageManagerSourceLabel = "only installed package manager";
       break;
@@ -501,11 +537,12 @@ export async function runInitCommand(
   logger.kv("Lint/format", lintEnabled ? "enabled" : "disabled");
 
   const currentManifest = await readPackageJson(projectRoot);
-  const packagesToResolve = [
+  const packagesToResolve = selectResolvablePackages([
     ...Object.values(CORE_VERSION_PACKAGES),
     ...(lintEnabled ? Object.values(LINT_VERSION_PACKAGES) : []),
-  ];
-  const versions = await resolveLatestVersionsFn(packagesToResolve);
+    ...resolveLegacyReplacements(currentManifest),
+  ]);
+  const versions = applyPinnedVersions(await resolveLatestVersionsFn(packagesToResolve));
   const replacements = buildVersionReplacements(inferProjectName(projectRoot, currentManifest), versions);
 
   const templateDir = path.resolve(__dirname, "../../templates/init");
@@ -532,6 +569,8 @@ export async function runInitCommand(
   const manifestPlan = planManifestChanges(
     currentManifest,
     lintManifest ? [templateManifest, lintManifest] : [templateManifest],
+    resolvedPm.name,
+    versions,
   );
   const gitignorePlan = await planGitignore(projectRoot);
   const npmrcPlan = await planPnpmNpmrc(projectRoot, resolvedPm.name);
@@ -576,6 +615,21 @@ export async function runInitCommand(
     }
   }
 
+  if (manifestPlan.legacyMigrations.length > 0) {
+    logger.kv("Renamed packages", String(manifestPlan.legacyMigrations.length));
+    logger.list(manifestPlan.legacyMigrations.map((migration) => `${migration.from} -> ${migration.to}`));
+  }
+
+  for (const replacement of manifestPlan.unresolvedLegacyReplacements) {
+    logger.warn(`Could not resolve a version for ${replacement}; its legacy entry was left in place.`);
+  }
+
+  for (const pin of manifestPlan.repinnedFrom) {
+    logger.warn(
+      `Repinning ${describePackageManagerPin(pin)} to ${resolvedPm.name}; ${pin.name} would refuse to install.`,
+    );
+  }
+
   if (input.dryRun) {
     logger.section("Dry Run");
     if (changedFiles.length === 0) {
@@ -608,42 +662,59 @@ export async function runInitCommand(
         return;
       }
 
-      await copyTemplateSafe(templateDir, projectRoot, {
-        dryRun: false,
-        logger,
-        replacements,
-        shouldIncludeFile: (relativePath) => relativePath !== "package.json",
-      });
+      // Everything below is undone as a unit: a failed install must not leave a partially
+      // written scaffold behind, because the next run would merge on top of it.
+      const fileSnapshots = await snapshotFiles(projectRoot, changedFiles);
+      const directorySnapshots = await snapshotDirectories(projectRoot, PROJECT_DIRECTORIES);
 
-      if (lintEnabled) {
-        await copyTemplateSafe(lintTemplateDir, projectRoot, {
+      try {
+        await copyTemplateSafe(templateDir, projectRoot, {
           dryRun: false,
           logger,
           replacements,
           shouldIncludeFile: (relativePath) => relativePath !== "package.json",
         });
-      }
 
-      if (manifestPlan.changed) {
-        await writePackageJson(projectRoot, manifestPlan.nextManifest);
-      }
+        if (lintEnabled) {
+          await copyTemplateSafe(lintTemplateDir, projectRoot, {
+            dryRun: false,
+            logger,
+            replacements,
+            shouldIncludeFile: (relativePath) => relativePath !== "package.json",
+          });
+        }
 
-      await ensureProjectDirectories(projectRoot);
+        if (manifestPlan.changed) {
+          await writePackageJson(projectRoot, manifestPlan.nextManifest);
+        }
 
-      if (gitignorePlan.changed) {
-        await fs.writeFile(path.join(projectRoot, ".gitignore"), gitignorePlan.nextContent, "utf8");
-      }
+        await ensureProjectDirectories(projectRoot);
 
-      if (npmrcPlan.changed) {
-        await fs.writeFile(path.join(projectRoot, PNPM_NPMRC_PATH), npmrcPlan.nextContent, "utf8");
-      }
+        if (gitignorePlan.changed) {
+          await fs.writeFile(path.join(projectRoot, ".gitignore"), gitignorePlan.nextContent, "utf8");
+        }
 
-      if (installRequired) {
-        const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
-        await resolvedPm.manager.install(projectRoot);
-        installSpinner.succeed("Dependencies installed.");
-      } else {
-        logger.step("No dependency installation required.");
+        if (npmrcPlan.changed) {
+          await fs.writeFile(path.join(projectRoot, PNPM_NPMRC_PATH), npmrcPlan.nextContent, "utf8");
+        }
+
+        if (installRequired) {
+          const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
+          try {
+            await resolvedPm.manager.install(projectRoot);
+          } catch (error) {
+            installSpinner.fail("Dependency installation failed.");
+            throw error;
+          }
+          installSpinner.succeed("Dependencies installed.");
+        } else {
+          logger.step("No dependency installation required.");
+        }
+      } catch (error) {
+        const restored = await restoreFiles(projectRoot, fileSnapshots);
+        await restoreDirectories(projectRoot, directorySnapshots);
+        logger.warn(`Init failed; rolled back ${restored} file change(s) in ${projectRoot}.`);
+        throw error;
       }
     }
   }
