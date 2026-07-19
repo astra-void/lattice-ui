@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useTextFieldContext } from "./context";
 import type { TextFieldDescriptionProps } from "./types";
 
@@ -15,7 +15,7 @@ export function TextFieldDescription(props: TextFieldDescriptionProps) {
   // Renders nothing of its own, but must still be inside a `TextField.Root`.
   useTextFieldContext();
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
 
   if (props.asChild) {
     const child = props.children;
@@ -24,7 +24,7 @@ export function TextFieldDescription(props: TextFieldDescriptionProps) {
     }
 
     // No neutral defaults here: the rendered element belongs to the consumer.
-    return <Slot {...passthrough}>{child}</Slot>;
+    return <Slot {...toSlotProps(passthrough)}>{child}</Slot>;
   }
 
   return <textlabel {...NEUTRAL_PROPS} {...passthrough} />;

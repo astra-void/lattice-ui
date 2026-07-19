@@ -16,8 +16,21 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-const UNCHECKED_THUMB_POSITION = UDim2.fromScale(0, 0);
-const ZERO_SIZE = UDim2.fromScale(0, 0);
+/**
+ * Checked parks the thumb's trailing edge on the track's trailing edge, unchecked its leading edge
+ * on the leading edge. `AnchorPoint` and `Position` interpolate together, so the travel resolves to
+ * `t * (trackWidth - thumbWidth)` for any thumb width — the primitive never has to know how wide
+ * the consumer made it.
+ */
+const CHECKED_THUMB_GEOMETRY = {
+  AnchorPoint: new Vector2(1, 0),
+  Position: UDim2.fromScale(1, 0),
+};
+
+const UNCHECKED_THUMB_GEOMETRY = {
+  AnchorPoint: new Vector2(0, 0),
+  Position: UDim2.fromScale(0, 0),
+};
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
 
@@ -29,37 +42,32 @@ function toUDim2(value: unknown) {
   return typeIs(value, "UDim2") ? value : undefined;
 }
 
-/**
- * The thumb travels the full width of its track, so the checked position depends on how wide the
- * consumer sized it. The size itself stays a consumer decision; only the resulting geometry is
- * state-driven.
- */
-function getCheckedThumbPosition(size: UDim2) {
-  return new UDim2(1 - size.X.Scale, -size.X.Offset, 0, 0);
-}
-
 export function SwitchThumb(props: SwitchThumbProps) {
   const switchContext = useSwitchContext();
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  // Motion owns the thumb's placement under the `layout` contract, so these are dropped rather than
+  // written and then silently clobbered on the next frame.
+  passthrough.AnchorPoint = undefined;
+  passthrough.Position = undefined;
 
   const child = props.children;
   const childProps =
     props.asChild && React.isValidElement(child) ? toGuiPropBag((child as { props?: unknown }).props) : undefined;
-  // Only a size the consumer actually declared can inform the travel distance; nothing is invented
-  // when they size the thumb some other way.
+  // The wrapper is an extra layer between the track and the consumer's element, so it has to match
+  // the size the consumer declared; otherwise the child would hang off the edge the wrapper anchors
+  // to. This informs nothing about the travel distance.
   const declaredSize = toUDim2(passthrough.Size) ?? toUDim2(childProps?.Size);
-  const thumbSize = declaredSize ?? ZERO_SIZE;
 
   const motionTargets = React.useMemo(
     () => ({
-      active: { Position: getCheckedThumbPosition(thumbSize) },
-      inactive: { Position: UNCHECKED_THUMB_POSITION },
+      active: CHECKED_THUMB_GEOMETRY,
+      inactive: UNCHECKED_THUMB_GEOMETRY,
     }),
-    [thumbSize],
+    [],
   );
   const motionConfig = React.useMemo<ResponseMotionConfig>(
     () => ({
-      target: motionTargetContracts.offsetWrapper("switch thumb response"),
+      target: motionTargetContracts.layout("switch thumb response"),
       settle: { duration: motionSettle.toggle, tempo: "swift", tone: "responsive" },
     }),
     [],

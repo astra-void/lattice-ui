@@ -41,19 +41,19 @@ export type TextareaInputProps = {
   readOnly?: boolean;
   lineHeight?: number;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextBox>;
 
 export type TextareaLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type TextareaDescriptionProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;
 
 export type TextareaMessageProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;

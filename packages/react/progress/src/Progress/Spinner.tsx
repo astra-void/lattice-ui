@@ -1,4 +1,4 @@
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { SpinnerProps } from "./types";
 
 const RunService = game.GetService("RunService");
@@ -48,7 +48,7 @@ export function Spinner(props: SpinnerProps) {
     };
   }, [spinning, speedDegPerSecond]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setSpinnerRef);
   const behaviorProps = {
     Visible: spinning,
@@ -62,7 +62,7 @@ export function Spinner(props: SpinnerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );

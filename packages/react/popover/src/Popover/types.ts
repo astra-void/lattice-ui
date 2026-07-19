@@ -27,7 +27,7 @@ export type PopoverTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type PopoverPortalProps = {
   container?: BasePlayerGui;
@@ -46,14 +46,14 @@ export type PopoverContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<CanvasGroup>;
 
 export type PopoverAnchorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type PopoverCloseProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;

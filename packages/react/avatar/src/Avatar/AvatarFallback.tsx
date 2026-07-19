@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useAvatarContext } from "./context";
 import { resolveAvatarFallbackVisible } from "./state";
 import type { AvatarFallbackProps } from "./types";
@@ -18,7 +18,7 @@ export function AvatarFallback(props: AvatarFallbackProps) {
   const avatarContext = useAvatarContext();
   const visible = resolveAvatarFallbackVisible(avatarContext.status, avatarContext.delayElapsed);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
   const behaviorProps = {
     Visible: visible,
   };
@@ -31,7 +31,7 @@ export function AvatarFallback(props: AvatarFallbackProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

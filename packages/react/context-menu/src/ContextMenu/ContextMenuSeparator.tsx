@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { ContextMenuSeparatorProps } from "./types";
 
 const OWN_PROPS = ["asChild", "children"] as const;
@@ -10,7 +10,7 @@ const NEUTRAL_PROPS = {
 };
 
 export function ContextMenuSeparator(props: ContextMenuSeparatorProps) {
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
 
   if (props.asChild) {
     const child = props.children;
@@ -19,7 +19,7 @@ export function ContextMenuSeparator(props: ContextMenuSeparatorProps) {
     }
 
     // No neutral defaults here: the rendered element belongs to the consumer.
-    return <Slot {...passthrough}>{child}</Slot>;
+    return <Slot {...toSlotProps(passthrough)}>{child}</Slot>;
   }
 
   return <frame {...NEUTRAL_PROPS} {...passthrough} />;

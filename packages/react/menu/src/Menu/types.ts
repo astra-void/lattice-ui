@@ -42,7 +42,7 @@ export type MenuTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type MenuPortalProps = {
   container?: BasePlayerGui;
@@ -61,7 +61,7 @@ export type MenuContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<CanvasGroup>;
 
 export type MenuSelectEvent = {
   defaultPrevented: boolean;
@@ -73,19 +73,19 @@ export type MenuItemProps = {
   disabled?: boolean;
   onSelect?: (event: MenuSelectEvent) => void;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type MenuSeparatorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type MenuGroupProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type MenuLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;

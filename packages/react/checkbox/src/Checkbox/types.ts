@@ -21,11 +21,11 @@ export type CheckboxProps = {
   required?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type CheckboxIndicatorProps = {
   transition?: PresenceMotionConfig;
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;

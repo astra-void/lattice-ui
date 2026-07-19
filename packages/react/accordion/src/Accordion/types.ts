@@ -29,21 +29,21 @@ export type AccordionItemProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type AccordionHeaderProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type AccordionTriggerProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type AccordionContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
   transition?: PresenceMotionConfig;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;

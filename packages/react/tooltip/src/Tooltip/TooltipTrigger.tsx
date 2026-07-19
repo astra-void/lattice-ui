@@ -1,4 +1,4 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE, updateTooltipTriggerActivity } from "./activity";
 import { useTooltipContext } from "./context";
 import type { TooltipTriggerProps } from "./types";
@@ -81,7 +81,7 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     [applyActivity],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, eventHandlers),
@@ -97,7 +97,7 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

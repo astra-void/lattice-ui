@@ -1,4 +1,4 @@
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import type { ScrollAreaViewportProps } from "./types";
 
@@ -81,7 +81,7 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
     };
   }, [viewportRef, setMetrics, notifyScrollActivity]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<ScrollingFrame>(props, OWN_PROPS);
   // The viewport instance is measured for every scroll metric, so its ref must reach the root even
   // when the consumer forwards one of their own.
   const ref = composeRefs<ScrollingFrame>(passthrough.ref as never, setViewportRef);
@@ -94,7 +94,7 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...SCROLL_PROPS} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...SCROLL_PROPS} ref={ref as never}>
         {child}
       </Slot>
     );

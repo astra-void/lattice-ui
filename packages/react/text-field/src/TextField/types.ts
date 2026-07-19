@@ -34,19 +34,19 @@ export type TextFieldInputProps = {
   disabled?: boolean;
   readOnly?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextBox>;
 
 export type TextFieldLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type TextFieldDescriptionProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;
 
 export type TextFieldMessageProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;

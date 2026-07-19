@@ -8,7 +8,7 @@ export type ToggleGroupCommonProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ToggleGroupSingleProps = {
   type: "single";
@@ -38,4 +38,4 @@ export type ToggleGroupItemProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;

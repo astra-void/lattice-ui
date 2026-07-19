@@ -19,9 +19,9 @@ export type AvatarImageProps = {
   asChild?: boolean;
   src?: string;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<ImageLabel>;
 
 export type AvatarFallbackProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;

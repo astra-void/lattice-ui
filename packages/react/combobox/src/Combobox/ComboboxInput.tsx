@@ -1,4 +1,4 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxInputProps } from "./types";
 
@@ -92,7 +92,7 @@ export function ComboboxInput(props: ComboboxInputProps) {
     [comboboxContext, disabled, readOnly],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     // Roblox clears a TextBox on focus by default, which would wipe the controlled query.
@@ -115,7 +115,7 @@ export function ComboboxInput(props: ComboboxInputProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

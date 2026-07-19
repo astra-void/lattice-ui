@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useSelectContext } from "./context";
 import type { SelectValueProps } from "./types";
 
@@ -24,7 +24,7 @@ export function SelectValue(props: SelectValueProps) {
     return selectContext.getItemText(selectedValue) ?? selectedValue;
   }, [hasValue, props.placeholder, selectContext, selectedValue]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
   // Rendering the selected label *is* this part's behavior, so `Text` is state-driven, not styling.
   const behaviorProps = {
     Text: resolvedText,
@@ -37,7 +37,7 @@ export function SelectValue(props: SelectValueProps) {
     }
 
     return (
-      <Slot Name="SelectValue" {...passthrough} {...behaviorProps}>
+      <Slot Name="SelectValue" {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

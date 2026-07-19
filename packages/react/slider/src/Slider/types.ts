@@ -37,14 +37,14 @@ export type SliderProps = {
 export type SliderTrackProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type SliderRangeProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type SliderThumbProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;

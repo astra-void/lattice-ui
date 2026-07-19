@@ -1,5 +1,5 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
 
@@ -118,7 +118,7 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     [checked, disabled],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -141,7 +141,7 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
 
           // No neutral defaults here: the rendered element belongs to the consumer.
           return (
-            <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+            <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
               {child}
             </Slot>
           );

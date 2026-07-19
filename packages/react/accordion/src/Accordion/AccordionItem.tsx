@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { AccordionItemContextProvider, useAccordionContext } from "./context";
 import type { AccordionItemProps } from "./types";
 
@@ -26,7 +26,7 @@ export function AccordionItem(props: AccordionItemProps) {
     [disabled, open, props.value],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
 
   if (props.asChild) {
     const child = props.children;
@@ -37,7 +37,7 @@ export function AccordionItem(props: AccordionItemProps) {
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
       <AccordionItemContextProvider value={contextValue}>
-        <Slot {...passthrough}>{child}</Slot>
+        <Slot {...toSlotProps(passthrough)}>{child}</Slot>
       </AccordionItemContextProvider>
     );
   }

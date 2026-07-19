@@ -22,11 +22,11 @@ export type ProgressIndicatorProps = {
   transition?: MotionConfig;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type SpinnerProps = {
   asChild?: boolean;
   spinning?: boolean;
   speedDegPerSecond?: number;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;

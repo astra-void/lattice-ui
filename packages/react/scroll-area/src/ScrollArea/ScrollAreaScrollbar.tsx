@@ -1,4 +1,4 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import { resolveCanvasPositionFromTrackPosition, resolveThumbOffset, resolveThumbSize } from "./scrollMath";
 import type { ScrollAreaScrollbarProps } from "./types";
@@ -83,7 +83,7 @@ export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
     ],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
   // The bar instance is measured to turn a click into a canvas position, so its ref must reach this
   // primitive even when the consumer forwards one of their own.
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setScrollbarRef);
@@ -101,7 +101,7 @@ export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );

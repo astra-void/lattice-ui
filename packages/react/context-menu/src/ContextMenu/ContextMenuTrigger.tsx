@@ -1,4 +1,4 @@
-import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useContextMenuContext } from "./context";
 import type { ContextMenuTriggerProps } from "./types";
 
@@ -42,7 +42,7 @@ export function ContextMenuTrigger(props: ContextMenuTriggerProps) {
     [contextMenuContext, props.disabled],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { InputBegan: handleInputBegan }),
@@ -56,7 +56,7 @@ export function ContextMenuTrigger(props: ContextMenuTriggerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

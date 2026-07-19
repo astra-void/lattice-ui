@@ -1,6 +1,6 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
 import { createSliderThumbResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderThumbProps } from "./types";
@@ -108,7 +108,7 @@ export function SliderThumb(props: SliderThumbProps) {
     [isHorizontal, sliderContext],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setNodeRef);
   const behaviorProps = {
     Active: !sliderContext.disabled,
@@ -127,7 +127,7 @@ export function SliderThumb(props: SliderThumbProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );

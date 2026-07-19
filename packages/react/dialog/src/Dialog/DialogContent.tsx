@@ -2,7 +2,13 @@ import { FocusScope } from "@lattice-ui/react-focus";
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
 import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
+import {
+  composeRefs,
+  getElementRef,
+  getPassthroughProps,
+  type PassthroughProps,
+  React,
+} from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
 
@@ -121,7 +127,7 @@ function DialogContentImpl(props: {
   onInteractOutside?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-  passthrough: Record<string, unknown>;
+  passthrough: PassthroughProps<CanvasGroup>;
 }) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
@@ -237,7 +243,7 @@ export function DialogContent(props: DialogContentProps) {
   const open = dialogContext.open;
   const trapFocus = props.trapFocus ?? true;
   const restoreFocus = props.restoreFocus ?? true;
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<CanvasGroup>(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (

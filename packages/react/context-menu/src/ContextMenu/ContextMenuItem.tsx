@@ -1,4 +1,4 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { ContextMenuItemContextProvider, useContextMenuContext } from "./context";
 import type { ContextMenuItemProps, ContextMenuSelectEvent } from "./types";
 
@@ -69,7 +69,7 @@ export function ContextMenuItem(props: ContextMenuItemProps) {
     [disabled, highlighted],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, ownEvents),
@@ -85,7 +85,7 @@ export function ContextMenuItem(props: ContextMenuItemProps) {
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
       <ContextMenuItemContextProvider value={itemContextValue}>
-        <Slot {...passthrough} {...behaviorProps} ref={ref}>
+        <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref}>
           {child}
         </Slot>
       </ContextMenuItemContextProvider>

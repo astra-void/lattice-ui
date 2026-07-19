@@ -1,5 +1,5 @@
 import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { SelectItemContextProvider, useSelectContext } from "./context";
 import type { SelectItemProps } from "./types";
 
@@ -120,7 +120,7 @@ export function SelectItem(props: SelectItemProps) {
     [disabled, highlighted],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, ownEvents),
@@ -137,7 +137,7 @@ export function SelectItem(props: SelectItemProps) {
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
       <SelectItemContextProvider value={itemContextValue}>
-        <Slot {...passthrough} {...behaviorProps}>
+        <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
           {child}
         </Slot>
       </SelectItemContextProvider>

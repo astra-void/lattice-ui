@@ -40,7 +40,7 @@ export type TooltipTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type TooltipPortalProps = {
   container?: BasePlayerGui;
@@ -59,4 +59,4 @@ export type TooltipContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<CanvasGroup>;

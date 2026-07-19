@@ -1,4 +1,4 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import type { SliderTrackProps } from "./types";
 
@@ -33,7 +33,7 @@ export function SliderTrack(props: SliderTrackProps) {
     [sliderContext],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
   // The track instance is measured to convert pointer position into a value, so its ref must reach
   // the slider even when the consumer forwards one of their own.
   const ref = composeRefs<GuiObject>(passthrough.ref as never, sliderContext.setTrackNode);
@@ -51,7 +51,7 @@ export function SliderTrack(props: SliderTrackProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );

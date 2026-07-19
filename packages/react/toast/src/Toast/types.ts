@@ -39,7 +39,7 @@ export type ToastProviderProps = {
 export type ToastViewportProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ToastRootProps = {
   transition?: MotionConfig;
@@ -47,26 +47,26 @@ export type ToastRootProps = {
   visible?: boolean;
   onExitComplete?: () => void;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<CanvasGroup>;
 
 export type ToastTitleProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;
 
 export type ToastDescriptionProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;
 
 export type ToastActionProps = {
   asChild?: boolean;
   onAction?: () => void;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type ToastCloseProps = {
   asChild?: boolean;
   onClose?: () => void;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;

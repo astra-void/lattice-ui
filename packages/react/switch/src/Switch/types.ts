@@ -16,9 +16,9 @@ export type SwitchProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type SwitchThumbProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;

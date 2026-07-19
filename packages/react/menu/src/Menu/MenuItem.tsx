@@ -1,5 +1,5 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { MenuItemContextProvider, useMenuContext } from "./context";
 import type { MenuItemProps, MenuSelectEvent } from "./types";
 
@@ -123,7 +123,7 @@ export function MenuItem(props: MenuItemProps) {
     [disabled, highlighted],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, ownEvents),
@@ -140,7 +140,7 @@ export function MenuItem(props: MenuItemProps) {
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
       <MenuItemContextProvider value={itemContextValue}>
-        <Slot {...passthrough} {...behaviorProps} ref={ref}>
+        <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref}>
           {child}
         </Slot>
       </MenuItemContextProvider>

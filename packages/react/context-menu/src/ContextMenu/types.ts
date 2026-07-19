@@ -40,7 +40,7 @@ export type ContextMenuTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type ContextMenuPortalProps = {
   container?: BasePlayerGui;
@@ -59,7 +59,7 @@ export type ContextMenuContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<CanvasGroup>;
 
 export type ContextMenuSelectEvent = {
   defaultPrevented: boolean;
@@ -71,19 +71,19 @@ export type ContextMenuItemProps = {
   disabled?: boolean;
   onSelect?: (event: ContextMenuSelectEvent) => void;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type ContextMenuSeparatorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ContextMenuGroupProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ContextMenuLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;

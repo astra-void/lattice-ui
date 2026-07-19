@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot, useControllableState } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps, useControllableState } from "@lattice-ui/react-runtime";
 import { ToggleGroupContextProvider } from "./context";
 import type { ToggleGroupProps } from "./types";
 
@@ -101,7 +101,7 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
     [disabled, isPressed, props.type, toggleValue],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
 
   const groupNode = props.asChild ? (
     (() => {
@@ -111,7 +111,7 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
       }
 
       // No neutral defaults here: the rendered element belongs to the consumer.
-      return <Slot {...passthrough}>{child}</Slot>;
+      return <Slot {...toSlotProps(passthrough)}>{child}</Slot>;
     })()
   ) : (
     <frame {...NEUTRAL_PROPS} {...passthrough}>

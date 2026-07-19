@@ -1,5 +1,5 @@
 import { focusGuiObject, useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { usePopoverContext } from "./context";
 import type { PopoverTriggerProps } from "./types";
 
@@ -59,7 +59,7 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
     popoverContext.setOpen(!popoverContext.open);
   }, [popoverContext.open, popoverContext.setOpen, props.disabled, triggerRef]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -75,7 +75,7 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

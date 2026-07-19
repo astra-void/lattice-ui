@@ -69,7 +69,7 @@ export type ComboboxTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type ComboboxInputProps = {
   asChild?: boolean;
@@ -77,13 +77,13 @@ export type ComboboxInputProps = {
   readOnly?: boolean;
   placeholder?: string;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextBox>;
 
 export type ComboboxValueProps = {
   asChild?: boolean;
   placeholder?: string;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;
 
 export type ComboboxPortalProps = {
   container?: BasePlayerGui;
@@ -102,7 +102,7 @@ export type ComboboxContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<CanvasGroup>;
 
 export type ComboboxItemProps = {
   value: string;
@@ -110,19 +110,19 @@ export type ComboboxItemProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type ComboboxSeparatorProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ComboboxGroupProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ComboboxLabelProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextLabel>;

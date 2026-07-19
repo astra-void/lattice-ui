@@ -1,4 +1,4 @@
-import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogCloseProps } from "./types";
 
@@ -19,7 +19,7 @@ export function DialogClose(props: DialogCloseProps) {
     dialogContext.setOpen(false);
   }, [dialogContext.setOpen]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -34,7 +34,7 @@ export function DialogClose(props: DialogCloseProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

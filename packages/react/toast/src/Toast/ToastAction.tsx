@@ -1,4 +1,4 @@
-import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { ToastActionProps } from "./types";
 
 const OWN_PROPS = ["asChild", "onAction", "children"] as const;
@@ -16,7 +16,7 @@ export function ToastAction(props: ToastActionProps) {
     props.onAction?.();
   }, [props]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -31,7 +31,7 @@ export function ToastAction(props: ToastActionProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

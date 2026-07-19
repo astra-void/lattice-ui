@@ -1,6 +1,13 @@
 import { Presence } from "@lattice-ui/react-layer";
 import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import {
+  composeRefs,
+  getPassthroughProps,
+  type PassthroughProps,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useTabsContext } from "./context";
 import { createTabsContentName } from "./internals/ids";
 import type { TabsContentProps } from "./types";
@@ -25,7 +32,7 @@ function TabsContentImpl(props: {
   value: string;
   asChild?: boolean;
   children?: React.ReactNode;
-  passthrough: Record<string, unknown>;
+  passthrough: PassthroughProps<Frame>;
 }) {
   const contentName = createTabsContentName(props.value);
   const config = props.transition ?? NO_MOTION;
@@ -54,7 +61,7 @@ function TabsContentImpl(props: {
     }
 
     return (
-      <Slot {...passthrough} Name={contentName} Visible={visible} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} Name={contentName} Visible={visible} ref={ref as never}>
         {child}
       </Slot>
     );
@@ -71,7 +78,7 @@ export function TabsContent(props: TabsContentProps) {
   const tabsContext = useTabsContext();
   const selected = tabsContext.value === props.value;
   const forceMount = props.forceMount === true;
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
 
   if (forceMount) {
     return (

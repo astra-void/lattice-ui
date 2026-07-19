@@ -3,7 +3,13 @@ import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
 import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
 import type { PopperPlacement } from "@lattice-ui/react-popper";
 import { usePopper } from "@lattice-ui/react-popper";
-import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
+import {
+  composeRefs,
+  getElementRef,
+  getPassthroughProps,
+  type PassthroughProps,
+  React,
+} from "@lattice-ui/react-runtime";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
 
@@ -58,7 +64,7 @@ function TooltipContentImpl(props: {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
-  passthrough: Record<string, unknown>;
+  passthrough: PassthroughProps<CanvasGroup>;
 }) {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
@@ -181,7 +187,7 @@ function TooltipContentImpl(props: {
 export function TooltipContent(props: TooltipContentProps) {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<CanvasGroup>(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (

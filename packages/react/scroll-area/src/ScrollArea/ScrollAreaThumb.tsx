@@ -1,4 +1,4 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import {
   resolveCanvasPositionFromThumbOffset,
@@ -195,7 +195,7 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
     };
   }, []);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
   // The thumb instance is read back to find its track, so its ref must reach this primitive even
   // when the consumer forwards one of their own.
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setThumbRef);
@@ -215,7 +215,7 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );

@@ -1,5 +1,5 @@
 import { focusGuiObject, useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useMenuContext } from "./context";
 import type { MenuTriggerProps } from "./types";
 
@@ -69,7 +69,7 @@ export function MenuTrigger(props: MenuTriggerProps) {
     [menuContext.open, menuContext.setOpen, props.disabled, triggerRef],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated, InputBegan: handleInputBegan }),
@@ -85,7 +85,7 @@ export function MenuTrigger(props: MenuTriggerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref}>
         {child}
       </Slot>
     );

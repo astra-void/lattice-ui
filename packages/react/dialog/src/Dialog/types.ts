@@ -24,7 +24,7 @@ export type DialogTriggerProps = {
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type DialogPortalProps = {
   container?: BasePlayerGui;
@@ -36,7 +36,7 @@ export type DialogOverlayProps = {
   asChild?: boolean;
   forceMount?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type DialogContentProps = {
   transition?: PresenceMotionConfig;
@@ -46,9 +46,9 @@ export type DialogContentProps = {
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<CanvasGroup>;
 
 export type DialogCloseProps = {
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;

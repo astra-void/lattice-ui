@@ -43,11 +43,11 @@ export type RadioGroupItemProps = {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type RadioGroupIndicatorProps = {
   transition?: PresenceMotionConfig;
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;

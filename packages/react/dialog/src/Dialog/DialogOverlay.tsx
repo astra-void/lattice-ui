@@ -1,6 +1,14 @@
 import { Presence, usePortalContext } from "@lattice-ui/react-layer";
 import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import {
+  composeEvents,
+  composeRefs,
+  getPassthroughProps,
+  type PassthroughProps,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogOverlayProps } from "./types";
 
@@ -61,7 +69,7 @@ function DialogOverlayImpl(props: {
   forceMount?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
-  passthrough: Record<string, unknown>;
+  passthrough: PassthroughProps<TextButton>;
 }) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
@@ -96,7 +104,7 @@ function DialogOverlayImpl(props: {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );
@@ -131,7 +139,7 @@ function DialogOverlayGui(props: { children?: React.ReactNode }) {
 export function DialogOverlay(props: DialogOverlayProps) {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
 
   if (props.forceMount) {
     return (

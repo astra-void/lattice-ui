@@ -33,21 +33,21 @@ export type ScrollAreaProps = {
 export type ScrollAreaViewportProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<ScrollingFrame>;
 
 export type ScrollAreaScrollbarProps = {
   orientation: ScrollAreaOrientation;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ScrollAreaThumbProps = {
   orientation: ScrollAreaOrientation;
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type ScrollAreaCornerProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;

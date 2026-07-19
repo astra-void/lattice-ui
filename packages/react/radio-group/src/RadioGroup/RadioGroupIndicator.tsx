@@ -1,6 +1,13 @@
 import { Presence } from "@lattice-ui/react-layer";
 import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import {
+  composeRefs,
+  getPassthroughProps,
+  type PassthroughProps,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useRadioGroupItemContext } from "./context";
 import type { RadioGroupIndicatorProps } from "./types";
 
@@ -23,7 +30,7 @@ function RadioGroupIndicatorImpl(props: {
   onExitComplete?: () => void;
   asChild?: boolean;
   children?: React.ReactNode;
-  passthrough: Record<string, unknown>;
+  passthrough: PassthroughProps<Frame>;
 }) {
   const config = props.transition ?? NO_MOTION;
 
@@ -51,7 +58,7 @@ function RadioGroupIndicatorImpl(props: {
     }
 
     return (
-      <Slot {...passthrough} Visible={visible} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} Visible={visible} ref={ref as never}>
         {child}
       </Slot>
     );
@@ -68,7 +75,7 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
   const radioGroupItemContext = useRadioGroupItemContext();
   const visible = radioGroupItemContext.checked;
   const forceMount = props.forceMount === true;
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
 
   if (forceMount) {
     return (

@@ -1,4 +1,4 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { ComboboxItemContextProvider, useComboboxContext } from "./context";
 import type { ComboboxItemProps } from "./types";
 
@@ -118,7 +118,7 @@ export function ComboboxItem(props: ComboboxItemProps) {
     [disabled, highlighted, interactionDisabled],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !interactionDisabled,
     Event: composeEvents(passthrough.Event, ownEvents),
@@ -138,7 +138,7 @@ export function ComboboxItem(props: ComboboxItemProps) {
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
       <ComboboxItemContextProvider value={itemContextValue}>
-        <Slot {...passthrough} {...behaviorProps}>
+        <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
           {child}
         </Slot>
       </ComboboxItemContextProvider>

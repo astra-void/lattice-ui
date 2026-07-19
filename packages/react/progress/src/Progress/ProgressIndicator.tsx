@@ -1,5 +1,5 @@
 import { createProgressResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useProgressContext } from "./context";
 import type { ProgressIndicatorProps } from "./types";
 
@@ -41,7 +41,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
     props.transition ?? createProgressResponseRecipe(),
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
 
   if (props.asChild) {
     const child = props.children;
@@ -53,7 +53,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
     // consumer's element only receives passthrough and fill geometry.
     return (
       <frame {...NEUTRAL_PROPS} {...FILL_PROPS} ref={motionRef}>
-        <Slot {...passthrough} {...CHILD_FILL_PROPS}>
+        <Slot {...toSlotProps(passthrough)} {...CHILD_FILL_PROPS}>
           {child}
         </Slot>
       </frame>

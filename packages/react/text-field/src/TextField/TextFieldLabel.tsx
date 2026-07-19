@@ -1,4 +1,4 @@
-import { composeEvents, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useTextFieldContext } from "./context";
 import type { TextFieldLabelProps } from "./types";
 
@@ -24,7 +24,7 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
     textFieldContext.inputRef.current?.CaptureFocus();
   }, [disabled, textFieldContext.inputRef]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Selectable: !disabled,
@@ -39,7 +39,7 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

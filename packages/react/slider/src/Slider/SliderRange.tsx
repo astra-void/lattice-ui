@@ -1,5 +1,5 @@
 import { createProgressResponseRecipe, motionDrag, useResponseMotion } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderRangeProps } from "./types";
@@ -37,7 +37,7 @@ export function SliderRange(props: SliderRangeProps) {
     createProgressResponseRecipe(sliderContext.isDragging ? motionDrag.active : motionDrag.idle),
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
 
   if (props.asChild) {
     const child = props.children;
@@ -49,7 +49,7 @@ export function SliderRange(props: SliderRangeProps) {
     // consumer's element only receives passthrough and fill geometry.
     return (
       <frame {...NEUTRAL_PROPS} ref={motionRef}>
-        <Slot {...passthrough} {...CHILD_FILL_PROPS}>
+        <Slot {...toSlotProps(passthrough)} {...CHILD_FILL_PROPS}>
           {child}
         </Slot>
       </frame>

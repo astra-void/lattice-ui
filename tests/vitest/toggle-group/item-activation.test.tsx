@@ -30,6 +30,7 @@ vi.mock("@lattice-ui/react-runtime", async () => {
   return {
     composeEvents: runtimeProps.composeEvents,
     getPassthroughProps: runtimeProps.getPassthroughProps,
+    toSlotProps: runtimeProps.toSlotProps,
     composeRefs: runtimeRefs.composeRefs,
     React: react.default,
     Slot,

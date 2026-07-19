@@ -38,6 +38,5 @@ BREAKING CHANGES:
   combobox filtering.
 - `Toast.Viewport` renders its children instead of the toast queue markup it used to hardcode. Map
   over `useToast().visibleToasts` yourself — which is what the `asChild` path already required.
-- `Switch.Thumb` no longer applies a default size or a 2px inset. Give it a `Size` so its travel
-  distance can be derived.
+- `Switch.Thumb` no longer applies a default size or a 2px inset.
 - Anything that relied on a primitive's built-in look now renders invisible until styled.

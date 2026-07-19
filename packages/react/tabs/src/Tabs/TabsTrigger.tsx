@@ -1,5 +1,5 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
@@ -117,7 +117,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
 
   const triggerName = React.useMemo(() => createTabsTriggerName(props.value), [props.value]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -139,7 +139,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );

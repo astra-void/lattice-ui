@@ -1,5 +1,5 @@
 import { focusGuiObject, useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogTriggerProps } from "./types";
 
@@ -49,7 +49,7 @@ export function DialogTrigger(props: DialogTriggerProps) {
     dialogContext.setOpen(true);
   }, [dialogContext.setOpen, props.disabled, triggerRef]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -65,7 +65,7 @@ export function DialogTrigger(props: DialogTriggerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

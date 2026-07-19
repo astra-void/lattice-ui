@@ -1,4 +1,11 @@
-import { composeEvents, getPassthroughProps, React, Slot, useControllableState } from "@lattice-ui/react-runtime";
+import {
+  composeEvents,
+  getPassthroughProps,
+  React,
+  Slot,
+  toSlotProps,
+  useControllableState,
+} from "@lattice-ui/react-runtime";
 import { CheckboxContextProvider } from "./context";
 import type { CheckboxProps, CheckedState } from "./types";
 
@@ -70,7 +77,7 @@ export function CheckboxRoot(props: CheckboxProps) {
   );
 
   const child = props.children;
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, { Activated: toggle }),
@@ -87,7 +94,7 @@ export function CheckboxRoot(props: CheckboxProps) {
 
           // No neutral defaults here: the rendered element belongs to the consumer.
           return (
-            <Slot {...passthrough} {...behaviorProps}>
+            <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
               {child}
             </Slot>
           );

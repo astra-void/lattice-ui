@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxValueProps } from "./types";
 
@@ -24,7 +24,7 @@ export function ComboboxValue(props: ComboboxValueProps) {
     return comboboxContext.getItemText(selectedValue) ?? selectedValue;
   }, [comboboxContext, hasValue, props.placeholder, selectedValue]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
   // Rendering the selected label *is* this part's behavior, so `Text` is state-driven, not styling.
   const behaviorProps = {
     Text: resolvedText,
@@ -37,7 +37,7 @@ export function ComboboxValue(props: ComboboxValueProps) {
     }
 
     return (
-      <Slot Name="ComboboxValue" {...passthrough} {...behaviorProps}>
+      <Slot Name="ComboboxValue" {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

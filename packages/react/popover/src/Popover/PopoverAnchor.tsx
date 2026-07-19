@@ -1,4 +1,4 @@
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { usePopoverContext } from "./context";
 import type { PopoverAnchorProps } from "./types";
 
@@ -28,7 +28,7 @@ export function PopoverAnchor(props: PopoverAnchorProps) {
     [popoverContext.anchorRef],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
   const behaviorProps = {
     ref: composeRefs<Instance>(passthrough.ref as never, setAnchorRef),
   };
@@ -41,7 +41,7 @@ export function PopoverAnchor(props: PopoverAnchorProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

@@ -1,5 +1,5 @@
 import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useToggleGroupContext } from "./context";
 import type { ToggleGroupItemProps } from "./types";
 
@@ -54,7 +54,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
     [handleToggle],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -73,7 +73,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps} ref={ref as never}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
         {child}
       </Slot>
     );

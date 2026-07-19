@@ -1,5 +1,5 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useTextFieldContext } from "./context";
 import type { TextFieldInputProps } from "./types";
 
@@ -78,7 +78,7 @@ export function TextFieldInput(props: TextFieldInputProps) {
     [disabled, textFieldContext],
   );
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     ClearTextOnFocus: false,
@@ -103,7 +103,7 @@ export function TextFieldInput(props: TextFieldInputProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

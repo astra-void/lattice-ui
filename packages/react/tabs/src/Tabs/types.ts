@@ -32,14 +32,14 @@ export type TabsProps = {
 export type TabsListProps = {
   asChild?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;
 
 export type TabsTriggerProps = {
   value: string;
   asChild?: boolean;
   disabled?: boolean;
   children?: React.ReactElement;
-} & PassthroughProps;
+} & PassthroughProps<TextButton>;
 
 export type TabsContentProps = {
   transition?: PresenceMotionConfig;
@@ -47,4 +47,4 @@ export type TabsContentProps = {
   asChild?: boolean;
   forceMount?: boolean;
   children?: React.ReactNode;
-} & PassthroughProps;
+} & PassthroughProps<Frame>;

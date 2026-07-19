@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import type { ScrollAreaCornerProps } from "./types";
 
@@ -15,7 +15,7 @@ export function ScrollAreaCorner(props: ScrollAreaCornerProps) {
   const scrollAreaContext = useScrollAreaContext();
   const visible = scrollAreaContext.showHorizontalScrollbar && scrollAreaContext.showVerticalScrollbar;
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
   const behaviorProps = {
     Visible: visible,
   };
@@ -28,7 +28,7 @@ export function ScrollAreaCorner(props: ScrollAreaCornerProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );

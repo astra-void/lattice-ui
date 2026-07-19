@@ -1,5 +1,5 @@
 import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { ToastRootProps } from "./types";
 
 const OWN_PROPS = ["transition", "asChild", "visible", "onExitComplete", "children"] as const;
@@ -30,7 +30,7 @@ export function ToastRoot(props: ToastRootProps) {
   // the instance only hides once the presence controller reports "exited".
   const motionVisible = motion.mounted && motion.phase !== "exited";
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<CanvasGroup>(props, OWN_PROPS);
   const behaviorProps = {
     Visible: motionVisible,
     ref: composeRefs<CanvasGroup>(passthrough.ref as never, motion.ref),
@@ -44,7 +44,7 @@ export function ToastRoot(props: ToastRootProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} Visible={motionVisible} ref={behaviorProps.ref as never}>
+      <Slot {...toSlotProps(passthrough)} Visible={motionVisible} ref={behaviorProps.ref as never}>
         {child}
       </Slot>
     );

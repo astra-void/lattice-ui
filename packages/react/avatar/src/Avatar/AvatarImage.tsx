@@ -1,4 +1,4 @@
-import { composeRefs, getPassthroughProps, React, Slot } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useAvatarContext } from "./context";
 import type { AvatarImageProps } from "./types";
 
@@ -70,7 +70,7 @@ export function AvatarImage(props: AvatarImageProps) {
     };
   }, [setStatus, source, status]);
 
-  const passthrough = getPassthroughProps(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<ImageLabel>(props, OWN_PROPS);
   const behaviorProps = {
     // `Image` is data, not appearance: it is the source the load state is derived from.
     Image: source ?? "",
@@ -86,7 +86,7 @@ export function AvatarImage(props: AvatarImageProps) {
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...passthrough} {...behaviorProps}>
+      <Slot {...toSlotProps(passthrough)} {...behaviorProps}>
         {child}
       </Slot>
     );
