@@ -7,17 +7,54 @@ import { buttonRecipe, panelRecipe } from "../theme/recipes";
 type DemoTabKey = "overview" | "activity" | "settings";
 type ManualTabKey = "alpha" | "beta" | "gamma";
 
+function PanelBody(props: { heading: string; lines: Array<string>; headingColor?: Color3 }) {
+  const { theme } = useTheme();
+  return (
+    <React.Fragment>
+      <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
+      <uipadding
+        PaddingBottom={new UDim(0, theme.space[10])}
+        PaddingLeft={new UDim(0, theme.space[10])}
+        PaddingRight={new UDim(0, theme.space[10])}
+        PaddingTop={new UDim(0, theme.space[10])}
+      />
+      <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[6])} />
+      <Text
+        BackgroundTransparency={1}
+        LayoutOrder={1}
+        Size={UDim2.fromOffset(600, 24)}
+        Text={props.heading}
+        TextColor3={props.headingColor ?? theme.colors.textPrimary}
+        TextSize={theme.typography.bodyMd.textSize}
+        TextXAlignment={Enum.TextXAlignment.Left}
+      />
+      {props.lines.map((line, index) => (
+        <Text
+          key={`${index}`}
+          BackgroundTransparency={1}
+          LayoutOrder={index + 2}
+          Size={UDim2.fromOffset(600, 18)}
+          Text={line}
+          TextColor3={theme.colors.textSecondary}
+          TextSize={theme.typography.labelSm.textSize}
+          TextXAlignment={Enum.TextXAlignment.Left}
+        />
+      ))}
+    </React.Fragment>
+  );
+}
+
 export function TabsBasicScene() {
   const { theme } = useTheme();
   const [primaryValue, setPrimaryValue] = React.useState<DemoTabKey>("overview");
   const [secondaryValue, setSecondaryValue] = React.useState<ManualTabKey>("alpha");
 
   return (
-    <frame BackgroundTransparency={1} Size={UDim2.fromOffset(920, 560)}>
+    <frame BackgroundTransparency={1} Size={UDim2.fromOffset(920, 640)}>
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(900, 28)}
-        Text="Tabs basics: selected triggers, disabled states, custom layouts, and forceMount content."
+        Text="Tabs: horizontal + vertical orientation, a disabled tab, forceMount content, and rich panels."
         TextColor3={theme.colors.textPrimary}
         TextSize={theme.typography.titleMd.textSize - 2}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -32,11 +69,11 @@ export function TabsBasicScene() {
         TextXAlignment={Enum.TextXAlignment.Left}
       />
 
-      <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 70)} Size={UDim2.fromOffset(900, 220)}>
+      <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 70)} Size={UDim2.fromOffset(900, 250)}>
         <Text
           BackgroundTransparency={1}
           Size={UDim2.fromOffset(820, 20)}
-          Text="Primary Layout"
+          Text="Horizontal orientation (Settings tab is disabled)"
           TextColor3={theme.colors.textSecondary}
           TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
@@ -86,18 +123,12 @@ export function TabsBasicScene() {
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
-                Size: UDim2.fromOffset(640, 110),
+                Size: UDim2.fromOffset(640, 150),
               }) as Record<string, unknown>)}
             >
-              <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-              <Text
-                BackgroundTransparency={1}
-                Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
-                Size={UDim2.fromOffset(600, 26)}
-                Text="Overview Content"
-                TextColor3={theme.colors.textPrimary}
-                TextSize={theme.typography.bodyMd.textSize}
-                TextXAlignment={Enum.TextXAlignment.Left}
+              <PanelBody
+                heading="Overview"
+                lines={["Status: healthy", "Active sessions: 128", "Uptime: 99.98% over 30 days"]}
               />
             </frame>
           </Tabs.Content>
@@ -106,18 +137,12 @@ export function TabsBasicScene() {
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
-                Size: UDim2.fromOffset(640, 110),
+                Size: UDim2.fromOffset(640, 150),
               }) as Record<string, unknown>)}
             >
-              <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-              <Text
-                BackgroundTransparency={1}
-                Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
-                Size={UDim2.fromOffset(600, 26)}
-                Text="Activity Content"
-                TextColor3={theme.colors.textPrimary}
-                TextSize={theme.typography.bodyMd.textSize}
-                TextXAlignment={Enum.TextXAlignment.Left}
+              <PanelBody
+                heading="Activity"
+                lines={["Deploy #4821 succeeded 5m ago", "3 pull requests merged today", "Alerts: none"]}
               />
             </frame>
           </Tabs.Content>
@@ -126,29 +151,24 @@ export function TabsBasicScene() {
             <frame
               {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
                 Position: UDim2.fromOffset(0, 82),
-                Size: UDim2.fromOffset(640, 110),
+                Size: UDim2.fromOffset(640, 150),
               }) as Record<string, unknown>)}
             >
-              <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-              <Text
-                BackgroundTransparency={1}
-                Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
-                Size={UDim2.fromOffset(600, 26)}
-                Text="Disabled tabs remain unavailable until enabled."
-                TextColor3={theme.colors.textSecondary}
-                TextSize={theme.typography.bodyMd.textSize}
-                TextXAlignment={Enum.TextXAlignment.Left}
+              <PanelBody
+                heading="Settings"
+                headingColor={theme.colors.textSecondary}
+                lines={["Disabled tabs remain unavailable until enabled."]}
               />
             </frame>
           </Tabs.Content>
         </Tabs.Root>
       </frame>
 
-      <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 308)} Size={UDim2.fromOffset(900, 240)}>
+      <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 338)} Size={UDim2.fromOffset(900, 260)}>
         <Text
           BackgroundTransparency={1}
           Size={UDim2.fromOffset(860, 20)}
-          Text="Secondary Layout"
+          Text="Vertical orientation (Alpha uses forceMount, arrow keys move up/down)"
           TextColor3={theme.colors.textSecondary}
           TextSize={theme.typography.labelSm.textSize}
           TextXAlignment={Enum.TextXAlignment.Left}
@@ -159,9 +179,9 @@ export function TabsBasicScene() {
           onValueChange={(nextValue) => setSecondaryValue(nextValue as ManualTabKey)}
           orientation="vertical"
         >
-          <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 26)} Size={UDim2.fromOffset(880, 188)}>
+          <frame BackgroundTransparency={1} Position={UDim2.fromOffset(0, 26)} Size={UDim2.fromOffset(880, 200)}>
             <Tabs.List asChild>
-              <frame BackgroundTransparency={1} Size={UDim2.fromOffset(180, 168)}>
+              <frame BackgroundTransparency={1} Size={UDim2.fromOffset(180, 180)}>
                 <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[8])} />
 
                 <Tabs.Trigger asChild value="alpha">
@@ -206,18 +226,16 @@ export function TabsBasicScene() {
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
-                  Size: UDim2.fromOffset(660, 168),
+                  Size: UDim2.fromOffset(660, 180),
                 }) as Record<string, unknown>)}
               >
-                <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-                <Text
-                  BackgroundTransparency={1}
-                  Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
-                  Size={UDim2.fromOffset(620, 30)}
-                  Text="Alpha Content (forceMount=true, vertical navigation)"
-                  TextColor3={theme.colors.textPrimary}
-                  TextSize={theme.typography.bodyMd.textSize}
-                  TextXAlignment={Enum.TextXAlignment.Left}
+                <PanelBody
+                  heading="Alpha (forceMount = true)"
+                  lines={[
+                    "This panel stays mounted even when another tab is active,",
+                    "so its scroll position and inputs survive tab switches.",
+                    "Region: us-east | Replicas: 3 | Queue depth: 12",
+                  ]}
                 />
               </frame>
             </Tabs.Content>
@@ -226,18 +244,12 @@ export function TabsBasicScene() {
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
-                  Size: UDim2.fromOffset(660, 168),
+                  Size: UDim2.fromOffset(660, 180),
                 }) as Record<string, unknown>)}
               >
-                <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-                <Text
-                  BackgroundTransparency={1}
-                  Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
-                  Size={UDim2.fromOffset(620, 30)}
-                  Text="Beta Content"
-                  TextColor3={theme.colors.textPrimary}
-                  TextSize={theme.typography.bodyMd.textSize}
-                  TextXAlignment={Enum.TextXAlignment.Left}
+                <PanelBody
+                  heading="Beta"
+                  lines={["Mounted on demand when selected.", "Region: eu-west | Replicas: 2 | Queue depth: 4"]}
                 />
               </frame>
             </Tabs.Content>
@@ -246,18 +258,12 @@ export function TabsBasicScene() {
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "elevated" }, theme), {
                   Position: UDim2.fromOffset(196, 0),
-                  Size: UDim2.fromOffset(660, 168),
+                  Size: UDim2.fromOffset(660, 180),
                 }) as Record<string, unknown>)}
               >
-                <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
-                <Text
-                  BackgroundTransparency={1}
-                  Position={UDim2.fromOffset(theme.space[10], theme.space[10])}
-                  Size={UDim2.fromOffset(620, 30)}
-                  Text="Gamma Content"
-                  TextColor3={theme.colors.textPrimary}
-                  TextSize={theme.typography.bodyMd.textSize}
-                  TextXAlignment={Enum.TextXAlignment.Left}
+                <PanelBody
+                  heading="Gamma"
+                  lines={["Mounted on demand when selected.", "Region: ap-south | Replicas: 1 | Queue depth: 0"]}
                 />
               </frame>
             </Tabs.Content>

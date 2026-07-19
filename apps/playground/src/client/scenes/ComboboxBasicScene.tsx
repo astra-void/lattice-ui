@@ -3,13 +3,54 @@ import { React } from "@lattice-ui/core";
 import { mergeGuiProps, Text, useTheme } from "@lattice-ui/style";
 import { buttonRecipe, menuItemRecipe, panelRecipe } from "../theme/recipes";
 
+const DATASET = [
+  "apricot",
+  "blueberry",
+  "cherry",
+  "cranberry",
+  "grapefruit",
+  "kiwi",
+  "lemon",
+  "lychee",
+  "mango",
+  "nectarine",
+  "papaya",
+  "raspberry",
+];
+
+function queryMatches(text: string, query: string) {
+  if (query === "") {
+    return true;
+  }
+  return string.find(string.lower(text), string.lower(query), 1, true) !== undefined;
+}
+
+function OptionItem(props: { value: string }) {
+  const { theme } = useTheme();
+  return (
+    <Combobox.Item asChild textValue={props.value} value={props.value}>
+      <textbutton
+        {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
+          Size: UDim2.fromOffset(288, 30),
+          Text: props.value,
+        }) as Record<string, unknown>)}
+      >
+        <uipadding PaddingLeft={new UDim(0, theme.space[8])} />
+      </textbutton>
+    </Combobox.Item>
+  );
+}
+
 export function ComboboxBasicScene() {
   const { theme } = useTheme();
-  const [value, setValue] = React.useState<string | undefined>("alpha");
+  const [value, setValue] = React.useState<string | undefined>("apricot");
   const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
+
+  const matchCount = DATASET.filter((option) => queryMatches(option, query)).size();
 
   return (
-    <frame BackgroundTransparency={1} Size={UDim2.fromOffset(940, 560)}>
+    <frame BackgroundTransparency={1} Size={UDim2.fromOffset(940, 460)}>
       <Text
         BackgroundTransparency={1}
         Size={UDim2.fromOffset(920, 28)}
@@ -22,7 +63,7 @@ export function ComboboxBasicScene() {
         BackgroundTransparency={1}
         Position={UDim2.fromOffset(0, 34)}
         Size={UDim2.fromOffset(920, 24)}
-        Text={`Controlled open: ${open ? "true" : "false"} | value: ${value ?? "(none)"}`}
+        Text={`open: ${open ? "true" : "false"} | value: ${value ?? "(none)"} | query: "${query}" | matches: ${matchCount}/${DATASET.size()}`}
         TextColor3={theme.colors.textSecondary}
         TextSize={theme.typography.bodyMd.textSize}
         TextXAlignment={Enum.TextXAlignment.Left}
@@ -31,7 +72,7 @@ export function ComboboxBasicScene() {
       <frame
         {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
           Position: UDim2.fromOffset(0, 76),
-          Size: UDim2.fromOffset(900, 220),
+          Size: UDim2.fromOffset(900, 330),
         }) as Record<string, unknown>)}
       >
         <uicorner CornerRadius={new UDim(0, theme.radius.lg)} />
@@ -43,7 +84,17 @@ export function ComboboxBasicScene() {
         />
         <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[10])} />
 
-        <Combobox.Root onOpenChange={setOpen} onValueChange={setValue} value={value}>
+        <Text
+          BackgroundTransparency={1}
+          LayoutOrder={0}
+          Size={UDim2.fromOffset(860, 18)}
+          Text="12-item dataset — filter is case-insensitive substring; Enter/Space commits, empty query clears the filter"
+          TextColor3={theme.colors.textSecondary}
+          TextSize={theme.typography.labelSm.textSize}
+          TextXAlignment={Enum.TextXAlignment.Left}
+        />
+
+        <Combobox.Root onInputValueChange={setQuery} onOpenChange={setOpen} onValueChange={setValue} value={value}>
           <frame BackgroundTransparency={1} LayoutOrder={1} Size={UDim2.fromOffset(860, 86)}>
             <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[6])} />
 
@@ -63,7 +114,7 @@ export function ComboboxBasicScene() {
                   TextSize={theme.typography.labelSm.textSize}
                   TextXAlignment={Enum.TextXAlignment.Left}
                 />
-                <Combobox.Value asChild placeholder="Select option">
+                <Combobox.Value asChild placeholder="Select fruit">
                   <textlabel
                     BackgroundTransparency={1}
                     Position={UDim2.fromOffset(88, 0)}
@@ -76,7 +127,7 @@ export function ComboboxBasicScene() {
               </textbutton>
             </Combobox.Trigger>
 
-            <Combobox.Input asChild placeholder="Type alpha, beta, gamma...">
+            <Combobox.Input asChild placeholder="Type to filter (e.g. berry, an, ly)...">
               <textbox
                 BackgroundColor3={theme.colors.surfaceElevated}
                 BorderSizePixel={0}
@@ -95,7 +146,7 @@ export function ComboboxBasicScene() {
             <Combobox.Content asChild sideOffset={8} placement="bottom">
               <frame
                 {...(mergeGuiProps(panelRecipe({ tone: "surface" }, theme), {
-                  Size: UDim2.fromOffset(320, 128),
+                  Size: UDim2.fromOffset(320, 200),
                 }) as Record<string, unknown>)}
               >
                 <uicorner CornerRadius={new UDim(0, theme.radius.md)} />
@@ -105,40 +156,35 @@ export function ComboboxBasicScene() {
                   PaddingRight={new UDim(0, theme.space[8])}
                   PaddingTop={new UDim(0, theme.space[8])}
                 />
-                <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[4])} />
 
-                <Combobox.Item asChild textValue="alpha" value="alpha">
-                  <textbutton
-                    {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
-                      Size: UDim2.fromOffset(300, 30),
-                      Text: "alpha",
-                    }) as Record<string, unknown>)}
-                  >
-                    <uipadding PaddingLeft={new UDim(0, theme.space[8])} />
-                  </textbutton>
-                </Combobox.Item>
+                {/* Empty state — visible only when the query filters everything out */}
+                <Text
+                  BackgroundTransparency={1}
+                  Position={UDim2.fromOffset(0, 0)}
+                  Size={UDim2.fromScale(1, 1)}
+                  Text={`No results for "${query}"`}
+                  TextColor3={theme.colors.textSecondary}
+                  TextSize={theme.typography.bodyMd.textSize}
+                  TextWrapped
+                  Visible={matchCount === 0}
+                />
 
-                <Combobox.Item asChild textValue="beta" value="beta">
-                  <textbutton
-                    {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
-                      Size: UDim2.fromOffset(300, 30),
-                      Text: "beta",
-                    }) as Record<string, unknown>)}
-                  >
-                    <uipadding PaddingLeft={new UDim(0, theme.space[8])} />
-                  </textbutton>
-                </Combobox.Item>
-
-                <Combobox.Item asChild textValue="gamma" value="gamma">
-                  <textbutton
-                    {...(mergeGuiProps(menuItemRecipe({ intent: "default", disabled: "false" }, theme), {
-                      Size: UDim2.fromOffset(300, 30),
-                      Text: "gamma",
-                    }) as Record<string, unknown>)}
-                  >
-                    <uipadding PaddingLeft={new UDim(0, theme.space[8])} />
-                  </textbutton>
-                </Combobox.Item>
+                <scrollingframe
+                  Active
+                  AutomaticCanvasSize={Enum.AutomaticSize.Y}
+                  BackgroundTransparency={1}
+                  BorderSizePixel={0}
+                  CanvasSize={new UDim2()}
+                  ScrollBarThickness={4}
+                  ScrollingDirection={Enum.ScrollingDirection.Y}
+                  Size={UDim2.fromScale(1, 1)}
+                  Visible={matchCount > 0}
+                >
+                  <uilistlayout FillDirection={Enum.FillDirection.Vertical} Padding={new UDim(0, theme.space[4])} />
+                  {DATASET.map((option) => (
+                    <OptionItem key={option} value={option} />
+                  ))}
+                </scrollingframe>
               </frame>
             </Combobox.Content>
           </Combobox.Portal>
