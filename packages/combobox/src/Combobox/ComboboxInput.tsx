@@ -17,6 +17,21 @@ export function ComboboxInput(props: ComboboxInputProps) {
   const disabled = comboboxContext.disabled || props.disabled === true;
   const readOnly = comboboxContext.readOnly || props.readOnly === true;
 
+  // Focusing the field opens the list — with an empty query every item matches,
+  // so the user sees the full set and can then type to narrow it. Kept in a ref
+  // and connected imperatively so the closure never captures a stale
+  // `disabled`/`setOpen`. A disabled combobox refuses to open; readOnly opens.
+  const openOnFocusRef = React.useRef<() => void>();
+  openOnFocusRef.current = () => {
+    if (disabled) {
+      return;
+    }
+
+    comboboxContext.setOpen(true);
+  };
+
+  const focusedConnectionRef = React.useRef<RBXScriptConnection>();
+
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
       const previousInput = comboboxContext.inputRef.current;
@@ -24,8 +39,14 @@ export function ComboboxInput(props: ComboboxInputProps) {
 
       comboboxContext.inputRef.current = nextInput;
 
+      focusedConnectionRef.current?.Disconnect();
+      focusedConnectionRef.current = undefined;
+
       if (nextInput) {
         comboboxContext.anchorRef.current = nextInput;
+        focusedConnectionRef.current = nextInput.Focused.Connect(() => {
+          openOnFocusRef.current?.();
+        });
         return;
       }
 
