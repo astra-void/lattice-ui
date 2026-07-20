@@ -6,8 +6,27 @@ import { panelRecipe } from "../theme/recipes";
 
 type Theme = ReturnType<typeof useTheme>["theme"];
 
+// The thumb sits inside the track by `THUMB_INSET` on every side: 26 - 2 * 2 = 22 tall, and the
+// travel is the padded width minus the thumb. The primitive centers the thumb and parks it on the
+// track's edges, so an inset is padding on the track, never a nudge on the thumb — motion owns the
+// thumb's placement and would overwrite it.
+const THUMB_INSET = 2;
+const TRACK_SIZE = UDim2.fromOffset(46, 26);
+const THUMB_SIZE = UDim2.fromOffset(22, 22);
+
 function toSwitchLabel(checked: boolean) {
   return checked ? "on" : "off";
+}
+
+function TrackInset() {
+  return (
+    <uipadding
+      PaddingBottom={new UDim(0, THUMB_INSET)}
+      PaddingLeft={new UDim(0, THUMB_INSET)}
+      PaddingRight={new UDim(0, THUMB_INSET)}
+      PaddingTop={new UDim(0, THUMB_INSET)}
+    />
+  );
 }
 
 function SectionHeader(props: { theme: Theme; text: string; order: number }) {
@@ -69,12 +88,13 @@ function SettingRow(props: {
           BackgroundColor3={trackColor}
           BorderSizePixel={0}
           Position={new UDim2(1, 0, 0.5, 0)}
-          Size={UDim2.fromOffset(46, 24)}
+          Size={TRACK_SIZE}
           Text=""
         >
           <uicorner CornerRadius={new UDim(1, 0)} />
+          <TrackInset />
           <Switch.Thumb asChild>
-            <frame BackgroundColor3={theme.colors.accentContrast} BorderSizePixel={0} Size={UDim2.fromOffset(20, 20)}>
+            <frame BackgroundColor3={theme.colors.accentContrast} BorderSizePixel={0} Size={THUMB_SIZE}>
               <uicorner CornerRadius={new UDim(1, 0)} />
             </frame>
           </Switch.Thumb>
@@ -197,15 +217,12 @@ export function SwitchBasicScene() {
               BackgroundTransparency={0}
               checked={passthroughStyled}
               onCheckedChange={setPassthroughStyled}
-              Position={UDim2.fromOffset(0, 10)}
-              Size={UDim2.fromOffset(46, 24)}
+              Position={UDim2.fromOffset(0, 9)}
+              Size={TRACK_SIZE}
             >
               <uicorner CornerRadius={new UDim(1, 0)} />
-              <Switch.Thumb
-                BackgroundColor3={theme.colors.accentContrast}
-                BackgroundTransparency={0}
-                Size={UDim2.fromOffset(20, 20)}
-              >
+              <TrackInset />
+              <Switch.Thumb BackgroundColor3={theme.colors.accentContrast} BackgroundTransparency={0} Size={THUMB_SIZE}>
                 <uicorner CornerRadius={new UDim(1, 0)} />
               </Switch.Thumb>
             </Switch.Root>
@@ -227,17 +244,14 @@ export function SwitchBasicScene() {
                 AutoButtonColor={false}
                 BackgroundColor3={asChildStyled ? theme.colors.accent : theme.colors.surfaceElevated}
                 BorderSizePixel={0}
-                Position={UDim2.fromOffset(0, 10)}
-                Size={UDim2.fromOffset(46, 24)}
+                Position={UDim2.fromOffset(0, 9)}
+                Size={TRACK_SIZE}
                 Text=""
               >
                 <uicorner CornerRadius={new UDim(1, 0)} />
+                <TrackInset />
                 <Switch.Thumb asChild>
-                  <frame
-                    BackgroundColor3={theme.colors.accentContrast}
-                    BorderSizePixel={0}
-                    Size={UDim2.fromOffset(20, 20)}
-                  >
+                  <frame BackgroundColor3={theme.colors.accentContrast} BorderSizePixel={0} Size={THUMB_SIZE}>
                     <uicorner CornerRadius={new UDim(1, 0)} />
                   </frame>
                 </Switch.Thumb>
@@ -261,17 +275,14 @@ export function SwitchBasicScene() {
                 AutoButtonColor={false}
                 BackgroundColor3={theme.colors.surfaceElevated}
                 BorderSizePixel={0}
-                Position={UDim2.fromOffset(0, 10)}
-                Size={UDim2.fromOffset(46, 24)}
+                Position={UDim2.fromOffset(0, 9)}
+                Size={TRACK_SIZE}
                 Text=""
               >
                 <uicorner CornerRadius={new UDim(1, 0)} />
+                <TrackInset />
                 <Switch.Thumb asChild>
-                  <frame
-                    BackgroundColor3={theme.colors.textSecondary}
-                    BorderSizePixel={0}
-                    Size={UDim2.fromOffset(20, 20)}
-                  >
+                  <frame BackgroundColor3={theme.colors.textSecondary} BorderSizePixel={0} Size={THUMB_SIZE}>
                     <uicorner CornerRadius={new UDim(1, 0)} />
                   </frame>
                 </Switch.Thumb>
