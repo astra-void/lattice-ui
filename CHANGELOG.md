@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accept `-y` wherever `--yes` is accepted, and `-h` wherever `--help` is.
 - Wire up `--verbose`. The flag was documented by the logger but never parsed, so `logger.debug` and the verbose file-copy logging could not be reached.
 - Honor `NO_COLOR` and `FORCE_COLOR` for colored output, with `NO_COLOR` winning when both are set. Color previously keyed off TTY detection alone.
+- Document styling in the README: the three ways to style a part, and a reference for the props a primitive owns and therefore ignores when you pass them — `Active`/`Selectable` from `disabled`, `Visible` from presence, `Text` from a controlled value, and the computed geometry on `Content`, `Indicator`, `Range`, `Thumb` and `Viewport` parts. Includes the `asChild` escape hatch for sizing a `Content` part.
 - Expose the highlight state that used to only drive built-in colors: `useMenuItemContext`, `useContextMenuItemContext`, `useSelectItemContext` and `useComboboxItemContext` return `{ highlighted, disabled }`.
 
 ### Removed
@@ -31,9 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RadioGroup.Item` and `ToggleGroup.Item` no longer accept `transition`; it only fed the removed color animation.
 - `Select.Item` and `Combobox.Item` no longer render `textValue` as their label. Supply the label as a child. `textValue` still drives `Select.Value` and combobox filtering.
 - `Toast.Viewport` renders its children instead of the toast queue markup it used to hardcode. Map over `useToast().visibleToasts` yourself, as the `asChild` path already required.
+- `Menu.Group` and `ContextMenu.Group` no longer render a vertical `UIListLayout` or force `AutomaticSize`. They were the last primitives holding an opinion about how their children lay out; supply the layout yourself, as `Select.Group` and `Combobox.Group` already required.
 
 ### Fixed
 
+- Accept Roblox UI modifiers as siblings of an `asChild` element. `asChild` previously required the subtree to hold exactly one element, so a `UICorner`, `UIPadding` or `UIListLayout` written next to the child — the shape a Tailwind-style `className` transform emits when it lowers `rounded-*`, `p-*` or `gap-*` at the call site — either raised "asChild requires a child element" or cloned the modifier instead of the consumer's element. The modifier is now re-parented under the element the props land on. Fragments are looked through, and two real candidates remain an error.
+- Render `children` from the 16 leaf parts that previously dropped them unless `asChild` was set — both separators, both text inputs, the labels, descriptions and messages on `TextField` and `Textarea`, `Toast.Title`, `Toast.Description`, `Select.Value`, `Combobox.Value`, `Avatar.Image` and `Dialog.Overlay`. Attaching a `UICorner`, `UIPadding` or any other child to one of these silently did nothing.
 - Register the context-menu and motion packages in the CLI registry so `lattice add context-menu` and `lattice add motion` no longer fail with "Unknown component".
 - Stop reporting a `--dry-run` as if it had run. `lattice add --dry-run` closed with "Added components: ..." and "Installed packages: 4" despite changing nothing; `remove` and `upgrade` did the same. Dry runs now say what they would do.
 - Map `@lattice-ui/react-context-menu` in the tsconfig paths that were missing it. Typecheck fell back to resolving the package's build output, which exists locally but not on a clean checkout.
