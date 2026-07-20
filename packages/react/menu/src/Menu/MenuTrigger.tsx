@@ -1,4 +1,4 @@
-import { focusGuiObject, useFocusNode } from "@lattice-ui/react-focus";
+import { focusGuiObject, useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useMenuContext } from "./context";
 import type { MenuTriggerProps } from "./types";
@@ -34,13 +34,13 @@ export function MenuTrigger(props: MenuTriggerProps) {
     [triggerRef],
   );
 
-  useFocusNode({
-    ref: triggerRef,
-    disabled: props.disabled === true,
-  });
+  const claimActivation = useActivationGuard();
 
+  // Pointer clicks arrive through `Activated`, keyboard and gamepad through the
+  // focus node's `onActivate`; the guard keeps a single activation from toggling
+  // the menu twice when the engine fires both.
   const handleActivated = React.useCallback(() => {
-    if (props.disabled) {
+    if (props.disabled || !claimActivation()) {
       return;
     }
 
@@ -49,30 +49,18 @@ export function MenuTrigger(props: MenuTriggerProps) {
     }
 
     menuContext.setOpen(!menuContext.open);
-  }, [menuContext.open, menuContext.setOpen, props.disabled, triggerRef]);
+  }, [claimActivation, menuContext.open, menuContext.setOpen, props.disabled, triggerRef]);
 
-  const handleInputBegan = React.useCallback(
-    (_rbx: GuiObject, inputObject: InputObject) => {
-      if (props.disabled) {
-        return;
-      }
-
-      const keyCode = inputObject.KeyCode;
-      if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
-        if (!menuContext.open) {
-          focusGuiObject(triggerRef.current);
-        }
-
-        menuContext.setOpen(!menuContext.open);
-      }
-    },
-    [menuContext.open, menuContext.setOpen, props.disabled, triggerRef],
-  );
+  useFocusNode({
+    ref: triggerRef,
+    disabled: props.disabled === true,
+    onActivate: handleActivated,
+  });
 
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
-    Event: composeEvents(passthrough.Event, { Activated: handleActivated, InputBegan: handleInputBegan }),
+    Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
     Selectable: props.disabled !== true,
   };
   const ref = composeRefs<Instance>(passthrough.ref as never, setTriggerRef);

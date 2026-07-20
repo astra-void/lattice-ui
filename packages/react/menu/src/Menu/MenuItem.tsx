@@ -1,4 +1,4 @@
-import { useFocusNode } from "@lattice-ui/react-focus";
+import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { MenuItemContextProvider, useMenuContext } from "./context";
 import type { MenuItemProps, MenuSelectEvent } from "./types";
@@ -32,7 +32,10 @@ export function MenuItem(props: MenuItemProps) {
   const itemRef = React.useRef<GuiObject>();
   const disabledRef = React.useRef(props.disabled === true);
 
-  const [highlighted, setHighlighted] = React.useState(false);
+  // Pointer hover and managed focus are tracked apart so neither clears the
+  // other: the item reads highlighted while either one is on it.
+  const [hovered, setHovered] = React.useState(false);
+  const [focused, setFocused] = React.useState(false);
 
   React.useEffect(() => {
     disabledRef.current = props.disabled === true;
@@ -59,17 +62,17 @@ export function MenuItem(props: MenuItemProps) {
     });
   }, [menuContext]);
 
-  useFocusNode({
-    ref: itemRef,
-    getDisabled: () => disabledRef.current,
-  });
-
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
     itemRef.current = !instance?.IsA("GuiObject") ? undefined : instance;
   }, []);
 
+  const claimActivation = useActivationGuard();
+
+  // A click and a keyboard/gamepad activation both land here: the mouse through
+  // `Activated`, the keyboard through the focus node's `onActivate`. The guard
+  // collapses the pair the engine still fires for a single selection.
   const handleActivated = React.useCallback(() => {
-    if (props.disabled) {
+    if (props.disabled || !claimActivation()) {
       return;
     }
 
@@ -79,37 +82,27 @@ export function MenuItem(props: MenuItemProps) {
     if (!event.defaultPrevented) {
       menuContext.setOpen(false);
     }
-  }, [menuContext, props.disabled, props.onSelect]);
+  }, [claimActivation, menuContext, props.disabled, props.onSelect]);
 
-  const handleInputBegan = React.useCallback(
-    (_rbx: GuiObject, inputObject: InputObject) => {
-      if (props.disabled) {
-        return;
-      }
+  // Directional movement, Enter/Space activation and the highlight all come from
+  // the focus manager; the engine's own selection events are never consulted.
+  useFocusNode({
+    ref: itemRef,
+    getDisabled: () => disabledRef.current,
+    onFocusChange: setFocused,
+    onActivate: handleActivated,
+  });
 
-      // Directional movement between items is owned by the focus navigation
-      // controller (the MenuContent FocusScope is an ordered vertical scope).
-      const keyCode = inputObject.KeyCode;
-      if (keyCode === Enum.KeyCode.Return || keyCode === Enum.KeyCode.Space) {
-        handleActivated();
-      }
-    },
-    [handleActivated, props.disabled],
-  );
-
-  const handlePointerEnter = React.useCallback(() => setHighlighted(true), []);
-  const handlePointerLeave = React.useCallback(() => setHighlighted(false), []);
+  const handlePointerEnter = React.useCallback(() => setHovered(true), []);
+  const handlePointerLeave = React.useCallback(() => setHovered(false), []);
 
   const ownEvents = React.useMemo(
     () => ({
       Activated: handleActivated,
-      InputBegan: handleInputBegan,
       MouseEnter: handlePointerEnter,
       MouseLeave: handlePointerLeave,
-      SelectionGained: handlePointerEnter,
-      SelectionLost: handlePointerLeave,
     }),
-    [handleActivated, handleInputBegan, handlePointerEnter, handlePointerLeave],
+    [handleActivated, handlePointerEnter, handlePointerLeave],
   );
 
   const disabled = props.disabled === true;
@@ -117,10 +110,10 @@ export function MenuItem(props: MenuItemProps) {
   // Highlight is tracked, never painted: consumers read it here and style however they like.
   const itemContextValue = React.useMemo(
     () => ({
-      highlighted: highlighted && !disabled,
+      highlighted: (hovered || focused) && !disabled,
       disabled,
     }),
-    [disabled, highlighted],
+    [disabled, focused, hovered],
   );
 
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
