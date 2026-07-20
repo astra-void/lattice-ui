@@ -251,6 +251,39 @@ export = () => {
       });
     });
 
+    it("centers a thumb shorter than its track on both edges", () => {
+      withReactHarness("SwitchThumbVerticalCentering", (harness) => {
+        harness.render(renderSwitch(false));
+        waitForEffects(4);
+
+        const root = findSwitchRoot(harness.container);
+        const uncheckedThumb = findSwitchThumb(harness.container);
+        assert(root !== undefined && uncheckedThumb !== undefined, "Switch should mount for centering coverage.");
+
+        const trackCenterY = root.AbsolutePosition.Y + root.AbsoluteSize.Y / 2;
+        assertWithinTolerance(
+          uncheckedThumb.AbsolutePosition.Y + uncheckedThumb.AbsoluteSize.Y / 2,
+          trackCenterY,
+          1,
+          "Unchecked thumb should sit centered in the track, not pinned to its top edge.",
+        );
+
+        harness.render(renderSwitch(true));
+        waitForEffects(2);
+        task.wait(0.2);
+        waitForEffects(2);
+
+        const checkedThumb = findSwitchThumb(harness.container);
+        assert(checkedThumb !== undefined, "Switch thumb should remain mounted after settling.");
+        assertWithinTolerance(
+          checkedThumb.AbsolutePosition.Y + checkedThumb.AbsoluteSize.Y / 2,
+          trackCenterY,
+          1,
+          "Checked thumb should stay centered: only the X edge changes with state.",
+        );
+      });
+    });
+
     it("keeps disabled switches stable while following controlled checked state", () => {
       withReactHarness("SwitchDisabledControlled", (harness) => {
         harness.render(renderSwitch(false, true));

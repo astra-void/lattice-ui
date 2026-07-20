@@ -27,16 +27,18 @@ const NEUTRAL_PROPS = {
  * Checked parks the thumb's trailing edge on the track's trailing edge, unchecked its leading edge
  * on the leading edge. `AnchorPoint` and `Position` interpolate together, so the travel resolves to
  * `t * (trackWidth - thumbWidth)` for any thumb width — the primitive never has to know how wide
- * the consumer made it.
+ * the consumer made it. The same pairing on the Y axis centers the thumb in the track at any
+ * height: a thumb shorter than its track would otherwise hang off the top edge, and the consumer
+ * cannot correct it because motion owns `AnchorPoint` and `Position`.
  */
 const CHECKED_THUMB_GEOMETRY = {
-  AnchorPoint: new Vector2(1, 0),
-  Position: UDim2.fromScale(1, 0),
+  AnchorPoint: new Vector2(1, 0.5),
+  Position: UDim2.fromScale(1, 0.5),
 };
 
 const UNCHECKED_THUMB_GEOMETRY = {
-  AnchorPoint: new Vector2(0, 0),
-  Position: UDim2.fromScale(0, 0),
+  AnchorPoint: new Vector2(0, 0.5),
+  Position: UDim2.fromScale(0, 0.5),
 };
 
 type GuiPropBag = React.Attributes & Record<string, unknown>;
