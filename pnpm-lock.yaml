@@ -162,6 +162,9 @@ importers:
       '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../../packages/react/layer
+      '@lattice-ui/react-menu':
+        specifier: workspace:*
+        version: link:../../packages/react/menu
       '@lattice-ui/react-popover':
         specifier: workspace:*
         version: link:../../packages/react/popover

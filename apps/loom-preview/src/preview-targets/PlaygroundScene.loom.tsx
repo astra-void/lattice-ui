@@ -21,9 +21,11 @@ import * as Accordion from "@lattice-ui/react-accordion";
 import * as Avatar from "@lattice-ui/react-avatar";
 import * as Checkbox from "@lattice-ui/react-checkbox";
 import * as Combobox from "@lattice-ui/react-combobox";
+import * as ContextMenu from "@lattice-ui/react-context-menu";
 import * as Dialog from "@lattice-ui/react-dialog";
 import * as Layer from "@lattice-ui/react-layer";
 import { PortalProvider } from "@lattice-ui/react-layer";
+import * as Menu from "@lattice-ui/react-menu";
 import * as Popover from "@lattice-ui/react-popover";
 import * as Progress from "@lattice-ui/react-progress";
 import * as RadioGroup from "@lattice-ui/react-radio-group";
@@ -59,9 +61,11 @@ const PLAYGROUND_MODULES: Record<string, unknown> = {
   "@lattice-ui/react-avatar": Avatar,
   "@lattice-ui/react-checkbox": Checkbox,
   "@lattice-ui/react-combobox": Combobox,
+  "@lattice-ui/react-context-menu": ContextMenu,
   "@lattice-ui/react-runtime": Core,
   "@lattice-ui/react-dialog": Dialog,
   "@lattice-ui/react-layer": Layer,
+  "@lattice-ui/react-menu": Menu,
   "@lattice-ui/react-popover": Popover,
   "@lattice-ui/react-progress": Progress,
   "@lattice-ui/react-radio-group": RadioGroup,
