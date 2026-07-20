@@ -21,6 +21,12 @@ export class CliError extends Error {
   readonly cause?: unknown;
   /** Actionable follow-up shown under the error message, one line per entry. */
   readonly hints: string[];
+  /**
+   * The command already told the user what went wrong, so the top-level handler contributes only
+   * the exit code. Without this a command that closes with its own verdict line would have that
+   * same sentence repeated back as `Error: ...`.
+   */
+  reported = false;
 
   constructor(message: string, kind: CliErrorKind, exitCode: ExitCode, cause?: unknown, hints: string[] = []) {
     super(message);
@@ -65,6 +71,12 @@ export function projectNotFoundError(cwd: string): CliError {
 
 export function registryInvalidError(message: string, cause?: unknown): CliError {
   return new CliError(message, "RegistryInvalid", ExitCode.RegistryInvalid, cause);
+}
+
+/** Marks an error whose message the command has already printed itself. */
+export function asReported(error: CliError): CliError {
+  error.reported = true;
+  return error;
 }
 
 export function packageManagerFailedError(message: string, cause?: unknown): CliError {

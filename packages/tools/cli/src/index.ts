@@ -2,7 +2,7 @@
 
 import { runCli } from "./cli";
 import { type CliError, ExitCode, toCliError } from "./core/errors";
-import { shouldUseColor } from "./core/logger";
+import { shouldUseColor } from "./core/style";
 
 const ANSI = {
   reset: "\u001b[0m",
@@ -11,6 +11,10 @@ const ANSI = {
 } as const;
 
 function reportError(cliError: CliError) {
+  if (cliError.reported) {
+    return;
+  }
+
   const colored = shouldUseColor(process.stdout, process.stderr);
   const label = colored ? `${ANSI.red}Error${ANSI.reset}` : "Error";
   process.stderr.write(`${label}: ${cliError.message}\n`);

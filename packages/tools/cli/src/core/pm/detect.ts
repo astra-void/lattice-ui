@@ -24,6 +24,8 @@ export interface DetectPackageManagerResult {
 
 export interface DetectPackageManagerOptions {
   runtime?: PromptRuntime;
+  /** Stream the package manager's own output rather than buffering it. Follows `--verbose`. */
+  stream?: boolean;
   promptSelectFn?: typeof promptSelect;
   detectInstalledPackageManagersFn?: () => Promise<PackageManagerName[]>;
 }
@@ -38,7 +40,7 @@ const lockfileByManager: Record<PackageManagerName, string> = {
   npm: "package-lock.json",
 };
 
-const managerFactory: Record<PackageManagerName, () => PackageManager> = {
+const managerFactory: Record<PackageManagerName, (options?: { stream?: boolean }) => PackageManager> = {
   pnpm: createPnpmPackageManager,
   yarn: createYarnPackageManager,
   npm: createNpmPackageManager,
@@ -91,10 +93,11 @@ function createResult(
   installed: PackageManagerName[],
   source: PackageManagerResolutionSource,
   pins: PackageManagerPin[],
+  stream = false,
 ): DetectPackageManagerResult {
   return {
     name,
-    manager: managerFactory[name](),
+    manager: managerFactory[name]({ stream }),
     lockfiles,
     installed,
     source,
@@ -161,19 +164,19 @@ export async function detectPackageManager(
   if (requested) {
     const selected = requested as PackageManagerName;
     ensureInstalled(selected, installed, "override");
-    return createResult(selected, lockfiles, installed, "override", pins);
+    return createResult(selected, lockfiles, installed, "override", pins, options?.stream);
   }
 
   if (lockfiles.length > 0) {
     const selected = lockfiles[0];
     ensureInstalled(selected, installed, "lockfile");
-    return createResult(selected, lockfiles, installed, "lockfile", pins);
+    return createResult(selected, lockfiles, installed, "lockfile", pins, options?.stream);
   }
 
   if (pins.length > 0) {
     const selected = pins[0].name;
     ensureInstalled(selected, installed, "manifest");
-    return createResult(selected, lockfiles, installed, "manifest", pins);
+    return createResult(selected, lockfiles, installed, "manifest", pins, options?.stream);
   }
 
   if (installed.length === 0) {
@@ -181,7 +184,7 @@ export async function detectPackageManager(
   }
 
   if (installed.length === 1) {
-    return createResult(installed[0], lockfiles, installed, "installed", pins);
+    return createResult(installed[0], lockfiles, installed, "installed", pins, options?.stream);
   }
 
   const runtime = options?.runtime ?? { yes: false, stdin: process.stdin, stdout: process.stdout };
@@ -203,5 +206,5 @@ export async function detectPackageManager(
     { defaultIndex: 0 },
   );
 
-  return createResult(selected, lockfiles, installed, "prompt", pins);
+  return createResult(selected, lockfiles, installed, "prompt", pins, options?.stream);
 }

@@ -49,6 +49,7 @@ export async function createContext(
   });
 
   const pm = await detectPackageManager(projectRoot, options.pm, {
+    stream: options.verbose ?? false,
     runtime: {
       yes: options.yes,
       stdin: process.stdin,

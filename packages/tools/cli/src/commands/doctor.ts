@@ -1,7 +1,7 @@
-import { validationError } from "../core/errors";
+import { asReported, validationError } from "../core/errors";
 import { getDependencyNames, type PackageJsonLike } from "../core/fs/patch";
 import { PINNED_VERSIONS } from "../core/npm/pins";
-import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
+import { describePackageManager, linkPath, plural, resolveLocalLatticeCommand, summarizeItems } from "../core/output";
 import type { PackageManagerName } from "../core/pm/types";
 import { LEGACY_PACKAGE_RENAMES } from "../core/project/legacyPackages";
 import { readPackageJson } from "../core/project/readPackageJson";
@@ -90,9 +90,11 @@ function collectRecommendations(issues: Issue[], pmName: PackageManagerName): st
 }
 
 export async function runDoctorCommand(ctx: CliContext): Promise<void> {
-  ctx.logger.section("Checking");
-  ctx.logger.kv("Project", ctx.projectRoot);
-  ctx.logger.kv("Resolved package manager", ctx.pmName);
+  ctx.logger.header("lattice doctor");
+  ctx.logger.fields([
+    ["Project", linkPath(ctx.projectRoot, ctx.cwd)],
+    ["Manager", describePackageManager(ctx.pmName, ctx.pmResolutionSource)],
+  ]);
 
   const manifest = await readPackageJson(ctx.projectRoot);
   const installedDependencies = getDependencyNames(manifest);
@@ -211,40 +213,41 @@ export async function runDoctorCommand(ctx: CliContext): Promise<void> {
   const warnings = issues.filter((issue) => issue.level === "warn");
   const errors = issues.filter((issue) => issue.level === "error");
 
-  ctx.logger.section("Summary");
-  ctx.logger.kv("Errors", String(errors.length));
-  ctx.logger.kv("Warnings", String(warnings.length));
-
-  if (warnings.length > 0) {
-    ctx.logger.section("Warnings");
-    ctx.logger.list(warnings.map((issue) => issue.message));
-  }
-
+  // The counts live in the group headings, so there is no separate summary block restating them.
   if (errors.length > 0) {
-    ctx.logger.section("Errors");
-    ctx.logger.list(errors.map((issue) => issue.message));
-  }
-
-  const recommendations = collectRecommendations(issues, ctx.pmName);
-  if (recommendations.length > 0) {
-    ctx.logger.section("Recommended Commands");
-    const recommendationSummary = summarizeItems(recommendations);
-    ctx.logger.list(recommendationSummary.visible);
-    if (recommendationSummary.hidden > 0) {
-      ctx.logger.step(`...and ${recommendationSummary.hidden} more`);
-    }
-  }
-
-  ctx.logger.section("Result");
-  if (errors.length > 0) {
-    const message = `doctor found ${errors.length} error(s) and ${warnings.length} warning(s).`;
-    ctx.logger.error(message);
-    throw validationError(message);
+    ctx.logger.group(
+      `${errors.length} ${plural(errors.length, "error")}`,
+      errors.map((issue) => issue.message),
+      { tone: "error" },
+    );
   }
 
   if (warnings.length > 0) {
-    ctx.logger.success(`doctor completed with ${warnings.length} warning(s).`);
+    ctx.logger.group(
+      `${warnings.length} ${plural(warnings.length, "warning")}`,
+      warnings.map((issue) => issue.message),
+      { tone: "warn" },
+    );
+  }
+
+  // Every path closes with a verdict, so the run always terminates visually. The verdict states
+  // the outcome rather than restating the counts already carried by the group headings.
+  if (errors.length > 0) {
+    ctx.logger.outcome(`Failed with ${errors.length} ${plural(errors.length, "error")}.`, "error");
+  } else if (warnings.length > 0) {
+    ctx.logger.outcome("Passed with warnings.", "warn");
   } else {
-    ctx.logger.success("doctor found no issues.");
+    ctx.logger.outcome("No issues found.");
+  }
+
+  ctx.logger.next(summarizeItems(collectRecommendations(issues, ctx.pmName)).visible);
+
+  if (errors.length > 0) {
+    // The verdict above is the user-facing report; this only carries the exit code.
+    throw asReported(
+      validationError(
+        `doctor found ${errors.length} ${plural(errors.length, "error")} and ${warnings.length} ${plural(warnings.length, "warning")}.`,
+      ),
+    );
   }
 }

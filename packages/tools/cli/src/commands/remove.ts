@@ -1,6 +1,13 @@
 import { usageError } from "../core/errors";
 import { getDependencyNames } from "../core/fs/patch";
-import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
+import {
+  describePackageManager,
+  ITEM_LIMIT,
+  linkPackage,
+  linkPath,
+  plural,
+  resolveLocalLatticeCommand,
+} from "../core/output";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
@@ -13,9 +20,7 @@ function normalizeList(values: string[]): string[] {
 
 export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): Promise<void> {
   const localLattice = resolveLocalLatticeCommand(ctx.pmName);
-
-  ctx.logger.section("Selecting");
-  ctx.logger.kv("Project", ctx.projectRoot);
+  const dryRun = ctx.options.dryRun;
 
   const packageJson = await readPackageJson(ctx.projectRoot);
   const installedDependencies = getDependencyNames(packageJson);
@@ -33,10 +38,9 @@ export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): 
       .sort((left, right) => left.localeCompare(right));
 
     if (installedComponents.length === 0) {
-      ctx.logger.section("Result");
-      ctx.logger.warn("No installed registry components found to remove.");
-      ctx.logger.section("Next Steps");
-      ctx.logger.step(`${localLattice} doctor`);
+      ctx.logger.header("lattice remove", dryRun ? "dry run" : undefined);
+      ctx.logger.outcome("No installed registry components to remove.", "warn");
+      ctx.logger.next([`${localLattice} doctor`]);
       return;
     }
 
@@ -53,7 +57,6 @@ export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): 
     );
   }
 
-  const selectedSummary = summarizeItems(components);
   const specs = normalizeList(components.map((component) => ctx.registry.packages[component].npm));
   const plannedSpecs = specs.filter((spec) => installedDependencies.has(spec));
   const missingComponents = normalizeList(
@@ -63,74 +66,59 @@ export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): 
     components.filter((component) => installedDependencies.has(ctx.registry.packages[component].npm)),
   );
 
-  ctx.logger.section("Planning");
-  ctx.logger.kv("Selected components", String(selectedSummary.total));
-  if (selectedSummary.total > 0) {
-    ctx.logger.list(selectedSummary.visible);
-    if (selectedSummary.hidden > 0) {
-      ctx.logger.step(`...and ${selectedSummary.hidden} more`);
-    }
-  }
-  const plannedSummary = summarizeItems(plannedSpecs);
-  ctx.logger.kv("Packages to remove", String(plannedSummary.total));
-  if (plannedSummary.total > 0) {
-    ctx.logger.list(plannedSummary.visible);
-    if (plannedSummary.hidden > 0) {
-      ctx.logger.step(`...and ${plannedSummary.hidden} more`);
-    }
-  }
-  if (missingComponents.length > 0) {
-    const missingSummary = summarizeItems(missingComponents);
-    ctx.logger.kv("Missing selected", String(missingSummary.total));
-    ctx.logger.list(missingSummary.visible);
-    if (missingSummary.hidden > 0) {
-      ctx.logger.step(`...and ${missingSummary.hidden} more`);
-    }
-  }
+  ctx.logger.header("lattice remove", dryRun ? "dry run" : undefined);
+  ctx.logger.fields([
+    ["Project", linkPath(ctx.projectRoot, ctx.cwd)],
+    ["Manager", describePackageManager(ctx.pmName, ctx.pmResolutionSource)],
+    ["Components", components.join(", ")],
+  ]);
 
   if (plannedSpecs.length > 0) {
-    await applyPackageManagerPin(ctx);
+    ctx.logger.group(
+      `${dryRun ? "Would remove" : "Remove"} ${plannedSpecs.length} ${plural(plannedSpecs.length, "package")}`,
+      plannedSpecs.map(linkPackage),
+      { limit: ITEM_LIMIT },
+    );
   }
 
-  if (ctx.options.dryRun) {
-    ctx.logger.section("Dry Run");
-    if (plannedSpecs.length > 0) {
-      ctx.logger.step(`[dry-run] ${ctx.pmName} remove ${plannedSpecs.join(" ")}`);
-    } else {
-      ctx.logger.step("[dry-run] No remove actions required.");
-    }
-    ctx.logger.step("No files were changed.");
-  } else {
-    ctx.logger.section("Applying");
-    if (plannedSpecs.length > 0) {
-      ctx.logger.step(`${ctx.pmName} remove ${plannedSpecs.join(" ")}`);
-      const confirmed = await ctx.logger.confirm(`Remove ${plannedSpecs.length} package(s) in ${ctx.projectRoot}?`);
-      if (!confirmed) {
-        ctx.logger.section("Result");
-        ctx.logger.warn("Remove command cancelled.");
-        ctx.logger.section("Next Steps");
-        ctx.logger.step(`${localLattice} doctor`);
-        return;
-      }
-
-      const spinner = ctx.logger.spinner(`Removing ${plannedSpecs.length} package(s)...`);
-      await ctx.pm.remove(plannedSpecs, ctx.projectRoot);
-      spinner.succeed("Dependencies removed.");
-    } else {
-      ctx.logger.step("No removal required.");
-    }
+  if (missingComponents.length > 0) {
+    ctx.logger.group("Not installed, skipped", missingComponents, { tone: "warn", limit: ITEM_LIMIT });
   }
 
-  ctx.logger.section("Result");
   if (plannedSpecs.length === 0) {
-    ctx.logger.warn("No installed package matched remove selection.");
-  } else if (ctx.options.dryRun) {
-    ctx.logger.info(`Would remove components: ${removedComponents.join(", ")}`);
-  } else {
-    ctx.logger.success(`Removed components: ${removedComponents.join(", ")}`);
+    ctx.logger.outcome("No installed package matched the selection.", "warn");
+    ctx.logger.next([`${localLattice} doctor`]);
+    return;
   }
-  ctx.logger.kv(ctx.options.dryRun ? "Packages to remove" : "Removed packages", String(plannedSpecs.length));
 
-  ctx.logger.section("Next Steps");
-  ctx.logger.step(`${localLattice} doctor`);
+  await applyPackageManagerPin(ctx);
+  ctx.logger.command(`${ctx.pmName} remove ${plannedSpecs.join(" ")}`);
+
+  if (dryRun) {
+    ctx.logger.outcome("Nothing changed. Re-run without --dry-run to apply.", "plain");
+    ctx.logger.next([`${localLattice} doctor`]);
+    return;
+  }
+
+  const confirmed = await ctx.logger.confirm(
+    `Remove ${plannedSpecs.length} ${plural(plannedSpecs.length, "package")}?`,
+  );
+  if (!confirmed) {
+    ctx.logger.outcome("Cancelled. Nothing changed.", "warn");
+    return;
+  }
+
+  const spinner = ctx.logger.spinner(`Removing ${plannedSpecs.length} ${plural(plannedSpecs.length, "package")}…`);
+  try {
+    await ctx.pm.remove(plannedSpecs, ctx.projectRoot);
+  } catch (error) {
+    spinner.fail("Remove failed.");
+    throw error;
+  }
+  spinner.stop(`Removed ${plannedSpecs.length} ${plural(plannedSpecs.length, "package")}.`);
+
+  ctx.logger.outcome(
+    `Removed ${removedComponents.length} ${plural(removedComponents.length, "component")}: ${removedComponents.join(", ")}`,
+  );
+  ctx.logger.next([`${localLattice} doctor`]);
 }

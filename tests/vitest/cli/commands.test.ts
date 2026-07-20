@@ -30,15 +30,15 @@ afterEach(async () => {
 function createLogger(overrides?: Partial<Logger>): Logger {
   return {
     verbose: false,
-    info: vi.fn(),
-    success: vi.fn(),
+    header: vi.fn(),
+    fields: vi.fn(),
+    group: vi.fn(),
+    command: vi.fn(),
+    outcome: vi.fn(),
+    next: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
-    section: vi.fn(),
-    kv: vi.fn(),
-    step: vi.fn(),
-    list: vi.fn(),
     confirm: vi.fn(async () => true),
     spinner: vi.fn(() => ({
       succeed: vi.fn(),
@@ -47,6 +47,32 @@ function createLogger(overrides?: Partial<Logger>): Logger {
     })),
     ...overrides,
   };
+}
+
+/** Flattens every `fields([...])` call into `label` → `value` for assertions. */
+function fieldsOf(logger: Logger): Record<string, string> {
+  const calls = (logger.fields as unknown as { mock: { calls: [[string, string][]][] } }).mock.calls;
+  return Object.fromEntries(calls.flatMap(([entries]) => entries));
+}
+
+/** Every `group()` call as `title` → rows, with two-column rows joined. */
+function groupsOf(logger: Logger): Record<string, string[]> {
+  const calls = (logger.group as unknown as { mock: { calls: [string, (string | [string, string])[]][] } }).mock.calls;
+  return Object.fromEntries(
+    calls.map(([title, items]) => [title, items.map((item) => (Array.isArray(item) ? item.join(" ") : item))]),
+  );
+}
+
+function commandsOf(logger: Logger): string[] {
+  return (logger.command as unknown as { mock: { calls: [string][] } }).mock.calls.map(([line]) => line);
+}
+
+function nextOf(logger: Logger): string[] {
+  return (logger.next as unknown as { mock: { calls: [string[]][] } }).mock.calls.flatMap(([entries]) => entries);
+}
+
+function outcomesOf(logger: Logger): string[] {
+  return (logger.outcome as unknown as { mock: { calls: [string, string?][] } }).mock.calls.map(([message]) => message);
 }
 
 function createPackageManager(overrides?: Partial<PackageManager>): PackageManager {
@@ -532,13 +558,10 @@ describe("command behavior", () => {
       },
     );
 
-    expect(logger.section).toHaveBeenCalledWith("Creating a new Lattice app");
-    expect(logger.section).toHaveBeenCalledWith("Resolving");
-    expect(logger.section).toHaveBeenCalledWith("Scaffolding");
-    expect(logger.section).toHaveBeenCalledWith("Configuring");
-    expect(logger.section).toHaveBeenCalledWith("Installing");
-    expect(logger.section).toHaveBeenCalledWith("Next Steps");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui add --preset form");
+    expect(logger.header).toHaveBeenCalledWith("lattice create");
+    expect(fieldsOf(logger)).toMatchObject({ Template: "rbxts", Manager: "npm · --pm" });
+    expect(outcomesOf(logger)[0]).toMatch(/^Created /);
+    expect(nextOf(logger)).toContain("npx lattice-ui add --preset form");
   });
 
   it("create auto-selects the only installed package manager without prompting", async () => {
@@ -921,8 +944,9 @@ describe("command behavior", () => {
     await expect(readFile(path.join(dir, "tsconfig.json"), "utf8")).rejects.toThrow();
     await expect(readFile(path.join(dir, ".gitignore"), "utf8")).rejects.toThrow();
     expect(install).not.toHaveBeenCalled();
-    expect(logger.section).toHaveBeenCalledWith("Dry Run");
-    expect(logger.step).toHaveBeenCalledWith("[dry-run] npm install");
+    expect(logger.header).toHaveBeenCalledWith("lattice init", "dry run");
+    expect(commandsOf(logger)).toContain("npm install");
+    expect(outcomesOf(logger)).toContain("Nothing changed. Re-run without --dry-run to apply.");
   });
 
   it("init safely bootstraps an existing project and appends gitignore entries", async () => {
@@ -1323,7 +1347,7 @@ describe("command behavior", () => {
     );
 
     expect(install).not.toHaveBeenCalled();
-    expect(logger.success).toHaveBeenCalledWith("Project already matches the Lattice init template.");
+    expect(outcomesOf(logger)).toContain("Project already matches the Lattice init template.");
   });
 
   it("add expands presets and installs peers, excluding optional providers", async () => {
@@ -1377,20 +1401,14 @@ describe("command behavior", () => {
 
     await runAddCommand(ctx, { names: ["style"], presets: [] });
 
-    expect(logger.section).toHaveBeenNthCalledWith(1, "Selecting");
-    expect(logger.section).toHaveBeenNthCalledWith(2, "Planning");
-    expect(logger.section).toHaveBeenNthCalledWith(3, "Dry Run");
-    expect(logger.section).toHaveBeenNthCalledWith(4, "Result");
-    expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
-    expect(logger.step).toHaveBeenCalledWith(expect.stringMatching(/^\[dry-run\] npm add/));
-    expect(logger.step).toHaveBeenCalledWith("No files were changed.");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
+    expect(logger.header).toHaveBeenCalledWith("lattice add", "dry run");
+    expect(fieldsOf(logger)).toMatchObject({ Components: "style" });
+    expect(commandsOf(logger)).toEqual([expect.stringMatching(/^npm add /)]);
+    expect(nextOf(logger)).toContain("npx lattice-ui doctor");
 
     // A dry run must not claim the install happened.
-    expect(logger.info).toHaveBeenCalledWith("Would add components: style");
-    expect(logger.success).not.toHaveBeenCalledWith(expect.stringContaining("Added components"));
-    expect(logger.kv).toHaveBeenCalledWith("Packages to install", "1");
-    expect(logger.kv).not.toHaveBeenCalledWith("Installed packages", expect.anything());
+    expect(groupsOf(logger)).toHaveProperty("Would install 1 package");
+    expect(outcomesOf(logger)).toEqual(["Nothing changed. Re-run without --dry-run to apply."]);
   });
 
   it("add requires explicit selection in --yes mode", async () => {
@@ -1482,14 +1500,10 @@ describe("command behavior", () => {
 
     await runRemoveCommand(ctx, { names: ["style"], presets: [] });
 
-    expect(logger.section).toHaveBeenNthCalledWith(1, "Selecting");
-    expect(logger.section).toHaveBeenNthCalledWith(2, "Planning");
-    expect(logger.section).toHaveBeenNthCalledWith(3, "Dry Run");
-    expect(logger.section).toHaveBeenNthCalledWith(4, "Result");
-    expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
-    expect(logger.step).toHaveBeenCalledWith(expect.stringContaining("[dry-run] npm remove @lattice-ui/react-style"));
-    expect(logger.step).toHaveBeenCalledWith("No files were changed.");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
+    expect(logger.header).toHaveBeenCalledWith("lattice remove", "dry run");
+    expect(commandsOf(logger)).toEqual([expect.stringContaining("npm remove @lattice-ui/react-style")]);
+    expect(outcomesOf(logger)).toEqual(["Nothing changed. Re-run without --dry-run to apply."]);
+    expect(nextOf(logger)).toContain("npx lattice-ui doctor");
   });
 
   it("remove skips requested components that are not installed", async () => {
@@ -1528,7 +1542,7 @@ describe("command behavior", () => {
 
     expect(remove).toHaveBeenCalledTimes(1);
     expect(remove.mock.calls[0]).toEqual([["@lattice-ui/react-style"], dir]);
-    expect(logger.kv).toHaveBeenCalledWith("Missing selected", "1");
+    expect(groupsOf(logger)["Not installed, skipped"]).toEqual(["dialog"]);
   });
 
   it("remove reports no-installed result and next steps", async () => {
@@ -1550,10 +1564,8 @@ describe("command behavior", () => {
 
     await runRemoveCommand(ctx, { names: [], presets: [] });
 
-    expect(logger.section).toHaveBeenCalledWith("Result");
-    expect(logger.warn).toHaveBeenCalledWith("No installed registry components found to remove.");
-    expect(logger.section).toHaveBeenCalledWith("Next Steps");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
+    expect(logger.outcome).toHaveBeenCalledWith("No installed registry components to remove.", "warn");
+    expect(nextOf(logger)).toContain("npx lattice-ui doctor");
   });
 
   it("remove interactive no-arg path selects from installed components", async () => {
@@ -1674,16 +1686,10 @@ describe("command behavior", () => {
 
     await runUpgradeCommand(ctx, { names: ["style"], presets: [] });
 
-    expect(logger.section).toHaveBeenNthCalledWith(1, "Selecting");
-    expect(logger.section).toHaveBeenNthCalledWith(2, "Planning");
-    expect(logger.section).toHaveBeenNthCalledWith(3, "Dry Run");
-    expect(logger.section).toHaveBeenNthCalledWith(4, "Result");
-    expect(logger.section).toHaveBeenNthCalledWith(5, "Next Steps");
-    expect(logger.step).toHaveBeenCalledWith(
-      expect.stringContaining("[dry-run] npm add @lattice-ui/react-style@latest"),
-    );
-    expect(logger.step).toHaveBeenCalledWith("No files were changed.");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
+    expect(logger.header).toHaveBeenCalledWith("lattice upgrade", "dry run");
+    expect(commandsOf(logger)).toEqual([expect.stringContaining("npm add @lattice-ui/react-style@latest")]);
+    expect(outcomesOf(logger)).toEqual(["Nothing changed. Re-run without --dry-run to apply."]);
+    expect(nextOf(logger)).toContain("npx lattice-ui doctor");
   });
 
   it("upgrade summarizes long selection lists with overflow count", async () => {
@@ -1716,8 +1722,7 @@ describe("command behavior", () => {
       presets: [],
     });
 
-    expect(logger.kv).toHaveBeenCalledWith("Selected", "10");
-    expect(logger.step).toHaveBeenCalledWith("...and 2 more");
+    expect(groupsOf(logger)["Would upgrade 10 dependencies"]).toHaveLength(10);
   });
 
   it("upgrade reports a clear result when no requested packages are installed", async () => {
@@ -1739,10 +1744,8 @@ describe("command behavior", () => {
 
     await runUpgradeCommand(ctx, { names: ["style"], presets: [] });
 
-    expect(logger.section).toHaveBeenCalledWith("Result");
-    expect(logger.warn).toHaveBeenCalledWith("No installed @lattice-ui/* package matched upgrade selection.");
-    expect(logger.section).toHaveBeenCalledWith("Next Steps");
-    expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
+    expect(logger.outcome).toHaveBeenCalledWith("No installed @lattice-ui/* package matched the selection.", "warn");
+    expect(nextOf(logger)).toContain("npx lattice-ui doctor");
   });
 
   it("doctor recommends local package-manager aware commands", async () => {
@@ -1762,9 +1765,8 @@ describe("command behavior", () => {
 
     await expect(runDoctorCommand(ctx)).resolves.toBeUndefined();
 
-    expect(logger.section).toHaveBeenCalledWith("Checking");
-    expect(logger.section).toHaveBeenCalledWith("Recommended Commands");
-    expect(logger.list).toHaveBeenCalledWith(expect.arrayContaining(["pnpm lattice add <component>"]));
+    expect(logger.header).toHaveBeenCalledWith("lattice doctor");
+    expect(nextOf(logger)).toContain("pnpm lattice add <component>");
   });
 
   it("doctor ignores lattice-ui as a tooling package", async () => {
@@ -1796,8 +1798,7 @@ describe("command behavior", () => {
 
     await expect(runDoctorCommand(ctx)).resolves.toBeUndefined();
 
-    const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
-    const listedMessages = listCalls.flatMap((call) => call[0]);
+    const listedMessages = Object.values(groupsOf(logger)).flat();
 
     expect(listedMessages).not.toContain("lattice-ui is installed but not found in CLI registry.");
     expect(listedMessages).toContain("No @lattice-ui component packages are installed.");
@@ -1831,11 +1832,10 @@ describe("command behavior", () => {
 
     await expect(runDoctorCommand(ctx)).resolves.toBeUndefined();
 
-    const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
-    const listedMessages = listCalls.flatMap((call) => call[0]);
+    const listedMessages = Object.values(groupsOf(logger)).flat();
 
     expect(listedMessages).toContain("typescript is pinned to 7.0.2, but roblox-ts compiles with 5.5.3.");
-    expect(listedMessages).toContain("npm install -D typescript@5.5.3");
+    expect(nextOf(logger)).toContain("npm install -D typescript@5.5.3");
   });
 
   it("doctor accepts a supported typescript range", async () => {
@@ -1866,8 +1866,7 @@ describe("command behavior", () => {
 
     await expect(runDoctorCommand(ctx)).resolves.toBeUndefined();
 
-    const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
-    const listedMessages = listCalls.flatMap((call) => call[0]);
+    const listedMessages = Object.values(groupsOf(logger)).flat();
 
     expect(listedMessages.some((message) => message.includes("roblox-ts compiles with"))).toBe(false);
   });
@@ -1901,8 +1900,7 @@ describe("command behavior", () => {
 
     await expect(runDoctorCommand(ctx)).rejects.toThrow(/1 error/);
 
-    const listCalls = (logger.list as unknown as { mock: { calls: Array<[string[]]> } }).mock.calls;
-    const listedMessages = listCalls.flatMap((call) => call[0]);
+    const listedMessages = Object.values(groupsOf(logger)).flat();
 
     expect(listedMessages).toContain(
       "@lattice-ui/style was renamed to @lattice-ui/react-style; the old name no longer receives releases.",
@@ -1959,6 +1957,7 @@ describe("command behavior", () => {
     });
 
     await expect(runDoctorCommand(errorCtx)).rejects.toThrow(/doctor found/i);
-    expect(warningCtx.logger.section).toHaveBeenCalledWith("Summary");
+    // Warnings alone must not fail the command, and they land in their own titled group.
+    expect(Object.keys(groupsOf(warningCtx.logger)).join()).toMatch(/warning/);
   });
 });

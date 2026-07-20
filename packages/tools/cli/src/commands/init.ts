@@ -3,10 +3,17 @@ import * as path from "node:path";
 import { projectNotFoundError, usageError } from "../core/errors";
 import { type CopyTemplateReport, copyTemplateSafe } from "../core/fs/copy";
 import { restoreDirectories, restoreFiles, snapshotDirectories, snapshotFiles } from "../core/fs/transaction";
-import { createLogger } from "../core/logger";
+import { createLogger, type GroupItem } from "../core/logger";
 import { resolveLatestVersions } from "../core/npm/latest";
 import { applyPinnedVersions, selectResolvablePackages } from "../core/npm/pins";
-import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
+import {
+  describePackageManager,
+  ITEM_LIMIT,
+  linkPackage,
+  linkPath,
+  plural,
+  resolveLocalLatticeCommand,
+} from "../core/output";
 import { detectPackageManager } from "../core/pm/detect";
 import { describePackageManagerPin, type PackageManagerPin, planPackageManagerPin } from "../core/pm/devEngines";
 import type { PackageManagerName } from "../core/pm/types";
@@ -507,37 +514,20 @@ export async function runInitCommand(
   const resolvedPm = await detectPackageManagerFn(projectRoot, input.pm, {
     runtime,
     promptSelectFn,
+    stream: input.verbose ?? false,
   });
-  let packageManagerSourceLabel: string;
-  switch (resolvedPm.source) {
-    case "override":
-      packageManagerSourceLabel = "explicit --pm";
-      break;
-    case "lockfile":
-      packageManagerSourceLabel = "lockfile";
-      break;
-    case "manifest":
-      packageManagerSourceLabel = "package.json package manager pin";
-      break;
-    case "installed":
-      packageManagerSourceLabel = "only installed package manager";
-      break;
-    case "prompt":
-      packageManagerSourceLabel = "interactive selection";
-      break;
-  }
-
   const logger = createLoggerFn({
     verbose: input.verbose ?? false,
     yes: input.yes,
   });
 
-  logger.section("Inspecting");
-  logger.kv("Project", projectRoot);
-  logger.kv("Template", template);
-  logger.kv("Resolved package manager", resolvedPm.name);
-  logger.kv("Package manager source", packageManagerSourceLabel);
-  logger.kv("Lint/format", lintEnabled ? "enabled" : "disabled");
+  logger.header("lattice init", input.dryRun ? "dry run" : undefined);
+  logger.fields([
+    ["Project", linkPath(projectRoot, input.cwd)],
+    ["Template", template],
+    ["Manager", describePackageManager(resolvedPm.name, resolvedPm.source)],
+    ["Lint/format", lintEnabled ? "enabled" : "disabled"],
+  ]);
 
   const currentManifest = await readPackageJson(projectRoot);
   const packagesToResolve = selectResolvablePackages([
@@ -586,41 +576,38 @@ export async function runInitCommand(
   const localLattice = resolveLocalLatticeCommand(resolvedPm.name);
   const installRequired = manifestPlan.changed || npmrcPlan.changed;
 
-  logger.section("Planning");
-  logger.kv("Files to create", String(createdCount));
-  logger.kv("Files to merge", String(mergedCount));
-  logger.kv("Scripts to add", String(manifestPlan.addedScripts.length));
-  logger.kv("Packages to add", String(addedPackages.length));
+  const dryRun = input.dryRun;
 
-  const changedFileSummary = summarizeItems(changedFiles);
-  if (changedFileSummary.total > 0) {
-    logger.list(changedFileSummary.visible);
-    if (changedFileSummary.hidden > 0) {
-      logger.step(`...and ${changedFileSummary.hidden} more`);
-    }
+  if (changedFiles.length > 0) {
+    logger.group(
+      `${dryRun ? "Would change" : "Change"} ${changedFiles.length} ${plural(changedFiles.length, "file")}`,
+      changedFiles,
+      { limit: ITEM_LIMIT },
+    );
   }
 
   if (manifestPlan.addedScripts.length > 0) {
-    const scriptSummary = summarizeItems(manifestPlan.addedScripts);
-    logger.kv("New scripts", String(scriptSummary.total));
-    logger.list(scriptSummary.visible);
-    if (scriptSummary.hidden > 0) {
-      logger.step(`...and ${scriptSummary.hidden} more`);
-    }
+    logger.group(
+      `${manifestPlan.addedScripts.length} new ${plural(manifestPlan.addedScripts.length, "script")}`,
+      manifestPlan.addedScripts,
+      { limit: ITEM_LIMIT },
+    );
   }
 
   if (addedPackages.length > 0) {
-    const packageSummary = summarizeItems(addedPackages);
-    logger.kv("New dependencies", String(packageSummary.total));
-    logger.list(packageSummary.visible);
-    if (packageSummary.hidden > 0) {
-      logger.step(`...and ${packageSummary.hidden} more`);
-    }
+    logger.group(
+      `${addedPackages.length} new ${plural(addedPackages.length, "dependency", "dependencies")}`,
+      addedPackages.map(linkPackage),
+      { limit: ITEM_LIMIT },
+    );
   }
 
   if (manifestPlan.legacyMigrations.length > 0) {
-    logger.kv("Renamed packages", String(manifestPlan.legacyMigrations.length));
-    logger.list(manifestPlan.legacyMigrations.map((migration) => `${migration.from} -> ${migration.to}`));
+    logger.group(
+      `${manifestPlan.legacyMigrations.length} renamed ${plural(manifestPlan.legacyMigrations.length, "package")}`,
+      manifestPlan.legacyMigrations.map((migration): GroupItem => [migration.from, `→ ${migration.to}`]),
+      { tone: "warn" },
+    );
   }
 
   for (const replacement of manifestPlan.unresolvedLegacyReplacements) {
@@ -634,112 +621,87 @@ export async function runInitCommand(
   }
 
   if (manifestPlan.pinnedTo) {
-    logger.kv("Package manager pin", `devEngines.packageManager (${manifestPlan.pinnedTo})`);
+    logger.fields([["Pinned to", `devEngines.packageManager (${manifestPlan.pinnedTo})`]]);
   }
 
-  if (input.dryRun) {
-    logger.section("Dry Run");
-    if (changedFiles.length === 0) {
-      logger.step("[dry-run] No file changes required.");
-    } else {
-      for (const filePath of changedFileSummary.visible) {
-        logger.step(`[dry-run] update ${filePath}`);
-      }
-      if (changedFileSummary.hidden > 0) {
-        logger.step(`[dry-run] ...and ${changedFileSummary.hidden} more file changes`);
-      }
+  if (changedFiles.length === 0) {
+    logger.outcome("Project already matches the Lattice init template.");
+    logger.next([`${localLattice} doctor`, `${resolvedPm.name} run build`, `${localLattice} add --preset form`]);
+    return;
+  }
+
+  if (installRequired) {
+    logger.command(`${resolvedPm.name} install`);
+  }
+
+  if (dryRun) {
+    logger.outcome("Nothing changed. Re-run without --dry-run to apply.", "plain");
+    logger.next([`${localLattice} doctor`, `${resolvedPm.name} run build`, `${localLattice} add --preset form`]);
+    return;
+  }
+  {
+    const confirmed = await logger.confirm(`Apply ${changedFiles.length} ${plural(changedFiles.length, "change")}?`);
+    if (!confirmed) {
+      logger.outcome("Cancelled. Nothing changed.", "warn");
+      return;
     }
 
-    if (installRequired) {
-      logger.step(`[dry-run] ${resolvedPm.name} install`);
-    } else {
-      logger.step("[dry-run] No install required.");
-    }
-  } else {
-    logger.section("Applying");
-    if (changedFiles.length === 0) {
-      logger.step("Project already has the required Lattice bootstrap files.");
-    } else {
-      const confirmed = await logger.confirm(`Apply ${changedFiles.length} planned change(s) in ${projectRoot}?`);
-      if (!confirmed) {
-        logger.section("Result");
-        logger.warn("Init command cancelled.");
-        logger.section("Next Steps");
-        logger.step(`${localLattice} doctor`);
-        return;
-      }
+    // Everything below is undone as a unit: a failed install must not leave a partially
+    // written scaffold behind, because the next run would merge on top of it.
+    const fileSnapshots = await snapshotFiles(projectRoot, changedFiles);
+    const directorySnapshots = await snapshotDirectories(projectRoot, PROJECT_DIRECTORIES);
 
-      // Everything below is undone as a unit: a failed install must not leave a partially
-      // written scaffold behind, because the next run would merge on top of it.
-      const fileSnapshots = await snapshotFiles(projectRoot, changedFiles);
-      const directorySnapshots = await snapshotDirectories(projectRoot, PROJECT_DIRECTORIES);
+    try {
+      await copyTemplateSafe(templateDir, projectRoot, {
+        dryRun: false,
+        logger,
+        replacements,
+        shouldIncludeFile: (relativePath) => relativePath !== "package.json",
+      });
 
-      try {
-        await copyTemplateSafe(templateDir, projectRoot, {
+      if (lintEnabled) {
+        await copyTemplateSafe(lintTemplateDir, projectRoot, {
           dryRun: false,
           logger,
           replacements,
           shouldIncludeFile: (relativePath) => relativePath !== "package.json",
         });
-
-        if (lintEnabled) {
-          await copyTemplateSafe(lintTemplateDir, projectRoot, {
-            dryRun: false,
-            logger,
-            replacements,
-            shouldIncludeFile: (relativePath) => relativePath !== "package.json",
-          });
-        }
-
-        if (manifestPlan.changed) {
-          await writePackageJson(projectRoot, manifestPlan.nextManifest);
-        }
-
-        await ensureProjectDirectories(projectRoot);
-
-        if (gitignorePlan.changed) {
-          await fs.writeFile(path.join(projectRoot, ".gitignore"), gitignorePlan.nextContent, "utf8");
-        }
-
-        if (npmrcPlan.changed) {
-          await fs.writeFile(path.join(projectRoot, PNPM_NPMRC_PATH), npmrcPlan.nextContent, "utf8");
-        }
-
-        if (installRequired) {
-          const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
-          try {
-            await resolvedPm.manager.install(projectRoot);
-          } catch (error) {
-            installSpinner.fail("Dependency installation failed.");
-            throw error;
-          }
-          installSpinner.succeed("Dependencies installed.");
-        } else {
-          logger.step("No dependency installation required.");
-        }
-      } catch (error) {
-        const restored = await restoreFiles(projectRoot, fileSnapshots);
-        await restoreDirectories(projectRoot, directorySnapshots);
-        logger.warn(`Init failed; rolled back ${restored} file change(s) in ${projectRoot}.`);
-        throw error;
       }
+
+      if (manifestPlan.changed) {
+        await writePackageJson(projectRoot, manifestPlan.nextManifest);
+      }
+
+      await ensureProjectDirectories(projectRoot);
+
+      if (gitignorePlan.changed) {
+        await fs.writeFile(path.join(projectRoot, ".gitignore"), gitignorePlan.nextContent, "utf8");
+      }
+
+      if (npmrcPlan.changed) {
+        await fs.writeFile(path.join(projectRoot, PNPM_NPMRC_PATH), npmrcPlan.nextContent, "utf8");
+      }
+
+      if (installRequired) {
+        const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}…`);
+        try {
+          await resolvedPm.manager.install(projectRoot);
+        } catch (error) {
+          installSpinner.fail("Dependency installation failed.");
+          throw error;
+        }
+        installSpinner.succeed("Dependencies installed.");
+      }
+    } catch (error) {
+      const restored = await restoreFiles(projectRoot, fileSnapshots);
+      await restoreDirectories(projectRoot, directorySnapshots);
+      logger.warn(`Init failed; rolled back ${restored} file ${plural(restored, "change")} in ${projectRoot}.`);
+      throw error;
     }
   }
 
-  logger.section("Result");
-  if (changedFiles.length === 0) {
-    logger.success("Project already matches the Lattice init template.");
-  } else if (input.dryRun) {
-    logger.success(`Dry run complete. Planned ${changedFiles.length} file change(s).`);
-  } else {
-    logger.success(`Initialized Lattice in ${path.basename(projectRoot)}.`);
-  }
-  logger.kv("Files created", String(createdCount));
-  logger.kv("Files merged", String(mergedCount));
-  logger.kv("Dependencies added", String(addedPackages.length));
-
-  logger.section("Next Steps");
-  logger.step(`${localLattice} doctor`);
-  logger.step(`${resolvedPm.name} run build`);
-  logger.step(`${localLattice} add --preset form`);
+  logger.outcome(
+    `Initialized Lattice in ${path.basename(projectRoot)} — ${createdCount} created, ${mergedCount} merged, ${addedPackages.length} ${plural(addedPackages.length, "dependency", "dependencies")} added.`,
+  );
+  logger.next([`${localLattice} doctor`, `${resolvedPm.name} run build`, `${localLattice} add --preset form`]);
 }

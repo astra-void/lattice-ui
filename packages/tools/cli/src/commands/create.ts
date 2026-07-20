@@ -6,7 +6,7 @@ import { type CopyTemplateReport, copyTemplateSafe } from "../core/fs/copy";
 import { createLogger } from "../core/logger";
 import { resolveLatestVersions } from "../core/npm/latest";
 import { applyPinnedVersions, selectResolvablePackages } from "../core/npm/pins";
-import { resolveLocalLatticeCommand } from "../core/output";
+import { describePackageManager, linkPath, plural, resolveLocalLatticeCommand } from "../core/output";
 import { detectPackageManager } from "../core/pm/detect";
 import { planPackageManagerPin } from "../core/pm/devEngines";
 import type { PackageManagerName } from "../core/pm/types";
@@ -353,36 +353,18 @@ export async function runCreateCommand(
   const resolvedPm = await detectPackageManagerFn(targetRoot, input.pm, {
     runtime,
     promptSelectFn,
+    stream: input.verbose ?? false,
   });
-  let packageManagerSourceLabel: string;
-  switch (resolvedPm.source) {
-    case "override":
-      packageManagerSourceLabel = "explicit --pm";
-      break;
-    case "lockfile":
-      packageManagerSourceLabel = "lockfile";
-      break;
-    case "manifest":
-      packageManagerSourceLabel = "package.json package manager pin";
-      break;
-    case "installed":
-      packageManagerSourceLabel = "only installed package manager";
-      break;
-    case "prompt":
-      packageManagerSourceLabel = "interactive selection";
-      break;
-  }
+  logger.header("lattice create");
+  logger.fields([
+    ["Location", linkPath(targetRoot, input.cwd)],
+    ["Template", template],
+    ["Manager", describePackageManager(resolvedPm.name, resolvedPm.source)],
+    ["Git", gitEnabled ? "enabled" : "disabled (use --git to enable)"],
+    ["Lint/format", lintEnabled ? "enabled" : "disabled"],
+  ]);
 
-  logger.section("Creating a new Lattice app");
-  logger.kv("Location", targetRoot);
-  logger.kv("Template", template);
-  logger.kv("Resolved package manager", resolvedPm.name);
-  logger.kv("Package manager source", packageManagerSourceLabel);
-  logger.kv("Git", gitEnabled ? "enabled" : "disabled (use --git to enable)");
-  logger.kv("Lint/format", lintEnabled ? "enabled" : "disabled");
-
-  logger.section("Resolving");
-  const versionSpinner = logger.spinner("Resolving latest package versions...");
+  const versionSpinner = logger.spinner("Resolving latest package versions…");
   const packagesToResolve = selectResolvablePackages([
     ...Object.values(CORE_VERSION_PACKAGES),
     ...(lintEnabled ? Object.values(LINT_VERSION_PACKAGES) : []),
@@ -391,7 +373,6 @@ export async function runCreateCommand(
   versionSpinner.succeed("Package versions resolved.");
 
   const templateDir = path.resolve(__dirname, "../../templates/init");
-  logger.section("Scaffolding");
 
   // Scaffolding, install and git init are one unit: a failure at any step discards the
   // whole target directory instead of leaving an unusable half-created project behind.
@@ -400,7 +381,7 @@ export async function runCreateCommand(
   try {
     createdTargetRoot = await createTargetDirectory(targetRoot);
 
-    const scaffoldSpinner = logger.spinner(`Scaffolding ${template} template...`);
+    const scaffoldSpinner = logger.spinner(`Scaffolding the ${template} template…`);
     report = await copyTemplateSafe(templateDir, targetRoot, {
       dryRun: false,
       logger,
@@ -419,9 +400,8 @@ export async function runCreateCommand(
     scaffoldSpinner.succeed(`Scaffold complete (${report.created.length} created, ${report.merged.length} merged).`);
 
     if (lintEnabled) {
-      logger.section("Configuring");
       const lintTemplateDir = path.resolve(__dirname, "../../templates/init-lint");
-      const lintSpinner = logger.spinner("Applying ESLint + Prettier configuration...");
+      const lintSpinner = logger.spinner("Applying ESLint + Prettier configuration…");
       await copyTemplateSafe(lintTemplateDir, targetRoot, {
         dryRun: false,
         logger,
@@ -445,8 +425,7 @@ export async function runCreateCommand(
     await ensurePnpmNodeLinkerConfig(targetRoot, resolvedPm.name);
     await ensurePackageManagerPin(targetRoot, resolvedPm.name);
 
-    logger.section("Installing");
-    const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}...`);
+    const installSpinner = logger.spinner(`Installing dependencies with ${resolvedPm.name}…`);
     try {
       await resolvedPm.manager.install(targetRoot);
     } catch (error) {
@@ -456,8 +435,7 @@ export async function runCreateCommand(
     installSpinner.succeed("Dependencies installed.");
 
     if (gitEnabled) {
-      logger.section("Git");
-      const gitSpinner = logger.spinner("Initializing git repository...");
+      const gitSpinner = logger.spinner("Initializing a git repository…");
       await runProcessFn("git", ["init"], targetRoot);
       gitSpinner.succeed("Git repository initialized.");
     }
@@ -467,12 +445,12 @@ export async function runCreateCommand(
     throw error;
   }
 
-  logger.success(`Success! Created ${path.basename(targetRoot)} at ${targetRoot}`);
-  logger.kv("Files created", String(report.created.length));
-  logger.kv("Files merged", String(report.merged.length));
-
-  logger.section("Next Steps");
-  logger.step(`cd ${relativeProjectPath}`);
-  logger.step(`${resolvedPm.name} run build`);
-  logger.step(`${resolveLocalLatticeCommand(resolvedPm.name)} add --preset form`);
+  logger.outcome(
+    `Created ${path.basename(targetRoot)} — ${report.created.length} ${plural(report.created.length, "file")} created, ${report.merged.length} merged.`,
+  );
+  logger.next([
+    `cd ${relativeProjectPath}`,
+    `${resolvedPm.name} run build`,
+    `${resolveLocalLatticeCommand(resolvedPm.name)} add --preset form`,
+  ]);
 }

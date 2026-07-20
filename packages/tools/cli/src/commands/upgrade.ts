@@ -1,5 +1,12 @@
 import { usageError } from "../core/errors";
-import { resolveLocalLatticeCommand, summarizeItems } from "../core/output";
+import {
+  describePackageManager,
+  ITEM_LIMIT,
+  linkPackage,
+  linkPath,
+  plural,
+  resolveLocalLatticeCommand,
+} from "../core/output";
 import { LEGACY_PACKAGE_RENAMES } from "../core/project/legacyPackages";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
@@ -52,9 +59,13 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
   }
 
   const localLattice = resolveLocalLatticeCommand(ctx.pmName);
+  const dryRun = ctx.options.dryRun;
 
-  ctx.logger.section("Selecting");
-  ctx.logger.kv("Project", ctx.projectRoot);
+  ctx.logger.header("lattice upgrade", dryRun ? "dry run" : undefined);
+  ctx.logger.fields([
+    ["Project", linkPath(ctx.projectRoot, ctx.cwd)],
+    ["Manager", describePackageManager(ctx.pmName, ctx.pmResolutionSource)],
+  ]);
 
   for (const name of legacyInstalled) {
     ctx.logger.warn(
@@ -78,114 +89,73 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
     }
   }
 
-  ctx.logger.section("Planning");
-  const selectedSummary = summarizeItems(targets);
-  ctx.logger.kv("Selected", String(selectedSummary.total));
-  if (selectedSummary.total > 0) {
-    ctx.logger.list(selectedSummary.visible);
-    if (selectedSummary.hidden > 0) {
-      ctx.logger.step(`...and ${selectedSummary.hidden} more`);
-    }
-  }
-  if (missingRequested.length > 0) {
-    const missingSummary = summarizeItems(missingRequested);
-    ctx.logger.kv("Missing requested", String(missingSummary.total));
-    ctx.logger.list(missingSummary.visible);
-    if (missingSummary.hidden > 0) {
-      ctx.logger.step(`...and ${missingSummary.hidden} more`);
-    }
-  }
-  const dependencySummary = summarizeItems(dependencySpecs);
-  const devDependencySummary = summarizeItems(devDependencySpecs);
-  ctx.logger.kv("Dependency upgrades", String(dependencySummary.total));
-  if (dependencySummary.total > 0) {
-    ctx.logger.list(dependencySummary.visible);
-    if (dependencySummary.hidden > 0) {
-      ctx.logger.step(`...and ${dependencySummary.hidden} more`);
-    }
-  }
-  ctx.logger.kv("Dev dependency upgrades", String(devDependencySummary.total));
-  if (devDependencySummary.total > 0) {
-    ctx.logger.list(devDependencySummary.visible);
-    if (devDependencySummary.hidden > 0) {
-      ctx.logger.step(`...and ${devDependencySummary.hidden} more`);
-    }
-  }
-
-  if (dependencySpecs.length > 0 || devDependencySpecs.length > 0) {
-    await applyPackageManagerPin(ctx);
-  }
-
-  if (ctx.options.dryRun) {
-    ctx.logger.section("Dry Run");
-    if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
-      ctx.logger.step("[dry-run] No install actions required.");
-    } else {
-      if (dependencySpecs.length > 0) {
-        ctx.logger.step(`[dry-run] ${ctx.pmName} add ${dependencySpecs.join(" ")}`);
-      }
-      if (devDependencySpecs.length > 0) {
-        ctx.logger.step(`[dry-run] ${ctx.pmName} add -D ${devDependencySpecs.join(" ")}`);
-      }
-    }
-    ctx.logger.step("No files were changed.");
-  } else {
-    ctx.logger.section("Applying");
-    if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
-      ctx.logger.step("No installation required.");
-    } else {
-      if (dependencySpecs.length > 0) {
-        ctx.logger.step(`${ctx.pmName} add ${dependencySpecs.join(" ")}`);
-      }
-      if (devDependencySpecs.length > 0) {
-        ctx.logger.step(`${ctx.pmName} add -D ${devDependencySpecs.join(" ")}`);
-      }
-
-      const confirmed = await ctx.logger.confirm(`Upgrade ${targets.length} package(s) in ${ctx.projectRoot}?`);
-      if (!confirmed) {
-        ctx.logger.section("Result");
-        ctx.logger.warn("Upgrade cancelled.");
-        ctx.logger.section("Next Steps");
-        ctx.logger.step(`${localLattice} doctor`);
-        return;
-      }
-
-      const spinner = ctx.logger.spinner("Upgrading packages...");
-      if (dependencySpecs.length > 0) {
-        await ctx.pm.add(false, dependencySpecs, ctx.projectRoot);
-      }
-      if (devDependencySpecs.length > 0) {
-        await ctx.pm.add(true, devDependencySpecs, ctx.projectRoot);
-      }
-      spinner.succeed(`Upgraded ${targets.length} package(s).`);
-    }
-  }
+  const planned = dependencySpecs.length + devDependencySpecs.length;
 
   if (targets.length === 0) {
-    ctx.logger.section("Result");
-    ctx.logger.warn("No installed @lattice-ui/* package matched upgrade selection.");
-    ctx.logger.section("Next Steps");
-    ctx.logger.step(`${localLattice} doctor`);
+    ctx.logger.outcome("No installed @lattice-ui/* package matched the selection.", "warn");
+    ctx.logger.next([`${localLattice} doctor`]);
     return;
   }
 
-  ctx.logger.section("Result");
-  if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
-    ctx.logger.success("No package upgrades were needed.");
-  } else if (ctx.options.dryRun) {
-    ctx.logger.info(`Would upgrade ${targets.length} package(s).`);
-  } else {
-    ctx.logger.success("Upgrade completed.");
+  if (missingRequested.length > 0) {
+    ctx.logger.group("Not installed, skipped", missingRequested, { tone: "warn", limit: ITEM_LIMIT });
   }
-  ctx.logger.kv(
-    ctx.options.dryRun ? "Dependency upgrades planned" : "Dependency upgrades",
-    String(dependencySpecs.length),
-  );
-  ctx.logger.kv(
-    ctx.options.dryRun ? "Dev dependency upgrades planned" : "Dev dependency upgrades",
-    String(devDependencySpecs.length),
-  );
 
-  ctx.logger.section("Next Steps");
-  ctx.logger.step(`${localLattice} doctor`);
+  if (dependencySpecs.length > 0) {
+    ctx.logger.group(
+      `${dryRun ? "Would upgrade" : "Upgrade"} ${dependencySpecs.length} ${plural(dependencySpecs.length, "dependency", "dependencies")}`,
+      dependencySpecs.map(linkPackage),
+      { limit: ITEM_LIMIT },
+    );
+  }
+
+  if (devDependencySpecs.length > 0) {
+    ctx.logger.group(
+      `${dryRun ? "Would upgrade" : "Upgrade"} ${devDependencySpecs.length} dev ${plural(devDependencySpecs.length, "dependency", "dependencies")}`,
+      devDependencySpecs.map(linkPackage),
+      { limit: ITEM_LIMIT },
+    );
+  }
+
+  if (planned === 0) {
+    ctx.logger.outcome("Everything is already up to date.");
+    ctx.logger.next([`${localLattice} doctor`]);
+    return;
+  }
+
+  await applyPackageManagerPin(ctx);
+  if (dependencySpecs.length > 0) {
+    ctx.logger.command(`${ctx.pmName} add ${dependencySpecs.join(" ")}`);
+  }
+  if (devDependencySpecs.length > 0) {
+    ctx.logger.command(`${ctx.pmName} add -D ${devDependencySpecs.join(" ")}`);
+  }
+
+  if (dryRun) {
+    ctx.logger.outcome("Nothing changed. Re-run without --dry-run to apply.", "plain");
+    ctx.logger.next([`${localLattice} doctor`]);
+    return;
+  }
+
+  const confirmed = await ctx.logger.confirm(`Upgrade ${planned} ${plural(planned, "package")}?`);
+  if (!confirmed) {
+    ctx.logger.outcome("Cancelled. Nothing changed.", "warn");
+    return;
+  }
+
+  const spinner = ctx.logger.spinner(`Upgrading ${planned} ${plural(planned, "package")}…`);
+  try {
+    if (dependencySpecs.length > 0) {
+      await ctx.pm.add(false, dependencySpecs, ctx.projectRoot);
+    }
+    if (devDependencySpecs.length > 0) {
+      await ctx.pm.add(true, devDependencySpecs, ctx.projectRoot);
+    }
+  } catch (error) {
+    spinner.fail("Upgrade failed.");
+    throw error;
+  }
+  spinner.succeed(`Upgraded ${planned} ${plural(planned, "package")}.`);
+
+  ctx.logger.next([`${localLattice} doctor`]);
 }

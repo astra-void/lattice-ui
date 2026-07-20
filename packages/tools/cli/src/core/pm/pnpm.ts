@@ -1,31 +1,15 @@
-import { spawn } from "node:child_process";
-import { packageManagerFailedError } from "../errors";
+import { type RunProcessOptions, runProcess } from "./run";
 import type { PackageManager } from "./types";
 
-function run(command: string, args: string[], cwd: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd,
-      stdio: "inherit",
-      shell: process.platform === "win32",
-    });
-
-    child.on("error", (error) => {
-      reject(packageManagerFailedError(`Failed to run ${command}: ${error.message}`, error));
-    });
-
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-
-      reject(packageManagerFailedError(`${command} ${args.join(" ")} exited with code ${code ?? "unknown"}.`));
-    });
-  });
+export interface PnpmPackageManagerOptions {
+  /** Stream the package manager's own output instead of buffering it for failures. */
+  stream?: boolean;
 }
 
-export function createPnpmPackageManager(): PackageManager {
+export function createPnpmPackageManager(options?: PnpmPackageManagerOptions): PackageManager {
+  const run = (args: string[], cwd: string) =>
+    runProcess("pnpm", args, { cwd, stream: options?.stream ?? false } satisfies RunProcessOptions);
+
   return {
     name: "pnpm",
     async add(dev, specs, cwd) {
@@ -33,21 +17,20 @@ export function createPnpmPackageManager(): PackageManager {
         return;
       }
 
-      const args = ["add", ...(dev ? ["-D"] : []), ...specs];
-      await run("pnpm", args, cwd);
+      await run(["add", ...(dev ? ["-D"] : []), ...specs], cwd);
     },
     async remove(specs, cwd) {
       if (specs.length === 0) {
         return;
       }
 
-      await run("pnpm", ["remove", ...specs], cwd);
+      await run(["remove", ...specs], cwd);
     },
     async install(cwd) {
-      await run("pnpm", ["install"], cwd);
+      await run(["install"], cwd);
     },
     async exec(bin, args, cwd) {
-      await run("pnpm", ["exec", bin, ...args], cwd);
+      await run(["exec", bin, ...args], cwd);
     },
   };
 }
