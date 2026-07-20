@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ship no default motion. Presence timing is unchanged and content still stays mounted until an exit transition finishes, but an animation only runs when you pass `transition`.
 - Derive switch thumb travel from `AnchorPoint` and `Position` together, so it no longer depends on a declared `Size`. A thumb sized through a child element, a size constraint, or a layout previously parked itself off the right edge of the track.
 - Validate CLI component and preset names before resolving a package manager. `lattice add dialogg` reported an unrelated package-manager error first whenever more than one manager was installed.
+- Redraw CLI output as one connected run: a vertical gutter threads the header, each titled block and the closing verdict together, with tree branches for the rows inside a block and the elapsed time on the last line. This replaces the five ceremonial sections every command used to print — `doctor` no longer states its warning count three times, counts live in the heading of the block they describe, and the `?` glyph is gone from informational lines, where it read as a question. Piped output keeps a flat ASCII layout so logs and CI transcripts stay readable. Commands also report which package manager they resolved and why.
 
 ### Added
 
@@ -23,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accept `-y` wherever `--yes` is accepted, and `-h` wherever `--help` is.
 - Wire up `--verbose`. The flag was documented by the logger but never parsed, so `logger.debug` and the verbose file-copy logging could not be reached.
 - Honor `NO_COLOR` and `FORCE_COLOR` for colored output, with `NO_COLOR` winning when both are set. Color previously keyed off TTY detection alone.
+- Drive CLI selection prompts from the keyboard: arrow keys move, space toggles, `a`/`n` select all or none, enter confirms. They previously took a comma-separated list of numbers, and an unparseable answer aborted the whole command instead of re-asking.
+- Make project paths and package names clickable through OSC 8 hyperlinks, shorten paths against the working directory and `~`, and report how long a command took. `NO_HYPERLINK` and `FORCE_HYPERLINK` control the links; they are off automatically under `CI`.
+- Buffer the package manager's own output while a progress spinner is running and surface it only when the command fails. Inherited output used to interleave with the animation, scattering spinner frames through the install log. Pass `--verbose` to stream it live.
 - Document styling in the README: the three ways to style a part, and a reference for the props a primitive owns and therefore ignores when you pass them — `Active`/`Selectable` from `disabled`, `Visible` from presence, `Text` from a controlled value, and the computed geometry on `Content`, `Indicator`, `Range`, `Thumb` and `Viewport` parts. Includes the `asChild` escape hatch for sizing a `Content` part.
 - Expose the highlight state that used to only drive built-in colors: `useMenuItemContext`, `useContextMenuItemContext`, `useSelectItemContext` and `useComboboxItemContext` return `{ highlighted, disabled }`.
 
@@ -39,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accept Roblox UI modifiers as siblings of an `asChild` element. `asChild` previously required the subtree to hold exactly one element, so a `UICorner`, `UIPadding` or `UIListLayout` written next to the child — the shape a Tailwind-style `className` transform emits when it lowers `rounded-*`, `p-*` or `gap-*` at the call site — either raised "asChild requires a child element" or cloned the modifier instead of the consumer's element. The modifier is now re-parented under the element the props land on. Fragments are looked through, and two real candidates remain an error.
 - Render `children` from the 16 leaf parts that previously dropped them unless `asChild` was set — both separators, both text inputs, the labels, descriptions and messages on `TextField` and `Textarea`, `Toast.Title`, `Toast.Description`, `Select.Value`, `Combobox.Value`, `Avatar.Image` and `Dialog.Overlay`. Attaching a `UICorner`, `UIPadding` or any other child to one of these silently did nothing.
 - Register the context-menu and motion packages in the CLI registry so `lattice add context-menu` and `lattice add motion` no longer fail with "Unknown component".
+- Hand the terminal back when a selection prompt is cancelled. Ctrl-C left the cursor hidden and the terminal in raw mode, because the signal exited before the restore could run.
 - Stop reporting a `--dry-run` as if it had run. `lattice add --dry-run` closed with "Added components: ..." and "Installed packages: 4" despite changing nothing; `remove` and `upgrade` did the same. Dry runs now say what they would do.
 - Map `@lattice-ui/react-context-menu` in the tsconfig paths that were missing it. Typecheck fell back to resolving the package's build output, which exists locally but not on a clean checkout.
 
