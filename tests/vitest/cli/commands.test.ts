@@ -1385,6 +1385,12 @@ describe("command behavior", () => {
     expect(logger.step).toHaveBeenCalledWith(expect.stringMatching(/^\[dry-run\] npm add/));
     expect(logger.step).toHaveBeenCalledWith("No files were changed.");
     expect(logger.step).toHaveBeenCalledWith("npx lattice-ui doctor");
+
+    // A dry run must not claim the install happened.
+    expect(logger.info).toHaveBeenCalledWith("Would add components: style");
+    expect(logger.success).not.toHaveBeenCalledWith(expect.stringContaining("Added components"));
+    expect(logger.kv).toHaveBeenCalledWith("Packages to install", "1");
+    expect(logger.kv).not.toHaveBeenCalledWith("Installed packages", expect.anything());
   });
 
   it("add requires explicit selection in --yes mode", async () => {

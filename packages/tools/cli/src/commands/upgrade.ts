@@ -172,11 +172,19 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
   ctx.logger.section("Result");
   if (dependencySpecs.length === 0 && devDependencySpecs.length === 0) {
     ctx.logger.success("No package upgrades were needed.");
+  } else if (ctx.options.dryRun) {
+    ctx.logger.info(`Would upgrade ${targets.length} package(s).`);
   } else {
     ctx.logger.success("Upgrade completed.");
   }
-  ctx.logger.kv("Dependency upgrades", String(dependencySpecs.length));
-  ctx.logger.kv("Dev dependency upgrades", String(devDependencySpecs.length));
+  ctx.logger.kv(
+    ctx.options.dryRun ? "Dependency upgrades planned" : "Dependency upgrades",
+    String(dependencySpecs.length),
+  );
+  ctx.logger.kv(
+    ctx.options.dryRun ? "Dev dependency upgrades planned" : "Dev dependency upgrades",
+    String(devDependencySpecs.length),
+  );
 
   ctx.logger.section("Next Steps");
   ctx.logger.step(`${localLattice} doctor`);

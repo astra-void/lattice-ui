@@ -124,10 +124,12 @@ export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): 
   ctx.logger.section("Result");
   if (plannedSpecs.length === 0) {
     ctx.logger.warn("No installed package matched remove selection.");
+  } else if (ctx.options.dryRun) {
+    ctx.logger.info(`Would remove components: ${removedComponents.join(", ")}`);
   } else {
     ctx.logger.success(`Removed components: ${removedComponents.join(", ")}`);
   }
-  ctx.logger.kv("Removed packages", String(plannedSpecs.length));
+  ctx.logger.kv(ctx.options.dryRun ? "Packages to remove" : "Removed packages", String(plannedSpecs.length));
 
   ctx.logger.section("Next Steps");
   ctx.logger.step(`${localLattice} doctor`);

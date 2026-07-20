@@ -141,10 +141,12 @@ export async function runAddCommand(ctx: CliContext, input: SelectionInput): Pro
   ctx.logger.section("Result");
   if (plannedSpecs.length === 0) {
     ctx.logger.success("No new packages were needed.");
+  } else if (ctx.options.dryRun) {
+    ctx.logger.info(`Would add components: ${components.join(", ")}`);
   } else {
     ctx.logger.success(`Added components: ${components.join(", ")}`);
   }
-  ctx.logger.kv("Installed packages", String(plannedSpecs.length));
+  ctx.logger.kv(ctx.options.dryRun ? "Packages to install" : "Installed packages", String(plannedSpecs.length));
 
   if (optionalProviders.size > 0) {
     const optionalSummary = summarizeItems([...optionalProviders].sort((left, right) => left.localeCompare(right)));
