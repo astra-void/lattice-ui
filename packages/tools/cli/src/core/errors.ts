@@ -19,26 +19,48 @@ export class CliError extends Error {
   readonly kind: CliErrorKind;
   readonly exitCode: ExitCode;
   readonly cause?: unknown;
+  /** Actionable follow-up shown under the error message, one line per entry. */
+  readonly hints: string[];
 
-  constructor(message: string, kind: CliErrorKind, exitCode: ExitCode, cause?: unknown) {
+  constructor(message: string, kind: CliErrorKind, exitCode: ExitCode, cause?: unknown, hints: string[] = []) {
     super(message);
     this.name = "CliError";
     this.kind = kind;
     this.exitCode = exitCode;
     this.cause = cause;
+    this.hints = hints;
   }
 }
 
-export function usageError(message: string): CliError {
-  return new CliError(message, "Usage", ExitCode.Usage);
+/** `undefined` hints are dropped so callers can inline optional suggestions. */
+export function usageError(message: string, ...hints: (string | undefined)[]): CliError {
+  return new CliError(
+    message,
+    "Usage",
+    ExitCode.Usage,
+    undefined,
+    hints.filter((hint) => hint !== undefined),
+  );
 }
 
-export function validationError(message: string): CliError {
-  return new CliError(message, "Validation", ExitCode.Usage);
+export function validationError(message: string, ...hints: (string | undefined)[]): CliError {
+  return new CliError(
+    message,
+    "Validation",
+    ExitCode.Usage,
+    undefined,
+    hints.filter((hint) => hint !== undefined),
+  );
 }
 
 export function projectNotFoundError(cwd: string): CliError {
-  return new CliError(`Could not find package.json from "${cwd}".`, "ProjectNotFound", ExitCode.ProjectNotFound);
+  return new CliError(
+    `Could not find package.json from "${cwd}".`,
+    "ProjectNotFound",
+    ExitCode.ProjectNotFound,
+    undefined,
+    ["Run the command inside a project, or scaffold one with `lattice create`."],
+  );
 }
 
 export function registryInvalidError(message: string, cause?: unknown): CliError {

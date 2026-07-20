@@ -1,25 +1,41 @@
 import { usageError } from "../core/errors";
-import type { CliContext } from "../ctx";
+import type { Registry } from "../core/registry/schema";
+import { didYouMean } from "../core/suggest";
 
 export interface SelectionInput {
   names: string[];
   presets: string[];
 }
 
-export function resolveComponentSelection(ctx: CliContext, input: SelectionInput): string[] {
+/** Only the registry is needed, so selections can be validated before a CliContext exists. */
+export interface SelectionSource {
+  registry: Registry;
+}
+
+export function resolveComponentSelection(source: SelectionSource, input: SelectionInput): string[] {
   const selected = new Set<string>();
+  const componentNames = Object.keys(source.registry.packages);
+  const presetNames = Object.keys(source.registry.presets).sort((left, right) => left.localeCompare(right));
 
   for (const name of input.names) {
-    if (!ctx.registry.packages[name]) {
-      throw usageError(`Unknown component: ${name}`);
+    if (!source.registry.packages[name]) {
+      throw usageError(
+        `Unknown component: ${name}`,
+        didYouMean(name, componentNames),
+        "Run `lattice add --help` for the full component list.",
+      );
     }
     selected.add(name);
   }
 
   for (const preset of input.presets) {
-    const presetMembers = ctx.registry.presets[preset];
+    const presetMembers = source.registry.presets[preset];
     if (!presetMembers) {
-      throw usageError(`Unknown preset: ${preset}`);
+      throw usageError(
+        `Unknown preset: ${preset}`,
+        didYouMean(preset, presetNames),
+        `Available presets: ${presetNames.join(", ")}`,
+      );
     }
 
     for (const member of presetMembers) {
