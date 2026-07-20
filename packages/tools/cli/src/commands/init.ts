@@ -28,6 +28,7 @@ export interface InitCommandInput {
   dryRun: boolean;
   template?: string;
   lint?: boolean;
+  verbose?: boolean;
 }
 
 interface InitCommandRuntimeOverrides {
@@ -527,7 +528,7 @@ export async function runInitCommand(
   }
 
   const logger = createLoggerFn({
-    verbose: false,
+    verbose: input.verbose ?? false,
     yes: input.yes,
   });
 

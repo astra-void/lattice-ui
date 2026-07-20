@@ -22,6 +22,7 @@ export interface CreateCommandInput {
   git?: boolean;
   template?: string;
   lint?: boolean;
+  verbose?: boolean;
 }
 
 interface CreateCommandRuntimeOverrides {
@@ -345,7 +346,7 @@ export async function runCreateCommand(
   await assertUsableTargetDirectory(targetRoot);
 
   const logger = createLoggerFn({
-    verbose: false,
+    verbose: input.verbose ?? false,
     yes: input.yes,
   });
 

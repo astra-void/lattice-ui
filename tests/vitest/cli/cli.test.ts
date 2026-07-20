@@ -1,5 +1,34 @@
 import { describe, expect, it } from "vitest";
 import { runCli } from "../../../packages/tools/cli/src/cli";
+import type { CliError } from "../../../packages/tools/cli/src/core/errors";
+
+async function captureStdout(run: () => Promise<void>): Promise<string> {
+  let output = "";
+  const write = process.stdout.write.bind(process.stdout);
+  const spy = (chunk: string | Uint8Array) => {
+    output += chunk.toString();
+    return true;
+  };
+
+  process.stdout.write = spy as typeof process.stdout.write;
+  try {
+    await run();
+  } finally {
+    process.stdout.write = write;
+  }
+
+  return output;
+}
+
+async function captureHints(run: () => Promise<void>): Promise<string[]> {
+  try {
+    await run();
+  } catch (error) {
+    return (error as CliError).hints;
+  }
+
+  throw new Error("Expected the command to fail.");
+}
 
 describe("runCli", () => {
   it("rejects positional arguments for init", async () => {
@@ -28,20 +57,61 @@ describe("runCli", () => {
     await expect(runCli(["remove", "--bogus"])).rejects.toThrow(/unknown option for remove/i);
   });
 
-  it("prints help examples with local lattice command usage", async () => {
-    let output = "";
-    const write = process.stdout.write.bind(process.stdout);
-    const spy = (chunk: string | Uint8Array) => {
-      output += chunk.toString();
-      return true;
-    };
+  it("accepts -y as an alias for --yes", async () => {
+    await expect(runCli(["remove", "-y"])).rejects.toThrow(/when using --yes/i);
+  });
 
-    process.stdout.write = spy as typeof process.stdout.write;
-    try {
-      await runCli(["--help"]);
-    } finally {
-      process.stdout.write = write;
-    }
+  it("prints command help for <command> --help instead of failing on the flag", async () => {
+    const output = await captureStdout(() => runCli(["add", "--help"]));
+
+    expect(output).toContain("lattice add [name...] [options]");
+    expect(output).toContain("--preset <preset...>");
+    // The registry listing is what makes components discoverable without running the command.
+    expect(output).toContain("Components:");
+    expect(output).toContain("dialog");
+    expect(output).toContain("overlay (popover, tooltip, dialog, toast)");
+  });
+
+  it("treats `help <command>` the same as `<command> --help`", async () => {
+    const viaSubcommand = await captureStdout(() => runCli(["help", "doctor"]));
+    const viaFlag = await captureStdout(() => runCli(["doctor", "--help"]));
+
+    expect(viaSubcommand).toBe(viaFlag);
+    expect(viaSubcommand).toContain("lattice doctor [options]");
+  });
+
+  it("reaches help even when the rest of the command line is invalid", async () => {
+    const output = await captureStdout(() => runCli(["add", "--bogus", "--help"]));
+
+    expect(output).toContain("lattice add [name...] [options]");
+  });
+
+  it("suggests the closest command for a typo", async () => {
+    const hints = await captureHints(() => runCli(["addd"]));
+
+    expect(hints).toContain("Did you mean `add`?");
+  });
+
+  it("suggests the closest option for a typo", async () => {
+    const hints = await captureHints(() => runCli(["add", "--presett", "overlay"]));
+
+    expect(hints).toContain("Did you mean `--preset`?");
+  });
+
+  it("rejects an unknown component before resolving a package manager", async () => {
+    const hints = await captureHints(() => runCli(["add", "dialogg"]));
+
+    expect(hints).toContain("Did you mean `dialog`?");
+  });
+
+  it("suggests the closest preset for a typo", async () => {
+    const hints = await captureHints(() => runCli(["add", "--preset", "overlayy"]));
+
+    expect(hints).toContain("Did you mean `overlay`?");
+  });
+
+  it("prints help examples with local lattice command usage", async () => {
+    const output = await captureStdout(() => runCli(["--help"]));
 
     expect(output).toContain("npx lattice-ui add dialog,toast --preset overlay");
     expect(output).toContain("npx lattice-ui remove dialog --dry-run");

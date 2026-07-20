@@ -33,7 +33,7 @@ export interface CliContext {
 
 export async function createContext(
   options: ContextOptions,
-  config?: { allowMissingProject?: boolean },
+  config?: { allowMissingProject?: boolean; registry?: Registry },
 ): Promise<CliContext> {
   const cwd = path.resolve(options.cwd);
   const allowMissingProject = config?.allowMissingProject ?? false;
@@ -55,7 +55,7 @@ export async function createContext(
       stdout: process.stdout,
     },
   });
-  const registry = await loadRegistry();
+  const registry = config?.registry ?? (await loadRegistry());
 
   return {
     cwd,

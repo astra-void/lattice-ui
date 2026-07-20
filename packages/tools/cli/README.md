@@ -22,13 +22,25 @@ lattice <command> [options]
 - `lattice remove [name...] [--preset <preset...>] [--pm <pnpm|npm|yarn>] [--yes] [--dry-run]`
 - `lattice upgrade [name...] [--preset <preset...>] [--pm <pnpm|npm|yarn>] [--yes] [--dry-run]`
 - `lattice doctor [--pm <pnpm|npm|yarn>]`
-- `lattice help`
+- `lattice help [command]`
 - `lattice version`
+
+Every command has its own help page. `lattice add --help` and `lattice remove --help` also print the
+full list of available components and presets, so there is no need to start a run to discover them.
+
+```bash
+lattice add --help
+lattice help add     # same output
+```
 
 ### Global options
 
-- `--help`
-- `--version`
+- `-h`, `--help`
+- `-v`, `--version`
+- `--verbose` — print debug-level progress output
+- `-y` is accepted everywhere `--yes` is
+
+Colour output follows `NO_COLOR` and `FORCE_COLOR`; `NO_COLOR` wins when both are set.
 
 ### Examples
 
