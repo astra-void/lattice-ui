@@ -14,9 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Check forwarded props against the instance each part renders. Passing a prop that element does not accept is now a compile error instead of being silently absorbed.
 - Ship no default motion. Presence timing is unchanged and content still stays mounted until an exit transition finishes, but an animation only runs when you pass `transition`.
 - Derive switch thumb travel from `AnchorPoint` and `Position` together, so it no longer depends on a declared `Size`. A thumb sized through a child element, a size constraint, or a layout previously parked itself off the right edge of the track.
+- Validate CLI component and preset names before resolving a package manager. `lattice add dialogg` reported an unrelated package-manager error first whenever more than one manager was installed.
 
 ### Added
 
+- Give every CLI command its own help page. `lattice add --help`, `lattice help add` and `lattice add --bogus --help` all reach it, and the `add`, `remove` and `upgrade` pages list every available component and preset — previously the only way to see them was to start an interactive run.
+- Suggest the closest match when a command, option, component or preset name is misspelled, and print actionable hints under errors instead of a bare message.
+- Accept `-y` wherever `--yes` is accepted, and `-h` wherever `--help` is.
+- Wire up `--verbose`. The flag was documented by the logger but never parsed, so `logger.debug` and the verbose file-copy logging could not be reached.
+- Honor `NO_COLOR` and `FORCE_COLOR` for colored output, with `NO_COLOR` winning when both are set. Color previously keyed off TTY detection alone.
 - Expose the highlight state that used to only drive built-in colors: `useMenuItemContext`, `useContextMenuItemContext`, `useSelectItemContext` and `useComboboxItemContext` return `{ highlighted, disabled }`.
 
 ### Removed
@@ -29,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Register the context-menu and motion packages in the CLI registry so `lattice add context-menu` and `lattice add motion` no longer fail with "Unknown component".
+- Stop reporting a `--dry-run` as if it had run. `lattice add --dry-run` closed with "Added components: ..." and "Installed packages: 4" despite changing nothing; `remove` and `upgrade` did the same. Dry runs now say what they would do.
 - Map `@lattice-ui/react-context-menu` in the tsconfig paths that were missing it. Typecheck fell back to resolving the package's build output, which exists locally but not on a clean checkout.
 
 ## [0.6.2] - 2026-07-19
