@@ -7,15 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [0.7.0] - 2026-07-20
 
-- Make every primitive fully unstyled. Colors, fixed sizes, font sizes, literal text and decorative corner/stroke/padding children are gone; primitives now set behavior plus the minimum needed to neutralize Roblox instance defaults. Geometry computed from state — progress fill ratios, slider thumb travel, popper-driven position, scroll thumb size — stays owned by the primitive.
-- Forward unknown props from every part onto the instance it renders, so styling no longer requires `asChild`. Consumer props override the neutral defaults but never the behavior props, consumer event handlers compose with the primitive's instead of replacing them, and consumer refs compose with the primitive's own.
-- Check forwarded props against the instance each part renders. Passing a prop that element does not accept is now a compile error instead of being silently absorbed.
-- Ship no default motion. Presence timing is unchanged and content still stays mounted until an exit transition finishes, but an animation only runs when you pass `transition`.
-- Derive switch thumb travel from `AnchorPoint` and `Position` together, so it no longer depends on a declared `Size`. A thumb sized through a child element, a size constraint, or a layout previously parked itself off the right edge of the track.
-- Validate CLI component and preset names before resolving a package manager. `lattice add dialogg` reported an unrelated package-manager error first whenever more than one manager was installed.
-- Redraw CLI output as one connected run: a vertical gutter threads the header, each titled block and the closing verdict together, with tree branches for the rows inside a block and the elapsed time on the last line. This replaces the five ceremonial sections every command used to print — `doctor` no longer states its warning count three times, counts live in the heading of the block they describe, and the `?` glyph is gone from informational lines, where it read as a question. Piped output keeps a flat ASCII layout so logs and CI transcripts stay readable. Commands also report which package manager they resolved and why.
+This release strips every primitive down to behavior. Colors, sizes, fonts and decorative children are gone, any prop the underlying instance accepts now forwards through without `asChild`, and motion only runs when you ask for it. The CLI is rebuilt around the same idea: per-command help, keyboard-driven prompts, and a single connected run of output instead of five ceremonial sections.
+
+Migration notes:
+
+- Every primitive now renders unstyled. Pass the appearance props you want directly to the part — they forward onto the instance it renders — or use `asChild`. Forwarded props are type-checked against that instance, so a prop the element does not accept is a compile error.
+- Motion no longer has defaults. Pass `transition` to any part that should animate; presence timing and exit-before-unmount are unchanged.
+- Drop `trackColorMode`, `trackOnColor`, `trackOffColor` and `disabledTrackColor` from `Switch.Root`, and `transition` from `RadioGroup.Item` and `ToggleGroup.Item`.
+- Supply labels as children on `Select.Item` and `Combobox.Item`; `textValue` no longer renders.
+- Render the toast queue yourself inside `Toast.Viewport`, and supply the layout for `Menu.Group` and `ContextMenu.Group`.
 
 ### Added
 
@@ -29,17 +31,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Buffer the package manager's own output while a progress spinner is running and surface it only when the command fails. Inherited output used to interleave with the animation, scattering spinner frames through the install log. Pass `--verbose` to stream it live.
 - Document styling in the README: the three ways to style a part, and a reference for the props a primitive owns and therefore ignores when you pass them — `Active`/`Selectable` from `disabled`, `Visible` from presence, `Text` from a controlled value, and the computed geometry on `Content`, `Indicator`, `Range`, `Thumb` and `Viewport` parts. Includes the `asChild` escape hatch for sizing a `Content` part.
 - Expose the highlight state that used to only drive built-in colors: `useMenuItemContext`, `useContextMenuItemContext`, `useSelectItemContext` and `useComboboxItemContext` return `{ highlighted, disabled }`.
+- Tell a focus node when managed focus enters or leaves it through `useFocusNode({ onFocusChange })`. A node can hold managed focus without ever becoming `GuiService.SelectedObject` — with `syncToRoblox: false`, or on an object that is not `Selectable` — and those widgets previously had no way to render a focus highlight, because `SelectionGained`/`SelectionLost` never fired for them. It also fires when the focused node unmounts, so a highlight cannot outlive its widget.
+- Route activation to the focused node through `useFocusNode({ onActivate })`. While a `FocusScope` is active the navigation controller binds `Return`, `KeypadEnter`, `Space` and `ButtonA` at the navigation priority and runs the focused node's activation, rather than letting the engine activate whatever it has selected. A node that opts out is unaffected: the key passes through to the engine's own `Activated` as before. `activateFocusedNode()` is exported for driving the same path directly.
+
+### Changed
+
+- **Breaking:** make every primitive fully unstyled. Colors, fixed sizes, font sizes, literal text and decorative corner/stroke/padding children are gone; primitives now set behavior plus the minimum needed to neutralize Roblox instance defaults. Geometry computed from state — progress fill ratios, slider thumb travel, popper-driven position, scroll thumb size — stays owned by the primitive.
+- Forward unknown props from every part onto the instance it renders, so styling no longer requires `asChild`. Consumer props override the neutral defaults but never the behavior props, consumer event handlers compose with the primitive's instead of replacing them, and consumer refs compose with the primitive's own.
+- **Breaking:** check forwarded props against the instance each part renders. Passing a prop that element does not accept is now a compile error instead of being silently absorbed.
+- **Breaking:** ship no default motion. Presence timing is unchanged and content still stays mounted until an exit transition finishes, but an animation only runs when you pass `transition`.
+- Derive switch thumb travel from `AnchorPoint` and `Position` together, so it no longer depends on a declared `Size`. A thumb sized through a child element, a size constraint, or a layout previously parked itself off the right edge of the track.
+- Validate CLI component and preset names before resolving a package manager. `lattice add dialogg` reported an unrelated package-manager error first whenever more than one manager was installed.
+- Resolve a navigation keypress in a single pass over the focus registry, memoizing GUI ancestry, effective visibility and scope ownership for the duration of that pass and collecting candidates once per move instead of once per scope in the chain. The result is unchanged; the cost stops scaling quadratically with the number of registered focus nodes.
+- Redraw CLI output as one connected run: a vertical gutter threads the header, each titled block and the closing verdict together, with tree branches for the rows inside a block and the elapsed time on the last line. This replaces the five ceremonial sections every command used to print — `doctor` no longer states its warning count three times, counts live in the heading of the block they describe, and the `?` glyph is gone from informational lines, where it read as a question. Piped output keeps a flat ASCII layout so logs and CI transcripts stay readable. Commands also report which package manager they resolved and why.
 
 ### Removed
 
-- `Switch.Root` no longer accepts `trackColorMode`, `trackOnColor`, `trackOffColor` or `disabledTrackColor`, and the `SwitchTrackColorMode` type is gone. Style the track yourself.
-- `RadioGroup.Item` and `ToggleGroup.Item` no longer accept `transition`; it only fed the removed color animation.
-- `Select.Item` and `Combobox.Item` no longer render `textValue` as their label. Supply the label as a child. `textValue` still drives `Select.Value` and combobox filtering.
-- `Toast.Viewport` renders its children instead of the toast queue markup it used to hardcode. Map over `useToast().visibleToasts` yourself, as the `asChild` path already required.
-- `Menu.Group` and `ContextMenu.Group` no longer render a vertical `UIListLayout` or force `AutomaticSize`. They were the last primitives holding an opinion about how their children lay out; supply the layout yourself, as `Select.Group` and `Combobox.Group` already required.
+- **Breaking:** `Switch.Root` no longer accepts `trackColorMode`, `trackOnColor`, `trackOffColor` or `disabledTrackColor`, and the `SwitchTrackColorMode` type is gone. Style the track yourself.
+- **Breaking:** `RadioGroup.Item` and `ToggleGroup.Item` no longer accept `transition`; it only fed the removed color animation.
+- **Breaking:** `Select.Item` and `Combobox.Item` no longer render `textValue` as their label. Supply the label as a child. `textValue` still drives `Select.Value` and combobox filtering.
+- **Breaking:** `Toast.Viewport` renders its children instead of the toast queue markup it used to hardcode. Map over `useToast().visibleToasts` yourself, as the `asChild` path already required.
+- **Breaking:** `Menu.Group` and `ContextMenu.Group` no longer render a vertical `UIListLayout` or force `AutomaticSize`. They were the last primitives holding an opinion about how their children lay out; supply the layout yourself, as `Select.Group` and `Combobox.Group` already required.
 
 ### Fixed
 
+- Stop `Menu.Trigger` running its activation twice. A single keyboard or gamepad press made the engine fire both `Activated` and `InputBegan`, so `setOpen` toggled twice and the menu read as inert. Both parts now take activation from the focus manager instead of sniffing key codes in their own `InputBegan` handler, which also frees `InputBegan` on `Menu.Trigger` and `Menu.Item` for consumer use. `Menu.Item` fires `onSelect` exactly once per activation.
+- Keep a menu item highlighted while it holds keyboard focus. Hover and focus fed one shared flag, so moving the pointer away cleared the highlight on the item the keyboard had focused, and an item that never became the engine's `SelectedObject` never highlighted at all. `useMenuItemContext().highlighted` now reports hover or managed focus, and its shape is unchanged.
+- Center the switch thumb in its track. The thumb anchored at the track's top edge, so any thumb shorter than its track hung off the top with the leftover height pooling underneath — and no consumer could correct it, because motion owns the thumb's `AnchorPoint` and `Position`. Only the X edge changes with state now.
 - Accept Roblox UI modifiers as siblings of an `asChild` element. `asChild` previously required the subtree to hold exactly one element, so a `UICorner`, `UIPadding` or `UIListLayout` written next to the child — the shape a Tailwind-style `className` transform emits when it lowers `rounded-*`, `p-*` or `gap-*` at the call site — either raised "asChild requires a child element" or cloned the modifier instead of the consumer's element. The modifier is now re-parented under the element the props land on. Fragments are looked through, and two real candidates remain an error.
 - Render `children` from the 16 leaf parts that previously dropped them unless `asChild` was set — both separators, both text inputs, the labels, descriptions and messages on `TextField` and `Textarea`, `Toast.Title`, `Toast.Description`, `Select.Value`, `Combobox.Value`, `Avatar.Image` and `Dialog.Overlay`. Attaching a `UICorner`, `UIPadding` or any other child to one of these silently did nothing.
 - Register the context-menu and motion packages in the CLI registry so `lattice add context-menu` and `lattice add motion` no longer fail with "Unknown component".
