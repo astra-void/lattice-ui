@@ -21,6 +21,13 @@ export type UseFocusNodeOptions = {
   // slider value). The navigation controller passes those inputs through
   // instead of moving focus.
   getCapturesDirectional?: (direction: NavDirection) => boolean;
+  // Called when managed focus enters or leaves this node. Drive a widget's
+  // highlight from here instead of `SelectionGained`/`SelectionLost`.
+  onFocusChange?: (focused: boolean) => void;
+  // Runs on Enter/Space/ButtonA while this node is focused. Providing it makes
+  // the navigation controller own the widget's keyboard activation; omit it to
+  // leave activation to the engine's own `Activated` event.
+  onActivate?: () => void;
 };
 
 export function useFocusNode(options: UseFocusNodeOptions): React.MutableRefObject<number | undefined> {
@@ -33,6 +40,8 @@ export function useFocusNode(options: UseFocusNodeOptions): React.MutableRefObje
   const getVisibleRef = useLatest(options.getVisible);
   const syncToRobloxRef = useLatest(options.syncToRoblox !== false);
   const getCapturesDirectionalRef = useLatest(options.getCapturesDirectional);
+  const onFocusChangeRef = useLatest(options.onFocusChange);
+  const onActivateRef = useLatest(options.onActivate);
 
   React.useEffect(() => {
     const nodeId = registerFocusNode({
@@ -42,6 +51,16 @@ export function useFocusNode(options: UseFocusNodeOptions): React.MutableRefObje
       getVisible: () => getVisibleRef.current?.(),
       getSyncToRoblox: () => syncToRobloxRef.current,
       getCapturesDirectional: (direction) => getCapturesDirectionalRef.current?.(direction) === true,
+      onFocusChange: (focused) => onFocusChangeRef.current?.(focused),
+      activate: () => {
+        const activate = onActivateRef.current;
+        if (!activate) {
+          return false;
+        }
+
+        activate();
+        return true;
+      },
     });
 
     nodeIdRef.current = nodeId;

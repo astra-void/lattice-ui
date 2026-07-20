@@ -1,5 +1,6 @@
 import { syncRobloxSelection } from "./bridge";
 import { isInsideRoot } from "./guiObject";
+import { getFocusNodeRecord } from "./registry";
 import { getResolvedFocusNode, getTopTrappedScope, resolveFocusNodeByGuiObject } from "./resolution";
 import { focusNodes, focusScopes, focusState } from "./state";
 import { getBestScopeFallbackNode } from "./traversal";
@@ -16,7 +17,26 @@ function updateScopeLastFocusedNode(nodeId: number, guiObject: GuiObject) {
   }
 }
 
+// Focus notifications are the widget-facing half of the engine: a node learns it
+// gained or lost focus here rather than from Roblox's SelectionGained/Lost, so
+// a widget's highlight follows managed focus even when the node never reaches
+// GuiService.SelectedObject.
+export function notifyFocusChange(previousNodeId: number | undefined, nextNodeId: number | undefined) {
+  if (previousNodeId === nextNodeId) {
+    return;
+  }
+
+  if (previousNodeId !== undefined) {
+    getFocusNodeRecord(previousNodeId)?.onFocusChange(false);
+  }
+
+  if (nextNodeId !== undefined) {
+    getFocusNodeRecord(nextNodeId)?.onFocusChange(true);
+  }
+}
+
 export function setCurrentFocusedNode(nodeId: number | undefined) {
+  const previousNodeId = focusState.currentFocusedNodeId;
   focusState.currentFocusedNodeId = nodeId;
   const resolvedNode = nodeId !== undefined ? getResolvedFocusNode(nodeId) : undefined;
   if (resolvedNode) {
@@ -24,6 +44,7 @@ export function setCurrentFocusedNode(nodeId: number | undefined) {
   }
 
   syncRobloxSelection();
+  notifyFocusChange(previousNodeId, nodeId);
   return resolvedNode?.guiObject;
 }
 
@@ -117,4 +138,10 @@ export function getFocusedNode() {
 export function getFocusedGuiObject() {
   const focusedNode = getFocusedNode();
   return focusedNode?.getGuiObject();
+}
+
+// Runs the focused node's own activation. Returns false when nothing is focused
+// or the focused node has no activation, so callers can pass the input on.
+export function activateFocusedNode() {
+  return getFocusedNode()?.activate() === true;
 }

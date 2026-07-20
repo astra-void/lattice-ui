@@ -1,4 +1,4 @@
-import { focusNode, getFocusedNode } from "../engine";
+import { activateFocusedNode, focusNode, getFocusedNode } from "../engine";
 import { focusState } from "../state";
 import type { NavDirection } from "../types";
 import { ContextActionService, GuiService, RunService, UserInputService } from "./env";
@@ -19,6 +19,7 @@ const ACTION_LEFT = "LatticeNavLeft";
 const ACTION_RIGHT = "LatticeNavRight";
 const ACTION_TAB = "LatticeNavTab";
 const ACTION_STICK = "LatticeNavStick";
+const ACTION_ACTIVATE = "LatticeNavActivate";
 
 let bound = false;
 let heartbeatConnection: RBXScriptConnection | undefined;
@@ -84,6 +85,17 @@ function handleTab(_actionName: string, inputState: Enum.UserInputState): Enum.C
   }
 
   return Enum.ContextActionResult.Pass;
+}
+
+// Activation is routed to the focused node rather than to whatever the engine
+// happens to have selected. Nodes without their own activation return false, so
+// the key still reaches the engine (and the widget's `Activated`) untouched.
+function handleActivate(_actionName: string, inputState: Enum.UserInputState): Enum.ContextActionResult {
+  if (inputState !== Enum.UserInputState.Begin) {
+    return Enum.ContextActionResult.Pass;
+  }
+
+  return activateFocusedNode() ? Enum.ContextActionResult.Sink : Enum.ContextActionResult.Pass;
 }
 
 function handleStick(
@@ -177,6 +189,16 @@ function bindNavigation() {
   );
   ContextActionService.BindActionAtPriority(ACTION_TAB, handleTab, false, BIND_PRIORITY, Enum.KeyCode.Tab);
   ContextActionService.BindActionAtPriority(ACTION_STICK, handleStick, false, BIND_PRIORITY, Enum.KeyCode.Thumbstick1);
+  ContextActionService.BindActionAtPriority(
+    ACTION_ACTIVATE,
+    handleActivate,
+    false,
+    BIND_PRIORITY,
+    Enum.KeyCode.Return,
+    Enum.KeyCode.KeypadEnter,
+    Enum.KeyCode.Space,
+    Enum.KeyCode.ButtonA,
+  );
 
   heartbeatConnection = RunService.Heartbeat.Connect((deltaTime) => {
     handleHeartbeat(deltaTime);
@@ -195,6 +217,7 @@ function unbindNavigation() {
   ContextActionService.UnbindAction(ACTION_RIGHT);
   ContextActionService.UnbindAction(ACTION_TAB);
   ContextActionService.UnbindAction(ACTION_STICK);
+  ContextActionService.UnbindAction(ACTION_ACTIVATE);
 
   heartbeatConnection?.Disconnect();
   heartbeatConnection = undefined;

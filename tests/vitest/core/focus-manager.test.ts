@@ -449,4 +449,64 @@ describe("focusManager", () => {
     harness.setSelectedObject(button);
     expect(harness.focusManager.getFocusedNode()).toBeUndefined();
   });
+
+  it("notifies nodes as focus enters and leaves them", async () => {
+    const harness = await createFocusManagerHarness();
+    const first = createGuiObject("first", { parent: harness.mountRoot });
+    const second = createGuiObject("second", { parent: harness.mountRoot });
+
+    const onFirstFocusChange = vi.fn();
+    const onSecondFocusChange = vi.fn();
+
+    const firstId = harness.focusManager.registerFocusNode({
+      getGuiObject: () => first,
+      onFocusChange: onFirstFocusChange,
+    });
+    const secondId = harness.focusManager.registerFocusNode({
+      getGuiObject: () => second,
+      onFocusChange: onSecondFocusChange,
+    });
+
+    harness.focusManager.focusNode(firstId);
+    expect(onFirstFocusChange.mock.calls).toEqual([[true]]);
+
+    // Re-focusing the same node is not a change and must not re-notify.
+    harness.focusManager.focusNode(firstId);
+    expect(onFirstFocusChange.mock.calls).toEqual([[true]]);
+
+    harness.focusManager.focusNode(secondId);
+    expect(onFirstFocusChange.mock.calls).toEqual([[true], [false]]);
+    expect(onSecondFocusChange.mock.calls).toEqual([[true]]);
+
+    // A node that unregisters while focused still hears that it lost focus.
+    harness.focusManager.unregisterFocusNode(secondId);
+    expect(onSecondFocusChange.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it("routes activation to the focused node and reports when it went unhandled", async () => {
+    const harness = await createFocusManagerHarness();
+    const handled = createGuiObject("handled", { parent: harness.mountRoot });
+    const unhandled = createGuiObject("unhandled", { parent: harness.mountRoot });
+
+    const activate = vi.fn(() => true);
+    const handledId = harness.focusManager.registerFocusNode({
+      getGuiObject: () => handled,
+      activate,
+    });
+    const unhandledId = harness.focusManager.registerFocusNode({
+      getGuiObject: () => unhandled,
+    });
+
+    // Nothing focused: there is no activation to run.
+    expect(harness.focusManager.activateFocusedNode()).toBe(false);
+
+    harness.focusManager.focusNode(handledId);
+    expect(harness.focusManager.activateFocusedNode()).toBe(true);
+    expect(activate).toHaveBeenCalledTimes(1);
+
+    // A node without its own activation leaves the input for the engine.
+    harness.focusManager.focusNode(unhandledId);
+    expect(harness.focusManager.activateFocusedNode()).toBe(false);
+    expect(activate).toHaveBeenCalledTimes(1);
+  });
 });

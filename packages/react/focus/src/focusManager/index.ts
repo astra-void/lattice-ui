@@ -1,4 +1,10 @@
-import { enforceTrappedFocus, focusNode, pruneImplicitFocusNodes, setCurrentFocusedNode } from "./engine";
+import {
+  enforceTrappedFocus,
+  focusNode,
+  notifyFocusChange,
+  pruneImplicitFocusNodes,
+  setCurrentFocusedNode,
+} from "./engine";
 import { findFocusNodeIndex, findFocusScopeIndex, getFocusNodeRecord, getFocusScopeRecord } from "./registry";
 import { captureRestoreSnapshot, getCurrentFocusGuiObject, restoreScopeFocus } from "./restore";
 import { focusNodes, focusScopes, focusState } from "./state";
@@ -10,7 +16,14 @@ import type {
   RegisterFocusScopeParams,
 } from "./types";
 
-export { canFocusNode, focusGuiObject, focusNode, getFocusedGuiObject, getFocusedNode } from "./engine";
+export {
+  activateFocusedNode,
+  canFocusNode,
+  focusGuiObject,
+  focusNode,
+  getFocusedGuiObject,
+  getFocusedNode,
+} from "./engine";
 export { releaseNavigation, retainNavigation } from "./navigation/controller";
 export type { NavIntent } from "./navigation/resolve";
 export { resolveNavigation } from "./navigation/resolve";
@@ -39,6 +52,8 @@ export function registerFocusNode(params: RegisterFocusNodeParams) {
     getVisible: params.getVisible ?? (() => undefined),
     getSyncToRoblox: params.getSyncToRoblox ?? (() => true),
     getCapturesDirectional: params.getCapturesDirectional ?? (() => false),
+    onFocusChange: params.onFocusChange ?? (() => {}),
+    activate: params.activate ?? (() => false),
   };
 
   focusNodes.push(nodeRecord);
@@ -48,6 +63,9 @@ export function registerFocusNode(params: RegisterFocusNodeParams) {
     focusState.currentFocusedNodeId !== undefined ? getFocusNodeRecord(focusState.currentFocusedNodeId) : undefined;
   if (currentFocusedNode?.implicit && currentFocusedNode.getGuiObject() === guiObject) {
     focusState.currentFocusedNodeId = nodeRecord.id;
+    // The registered node takes over the focus its implicit placeholder held, so
+    // it starts life already focused.
+    notifyFocusChange(currentFocusedNode.id, nodeRecord.id);
     for (const scopeRecord of focusScopes) {
       if (scopeRecord.lastFocusedNodeId === currentFocusedNode.id) {
         scopeRecord.lastFocusedNodeId = nodeRecord.id;
@@ -69,7 +87,7 @@ export function unregisterFocusNode(nodeId: number) {
     return;
   }
 
-  focusNodes.remove(nodeIndex);
+  const nodeRecord = focusNodes.remove(nodeIndex);
 
   for (const scopeRecord of focusScopes) {
     if (scopeRecord.lastFocusedNodeId === nodeId) {
@@ -79,6 +97,9 @@ export function unregisterFocusNode(nodeId: number) {
 
   if (focusState.currentFocusedNodeId === nodeId) {
     focusState.currentFocusedNodeId = undefined;
+    // The record is already out of the registry, so notify it directly: a node
+    // that unregisters while focused still has to drop its highlight.
+    nodeRecord?.onFocusChange(false);
   }
 
   pruneImplicitFocusNodes();

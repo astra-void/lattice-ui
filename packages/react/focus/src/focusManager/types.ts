@@ -28,6 +28,13 @@ export type FocusNodeRecord = {
   // input itself (text cursor, slider value) and the navigation controller
   // passes the input through instead of moving focus.
   getCapturesDirectional: (direction: NavDirection) => boolean;
+  // Called when focus enters or leaves this node, so a widget can drive its own
+  // highlight from the focus manager instead of the engine's selection events.
+  onFocusChange: (focused: boolean) => void;
+  // Runs the widget's activation (Enter/Space/ButtonA while focused). Returns
+  // false when the node has no activation of its own, so the navigation
+  // controller can pass the input through.
+  activate: () => boolean;
 };
 
 export type FocusScopeRecord = {
@@ -55,6 +62,8 @@ export type RegisterFocusNodeParams = {
   getVisible?: () => boolean | undefined;
   getSyncToRoblox?: () => boolean;
   getCapturesDirectional?: (direction: NavDirection) => boolean;
+  onFocusChange?: (focused: boolean) => void;
+  activate?: () => boolean;
 };
 
 export type RegisterFocusScopeParams = {
