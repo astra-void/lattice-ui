@@ -50,6 +50,49 @@ See the [CLI reference](packages/tools/cli/README.md) for the full command set (
 
 `cli` (published as `lattice-ui`)
 
+## Styling
+
+Primitives set behavior and neutralize Roblox's instance defaults; everything visual is yours. There are three ways in, and they compose:
+
+- **Instance props** — anything a part does not recognize is forwarded to the instance it renders, so `<Menu.Item BackgroundColor3={...} />` works without `asChild`. Forwarded props are checked against that instance, so a prop it does not accept is a compile error rather than a silent no-op.
+- **Child instances** — `UICorner`, `UIPadding`, `UIListLayout` and the rest can be written as children of any part, including next to an `asChild` element, where they are re-parented under it.
+- **`asChild`** — render your own element and let the part merge its behavior props, events and refs onto it.
+
+### Props the primitive owns
+
+A part applies its own props *after* yours, so the ones below are ignored rather than merged. This is silent: passing them is not an error, they just have no effect. Change the state they are derived from instead, or move your value to a wrapper you control.
+
+Three rules cover most of it:
+
+- **`Active` and `Selectable`** are owned by every interactive part and derive from `disabled`.
+- **`Visible`** is owned by every part with open/checked/present state, including all `Content` and `Indicator` parts. Presence keeps content mounted through an exit transition, and `Visible` is how that is expressed.
+- **`Text`** is owned by parts that render a controlled value: `TextField.Input`, `Textarea.Input`, `Combobox.Input`, `Select.Value` and `Combobox.Value`. Those inputs also own `TextEditable` and `ClearTextOnFocus`. `Avatar.Image` owns `Image` the same way, from `src`.
+
+Beyond those, geometry is owned wherever the primitive computes it:
+
+| Part | Owned props | Computed from |
+| --- | --- | --- |
+| every `Content` part | `Size`, `AutomaticSize` | popper measurement — see the note below |
+| `Menu.Content`, `ContextMenu.Content`, `Combobox.Content`, `Tooltip.Content` | `Position` | popper placement, applied to the host that wraps the content |
+| `Dialog.Content` | `Size` | full-screen host sizing |
+| `Dialog.Overlay` | `Size`, `ZIndex` | full-screen hit-testing, stacking below content |
+| `Progress.Indicator` | `Size` | `value` / `max` fill ratio |
+| `Slider.Range` | `Size`, `Position` | value-to-percent mapping |
+| `Slider.Thumb` | `AnchorPoint` | thumb travel |
+| `Switch.Thumb` | `Position`, `AnchorPoint` | checked-state travel; your `Size` is read, not ignored — it sizes the wrapper the thumb travels in |
+| `ScrollArea.Thumb` | `Size`, `Position` | viewport-to-canvas ratio |
+| `ScrollArea.Viewport` | `CanvasSize`, `AutomaticCanvasSize`, `ScrollingDirection`, `ScrollBarThickness`, `ScrollBarImageTransparency` | canvas measurement; the native scrollbar is suppressed because `ScrollArea` renders its own |
+
+`Slider.Range`, `Progress.Indicator` and `Switch.Thumb` write their geometry through motion rather than props, so it is reapplied on every frame even when you pass a value.
+
+`Size` and `AutomaticSize` on a `Content` part are only owned on the default path, where the primitive measures the instance it renders so the popper can place it. Under `asChild` the measurement moves to the host that wraps your element and your own `Size` is left alone — so `asChild` is how you get a fixed-width dropdown:
+
+```tsx
+<Select.Content asChild>
+  <frame Size={UDim2.fromOffset(160, 0)} AutomaticSize={Enum.AutomaticSize.Y} />
+</Select.Content>
+```
+
 ## Development
 
 This is a [pnpm](https://pnpm.io/) monorepo managed with [Turbo](https://turbo.build/).
