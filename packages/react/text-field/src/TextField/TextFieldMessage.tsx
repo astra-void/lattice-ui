@@ -27,5 +27,9 @@ export function TextFieldMessage(props: TextFieldMessageProps) {
     return <Slot {...toSlotProps(passthrough)}>{child}</Slot>;
   }
 
-  return <textlabel {...NEUTRAL_PROPS} {...passthrough} />;
+  return (
+    <textlabel {...NEUTRAL_PROPS} {...passthrough}>
+      {props.children}
+    </textlabel>
+  );
 }

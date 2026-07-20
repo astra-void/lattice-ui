@@ -92,5 +92,9 @@ export function AvatarImage(props: AvatarImageProps) {
     );
   }
 
-  return <imagelabel {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
+  return (
+    <imagelabel {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+      {props.children}
+    </imagelabel>
+  );
 }

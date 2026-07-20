@@ -45,5 +45,9 @@ export function TextareaLabel(props: TextareaLabelProps) {
     );
   }
 
-  return <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
+  return (
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+      {props.children}
+    </textbutton>
+  );
 }

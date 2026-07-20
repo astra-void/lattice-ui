@@ -22,5 +22,9 @@ export function MenuSeparator(props: MenuSeparatorProps) {
     return <Slot {...toSlotProps(passthrough)}>{child}</Slot>;
   }
 
-  return <frame {...NEUTRAL_PROPS} {...passthrough} />;
+  return (
+    <frame {...NEUTRAL_PROPS} {...passthrough}>
+      {props.children}
+    </frame>
+  );
 }

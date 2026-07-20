@@ -190,5 +190,9 @@ export function TextareaInput(props: TextareaInputProps) {
     );
   }
 
-  return <textbox {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
+  return (
+    <textbox {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+      {props.children}
+    </textbox>
+  );
 }

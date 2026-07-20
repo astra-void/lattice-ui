@@ -43,5 +43,9 @@ export function ComboboxValue(props: ComboboxValueProps) {
     );
   }
 
-  return <textlabel {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} />;
+  return (
+    <textlabel {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>
+      {props.children}
+    </textlabel>
+  );
 }
