@@ -23,10 +23,7 @@ export function ContextMenuGroup(props: ContextMenuGroupProps) {
   }
 
   return (
-    // A group hugs its items so the menu can size to its content; the vertical stack is the
-    // Roblox equivalent of DOM block flow, not a design decision. Spacing is left to the consumer.
-    <frame {...NEUTRAL_PROPS} {...passthrough} AutomaticSize={Enum.AutomaticSize.XY}>
-      <uilistlayout FillDirection={Enum.FillDirection.Vertical} SortOrder={Enum.SortOrder.LayoutOrder} />
+    <frame {...NEUTRAL_PROPS} {...passthrough}>
       {props.children}
     </frame>
   );
