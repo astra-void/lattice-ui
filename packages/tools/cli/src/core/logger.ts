@@ -27,6 +27,7 @@ export interface LoggerOptions {
   stdin?: NodeJS.ReadStream;
   stdout?: NodeJS.WriteStream;
   stderr?: NodeJS.WriteStream;
+  env?: NodeJS.ProcessEnv;
 }
 
 const FRAMES = ["-", "\\", "|", "/"] as const;
@@ -64,6 +65,30 @@ function isTTY(stdout: NodeJS.WriteStream, stderr: NodeJS.WriteStream): boolean 
   return Boolean(stdout.isTTY || stderr.isTTY);
 }
 
+/**
+ * Honours the informal `NO_COLOR` / `FORCE_COLOR` contract before falling back to TTY detection,
+ * so CI logs and `| less` stay readable and users can force colour through a pipe.
+ */
+export function shouldUseColor(
+  stdout: NodeJS.WriteStream,
+  stderr: NodeJS.WriteStream,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (env.NO_COLOR !== undefined && env.NO_COLOR !== "") {
+    return false;
+  }
+
+  if (env.FORCE_COLOR !== undefined && env.FORCE_COLOR !== "") {
+    return env.FORCE_COLOR !== "0";
+  }
+
+  if (env.TERM === "dumb") {
+    return false;
+  }
+
+  return isTTY(stdout, stderr);
+}
+
 function colorize(enabled: boolean, color: string, text: string): string {
   if (!enabled) {
     return text;
@@ -76,7 +101,8 @@ export function createLogger(options: LoggerOptions): Logger {
   const stdin = options.stdin ?? process.stdin;
   const stdout = options.stdout ?? process.stdout;
   const stderr = options.stderr ?? process.stderr;
-  const useColor = isTTY(stdout, stderr);
+  const env = options.env ?? process.env;
+  const useColor = shouldUseColor(stdout, stderr, env);
   const useUnicodeIcons = isTTY(stdout, stderr);
 
   function icon(kind: keyof typeof ICONS.tty): string {
