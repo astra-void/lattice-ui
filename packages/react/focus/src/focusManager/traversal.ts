@@ -1,5 +1,6 @@
 import { isInsideRoot, isLiveGuiObject } from "./guiObject";
-import { getResolvedFocusNode, resolveFocusNodeByGuiObject } from "./resolution";
+import { runResolutionPass } from "./pass";
+import { getResolvedFocusNode, resolveFocusNodeByGuiObject, resolveFocusNodeRecord } from "./resolution";
 import { focusNodes } from "./state";
 import type { FocusScopeRecord } from "./types";
 
@@ -10,7 +11,7 @@ function findFirstRegisteredNodeInScope(scopeRecord: FocusScopeRecord) {
       continue;
     }
 
-    const resolvedNode = getResolvedFocusNode(nodeRecord.id, {
+    const resolvedNode = resolveFocusNodeRecord(nodeRecord, {
       trapScopeOverride: scopeRecord,
     });
     if (resolvedNode) {
@@ -52,16 +53,21 @@ function findFirstFocusableDescendantInScope(scopeRecord: FocusScopeRecord) {
   return undefined;
 }
 
+// Walking a scope root's descendants asks the same containment and registry
+// questions over and over, so the search runs as a pass. Nested inside an
+// enclosing pass it simply reuses that one's caches.
 export function getBestScopeFallbackNode(scopeRecord: FocusScopeRecord) {
-  const lastFocusedNodeId = scopeRecord.lastFocusedNodeId;
-  if (lastFocusedNodeId !== undefined) {
-    const lastFocusedNode = getResolvedFocusNode(lastFocusedNodeId, {
-      trapScopeOverride: scopeRecord,
-    });
-    if (lastFocusedNode && isInsideRoot(scopeRecord.getRoot(), lastFocusedNode.guiObject)) {
-      return lastFocusedNode;
+  return runResolutionPass(() => {
+    const lastFocusedNodeId = scopeRecord.lastFocusedNodeId;
+    if (lastFocusedNodeId !== undefined) {
+      const lastFocusedNode = getResolvedFocusNode(lastFocusedNodeId, {
+        trapScopeOverride: scopeRecord,
+      });
+      if (lastFocusedNode && isInsideRoot(scopeRecord.getRoot(), lastFocusedNode.guiObject)) {
+        return lastFocusedNode;
+      }
     }
-  }
 
-  return findFirstFocusableDescendantInScope(scopeRecord) ?? findFirstRegisteredNodeInScope(scopeRecord);
+    return findFirstFocusableDescendantInScope(scopeRecord) ?? findFirstRegisteredNodeInScope(scopeRecord);
+  });
 }

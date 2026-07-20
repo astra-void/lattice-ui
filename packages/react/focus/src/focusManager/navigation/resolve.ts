@@ -1,9 +1,10 @@
 import { getFocusedNode } from "../engine";
+import { runResolutionPass } from "../pass";
 import { getFocusScopeRecord } from "../registry";
 import { getNodeOwningScopeId, getResolvedFocusNode, getTopTrappedScope } from "../resolution";
 import { getBestScopeFallbackNode } from "../traversal";
 import type { FocusScopeRecord, NavDirection, NavOrientation, ResolvedFocusNode } from "../types";
-import { getResolvableNodes, getResolvableNodesInRoot } from "./candidates";
+import { filterNodesInRoot, getResolvableNodes } from "./candidates";
 import { findSpatialTarget } from "./spatial";
 
 export type NavIntent = { type: "move"; direction: NavDirection } | { type: "next" } | { type: "prev" };
@@ -33,8 +34,12 @@ function getOwningScope(current: ResolvedFocusNode): FocusScopeRecord | undefine
   return getFocusScopeRecord(scopeId);
 }
 
-function stepOrdered(scope: FocusScopeRecord, current: ResolvedFocusNode, step: -1 | 1): ResolvedFocusNode | undefined {
-  const nodes = getResolvableNodesInRoot(scope.getRoot());
+function stepOrdered(
+  scope: FocusScopeRecord,
+  nodes: Array<ResolvedFocusNode>,
+  current: ResolvedFocusNode,
+  step: -1 | 1,
+): ResolvedFocusNode | undefined {
   if (nodes.size() === 0) {
     return undefined;
   }
@@ -58,18 +63,24 @@ function stepOrdered(scope: FocusScopeRecord, current: ResolvedFocusNode, step: 
 function resolveMove(current: ResolvedFocusNode, direction: NavDirection): ResolvedFocusNode | undefined {
   let scope = getOwningScope(current);
 
+  // Every scope in the chain draws its candidates from the same trap boundary,
+  // so the pool is collected once here and narrowed per scope below.
+  const candidates = getResolvableNodes();
+
   // Walk up the scope chain: each scope gets a chance to resolve the move with
   // its own strategy; ordered scopes escape cross-axis moves to their parent,
   // and any scope that fails to find a target escapes upward — until a trapped
   // scope stops the walk.
   while (scope !== undefined) {
+    const scopeNodes = filterNodesInRoot(candidates, scope.getRoot());
+
     if (scope.getNavStrategy() === "ordered" && isOnAxis(direction, scope.getNavOrientation())) {
-      const target = stepOrdered(scope, current, directionStep(direction));
+      const target = stepOrdered(scope, scopeNodes, current, directionStep(direction));
       if (target) {
         return target;
       }
     } else {
-      const target = findSpatialTarget(current, getResolvableNodesInRoot(scope.getRoot()), direction);
+      const target = findSpatialTarget(current, scopeNodes, direction);
       if (target) {
         return target;
       }
@@ -84,7 +95,7 @@ function resolveMove(current: ResolvedFocusNode, direction: NavDirection): Resol
 
   // No owning scope (or escaped past the outermost one): resolve spatially
   // across every focusable node within the active trap boundary.
-  return findSpatialTarget(current, getResolvableNodes(), direction);
+  return findSpatialTarget(current, candidates, direction);
 }
 
 function resolveTab(current: ResolvedFocusNode | undefined, step: -1 | 1): ResolvedFocusNode | undefined {
@@ -106,23 +117,27 @@ function resolveTab(current: ResolvedFocusNode | undefined, step: -1 | 1): Resol
 // Returns undefined when the current node consumes the direction itself
 // (caller should pass the input through instead of moving focus).
 export function resolveNavigation(intent: NavIntent): ResolvedFocusNode | undefined {
-  const current = getCurrentResolvedNode();
+  // Resolution reads the GUI tree and the registries but never mutates them, so
+  // the whole intent is answered as one pass with shared lookup caches.
+  return runResolutionPass(() => {
+    const current = getCurrentResolvedNode();
 
-  if (intent.type === "next" || intent.type === "prev") {
-    return resolveTab(current, intent.type === "next" ? 1 : -1);
-  }
-
-  if (!current) {
-    // Nothing focused inside our UI: seed focus at the top trapped scope's
-    // preferred node, otherwise the first focusable node on screen.
-    const trapped = getTopTrappedScope();
-    if (trapped) {
-      return getBestScopeFallbackNode(trapped);
+    if (intent.type === "next" || intent.type === "prev") {
+      return resolveTab(current, intent.type === "next" ? 1 : -1);
     }
-    return getResolvableNodes()[0];
-  }
 
-  return resolveMove(current, intent.direction);
+    if (!current) {
+      // Nothing focused inside our UI: seed focus at the top trapped scope's
+      // preferred node, otherwise the first focusable node on screen.
+      const trapped = getTopTrappedScope();
+      if (trapped) {
+        return getBestScopeFallbackNode(trapped);
+      }
+      return getResolvableNodes()[0];
+    }
+
+    return resolveMove(current, intent.direction);
+  });
 }
 
 export function currentNodeCapturesDirectional(direction: NavDirection): boolean {

@@ -1,5 +1,5 @@
 import { isInsideRoot } from "../guiObject";
-import { getResolvedFocusNode } from "../resolution";
+import { resolveFocusNodeRecord } from "../resolution";
 import { focusNodes } from "../state";
 import type { ResolvedFocusNode, ResolveNodeOptions } from "../types";
 
@@ -9,7 +9,7 @@ import type { ResolvedFocusNode, ResolveNodeOptions } from "../types";
 export function getResolvableNodes(options?: ResolveNodeOptions): Array<ResolvedFocusNode> {
   const resolved: Array<ResolvedFocusNode> = [];
   for (const record of focusNodes) {
-    const node = getResolvedFocusNode(record.id, options);
+    const node = resolveFocusNodeRecord(record, options);
     if (node) {
       resolved.push(node);
     }
@@ -19,14 +19,16 @@ export function getResolvableNodes(options?: ResolveNodeOptions): Array<Resolved
   return resolved;
 }
 
-// Same as getResolvableNodes but restricted to nodes inside a scope root.
-export function getResolvableNodesInRoot(
+// Narrows an already-collected pool to one scope root. Resolving a move walks
+// the scope chain, so the pool is collected once and narrowed per scope rather
+// than rebuilt from the registry at every step.
+export function filterNodesInRoot(
+  nodes: ReadonlyArray<ResolvedFocusNode>,
   root: GuiObject | undefined,
-  options?: ResolveNodeOptions,
 ): Array<ResolvedFocusNode> {
   if (root === undefined) {
     return [];
   }
 
-  return getResolvableNodes(options).filter((node) => isInsideRoot(root, node.guiObject));
+  return nodes.filter((node) => isInsideRoot(root, node.guiObject));
 }

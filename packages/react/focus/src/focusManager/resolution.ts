@@ -1,4 +1,14 @@
 import { isEffectivelyVisible, isInsideRoot, isLiveGuiObject, isRawGuiObjectFocusable } from "./guiObject";
+import {
+  getCachedOwningScopeId,
+  getCachedTrappedScope,
+  getNodeIndexByGuiObject,
+  hasCachedOwningScopeId,
+  hasCachedTrappedScope,
+  indexNodeRecord,
+  setCachedOwningScopeId,
+  setCachedTrappedScope,
+} from "./pass";
 import { getFocusNodeRecord, getFocusScopeRecord } from "./registry";
 import { focusNodes, focusScopes, focusState } from "./state";
 import type { FocusNodeRecord, FocusScopeRecord, ResolvedFocusNode, ResolveNodeOptions } from "./types";
@@ -10,6 +20,10 @@ export function getNodeOwningScopeId(record: FocusNodeRecord, guiObject: GuiObje
 
   if (!isLiveGuiObject(guiObject)) {
     return undefined;
+  }
+
+  if (hasCachedOwningScopeId(record.id)) {
+    return getCachedOwningScopeId(record.id);
   }
 
   let bestScopeId: number | undefined;
@@ -30,6 +44,7 @@ export function getNodeOwningScopeId(record: FocusNodeRecord, guiObject: GuiObje
     }
   }
 
+  setCachedOwningScopeId(record.id, bestScopeId);
   return bestScopeId;
 }
 
@@ -40,6 +55,13 @@ function isNodeInsideInactiveScope(record: FocusNodeRecord, guiObject: GuiObject
 }
 
 export function getTopTrappedScope(excludingScopeId?: number) {
+  // Every node resolution consults the trap boundary, so the unfiltered answer
+  // is worth memoing; the exclusion variant is rare and stays uncached.
+  const cacheable = excludingScopeId === undefined;
+  if (cacheable && hasCachedTrappedScope()) {
+    return getCachedTrappedScope();
+  }
+
   let bestScope: FocusScopeRecord | undefined;
 
   for (const scopeRecord of focusScopes) {
@@ -64,15 +86,17 @@ export function getTopTrappedScope(excludingScopeId?: number) {
     }
   }
 
+  if (cacheable) {
+    setCachedTrappedScope(bestScope);
+  }
+
   return bestScope;
 }
 
-export function getResolvedFocusNode(nodeId: number, options?: ResolveNodeOptions) {
-  const record = getFocusNodeRecord(nodeId);
-  if (!record) {
-    return undefined;
-  }
-
+// Resolves a record the caller already holds. Bulk candidate collection goes
+// through here so that scanning every node does not also scan the registry once
+// per node to find the record it started from.
+export function resolveFocusNodeRecord(record: FocusNodeRecord, options?: ResolveNodeOptions) {
   const guiObject = record.getGuiObject();
   if (!isLiveGuiObject(guiObject)) {
     return undefined;
@@ -102,6 +126,11 @@ export function getResolvedFocusNode(nodeId: number, options?: ResolveNodeOption
   };
 }
 
+export function getResolvedFocusNode(nodeId: number, options?: ResolveNodeOptions) {
+  const record = getFocusNodeRecord(nodeId);
+  return record !== undefined ? resolveFocusNodeRecord(record, options) : undefined;
+}
+
 export function canSyncNodeToRoblox(resolvedNode: ResolvedFocusNode) {
   return resolvedNode.record.getSyncToRoblox() && resolvedNode.guiObject.Selectable;
 }
@@ -109,6 +138,13 @@ export function canSyncNodeToRoblox(resolvedNode: ResolvedFocusNode) {
 export function findExistingFocusNodeByGuiObject(guiObject: GuiObject | undefined) {
   if (!isLiveGuiObject(guiObject)) {
     return undefined;
+  }
+
+  // Descendant-walking fallbacks ask this for every child under a scope root, so
+  // inside a pass the registry is indexed once instead of rescanned per child.
+  const nodeIndex = getNodeIndexByGuiObject(focusNodes);
+  if (nodeIndex !== undefined) {
+    return nodeIndex.get(guiObject);
   }
 
   for (let index = focusNodes.size() - 1; index >= 0; index--) {
@@ -140,9 +176,12 @@ function registerImplicitFocusNode(guiObject: GuiObject) {
     getVisible: () => undefined,
     getSyncToRoblox: () => true,
     getCapturesDirectional: () => false,
+    onFocusChange: () => {},
+    activate: () => false,
   };
 
   focusNodes.push(nodeRecord);
+  indexNodeRecord(nodeRecord);
   return nodeRecord;
 }
 
@@ -153,13 +192,12 @@ export function resolveFocusNodeByGuiObject(guiObject: GuiObject | undefined, op
 
   const existingNode = findExistingFocusNodeByGuiObject(guiObject);
   if (existingNode) {
-    return getResolvedFocusNode(existingNode.id, options);
+    return resolveFocusNodeRecord(existingNode, options);
   }
 
   if (!options?.allowImplicit || !isRawGuiObjectFocusable(guiObject)) {
     return undefined;
   }
 
-  const implicitNode = registerImplicitFocusNode(guiObject);
-  return getResolvedFocusNode(implicitNode.id, options);
+  return resolveFocusNodeRecord(registerImplicitFocusNode(guiObject), options);
 }

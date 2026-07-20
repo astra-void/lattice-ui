@@ -1,3 +1,5 @@
+import { getAncestry, getCachedAncestry } from "./pass";
+
 export function isLiveGuiObject(guiObject: GuiObject | undefined): guiObject is GuiObject {
   return guiObject !== undefined && guiObject.Parent !== undefined;
 }
@@ -7,20 +9,7 @@ export function isEffectivelyVisible(guiObject: GuiObject | undefined) {
     return false;
   }
 
-  let ancestor = guiObject.Parent;
-  while (ancestor !== undefined) {
-    if (ancestor.IsA("GuiObject") && !ancestor.Visible) {
-      return false;
-    }
-
-    if (ancestor.IsA("LayerCollector") && !ancestor.Enabled) {
-      return false;
-    }
-
-    ancestor = ancestor.Parent;
-  }
-
-  return true;
+  return getAncestry(guiObject).effectivelyVisible;
 }
 
 export function isInsideRoot(scopeRoot: GuiObject | undefined, guiObject: GuiObject | undefined) {
@@ -28,7 +17,14 @@ export function isInsideRoot(scopeRoot: GuiObject | undefined, guiObject: GuiObj
     return false;
   }
 
-  return guiObject === scopeRoot || guiObject.IsDescendantOf(scopeRoot);
+  if (guiObject === scopeRoot) {
+    return true;
+  }
+
+  // Inside a pass the node's ancestry has almost always been walked already for
+  // its visibility check, which turns this into a hash lookup.
+  const ancestry = getCachedAncestry(guiObject);
+  return ancestry !== undefined ? ancestry.ancestors.has(scopeRoot) : guiObject.IsDescendantOf(scopeRoot);
 }
 
 export function isRawGuiObjectFocusable(guiObject: GuiObject | undefined) {
