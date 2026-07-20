@@ -4,6 +4,7 @@ import {
   composeEvents,
   composeRefs,
   getPassthroughProps,
+  getSlotChild,
   type PassthroughProps,
   React,
   Slot,
@@ -27,41 +28,6 @@ const NEUTRAL_PROPS = {
 // An unstyled overlay has nothing to fade, so there is no default recipe. Presence timing is still
 // owned here; consumers opt into motion by animating their own `asChild` overlay.
 const NO_MOTION: PresenceMotionConfig = {};
-
-function resolveOverlayChild(child: React.ReactNode): React.ReactElement | undefined {
-  if (!React.isValidElement(child)) {
-    return undefined;
-  }
-
-  if (child.type !== React.Fragment) {
-    return child;
-  }
-
-  let resolvedChild: React.ReactElement | undefined;
-  let foundExtraChild = false;
-  const fragmentProps = child.props as { children?: React.ReactNode };
-
-  React.Children.map(fragmentProps.children, (fragmentChild) => {
-    const candidate = resolveOverlayChild(fragmentChild);
-    if (!candidate) {
-      return fragmentChild;
-    }
-
-    if (resolvedChild) {
-      foundExtraChild = true;
-      return fragmentChild;
-    }
-
-    resolvedChild = candidate;
-    return fragmentChild;
-  });
-
-  if (foundExtraChild) {
-    error("[DialogOverlay] `asChild` with a fragment requires exactly one child element.");
-  }
-
-  return resolvedChild;
-}
 
 function DialogOverlayImpl(props: {
   motionPresent: boolean;
@@ -97,8 +63,8 @@ function DialogOverlayImpl(props: {
   };
 
   if (props.asChild) {
-    const child = resolveOverlayChild(props.children);
-    if (!child) {
+    const child = props.children;
+    if (getSlotChild(child) === undefined) {
       error("[DialogOverlay] `asChild` requires a child element.");
     }
 
@@ -112,7 +78,11 @@ function DialogOverlayImpl(props: {
 
   // Full-screen so the overlay actually covers and intercepts input: hit-testing, not a size
   // design choice. ZIndex keeps the dim below the dialog content it shares a host with.
-  return <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} Size={UDim2.fromScale(1, 1)} ZIndex={5} />;
+  return (
+    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} Size={UDim2.fromScale(1, 1)} ZIndex={5}>
+      {props.children}
+    </textbutton>
+  );
 }
 
 function DialogOverlayGui(props: { children?: React.ReactNode }) {

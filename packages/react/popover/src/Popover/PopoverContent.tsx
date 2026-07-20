@@ -8,8 +8,10 @@ import {
   composeRefs,
   getElementRef,
   getPassthroughProps,
+  mergeSlotModifiers,
   type PassthroughProps,
   React,
+  resolveSlotChildren,
 } from "@lattice-ui/react-runtime";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";
@@ -127,8 +129,8 @@ function PopoverContentImpl(props: {
 
   const contentNode = props.asChild ? (
     (() => {
-      const child = props.children;
-      if (!React.isValidElement(child)) {
+      const { target: child, modifiers } = resolveSlotChildren(props.children);
+      if (!child) {
         error("[PopoverContent] `asChild` requires a child element.");
       }
 
@@ -139,6 +141,7 @@ function PopoverContentImpl(props: {
       // left to the child too, since the consumer owns that element's layout.
       return React.cloneElement(child as React.ReactElement<GuiPropBag>, {
         ...childProps,
+        children: mergeSlotModifiers(modifiers, childProps.children),
         ...passthrough,
         Visible: contentVisible,
         ref: composeRefs<Instance>(childRef, contentRef),

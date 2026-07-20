@@ -4,7 +4,14 @@ import {
   type ResponseMotionConfig,
   useResponseMotion,
 } from "@lattice-ui/react-motion";
-import { composeRefs, getElementRef, getPassthroughProps, React } from "@lattice-ui/react-runtime";
+import {
+  composeRefs,
+  getElementRef,
+  getPassthroughProps,
+  mergeSlotModifiers,
+  React,
+  resolveSlotChildren,
+} from "@lattice-ui/react-runtime";
 import { useSwitchContext } from "./context";
 import type { SwitchThumbProps } from "./types";
 
@@ -50,9 +57,8 @@ export function SwitchThumb(props: SwitchThumbProps) {
   passthrough.AnchorPoint = undefined;
   passthrough.Position = undefined;
 
-  const child = props.children;
-  const childProps =
-    props.asChild && React.isValidElement(child) ? toGuiPropBag((child as { props?: unknown }).props) : undefined;
+  const { target: child, modifiers } = resolveSlotChildren(props.children);
+  const childProps = props.asChild && child ? toGuiPropBag((child as { props?: unknown }).props) : undefined;
   // The wrapper is an extra layer between the track and the consumer's element, so it has to match
   // the size the consumer declared; otherwise the child would hang off the edge the wrapper anchors
   // to. This informs nothing about the travel distance.
@@ -77,7 +83,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
   const ref = composeRefs<Frame>(passthrough.ref as never, motionRef);
 
   if (props.asChild) {
-    if (!React.isValidElement(child)) {
+    if (!child) {
       error("[SwitchThumb] `asChild` requires a child element.");
     }
 
@@ -90,6 +96,7 @@ export function SwitchThumb(props: SwitchThumbProps) {
       <frame {...NEUTRAL_PROPS} {...passthrough} Size={declaredSize} ref={ref}>
         {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
           ...resolvedChildProps,
+          children: mergeSlotModifiers(modifiers, resolvedChildProps.children),
           Position: UDim2.fromOffset(0, 0),
           ref: composeRefs(childRef),
         })}

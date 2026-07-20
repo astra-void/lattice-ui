@@ -7,8 +7,10 @@ import {
   composeRefs,
   getElementRef,
   getPassthroughProps,
+  mergeSlotModifiers,
   type PassthroughProps,
   React,
+  resolveSlotChildren,
 } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxContentProps } from "./types";
@@ -119,8 +121,8 @@ function ComboboxContentImpl(props: {
   // from zero is what lets the popper read the content's real extents before positioning it.
   const contentNode = props.asChild ? (
     (() => {
-      const child = props.children;
-      if (!React.isValidElement(child)) {
+      const { target: child, modifiers } = resolveSlotChildren(props.children);
+      if (!child) {
         error("[ComboboxContent] `asChild` requires a child element.");
       }
 
@@ -137,6 +139,7 @@ function ComboboxContentImpl(props: {
         >
           {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
             ...childProps,
+            children: mergeSlotModifiers(modifiers, childProps.children),
             ...passthrough,
             Position: UDim2.fromOffset(0, 0),
             Visible: contentVisible,

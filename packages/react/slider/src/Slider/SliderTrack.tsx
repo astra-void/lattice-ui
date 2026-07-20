@@ -1,4 +1,12 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import {
+  composeEvents,
+  composeRefs,
+  getPassthroughProps,
+  getSlotChild,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import type { SliderTrackProps } from "./types";
 
@@ -45,7 +53,7 @@ export function SliderTrack(props: SliderTrackProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[SliderTrack] `asChild` requires a child element.");
     }
 

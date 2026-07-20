@@ -1,4 +1,4 @@
-import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { SpinnerProps } from "./types";
 
 const RunService = game.GetService("RunService");
@@ -56,7 +56,7 @@ export function Spinner(props: SpinnerProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[Spinner] `asChild` requires a child element.");
     }
 

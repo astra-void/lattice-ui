@@ -1,4 +1,4 @@
-import { React, Slot } from "@lattice-ui/react-runtime";
+import { getSlotChild, React, Slot } from "@lattice-ui/react-runtime";
 import { FocusScopeProvider, useFocusLayerOrder, useFocusScopeId } from "../context";
 import {
   createFocusScopeId,
@@ -103,7 +103,7 @@ export function FocusScope(props: FocusScopeProps) {
   const content = props.asChild ? (
     (() => {
       const child = props.children;
-      if (!React.isValidElement(child)) {
+      if (getSlotChild(child) === undefined) {
         error("[FocusScope] `asChild` requires a child element.");
       }
 

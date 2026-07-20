@@ -1,5 +1,5 @@
 import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { ToastRootProps } from "./types";
 
 const OWN_PROPS = ["transition", "asChild", "visible", "onExitComplete", "children"] as const;
@@ -38,7 +38,7 @@ export function ToastRoot(props: ToastRootProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[ToastRoot] `asChild` requires a child element.");
     }
 

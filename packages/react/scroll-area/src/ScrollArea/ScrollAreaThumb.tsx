@@ -1,4 +1,12 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import {
+  composeEvents,
+  composeRefs,
+  getPassthroughProps,
+  getSlotChild,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import {
   resolveCanvasPositionFromThumbOffset,
@@ -209,7 +217,7 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[ScrollAreaThumb] `asChild` requires a child element.");
     }
 

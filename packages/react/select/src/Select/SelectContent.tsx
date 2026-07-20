@@ -8,8 +8,10 @@ import {
   composeRefs,
   getElementRef,
   getPassthroughProps,
+  mergeSlotModifiers,
   type PassthroughProps,
   React,
+  resolveSlotChildren,
 } from "@lattice-ui/react-runtime";
 import { useSelectContext } from "./context";
 import type { SelectContentProps } from "./types";
@@ -118,8 +120,8 @@ function SelectContentImpl(props: {
 
   const contentNode = props.asChild ? (
     (() => {
-      const child = props.children;
-      if (!React.isValidElement(child)) {
+      const { target: child, modifiers } = resolveSlotChildren(props.children);
+      if (!child) {
         error("[SelectContent] `asChild` requires a child element.");
       }
 
@@ -129,6 +131,7 @@ function SelectContentImpl(props: {
       // No neutral defaults here: the rendered element belongs to the consumer.
       return React.cloneElement(child as React.ReactElement<GuiPropBag>, {
         ...childProps,
+        children: mergeSlotModifiers(modifiers, childProps.children),
         ...passthrough,
         Visible: contentVisible,
         ref: composeRefs(childRef, passthrough.ref as never, setContentRef),

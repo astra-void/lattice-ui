@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { TabsListProps } from "./types";
 
 const OWN_PROPS = ["asChild", "children"] as const;
@@ -16,7 +16,7 @@ export function TabsList(props: TabsListProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[TabsList] `asChild` requires a child element.");
     }
 

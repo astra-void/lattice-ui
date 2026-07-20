@@ -1,6 +1,7 @@
 import {
   composeEvents,
   getPassthroughProps,
+  getSlotChild,
   React,
   Slot,
   toSlotProps,
@@ -88,7 +89,7 @@ export function CheckboxRoot(props: CheckboxProps) {
     <CheckboxContextProvider value={contextValue}>
       {props.asChild ? (
         (() => {
-          if (!React.isValidElement(child)) {
+          if (getSlotChild(child) === undefined) {
             error("[Checkbox] `asChild` requires a child element.");
           }
 

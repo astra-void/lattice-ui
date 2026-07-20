@@ -1,6 +1,7 @@
 import {
   composeEvents,
   getPassthroughProps,
+  getSlotChild,
   React,
   Slot,
   toSlotProps,
@@ -68,7 +69,7 @@ export function SwitchRoot(props: SwitchProps) {
     <SwitchContextProvider value={contextValue}>
       {props.asChild ? (
         (() => {
-          if (!React.isValidElement(child)) {
+          if (getSlotChild(child) === undefined) {
             error("[Switch] `asChild` requires a child element.");
           }
 

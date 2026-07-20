@@ -1,4 +1,12 @@
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import {
+  composeEvents,
+  composeRefs,
+  getPassthroughProps,
+  getSlotChild,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import { resolveCanvasPositionFromTrackPosition, resolveThumbOffset, resolveThumbSize } from "./scrollMath";
 import type { ScrollAreaScrollbarProps } from "./types";
@@ -95,7 +103,7 @@ export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[ScrollAreaScrollbar] `asChild` requires a child element.");
     }
 

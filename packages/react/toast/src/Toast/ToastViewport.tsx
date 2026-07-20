@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { ToastViewportProps } from "./types";
 
 const OWN_PROPS = ["asChild", "children"] as const;
@@ -14,7 +14,7 @@ export function ToastViewport(props: ToastViewportProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[ToastViewport] `asChild` requires a child element.");
     }
 

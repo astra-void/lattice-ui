@@ -1,4 +1,11 @@
-import { getPassthroughProps, React, Slot, toSlotProps, useControllableState } from "@lattice-ui/react-runtime";
+import {
+  getPassthroughProps,
+  getSlotChild,
+  React,
+  Slot,
+  toSlotProps,
+  useControllableState,
+} from "@lattice-ui/react-runtime";
 import { ToggleGroupContextProvider } from "./context";
 import type { ToggleGroupProps } from "./types";
 
@@ -106,7 +113,7 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
   const groupNode = props.asChild ? (
     (() => {
       const child = props.children;
-      if (!React.isValidElement(child)) {
+      if (getSlotChild(child) === undefined) {
         error("[ToggleGroup] `asChild` requires a child element.");
       }
 

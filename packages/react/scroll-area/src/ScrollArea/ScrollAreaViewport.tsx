@@ -1,4 +1,4 @@
-import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import type { ScrollAreaViewportProps } from "./types";
 
@@ -88,7 +88,7 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[ScrollAreaViewport] `asChild` requires a child element.");
     }
 

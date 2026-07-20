@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useScrollAreaContext } from "./context";
 import type { ScrollAreaCornerProps } from "./types";
 
@@ -22,7 +22,7 @@ export function ScrollAreaCorner(props: ScrollAreaCornerProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[ScrollAreaCorner] `asChild` requires a child element.");
     }
 

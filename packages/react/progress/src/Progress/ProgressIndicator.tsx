@@ -1,5 +1,5 @@
 import { createProgressResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useProgressContext } from "./context";
 import type { ProgressIndicatorProps } from "./types";
 
@@ -45,7 +45,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[ProgressIndicator] `asChild` requires a child element.");
     }
 

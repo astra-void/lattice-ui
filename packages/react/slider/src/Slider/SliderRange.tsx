@@ -1,5 +1,5 @@
 import { createProgressResponseRecipe, motionDrag, useResponseMotion } from "@lattice-ui/react-motion";
-import { composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { composeRefs, getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderRangeProps } from "./types";
@@ -41,7 +41,7 @@ export function SliderRange(props: SliderRangeProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[SliderRange] `asChild` requires a child element.");
     }
 

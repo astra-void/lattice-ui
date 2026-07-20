@@ -3,6 +3,7 @@ import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice
 import {
   composeRefs,
   getPassthroughProps,
+  getSlotChild,
   type PassthroughProps,
   React,
   Slot,
@@ -53,7 +54,7 @@ function RadioGroupIndicatorImpl(props: {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[RadioGroupIndicator] `asChild` requires a child element.");
     }
 

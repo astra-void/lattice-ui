@@ -7,8 +7,10 @@ import {
   composeRefs,
   getElementRef,
   getPassthroughProps,
+  mergeSlotModifiers,
   type PassthroughProps,
   React,
+  resolveSlotChildren,
 } from "@lattice-ui/react-runtime";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
@@ -133,8 +135,8 @@ function TooltipContentImpl(props: {
   const passthrough = props.passthrough;
 
   if (props.asChild) {
-    const child = props.children;
-    if (!React.isValidElement(child)) {
+    const { target: child, modifiers } = resolveSlotChildren(props.children);
+    if (!child) {
       error("[TooltipContent] `asChild` requires a child element.");
     }
 
@@ -155,6 +157,7 @@ function TooltipContentImpl(props: {
             {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
               // No neutral defaults here: the rendered element belongs to the consumer.
               ...childProps,
+              children: mergeSlotModifiers(modifiers, childProps.children),
               ...passthrough,
               Position: UDim2.fromOffset(0, 0),
               Visible: contentVisible,

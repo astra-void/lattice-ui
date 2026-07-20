@@ -8,8 +8,10 @@ import {
   composeRefs,
   getElementRef,
   getPassthroughProps,
+  mergeSlotModifiers,
   type PassthroughProps,
   React,
+  resolveSlotChildren,
 } from "@lattice-ui/react-runtime";
 import { useContextMenuContext } from "./context";
 import type { ContextMenuContentProps } from "./types";
@@ -139,8 +141,8 @@ function ContextMenuContentImpl(props: {
 
   const contentNode = props.asChild ? (
     (() => {
-      const child = props.children;
-      if (!React.isValidElement(child)) {
+      const { target: child, modifiers } = resolveSlotChildren(props.children);
+      if (!child) {
         error("[ContextMenuContent] `asChild` requires a child element.");
       }
 
@@ -152,6 +154,7 @@ function ContextMenuContentImpl(props: {
           {/* No neutral defaults here: the rendered element belongs to the consumer. */}
           {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
             ...childProps,
+            children: mergeSlotModifiers(modifiers, childProps.children),
             ...passthrough,
             Position: ZERO_UDIM2,
             Visible: contentVisible,

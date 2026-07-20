@@ -3,6 +3,7 @@ import { type PresenceMotionConfig, usePresenceMotionController } from "@lattice
 import {
   composeRefs,
   getPassthroughProps,
+  getSlotChild,
   type PassthroughProps,
   React,
   Slot,
@@ -53,7 +54,9 @@ function AccordionContentImpl(props: {
 
   if (props.asChild) {
     const child = props.children;
-    if (React.Children.count(props.children) !== 1 || !React.isValidElement(child)) {
+    // Counting raw children would reject a UI modifier written alongside the element; the resolver
+    // is what decides whether the subtree holds exactly one element to clone onto.
+    if (getSlotChild(child) === undefined) {
       error("[AccordionContent] `asChild` requires a single child element.");
     }
 

@@ -1,4 +1,4 @@
-import { getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import { getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { AccordionItemContextProvider, useAccordionContext } from "./context";
 import type { AccordionItemProps } from "./types";
 
@@ -30,7 +30,7 @@ export function AccordionItem(props: AccordionItemProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[AccordionItem] `asChild` requires a child element.");
     }
 

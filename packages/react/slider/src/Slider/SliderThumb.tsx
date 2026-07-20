@@ -1,6 +1,14 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
 import { createSliderThumbResponseRecipe, useResponseMotion } from "@lattice-ui/react-motion";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import {
+  composeEvents,
+  composeRefs,
+  getPassthroughProps,
+  getSlotChild,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useSliderContext } from "./context";
 import { valueToPercent } from "./internals/math";
 import type { SliderThumbProps } from "./types";
@@ -121,7 +129,7 @@ export function SliderThumb(props: SliderThumbProps) {
 
   if (props.asChild) {
     const child = props.children;
-    if (!React.isValidElement(child)) {
+    if (getSlotChild(child) === undefined) {
       error("[SliderThumb] `asChild` requires a child element.");
     }
 

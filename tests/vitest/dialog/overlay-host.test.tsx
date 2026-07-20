@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@lattice-ui/react-runtime", async () => {
   const runtimeProps = await import("../../../packages/react/runtime/src/props");
+  const runtimeSlot = await import("../../../packages/react/runtime/src/slot");
   const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const react = await import("react");
   const controllable = await import("../../../packages/react/runtime/src/useControllableState");
@@ -30,6 +31,9 @@ vi.mock("@lattice-ui/react-runtime", async () => {
 
   return {
     composeEvents: runtimeProps.composeEvents,
+    getSlotChild: runtimeSlot.getSlotChild,
+    mergeSlotModifiers: runtimeSlot.mergeSlotModifiers,
+    resolveSlotChildren: runtimeSlot.resolveSlotChildren,
     getPassthroughProps: runtimeProps.getPassthroughProps,
     toSlotProps: runtimeProps.toSlotProps,
     composeRefs: runtimeRefs.composeRefs,

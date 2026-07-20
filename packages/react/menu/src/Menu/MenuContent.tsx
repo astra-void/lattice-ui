@@ -9,8 +9,10 @@ import {
   composeRefs,
   getElementRef,
   getPassthroughProps,
+  mergeSlotModifiers,
   type PassthroughProps,
   React,
+  resolveSlotChildren,
 } from "@lattice-ui/react-runtime";
 import { useMenuContext } from "./context";
 import type { MenuContentProps } from "./types";
@@ -126,8 +128,8 @@ function MenuContentImpl(props: {
 
   const contentNode = props.asChild ? (
     (() => {
-      const child = props.children;
-      if (!React.isValidElement(child)) {
+      const { target: child, modifiers } = resolveSlotChildren(props.children);
+      if (!child) {
         error("[MenuContent] `asChild` requires a child element.");
       }
 
@@ -139,6 +141,7 @@ function MenuContentImpl(props: {
           {/* No neutral defaults here: the rendered element belongs to the consumer. */}
           {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
             ...childProps,
+            children: mergeSlotModifiers(modifiers, childProps.children),
             ...passthrough,
             Position: ZERO_UDIM2,
             Visible: contentVisible,

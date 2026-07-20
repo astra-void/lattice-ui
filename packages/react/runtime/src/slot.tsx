@@ -104,20 +104,148 @@ function moveHandlersToReactKeyedProps(props: SlotPropBag, key: "Event" | "Chang
   props[key] = undefined;
 }
 
+// Roblox attaches UI modifiers as children rather than as properties, so an `asChild` subtree can
+// legitimately hold more than one element: the consumer's GuiObject plus any number of these. A
+// Tailwind-style transform emits exactly that shape — `rounded-md` on an `asChild` part becomes a
+// `uicorner` sibling of the element the consumer wrote. Treating those as the slot target would
+// clone the modifier instead of the element, so they are routed into the target's own children.
+// This is the complete set of UIBase classes; anything else counts as a candidate target.
+const UI_MODIFIER_TAGS: Record<string, boolean> = {
+  uiaspectratioconstraint: true,
+  uicorner: true,
+  uidragdetector: true,
+  uiflexitem: true,
+  uigradient: true,
+  uigridlayout: true,
+  uilistlayout: true,
+  uipadding: true,
+  uipagelayout: true,
+  uiscale: true,
+  uisizeconstraint: true,
+  uistroke: true,
+  uitablelayout: true,
+  uitextsizeconstraint: true,
+};
+
+function isUiModifierElement(node: React.ReactElement) {
+  const elementType = (node as { type?: unknown }).type;
+
+  return typeIs(elementType, "string") && UI_MODIFIER_TAGS[elementType] === true;
+}
+
+export type SlotChildren = {
+  /** The element to clone, or `undefined` when the subtree does not hold exactly one candidate. */
+  target: React.ReactElement<SlotPropBag> | undefined;
+  /** UI modifiers to re-attach under `target` so their styling is not dropped. */
+  modifiers: React.ReactElement[];
+};
+
+/**
+ * Split an `asChild` subtree into the element a primitive should clone and the UI modifiers that
+ * belong under it. Primitives call this instead of `React.isValidElement` so a modifier sibling
+ * does not read as "not a single child".
+ */
+export function resolveSlotChildren(children: React.ReactNode): SlotChildren {
+  if (React.isValidElement(children)) {
+    // A fragment is a grouping node, not something a primitive can clone props onto, so look
+    // through it. Anything a transform or a `.map()` wrapped in one still resolves.
+    if (children.type === React.Fragment) {
+      const fragmentProps = children.props as { children?: React.ReactNode };
+
+      return resolveSlotChildren(fragmentProps.children);
+    }
+
+    // A lone modifier is not something to clone onto: `asChild` with a `className` but no child
+    // produces exactly that, and treating it as the target would put the primitive's behavior
+    // props on a UICorner. Report no target so the caller raises its own `asChild` error.
+    if (isUiModifierElement(children)) {
+      return { target: undefined, modifiers: [children] };
+    }
+
+    // Fast path for the common single-element case: no re-keying, no allocation.
+    return { target: children as React.ReactElement<SlotPropBag>, modifiers: [] };
+  }
+
+  const modifiers: React.ReactElement[] = [];
+  let target: React.ReactElement<SlotPropBag> | undefined;
+  let targetCount = 0;
+
+  for (const node of React.Children.toArray(children)) {
+    if (!React.isValidElement(node)) {
+      continue;
+    }
+
+    if (isUiModifierElement(node)) {
+      modifiers.push(node);
+      continue;
+    }
+
+    if (node.type === React.Fragment) {
+      const nested = resolveSlotChildren((node.props as { children?: React.ReactNode }).children);
+      for (const modifier of nested.modifiers) {
+        modifiers.push(modifier);
+      }
+
+      if (nested.target !== undefined) {
+        targetCount += 1;
+        if (target === undefined) {
+          target = nested.target;
+        }
+      }
+
+      continue;
+    }
+
+    targetCount += 1;
+    if (target === undefined) {
+      target = node as React.ReactElement<SlotPropBag>;
+    }
+  }
+
+  // More than one candidate stays an error: which element the primitive's props belong on would
+  // be a guess, and silently picking one is worse than telling the consumer to wrap them.
+  return { target: targetCount === 1 ? target : undefined, modifiers };
+}
+
+/** The element an `asChild` primitive should clone, or `undefined` if the subtree is not valid. */
+export function getSlotChild(children: React.ReactNode) {
+  return resolveSlotChildren(children).target;
+}
+
+/**
+ * Children for a cloned `asChild` element: the modifiers that were written as its siblings, then
+ * whatever it already had. Primitives that clone directly instead of going through `Slot` use this
+ * so the modifiers still land somewhere.
+ */
+export function mergeSlotModifiers(modifiers: React.ReactElement[], children: React.ReactNode): React.ReactNode {
+  if (modifiers[0] === undefined) {
+    return children;
+  }
+
+  // `toArray` keys the element's own children too; an array holding unkeyed elements warns.
+  return [...modifiers, ...React.Children.toArray(children)];
+}
+
 export type SlotProps = {
-  children: React.ReactElement<SlotPropBag>;
+  children: React.ReactNode;
   ref?: SlotRef;
 } & SlotPropBag;
 
 export const Slot = React.forwardRef<Instance, SlotProps>((props, forwardedRef) => {
-  const child = props.children;
+  const { target, modifiers } = resolveSlotChildren(props.children);
+  if (!target) {
+    error("[Slot] expected exactly one child element besides any UI modifiers.");
+  }
+
+  const child = target;
   const childProps = toSlotPropBag((child as { props?: unknown }).props);
 
   // Slot props override child props: primitives pass state-driven props
   // (Visible, Active, Selectable) that must win over the child's static
   // values. Primitives must not pass cosmetic defaults through Slot.
   const mergedProps: SlotPropBag = { ...childProps, ...props };
-  mergedProps.children = childProps.children;
+  // Modifiers were written as siblings of the child but describe it, so they render underneath it.
+  mergedProps.children = mergeSlotModifiers(modifiers, childProps.children);
 
   const slotEvent = toHandlerTable(props.Event);
   const childEvent = toHandlerTable(childProps.Event);
