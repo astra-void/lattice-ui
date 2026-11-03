@@ -165,10 +165,12 @@ function SelectContentImpl(props: {
       contentBoundaryRef={contentBoundaryRef}
       insideRefs={[selectContext.triggerRef]}
     >
+      {/* Trapped while open: cross-axis presses must not escape the list while the popup
+          stays open; ButtonB/Backspace or an outside press closes it and restores focus. */}
       <FocusScope
         active={open}
         restoreFocus={true}
-        trapped={false}
+        trapped={true}
         navStrategy="ordered"
         navOrientation="vertical"
         navWrap={true}

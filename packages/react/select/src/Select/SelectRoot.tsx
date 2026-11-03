@@ -1,3 +1,4 @@
+import { focusOrderedSelectionEntry, getFirstOrderedSelectionEntry } from "@lattice-ui/react-focus";
 import { React, useControllableState } from "@lattice-ui/react-runtime";
 import { SelectContextProvider } from "./context";
 import type { SelectItemRegistration, SelectProps } from "./types";
@@ -116,6 +117,32 @@ export function SelectRoot(props: SelectProps) {
     const fallback = orderedItems.find((item) => !item.getDisabled());
     setValueState(fallback?.value);
   }, [registryRevision, resolveOrderedItems, setValueState, value]);
+
+  // Move focus into the list once per open, as soon as its items have
+  // registered: onto the selected item when it can take focus, else the first
+  // enabled one. Later registry changes must not pull focus back.
+  const focusedOnOpenRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!open) {
+      focusedOnOpenRef.current = false;
+      return;
+    }
+
+    if (focusedOnOpenRef.current) {
+      return;
+    }
+
+    const orderedItems = resolveOrderedItems();
+    const selectedEntry = orderedItems.find((item) => item.value === value && !item.getDisabled());
+    const target =
+      selectedEntry !== undefined && getFirstOrderedSelectionEntry([selectedEntry]) !== undefined
+        ? selectedEntry
+        : getFirstOrderedSelectionEntry(orderedItems);
+    if (target) {
+      focusedOnOpenRef.current = true;
+      focusOrderedSelectionEntry(target);
+    }
+  }, [open, registryRevision, resolveOrderedItems, value]);
 
   const contextValue = React.useMemo(
     () => ({

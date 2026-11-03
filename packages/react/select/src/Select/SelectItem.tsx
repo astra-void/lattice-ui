@@ -54,6 +54,7 @@ export function SelectItem(props: SelectItemProps) {
       id: itemIdRef.current,
       value: props.value,
       order: itemOrderRef.current,
+      ref: itemRef,
       getDisabled: () => disabledRef.current,
       getTextValue: () => textValueRef.current,
     });
