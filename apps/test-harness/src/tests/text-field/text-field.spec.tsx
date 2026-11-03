@@ -79,23 +79,24 @@ export = () => {
       });
     });
 
-    it("forwards invalid state to message styling", () => {
+    it("renders the consumer's message without imposing an error tone", () => {
       withReactHarness("TextFieldInvalidMessage", (harness) => {
         harness.render(
           <TextField.Root invalid>
             <TextField.Label />
             <TextField.Input />
             <TextField.Description />
-            <TextField.Message />
+            <TextField.Message Text="Required" TextColor3={Color3.fromRGB(10, 20, 30)} />
           </TextField.Root>,
         );
 
         waitForEffects();
-        const message = findTextLabelByText(harness.container, "Message");
-        assert(message !== undefined, "TextFieldMessage should render default text.");
+        // Unstyled primitive: text and color belong to the consumer, even while invalid.
+        const message = findTextLabelByText(harness.container, "Required");
+        assert(message !== undefined, "TextFieldMessage should render the consumer's text.");
         assert(
-          message.TextColor3 === Color3.fromRGB(255, 128, 128),
-          "Invalid TextField should render message color in error tone.",
+          message.TextColor3 === Color3.fromRGB(10, 20, 30),
+          "Invalid TextField should keep the consumer's message color.",
         );
       });
     });

@@ -22,6 +22,8 @@ type SelectRenderOptions = {
   markerText: string;
 };
 
+const GuiService = game.GetService("GuiService");
+
 function renderSelectTree(options: SelectRenderOptions, playerGui: PlayerGui) {
   return (
     <PortalProvider container={playerGui}>
@@ -243,8 +245,8 @@ export = () => {
       });
     });
 
-    it("keeps trigger and items out of native Roblox selection", () => {
-      withReactHarness("SelectNoNativeSelection", (harness) => {
+    it("keeps enabled trigger and items selectable and focuses the selected item on open", () => {
+      withReactHarness("SelectManagedFocus", (harness) => {
         harness.render(
           renderSelectTree(
             {
@@ -260,15 +262,19 @@ export = () => {
         waitForEffects(4);
         const trigger = findTextButtonByText(harness.container, "select-trigger");
         assert(trigger !== undefined, "Select trigger should mount for selection coverage.");
-        assert(trigger.Selectable === false, "Select trigger should not participate in native selection navigation.");
+        assert(trigger.Selectable === true, "Enabled Select trigger should be selectable for managed focus.");
 
         const alphaItem = findTextButtonByText(harness.playerGui, "select-item-alpha");
         assert(alphaItem !== undefined, "Select item should mount while content is open.");
-        assert(alphaItem.Selectable === false, "Select items should not participate in native selection navigation.");
+        assert(alphaItem.Selectable === true, "Enabled Select items should be selectable for managed focus.");
 
         const betaItem = findTextButtonByText(harness.playerGui, "select-item-beta");
         assert(betaItem !== undefined, "Selected SelectItem should mount when content is open.");
-        assert(betaItem.Selectable === false, "Selected items should also stay out of native selection.");
+        // SelectedObject is the render-only mirror of managed focus (bridge.ts).
+        assert(
+          GuiService.SelectedObject === betaItem,
+          "Opening Select.Content should move managed focus onto the selected item.",
+        );
       });
     });
 
