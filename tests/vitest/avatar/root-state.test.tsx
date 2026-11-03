@@ -122,4 +122,16 @@ describe("AvatarRoot status retention", () => {
     expect(getContext().status).toBe("error");
     expect(getContext().delayElapsed).toBe(true);
   });
+
+  it("arms the fallback delay for a src given only to Avatar.Image", () => {
+    const { getContext } = renderAvatar({ delayMs: 250 });
+    expect(getContext().delayElapsed).toBe(true);
+
+    act(() => {
+      getContext().setImageSrc("rbxassetid://1");
+    });
+
+    expect(getContext().status).toBe("loading");
+    expect(getContext().delayElapsed).toBe(false);
+  });
 });

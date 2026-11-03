@@ -10,23 +10,30 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-function toImageLabel(instance: Instance | undefined) {
-  if (!instance?.IsA("ImageLabel")) {
-    return undefined;
+// `asChild` may hand us an ImageButton (a clickable avatar); both expose `IsLoaded`.
+function toImageObject(instance: Instance | undefined) {
+  if (instance?.IsA("ImageLabel") || instance?.IsA("ImageButton")) {
+    return instance;
   }
 
-  return instance;
+  return undefined;
 }
 
 export function AvatarImage(props: AvatarImageProps) {
   const avatarContext = useAvatarContext();
   const source = props.src ?? avatarContext.src;
 
-  const imageRef = React.useRef<ImageLabel>();
+  const imageRef = React.useRef<ImageLabel | ImageButton>();
 
   const setImageRef = React.useCallback((instance: Instance | undefined) => {
-    imageRef.current = toImageLabel(instance);
+    imageRef.current = toImageObject(instance);
   }, []);
+
+  const setImageSrc = avatarContext.setImageSrc;
+  React.useEffect(() => {
+    setImageSrc(props.src);
+    return () => setImageSrc(undefined);
+  }, [props.src, setImageSrc]);
 
   const setStatus = avatarContext.setStatus;
   const status = avatarContext.status;
@@ -70,7 +77,7 @@ export function AvatarImage(props: AvatarImageProps) {
     };
   }, [setStatus, source, status]);
 
-  const passthrough = getPassthroughProps<ImageLabel>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<ImageLabel | ImageButton>(props, OWN_PROPS);
   const behaviorProps = {
     // `Image` is data, not appearance: it is the source the load state is derived from.
     Image: source ?? "",

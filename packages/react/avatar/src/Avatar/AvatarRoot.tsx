@@ -5,7 +5,11 @@ import type { AvatarProps } from "./types";
 
 export function AvatarRoot(props: AvatarProps) {
   const delayMs = math.max(0, props.delayMs ?? 250);
-  const hasSource = props.src !== undefined && props.src.size() > 0;
+  // `src` may be given to the root or only to `Avatar.Image`; the image reports
+  // its own so status reset and the fallback delay follow whichever is in effect.
+  const [imageSrc, setImageSrc] = React.useState<string | undefined>();
+  const src = imageSrc ?? props.src;
+  const hasSource = src !== undefined && src.size() > 0;
 
   const [status, setStatus] = React.useState<AvatarStatus>(hasSource ? "loading" : "error");
   const [delayElapsed, setDelayElapsed] = React.useState(!hasSource);
@@ -24,20 +28,20 @@ export function AvatarRoot(props: AvatarProps) {
       return;
     }
 
-    if (props.src === undefined || props.src.size() === 0) {
+    if (src === undefined || src.size() === 0) {
       setStatus("error");
       return;
     }
 
     setStatus("loading");
-  }, [props.src]);
+  }, [src]);
 
   // Arm the fallback-reveal delay whenever the source or delayMs changes.
   React.useEffect(() => {
     sequenceRef.current += 1;
     const sequence = sequenceRef.current;
 
-    if (props.src === undefined || props.src.size() === 0) {
+    if (src === undefined || src.size() === 0) {
       setDelayElapsed(true);
       return;
     }
@@ -56,7 +60,7 @@ export function AvatarRoot(props: AvatarProps) {
     return () => {
       pcall(() => task.cancel(handle));
     };
-  }, [delayMs, props.src]);
+  }, [delayMs, src]);
 
   const contextValue = React.useMemo(
     () => ({
@@ -64,6 +68,7 @@ export function AvatarRoot(props: AvatarProps) {
       status,
       setStatus,
       delayElapsed,
+      setImageSrc,
     }),
     [delayElapsed, props.src, status],
   );
