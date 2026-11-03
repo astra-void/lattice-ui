@@ -72,7 +72,6 @@ export function DismissableLayer(props: DismissableLayerProps) {
         const insideRoots = insideRefsRef.current.map((ref) => ref.current);
         return isOutsidePointerEvent(inputObject, portalContext.container, contentBoundary, {
           insideRoots,
-          layerIgnoresGuiInset,
           boundaryMatchesSelf: usingProvidedBoundary,
         });
       },

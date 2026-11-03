@@ -1,8 +1,6 @@
-import { getGuiInsetTopLeft } from "../internals/env";
 import type { LayerInteractEvent } from "./types";
 
 type OutsidePointerOptions = {
-  layerIgnoresGuiInset: boolean;
   insideRoots?: Array<GuiObject | undefined>;
   // Whether a hit on the boundary node itself counts as inside. True when the
   // consumer passes a real content ref (clicking the content's own bare areas
@@ -51,59 +49,27 @@ function isWithinContentBoundary(hitObject: GuiObject, contentWrapper: GuiObject
   return hitObject.IsDescendantOf(contentWrapper);
 }
 
-function addUniqueSample(samples: Array<Vector2>, sampleKeys: Record<string, true>, x: number, y: number) {
-  const roundedX = math.round(x);
-  const roundedY = math.round(y);
-  const key = `${roundedX}:${roundedY}`;
-  if (sampleKeys[key]) {
-    return;
-  }
-
-  sampleKeys[key] = true;
-  samples.push(new Vector2(roundedX, roundedY));
-}
-
-function getPointerSamples(pointerPosition: Vector2, options: OutsidePointerOptions) {
-  const insetTopLeft = getGuiInsetTopLeft();
-
-  const samples: Vector2[] = [];
-  const sampleKeys: Record<string, true> = {};
-
-  addUniqueSample(samples, sampleKeys, pointerPosition.X, pointerPosition.Y);
-  addUniqueSample(samples, sampleKeys, pointerPosition.X + insetTopLeft.X, pointerPosition.Y + insetTopLeft.Y);
-  addUniqueSample(samples, sampleKeys, pointerPosition.X - insetTopLeft.X, pointerPosition.Y - insetTopLeft.Y);
-
-  if (options.layerIgnoresGuiInset) {
-    addUniqueSample(samples, sampleKeys, pointerPosition.X, pointerPosition.Y + insetTopLeft.Y);
-    addUniqueSample(samples, sampleKeys, pointerPosition.X, pointerPosition.Y - insetTopLeft.Y);
-    addUniqueSample(samples, sampleKeys, pointerPosition.X + insetTopLeft.X, pointerPosition.Y);
-    addUniqueSample(samples, sampleKeys, pointerPosition.X - insetTopLeft.X, pointerPosition.Y);
-  }
-
-  return samples;
-}
-
 export function isOutsidePointerEvent(
   inputObject: InputObject,
   container: BasePlayerGui,
   contentWrapper: GuiObject,
   options: OutsidePointerOptions,
 ) {
-  const rawPointerPosition = inputObject.Position;
-  const pointerPosition = new Vector2(rawPointerPosition.X, rawPointerPosition.Y);
-  const pointerSamples = getPointerSamples(pointerPosition, options);
+  // `InputObject.Position` and `GetGuiObjectsAtPosition` share one coordinate
+  // frame (checked in Studio against an IgnoreGuiInset layer), so the
+  // pointer is hit-tested exactly where it is. Extra samples shifted by the GUI
+  // inset used to turn a 36–58px band above and below every layer into "inside".
+  const pointerPosition = inputObject.Position;
   const insideRoots = options.insideRoots ?? [];
   const boundaryMatchesSelf = options.boundaryMatchesSelf ?? true;
 
-  for (const sample of pointerSamples) {
-    const hitGuiObjects = container.GetGuiObjectsAtPosition(sample.X, sample.Y);
-    for (const hitObject of hitGuiObjects) {
-      if (
-        isWithinContentBoundary(hitObject, contentWrapper, boundaryMatchesSelf) ||
-        isWithinInsideRoots(hitObject, insideRoots)
-      ) {
-        return false;
-      }
+  const hitGuiObjects = container.GetGuiObjectsAtPosition(pointerPosition.X, pointerPosition.Y);
+  for (const hitObject of hitGuiObjects) {
+    if (
+      isWithinContentBoundary(hitObject, contentWrapper, boundaryMatchesSelf) ||
+      isWithinInsideRoots(hitObject, insideRoots)
+    ) {
+      return false;
     }
   }
 

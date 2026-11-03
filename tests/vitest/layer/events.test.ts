@@ -31,7 +31,8 @@ async function loadLayerEvents() {
   vi.resetModules();
 
   vi.doMock("../../../packages/react/layer/src/internals/env", () => ({
-    getGuiInsetTopLeft: () => new Vector2(0, 0),
+    // A real top-bar inset: hit-testing must not depend on it.
+    getGuiInsetTopLeft: () => new Vector2(0, 58),
   }));
 
   return import("../../../packages/react/layer/src/dismissable/events") as Promise<LayerEventsModule>;
@@ -63,9 +64,7 @@ describe("dismissable layer outside pointer detection", () => {
       } as InputObject,
       container,
       contentWrapper as unknown as GuiObject,
-      {
-        layerIgnoresGuiInset: false,
-      },
+      {},
     );
 
     expect(outside).toBe(false);
@@ -91,7 +90,6 @@ describe("dismissable layer outside pointer detection", () => {
       container,
       contentWrapper as unknown as GuiObject,
       {
-        layerIgnoresGuiInset: false,
         boundaryMatchesSelf: false,
       },
     );
@@ -117,7 +115,6 @@ describe("dismissable layer outside pointer detection", () => {
       container,
       contentWrapper as unknown as GuiObject,
       {
-        layerIgnoresGuiInset: false,
         boundaryMatchesSelf: false,
       },
     );
@@ -142,9 +139,7 @@ describe("dismissable layer outside pointer detection", () => {
       } as InputObject,
       container,
       contentWrapper as unknown as GuiObject,
-      {
-        layerIgnoresGuiInset: false,
-      },
+      {},
     );
 
     expect(outside).toBe(false);
@@ -170,7 +165,6 @@ describe("dismissable layer outside pointer detection", () => {
       contentWrapper as unknown as GuiObject,
       {
         insideRoots: [triggerRoot as unknown as GuiObject, inputRoot as unknown as GuiObject],
-        layerIgnoresGuiInset: false,
       },
     );
 
@@ -198,7 +192,6 @@ describe("dismissable layer outside pointer detection", () => {
       contentWrapper as unknown as GuiObject,
       {
         insideRoots: [triggerRoot as unknown as GuiObject],
-        layerIgnoresGuiInset: false,
       },
     );
 
@@ -211,11 +204,38 @@ describe("dismissable layer outside pointer detection", () => {
       contentWrapper as unknown as GuiObject,
       {
         insideRoots: [triggerRoot as unknown as GuiObject],
-        layerIgnoresGuiInset: false,
       },
     );
 
     expect(insideHit).toBe(false);
     expect(outsideHit).toBe(true);
+  });
+
+  it("hit-tests only the pointer position, so a press just outside the content dismisses", async () => {
+    // Regression (DEV-93): samples shifted by the 58px top-bar inset made a
+    // press up to 58px above or below the content count as inside.
+    const layerEvents = await loadLayerEvents();
+    const contentWrapper = createGuiNode("ContentWrapper");
+    const contentTop = 206;
+    const contentBottom = 426;
+
+    const container = {
+      GetGuiObjectsAtPosition: vi.fn((_x: number, y: number) =>
+        y >= contentTop && y <= contentBottom ? [contentWrapper] : [],
+      ),
+    } as unknown as BasePlayerGui;
+
+    const pressAt = (y: number) =>
+      layerEvents.isOutsidePointerEvent(
+        { Position: { X: 700, Y: y }, UserInputType: Enum.UserInputType.MouseButton1 } as InputObject,
+        container,
+        contentWrapper as unknown as GuiObject,
+        {},
+      );
+
+    expect(pressAt(contentTop - 30)).toBe(true);
+    expect(pressAt(contentBottom + 30)).toBe(true);
+    expect(pressAt(contentTop + 4)).toBe(false);
+    expect(container.GetGuiObjectsAtPosition).toHaveBeenCalledTimes(3);
   });
 });
