@@ -52,6 +52,7 @@ async function createControllerHarness() {
   vi.resetModules();
 
   const handlers = new Map<string, ActionHandler>();
+  const navGuiService = { AutoSelectGuiEnabled: true, GuiNavigationEnabled: true };
   let heartbeat: ((deltaTime: number) => void) | undefined;
   let selectedObject: unknown;
 
@@ -88,7 +89,7 @@ async function createControllerHarness() {
         },
       },
     },
-    GuiService: { AutoSelectGuiEnabled: true },
+    GuiService: navGuiService,
     UserInputService: { IsKeyDown: () => false },
   }));
 
@@ -127,6 +128,7 @@ async function createControllerHarness() {
     secondId,
     stick,
     tick: (deltaTime: number) => heartbeat?.(deltaTime),
+    navGuiService,
   };
 }
 
@@ -188,5 +190,19 @@ describe("navigation controller thumbstick", () => {
     harness.tick(1);
 
     expect(harness.focusManager.getFocusedNode()?.id).toBe(harness.firstId);
+  });
+});
+
+describe("navigation controller ownership", () => {
+  it("turns off engine GUI navigation while bound and restores it after", async () => {
+    const harness = await createControllerHarness();
+
+    // Bound by retainNavigation() in the harness.
+    expect(harness.navGuiService.GuiNavigationEnabled).toBe(false);
+    expect(harness.navGuiService.AutoSelectGuiEnabled).toBe(false);
+
+    harness.focusManager.releaseNavigation();
+    expect(harness.navGuiService.GuiNavigationEnabled).toBe(true);
+    expect(harness.navGuiService.AutoSelectGuiEnabled).toBe(true);
   });
 });

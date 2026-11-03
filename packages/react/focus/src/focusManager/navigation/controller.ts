@@ -24,6 +24,7 @@ const ACTION_ACTIVATE = "LatticeNavActivate";
 let bound = false;
 let heartbeatConnection: RBXScriptConnection | undefined;
 let previousAutoSelectGuiEnabled = true;
+let previousGuiNavigationEnabled = true;
 
 let stickVector = new Vector2(0, 0);
 let heldStickDirection: NavDirection | undefined;
@@ -168,6 +169,13 @@ function bindNavigation() {
 
   previousAutoSelectGuiEnabled = GuiService.AutoSelectGuiEnabled;
   GuiService.AutoSelectGuiEnabled = false;
+  // The engine's own selection navigation moves GuiService.SelectedObject on
+  // arrow keys even when the action above sinks them (observed in Studio: Right
+  // inside a trapped Select list jumped to a ScrollingFrame outside it). Turn it
+  // off while we own navigation; SelectedObject still renders and still
+  // activates on Enter/ButtonA.
+  previousGuiNavigationEnabled = GuiService.GuiNavigationEnabled;
+  GuiService.GuiNavigationEnabled = false;
 
   ContextActionService.BindActionAtPriority(
     ACTION_UP,
@@ -240,6 +248,7 @@ function unbindNavigation() {
   heldStickDirection = undefined;
 
   GuiService.AutoSelectGuiEnabled = previousAutoSelectGuiEnabled;
+  GuiService.GuiNavigationEnabled = previousGuiNavigationEnabled;
 }
 
 // Binds navigation input while at least one FocusScope is active. Uses the same

@@ -11,7 +11,8 @@ Focus management primitives for Roblox UI.
 
 - Directional input is owned by a `ContextActionService`-based controller
   (keyboard arrows + Tab, gamepad D-pad + thumbstick with auto-repeat). It binds
-  only while a `FocusScope` is active and disables `AutoSelectGuiEnabled`.
+  only while a `FocusScope` is active and disables `AutoSelectGuiEnabled` and
+  `GuiNavigationEnabled` (the engine's own selection navigation).
 - `GuiService.SelectedObject` is a render-only mirror; external changes are not
   read back into focus state.
 - Resolution is hybrid. A scope's `navStrategy` selects between:

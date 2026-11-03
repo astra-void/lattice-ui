@@ -137,7 +137,9 @@ How the custom navigation works (`packages/react/focus/src/focusManager/navigati
   Thumbstick1 with deadzone/auto-repeat) and resolves the next node itself.
 - The controller is bound **only while a `FocusScope` is active** (ref-counted
   `retainNavigation` / `releaseNavigation`), and it sets `GuiService.AutoSelectGuiEnabled = false`
-  while bound so native auto-selection stays off. When no scope is open, input is not captured
+  and `GuiService.GuiNavigationEnabled = false` while bound so native auto-selection and the
+  engine's own arrow-key selection navigation stay off (the engine moves `SelectedObject` on
+  arrows even when the controller sinks them). When no scope is open, input is not captured
   and normal game controls keep working.
 - `GuiService.SelectedObject` is **render-only**: focus state is mirrored *out* to it
   (`bridge.ts`) so the native `SelectionImageObject` and `SelectionGained`/`SelectionLost`
