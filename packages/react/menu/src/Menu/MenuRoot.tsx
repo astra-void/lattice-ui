@@ -44,13 +44,26 @@ export function Menu(props: MenuProps) {
     focusGuiObject(triggerRef.current);
   }, []);
 
+  // Move focus into the menu once per open, as soon as its items have
+  // registered. Later registry changes (items shown or filtered while open)
+  // must not pull focus back to the first item.
+  const focusedOnOpenRef = React.useRef(false);
   React.useEffect(() => {
     if (!open) {
+      focusedOnOpenRef.current = false;
       return;
     }
 
-    focusFirstItem();
-  }, [focusFirstItem, open, registryRevision]);
+    if (focusedOnOpenRef.current) {
+      return;
+    }
+
+    const firstEntry = getFirstOrderedSelectionEntry(itemEntriesRef.current);
+    if (firstEntry) {
+      focusedOnOpenRef.current = true;
+      focusOrderedSelectionEntry(firstEntry);
+    }
+  }, [open, registryRevision]);
 
   const wasOpenRef = React.useRef(open);
   React.useEffect(() => {
