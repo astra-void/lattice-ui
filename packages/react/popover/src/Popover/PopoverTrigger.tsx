@@ -1,4 +1,4 @@
-import { focusGuiObject, useFocusNode } from "@lattice-ui/react-focus";
+import { focusGuiObject, useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { usePopoverContext } from "./context";
 import type { PopoverTriggerProps } from "./types";
@@ -41,14 +41,13 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
     [popoverContext.anchorRef, triggerRef],
   );
 
-  useFocusNode({
-    ref: triggerRef,
-    disabled: props.disabled === true,
-    syncToRoblox: false,
-  });
+  const claimActivation = useActivationGuard();
 
+  // Pointer clicks arrive through `Activated`, keyboard and gamepad through the
+  // focus node's `onActivate`; the guard keeps a single activation from firing
+  // twice when the engine delivers both.
   const handleActivated = React.useCallback(() => {
-    if (props.disabled) {
+    if (props.disabled || !claimActivation()) {
       return;
     }
 
@@ -57,13 +56,19 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
     }
 
     popoverContext.setOpen(!popoverContext.open);
-  }, [popoverContext.open, popoverContext.setOpen, props.disabled, triggerRef]);
+  }, [claimActivation, popoverContext.open, popoverContext.setOpen, props.disabled, triggerRef]);
+
+  useFocusNode({
+    ref: triggerRef,
+    disabled: props.disabled === true,
+    onActivate: handleActivated,
+  });
 
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
-    Selectable: false,
+    Selectable: props.disabled !== true,
     ref: composeRefs<Instance>(passthrough.ref as never, setTriggerRef),
   };
 

@@ -1,4 +1,4 @@
-import { focusGuiObject, useFocusNode } from "@lattice-ui/react-focus";
+import { focusGuiObject, useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogTriggerProps } from "./types";
@@ -34,26 +34,31 @@ export function DialogTrigger(props: DialogTriggerProps) {
     [triggerRef],
   );
 
-  useFocusNode({
-    ref: triggerRef,
-    disabled: props.disabled === true,
-    syncToRoblox: false,
-  });
+  const claimActivation = useActivationGuard();
 
+  // Pointer clicks arrive through `Activated`, keyboard and gamepad through the
+  // focus node's `onActivate`; the guard keeps a single activation from firing
+  // twice when the engine delivers both.
   const handleActivated = React.useCallback(() => {
-    if (props.disabled) {
+    if (props.disabled || !claimActivation()) {
       return;
     }
 
     focusGuiObject(triggerRef.current);
     dialogContext.setOpen(true);
-  }, [dialogContext.setOpen, props.disabled, triggerRef]);
+  }, [claimActivation, dialogContext.setOpen, props.disabled, triggerRef]);
+
+  useFocusNode({
+    ref: triggerRef,
+    disabled: props.disabled === true,
+    onActivate: handleActivated,
+  });
 
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
-    Selectable: false,
+    Selectable: props.disabled !== true,
     ref: composeRefs<Instance>(passthrough.ref as never, setTriggerRef),
   };
 
