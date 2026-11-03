@@ -1,4 +1,5 @@
 import { getFocusedNode } from "../engine";
+import { isInsideRoot } from "../guiObject";
 import { runResolutionPass } from "../pass";
 import { getFocusScopeRecord } from "../registry";
 import { getNodeOwningScopeId, getResolvedFocusNode, getTopTrappedScope } from "../resolution";
@@ -68,16 +69,24 @@ function resolveMove(current: ResolvedFocusNode, direction: NavDirection): Resol
   const candidates = getResolvableNodes();
 
   // Walk up the scope chain: each scope gets a chance to resolve the move with
-  // its own strategy; ordered scopes escape cross-axis moves to their parent,
-  // and any scope that fails to find a target escapes upward — until a trapped
-  // scope stops the walk.
-  while (scope !== undefined) {
-    const scopeNodes = filterNodesInRoot(candidates, scope.getRoot());
+  // its own strategy; ordered scopes escape cross-axis moves to their parent
+  // without trying them, and any scope that fails to find a target escapes
+  // upward — until a trapped scope stops the walk. Once a move escapes a scope,
+  // that scope's own nodes are no longer candidates: escaping a vertical list
+  // with Right must not land on a wider sibling of the same list.
+  let escapedRoot: GuiObject | undefined;
+  const outsideEscaped = (nodes: Array<ResolvedFocusNode>) =>
+    escapedRoot === undefined ? nodes : nodes.filter((node) => !isInsideRoot(escapedRoot, node.guiObject));
 
-    if (scope.getNavStrategy() === "ordered" && isOnAxis(direction, scope.getNavOrientation())) {
-      const target = stepOrdered(scope, scopeNodes, current, directionStep(direction));
-      if (target) {
-        return target;
+  while (scope !== undefined) {
+    const scopeNodes = outsideEscaped(filterNodesInRoot(candidates, scope.getRoot()));
+
+    if (scope.getNavStrategy() === "ordered") {
+      if (isOnAxis(direction, scope.getNavOrientation())) {
+        const target = stepOrdered(scope, scopeNodes, current, directionStep(direction));
+        if (target) {
+          return target;
+        }
       }
     } else {
       const target = findSpatialTarget(current, scopeNodes, direction);
@@ -90,12 +99,13 @@ function resolveMove(current: ResolvedFocusNode, direction: NavDirection): Resol
       return undefined;
     }
 
+    escapedRoot = scope.getRoot();
     scope = getFocusScopeRecord(scope.parentScopeId);
   }
 
   // No owning scope (or escaped past the outermost one): resolve spatially
   // across every focusable node within the active trap boundary.
-  return findSpatialTarget(current, candidates, direction);
+  return findSpatialTarget(current, outsideEscaped(candidates), direction);
 }
 
 function resolveTab(current: ResolvedFocusNode | undefined, step: -1 | 1): ResolvedFocusNode | undefined {

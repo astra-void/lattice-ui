@@ -1,5 +1,6 @@
 ﻿type LuauMath = {
   abs: (value: number) => number;
+  huge: number;
   floor: (value: number) => number;
   clamp: (value: number, min: number, max: number) => number;
   max: (...values: number[]) => number;
@@ -22,6 +23,10 @@ class MockVector2 {
 
   get Magnitude() {
     return Math.hypot(this.X, this.Y);
+  }
+
+  sub(other: MockVector2) {
+    return new MockVector2(this.X - other.X, this.Y - other.Y);
   }
 }
 
@@ -65,6 +70,7 @@ const luauMath: LuauMath = {
   abs(value) {
     return Math.abs(value);
   },
+  huge: Number.POSITIVE_INFINITY,
   floor(value) {
     return Math.floor(value);
   },
