@@ -103,9 +103,17 @@ function handleStick(
   inputState: Enum.UserInputState,
   inputObject: InputObject,
 ): Enum.ContextActionResult {
-  if (inputState === Enum.UserInputState.End) {
+  if (inputState === Enum.UserInputState.End || inputState === Enum.UserInputState.Cancel) {
     stickVector = new Vector2(0, 0);
-    return Enum.ContextActionResult.Sink;
+    return Enum.ContextActionResult.Pass;
+  }
+
+  // Like the D-pad, the stick only drives UI navigation once focus is inside
+  // our UI. With nothing focused (e.g. a non-modal popover is open but the
+  // player never moved into it) the game keeps the stick for movement.
+  if (getFocusedNode() === undefined) {
+    stickVector = new Vector2(0, 0);
+    return Enum.ContextActionResult.Pass;
   }
 
   stickVector = new Vector2(inputObject.Position.X, inputObject.Position.Y);
@@ -126,6 +134,12 @@ function stickToDirection(vector: Vector2): NavDirection | undefined {
 }
 
 function handleHeartbeat(deltaTime: number) {
+  // Focus can leave our UI while the stick is held (scope closed, node
+  // unmounted); stop repeating rather than seeding focus from the stick.
+  if (getFocusedNode() === undefined) {
+    stickVector = new Vector2(0, 0);
+  }
+
   const direction = stickToDirection(stickVector);
   if (direction === undefined) {
     heldStickDirection = undefined;
