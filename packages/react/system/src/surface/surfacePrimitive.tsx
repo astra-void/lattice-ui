@@ -18,7 +18,7 @@ export type SurfaceProps = {
  * Host border props are not the canonical border representation here.
  * `asChild` is intentionally not supported in this milestone.
  */
-export function Surface(props: SurfaceProps) {
+export const Surface = React.forwardRef<Frame, SurfaceProps>((props, ref) => {
   const tone = props.tone ?? "surface";
   const sx = props.sx;
   const children = props.children;
@@ -50,10 +50,11 @@ export function Surface(props: SurfaceProps) {
   const decorated = tone !== "overlay";
 
   return (
-    <frame {...(mergedProps as Record<string, unknown>)}>
+    <frame {...(mergedProps as Record<string, unknown>)} ref={ref}>
       {decorated ? <uicorner CornerRadius={new UDim(0, theme.radius.lg)} /> : undefined}
       {decorated ? <uistroke Color={theme.colors.border} Thickness={1} /> : undefined}
       {children}
     </frame>
   );
-}
+});
+Surface.displayName = "Surface";

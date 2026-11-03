@@ -48,7 +48,7 @@ function toAutomaticSize(autoSize: StackAutoSize | undefined, direction: LayoutD
   }
 }
 
-export function Stack(props: StackProps) {
+export const Stack = React.forwardRef<Frame, StackProps>((props, ref) => {
   const direction = props.direction ?? "vertical";
   const gap = props.gap ?? 0;
   const align = props.align ?? "start";
@@ -109,7 +109,7 @@ export function Stack(props: StackProps) {
   const verticalAlignment = vertical ? toVerticalAlignment(justify) : toVerticalAlignment(align);
 
   return (
-    <frame {...(mergedProps as Record<string, unknown>)}>
+    <frame {...(mergedProps as Record<string, unknown>)} ref={ref}>
       <uilistlayout
         FillDirection={vertical ? Enum.FillDirection.Vertical : Enum.FillDirection.Horizontal}
         HorizontalAlignment={horizontalAlignment}
@@ -128,4 +128,5 @@ export function Stack(props: StackProps) {
       {children}
     </frame>
   );
-}
+});
+Stack.displayName = "Stack";

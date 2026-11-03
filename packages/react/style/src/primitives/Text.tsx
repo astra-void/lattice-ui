@@ -18,7 +18,7 @@ export type TextProps = {
   children?: React.ReactNode;
 } & StyleProps;
 
-export function Text(props: TextProps) {
+export const Text = React.forwardRef<Instance, TextProps>((props, ref) => {
   const asChild = props.asChild;
   const sx = props.sx;
   const truncate = props.truncate;
@@ -46,8 +46,13 @@ export function Text(props: TextProps) {
       error("[Text] `asChild` requires a single child element.");
     }
 
-    return <Slot {...mergedProps}>{children}</Slot>;
+    return (
+      <Slot {...mergedProps} ref={ref}>
+        {children}
+      </Slot>
+    );
   }
 
-  return React.createElement("textlabel", mergedProps as never, children);
-}
+  return React.createElement("textlabel", { ...mergedProps, ref } as never, children);
+});
+Text.displayName = "Text";

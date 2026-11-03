@@ -2,6 +2,7 @@ import { React } from "@lattice-ui/react-runtime";
 import { Stack } from "./Stack";
 import type { RowProps } from "./types";
 
-export function Row(props: RowProps) {
-  return <Stack {...props} direction="horizontal" />;
-}
+export const Row = React.forwardRef<Frame, RowProps>((props, ref) => {
+  return <Stack {...props} direction="horizontal" ref={ref} />;
+});
+Row.displayName = "Row";

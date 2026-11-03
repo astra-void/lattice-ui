@@ -12,7 +12,7 @@ export type BoxProps = {
   children?: React.ReactNode;
 } & StyleProps;
 
-export function Box(props: BoxProps) {
+export const Box = React.forwardRef<Instance, BoxProps>((props, ref) => {
   const asChild = props.asChild;
   const sx = props.sx;
   const children = props.children;
@@ -37,8 +37,13 @@ export function Box(props: BoxProps) {
       error("[Box] `asChild` requires a single child element.");
     }
 
-    return <Slot {...mergedProps}>{children}</Slot>;
+    return (
+      <Slot {...mergedProps} ref={ref}>
+        {children}
+      </Slot>
+    );
   }
 
-  return React.createElement("frame", mergedProps as never, children);
-}
+  return React.createElement("frame", { ...mergedProps, ref } as never, children);
+});
+Box.displayName = "Box";

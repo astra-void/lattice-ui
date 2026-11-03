@@ -1,4 +1,4 @@
-import { React } from "@lattice-ui/react-runtime";
+import { composeRefs, React } from "@lattice-ui/react-runtime";
 import { mergeGuiProps, resolveSx, useTheme } from "@lattice-ui/react-style";
 import { resolveGridCellWidth, resolveGridColumns } from "./gridMath";
 import { resolvePadding, resolveSpace } from "./space";
@@ -6,7 +6,7 @@ import type { GridProps } from "./types";
 
 type StyleProps = React.Attributes & Record<string, unknown>;
 
-export function Grid(props: GridProps) {
+export const Grid = React.forwardRef<Frame, GridProps>((props, ref) => {
   const gap = props.gap ?? 0;
   const rowGap = props.rowGap ?? gap;
   const columnGap = props.columnGap ?? gap;
@@ -80,6 +80,8 @@ export function Grid(props: GridProps) {
 
     frameRef.current = instance;
   }, []);
+  // Memoized so the frame does not detach and re-attach its ref on every render.
+  const composedFrameRef = React.useMemo(() => composeRefs<Instance>(ref as never, setFrameRef), [ref, setFrameRef]);
 
   const updateLayout = React.useCallback(() => {
     const frame = frameRef.current;
@@ -139,7 +141,7 @@ export function Grid(props: GridProps) {
   const mergedProps = mergeGuiProps(baseProps, sxProps, restProps);
 
   return (
-    <frame {...(mergedProps as Record<string, unknown>)} ref={setFrameRef}>
+    <frame {...(mergedProps as Record<string, unknown>)} ref={composedFrameRef}>
       <uigridlayout
         CellPadding={UDim2.fromOffset(resolvedColumnGap, resolvedRowGap)}
         CellSize={UDim2.fromOffset(layoutState.cellWidth, resolvedCellHeight)}
@@ -157,4 +159,5 @@ export function Grid(props: GridProps) {
       {children}
     </frame>
   );
-}
+});
+Grid.displayName = "Grid";
