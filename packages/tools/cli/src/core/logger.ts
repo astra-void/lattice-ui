@@ -1,4 +1,5 @@
 import { createInterface } from "node:readline/promises";
+import { usageError } from "./errors";
 import { ANSI, createStyle, displayWidth, type Style } from "./style";
 
 export interface Spinner {
@@ -251,9 +252,10 @@ export function createLogger(options: LoggerOptions): Logger {
         return true;
       }
 
+      // Without a terminal nobody can answer. Fail loudly instead of returning
+      // "no": a script or CI step that forgot --yes must not pass with exit 0.
       if (!stdin.isTTY || !stdout.isTTY) {
-        tagged(stderr, "warn", `${message} (confirmation required; pass --yes in non-interactive mode)`);
-        return false;
+        throw usageError(`${message} needs confirmation, but no terminal is attached.`, "Re-run with --yes to confirm.");
       }
 
       spacerBefore();

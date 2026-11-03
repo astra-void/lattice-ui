@@ -236,3 +236,28 @@ describe("logger capabilities", () => {
     expect(harness.plain().startsWith("┌")).toBe(true);
   });
 });
+
+describe("logger confirm", () => {
+  it("fails with a usage error when no terminal can answer and --yes was not passed", async () => {
+    const stdout = new PassThrough();
+    (stdout as unknown as { isTTY: boolean }).isTTY = false;
+    const logger = createLogger({
+      verbose: false,
+      yes: false,
+      env: {},
+      stdin: createReadStream(false),
+      stdout: stdout as unknown as NodeJS.WriteStream,
+      stderr: new PassThrough() as unknown as NodeJS.WriteStream,
+    });
+
+    await expect(logger.confirm("Install 1 package?")).rejects.toMatchObject({
+      name: expect.anything(),
+      message: expect.stringMatching(/needs confirmation/),
+    });
+  });
+
+  it("confirms without prompting under --yes", async () => {
+    const harness = createLoggerFor(false);
+    await expect(harness.logger.confirm("Install 1 package?")).resolves.toBe(true);
+  });
+});
