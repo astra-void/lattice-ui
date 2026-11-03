@@ -32,10 +32,14 @@ export function SelectRoot(props: SelectProps) {
   const contentRef = React.useRef<GuiObject>();
 
   const itemEntriesRef = React.useRef<Array<SelectItemRegistration>>([]);
+  // Items only register while the content is mounted, so the label of the
+  // selected item is cached for `Select.Value` to read while the popup is closed.
+  const itemTextCacheRef = React.useRef<Record<string, string>>({});
   const [registryRevision, setRegistryRevision] = React.useState(0);
 
   const registerItem = React.useCallback((item: SelectItemRegistration) => {
     itemEntriesRef.current.push(item);
+    itemTextCacheRef.current[item.value] = item.getTextValue();
     setRegistryRevision((revision) => revision + 1);
 
     return () => {
@@ -54,7 +58,13 @@ export function SelectRoot(props: SelectProps) {
   const getItemText = React.useCallback(
     (candidateValue: string) => {
       const selected = resolveOrderedItems().find((item) => item.value === candidateValue);
-      return selected?.getTextValue();
+      if (selected) {
+        const textValue = selected.getTextValue();
+        itemTextCacheRef.current[candidateValue] = textValue;
+        return textValue;
+      }
+
+      return itemTextCacheRef.current[candidateValue];
     },
     [resolveOrderedItems],
   );

@@ -43,13 +43,13 @@ function renderSelect(rootProps: Record<string, unknown>) {
   return { view, getContext: () => context! };
 }
 
-function makeItem(overrides: { id: number; value: string; disabled?: boolean }) {
+function makeItem(overrides: { id: number; value: string; disabled?: boolean; textValue?: string }) {
   return {
     id: overrides.id,
     value: overrides.value,
     order: overrides.id,
     getDisabled: () => overrides.disabled === true,
-    getTextValue: () => overrides.value,
+    getTextValue: () => overrides.textValue ?? overrides.value,
   };
 }
 
@@ -101,5 +101,26 @@ describe("SelectRoot value retention", () => {
     });
 
     expect(getContext().value).toBe("alpha");
+  });
+
+  it("keeps resolving the selected item's textValue after the popup closes", () => {
+    const { getContext } = renderSelect({ defaultValue: "dark" });
+
+    let unregisterLight: (() => void) | undefined;
+    let unregisterDark: (() => void) | undefined;
+
+    act(() => {
+      unregisterLight = getContext().registerItem(makeItem({ id: 1, value: "light", textValue: "Light" }));
+      unregisterDark = getContext().registerItem(makeItem({ id: 2, value: "dark", textValue: "Dark" }));
+    });
+    expect(getContext().getItemText("dark")).toBe("Dark");
+
+    act(() => {
+      unregisterLight!();
+      unregisterDark!();
+    });
+
+    expect(getContext().getItemText("dark")).toBe("Dark");
+    expect(getContext().getItemText("light")).toBe("Light");
   });
 });
