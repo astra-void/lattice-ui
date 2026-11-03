@@ -106,22 +106,32 @@ export function ComboboxInput(props: ComboboxInputProps) {
   );
 
   // Up/Down move the list highlight while the field keeps focus (the
-  // active-descendant pattern); the first press opens a closed list.
-  const handleInputBegan = React.useCallback(
-    (_rbx: TextBox, inputObject: InputObject) => {
-      if (disabled) {
+  // active-descendant pattern); the first press opens a closed list. A focused
+  // TextBox receives no InputBegan of its own (verified in Studio), so the keys
+  // are read from UserInputService while this field is being edited. This moves
+  // the highlight, not focus: focus stays in the field throughout.
+  const moveHighlightRef = React.useRef(comboboxContext.moveHighlight);
+  moveHighlightRef.current = comboboxContext.moveHighlight;
+  React.useEffect(() => {
+    if (!editing || disabled) {
+      return;
+    }
+
+    const connection = UserInputService.InputBegan.Connect((inputObject) => {
+      const input = comboboxContext.inputRef.current;
+      if (input === undefined || UserInputService.GetFocusedTextBox() !== input) {
         return;
       }
 
-      const keyCode = inputObject.KeyCode;
-      if (keyCode === Enum.KeyCode.Down) {
-        comboboxContext.moveHighlight(1);
-      } else if (keyCode === Enum.KeyCode.Up) {
-        comboboxContext.moveHighlight(-1);
+      if (inputObject.KeyCode === Enum.KeyCode.Down) {
+        moveHighlightRef.current(1);
+      } else if (inputObject.KeyCode === Enum.KeyCode.Up) {
+        moveHighlightRef.current(-1);
       }
-    },
-    [comboboxContext, disabled],
-  );
+    });
+
+    return () => connection.Disconnect();
+  }, [comboboxContext.inputRef, disabled, editing]);
 
   const handleFocused = React.useCallback(() => {
     setEditing(true);
@@ -151,7 +161,6 @@ export function ComboboxInput(props: ComboboxInputProps) {
       Text: handleTextChanged as Callback,
     }),
     Event: composeEvents(passthrough.Event, {
-      InputBegan: handleInputBegan as Callback,
       Focused: handleFocused as Callback,
       FocusLost: handleFocusLost as Callback,
     }),
