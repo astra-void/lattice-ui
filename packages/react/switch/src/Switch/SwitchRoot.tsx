@@ -1,5 +1,7 @@
+import { useFocusNode } from "@lattice-ui/react-focus";
 import {
   composeEvents,
+  composeRefs,
   getPassthroughProps,
   getSlotChild,
   React,
@@ -57,12 +59,26 @@ export function SwitchRoot(props: SwitchProps) {
     [checked, disabled, setChecked],
   );
 
+  // Registered so the navigation controller can reach the control inside a
+  // FocusScope (a Dialog, a Popover); unregistered objects are invisible to
+  // directional moves. Activation stays on the engine's `Activated`.
+  const rootRef = React.useRef<GuiObject>();
+  const setRootRef = React.useCallback((instance: Instance | undefined) => {
+    rootRef.current = instance?.IsA("GuiObject") ? instance : undefined;
+  }, []);
+
+  useFocusNode({
+    ref: rootRef,
+    disabled,
+  });
+
   const child = props.children;
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, { Activated: toggle }),
     Selectable: !disabled,
+    ref: composeRefs<Instance>(passthrough.ref as never, setRootRef),
   };
 
   return (
