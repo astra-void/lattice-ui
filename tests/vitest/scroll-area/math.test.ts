@@ -5,6 +5,7 @@ import {
   resolveThumbOffset,
   resolveThumbOffsetFromPointerDelta,
   resolveThumbOffsetFromTrackPosition,
+  resolveScrollbarVisible,
   resolveThumbSize,
 } from "../../../packages/react/scroll-area/src/ScrollArea/scrollMath";
 
@@ -36,5 +37,14 @@ describe("scroll-area math", () => {
 
   it("keeps track-position canvas mapping inert when there is no overflow", () => {
     expect(resolveCanvasPositionFromTrackPosition(25, 100, 100, 100, 100)).toBe(0);
+  });
+
+  it("shows scrollbars per visibility policy", () => {
+    expect(resolveScrollbarVisible("always", false, false)).toBe(true);
+    expect(resolveScrollbarVisible("auto", false, true)).toBe(false);
+    expect(resolveScrollbarVisible("auto", true, false)).toBe(true);
+    expect(resolveScrollbarVisible("scroll", true, false)).toBe(false);
+    expect(resolveScrollbarVisible("scroll", true, true)).toBe(true);
+    expect(resolveScrollbarVisible("scroll", false, true)).toBe(false);
   });
 });

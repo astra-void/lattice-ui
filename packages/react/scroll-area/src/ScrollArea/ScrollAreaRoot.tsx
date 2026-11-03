@@ -1,5 +1,6 @@
 import { React } from "@lattice-ui/react-runtime";
 import { ScrollAreaContextProvider } from "./context";
+import { resolveScrollbarVisible } from "./scrollMath";
 import type { ScrollAreaProps, ScrollAxisMetrics } from "./types";
 
 type ScrollAreaMetrics = {
@@ -119,19 +120,12 @@ export function ScrollAreaRoot(props: ScrollAreaProps) {
   const hasVerticalOverflow = metrics.vertical.contentSize > metrics.vertical.viewportSize + 1;
   const hasHorizontalOverflow = metrics.horizontal.contentSize > metrics.horizontal.viewportSize + 1;
 
-  const showVerticalScrollbar =
-    scrollType === "always"
-      ? hasVerticalOverflow
-      : scrollType === "scroll"
-        ? hasVerticalOverflow && showScrollbarsFromActivity
-        : hasVerticalOverflow;
-
-  const showHorizontalScrollbar =
-    scrollType === "always"
-      ? hasHorizontalOverflow
-      : scrollType === "scroll"
-        ? hasHorizontalOverflow && showScrollbarsFromActivity
-        : hasHorizontalOverflow;
+  const showVerticalScrollbar = resolveScrollbarVisible(scrollType, hasVerticalOverflow, showScrollbarsFromActivity);
+  const showHorizontalScrollbar = resolveScrollbarVisible(
+    scrollType,
+    hasHorizontalOverflow,
+    showScrollbarsFromActivity,
+  );
 
   const contextValue = React.useMemo(
     () => ({

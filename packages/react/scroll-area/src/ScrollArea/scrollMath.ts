@@ -69,3 +69,23 @@ export function resolveCanvasPositionFromTrackPosition(
   const thumbOffset = resolveThumbOffsetFromTrackPosition(trackPosition, trackSize, thumbSize);
   return resolveCanvasPositionFromThumbOffset(thumbOffset, viewportSize, contentSize, trackSize, thumbSize);
 }
+
+/**
+ * Whether a scrollbar axis is shown: "always" regardless of overflow, "scroll" only while the axis
+ * overflows and the user is scrolling, "auto" whenever the axis overflows.
+ */
+export function resolveScrollbarVisible(
+  scrollType: "auto" | "always" | "scroll",
+  hasOverflow: boolean,
+  scrolling: boolean,
+) {
+  if (scrollType === "always") {
+    return true;
+  }
+
+  if (scrollType === "scroll") {
+    return hasOverflow && scrolling;
+  }
+
+  return hasOverflow;
+}
