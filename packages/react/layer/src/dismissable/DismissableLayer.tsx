@@ -37,6 +37,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
   const onDismissRef = useLatest(props.onDismiss);
   const onPointerDownOutsideRef = useLatest(props.onPointerDownOutside);
   const onInteractOutsideRef = useLatest(props.onInteractOutside);
+  const onEscapeKeyDownRef = useLatest(props.onEscapeKeyDown);
 
   const callPointerDownOutside = React.useCallback((event: LayerInteractEvent) => {
     onPointerDownOutsideRef.current?.(event);
@@ -44,6 +45,10 @@ export function DismissableLayer(props: DismissableLayerProps) {
 
   const callInteractOutside = React.useCallback((event: LayerInteractEvent) => {
     onInteractOutsideRef.current?.(event);
+  }, []);
+
+  const callEscapeKeyDown = React.useCallback((event: LayerInteractEvent) => {
+    onEscapeKeyDownRef.current?.(event);
   }, []);
 
   const callDismiss = React.useCallback(() => {
@@ -73,6 +78,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
       },
       onPointerDownOutside: callPointerDownOutside,
       onInteractOutside: callInteractOutside,
+      onEscapeKeyDown: callEscapeKeyDown,
       onDismiss: callDismiss,
     });
 
@@ -85,6 +91,7 @@ export function DismissableLayer(props: DismissableLayerProps) {
     };
   }, [
     callDismiss,
+    callEscapeKeyDown,
     callInteractOutside,
     callPointerDownOutside,
     enabledRef,

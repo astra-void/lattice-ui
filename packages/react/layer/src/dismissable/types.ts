@@ -15,5 +15,10 @@ export type DismissableLayerProps = {
   disableOutsidePointerEvents?: boolean;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  /**
+   * Called when the dismiss key (gamepad `ButtonB`, keyboard `Backspace`) is pressed while this is
+   * the top-most enabled layer. Call `preventDefault()` to keep the layer open.
+   */
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onDismiss?: () => void;
 };

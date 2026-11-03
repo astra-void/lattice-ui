@@ -1,4 +1,4 @@
-import { UserInputService } from "../internals/env";
+import { ContextActionService, UserInputService } from "../internals/env";
 import { isPointerInput, toLayerInteractEvent } from "./events";
 import type { LayerInteractEvent } from "./types";
 
@@ -9,6 +9,7 @@ type LayerEntry = {
   isPointerOutside: (inputObject: InputObject) => boolean;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onDismiss?: () => void;
 };
 
@@ -19,10 +20,20 @@ export type LayerRegistration = {
   mountOrder: number;
 };
 
+// The dismiss ("back") key closes the top-most layer. Roblox reserves Escape for its
+// own menu, so the binding uses the platform back keys instead: ButtonB on gamepad and
+// Backspace on keyboard. It is bound only while a layer is registered.
+const DISMISS_ACTION = "LatticeUiDismissLayer";
+const DISMISS_ACTION_PRIORITY = 3000;
+
 const layerEntries: LayerEntry[] = [];
 let nextLayerId = 0;
 let nextMountOrder = 0;
 let inputConnection: RBXScriptConnection | undefined;
+let dismissActionBound = false;
+// The key whose press dismissed a layer: its release is sunk too, so the game
+// never sees a release without the matching press.
+let sunkDismissKey: Enum.KeyCode | undefined;
 
 function getTopMostEnabledLayer() {
   for (let index = layerEntries.size() - 1; index >= 0; index--) {
@@ -66,7 +77,68 @@ function handleInputBegan(inputObject: InputObject) {
   handleDismissEvent(topLayer, outsideEvent);
 }
 
+function unbindDismissAction() {
+  if (!dismissActionBound) {
+    return;
+  }
+
+  dismissActionBound = false;
+  ContextActionService.UnbindAction(DISMISS_ACTION);
+}
+
+function handleDismissAction(
+  _actionName: string,
+  inputState: Enum.UserInputState,
+  inputObject: InputObject,
+): Enum.ContextActionResult {
+  if (inputState === Enum.UserInputState.Begin) {
+    const topLayer = getTopMostEnabledLayer();
+    // Backspace inside a focused TextBox edits text; it never dismisses.
+    if (!topLayer || UserInputService.GetFocusedTextBox() !== undefined) {
+      return Enum.ContextActionResult.Pass;
+    }
+
+    // Recorded before dismissing: the dismissed layer may unregister synchronously,
+    // and the binding must survive until this key is released.
+    sunkDismissKey = inputObject.KeyCode;
+    const dismissEvent = toLayerInteractEvent(inputObject);
+    topLayer.onEscapeKeyDown?.(dismissEvent);
+    handleDismissEvent(topLayer, dismissEvent);
+    return Enum.ContextActionResult.Sink;
+  }
+
+  if (sunkDismissKey === inputObject.KeyCode) {
+    if (inputState === Enum.UserInputState.End || inputState === Enum.UserInputState.Cancel) {
+      sunkDismissKey = undefined;
+      if (layerEntries.size() === 0) {
+        unbindDismissAction();
+      }
+    }
+    return Enum.ContextActionResult.Sink;
+  }
+
+  return Enum.ContextActionResult.Pass;
+}
+
+function bindDismissAction() {
+  if (dismissActionBound) {
+    return;
+  }
+
+  dismissActionBound = true;
+  ContextActionService.BindActionAtPriority(
+    DISMISS_ACTION,
+    handleDismissAction,
+    false,
+    DISMISS_ACTION_PRIORITY,
+    Enum.KeyCode.ButtonB,
+    Enum.KeyCode.Backspace,
+  );
+}
+
 function startInputListener() {
+  bindDismissAction();
+
   if (inputConnection) {
     return;
   }
@@ -80,6 +152,12 @@ function stopInputListener() {
   if (inputConnection) {
     inputConnection.Disconnect();
     inputConnection = undefined;
+  }
+
+  // Keep the action bound until a sunk dismiss key is released; the release
+  // handler unbinds it then.
+  if (sunkDismissKey === undefined) {
+    unbindDismissAction();
   }
 }
 

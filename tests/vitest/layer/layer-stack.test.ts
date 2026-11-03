@@ -6,6 +6,8 @@ type LayerStackHarness = {
   layerStack: LayerStackModule;
   bindActionAtPriority: ReturnType<typeof vi.fn>;
   unbindAction: ReturnType<typeof vi.fn>;
+  focusedTextBox: { current: unknown };
+  pressDismissKey: (inputState: string, keyCode?: string) => unknown;
   emitInputBegan: (inputObject: unknown, gameProcessedEvent?: boolean) => void;
 };
 
@@ -30,6 +32,7 @@ async function createLayerStackHarness(): Promise<LayerStackHarness> {
   const bindActionAtPriority = vi.fn();
   const unbindAction = vi.fn();
 
+  const focusedTextBox: { current: unknown } = { current: undefined };
   const inputConnections = new Set<(inputObject: unknown, gameProcessedEvent: boolean) => void>();
 
   vi.doMock("../../../packages/react/layer/src/internals/env", () => {
@@ -49,6 +52,7 @@ async function createLayerStackHarness(): Promise<LayerStackHarness> {
         },
       },
       UserInputService: {
+        GetFocusedTextBox: () => focusedTextBox.current,
         InputBegan: {
           Connect(callback: (inputObject: unknown, gameProcessedEvent: boolean) => void) {
             inputConnections.add(callback);
@@ -69,6 +73,13 @@ async function createLayerStackHarness(): Promise<LayerStackHarness> {
     layerStack,
     bindActionAtPriority,
     unbindAction,
+    focusedTextBox,
+    pressDismissKey: (inputState: string, keyCode = "ButtonB") => {
+      const handler = bindActionAtPriority.mock.calls.at(-1)?.[1] as
+        | ((actionName: string, inputState: string, inputObject: unknown) => unknown)
+        | undefined;
+      return handler?.("LatticeUiDismissLayer", inputState, { KeyCode: keyCode });
+    },
     emitInputBegan: (inputObject, gameProcessedEvent = false) => {
       for (const callback of inputConnections) {
         callback(inputObject, gameProcessedEvent);
@@ -86,12 +97,15 @@ beforeEach(() => {
         MouseButton1: "MouseButton1",
         Touch: "Touch",
       },
+      KeyCode: { ButtonB: "ButtonB", Backspace: "Backspace" },
+      UserInputState: { Begin: "Begin", End: "End", Cancel: "Cancel" },
+      ContextActionResult: { Sink: "Sink", Pass: "Pass" },
     },
   });
 });
 
 describe("layerStack dismiss key handling", () => {
-  it("does not bind a dismiss action when layers register", async () => {
+  it("binds the dismiss keys while a layer is registered and unbinds after", async () => {
     const harness = await createLayerStackHarness();
 
     const registration = harness.layerStack.registerLayer({
@@ -99,11 +113,90 @@ describe("layerStack dismiss key handling", () => {
       isPointerOutside: () => false,
     });
 
-    expect(harness.bindActionAtPriority).not.toHaveBeenCalled();
-    expect(harness.unbindAction).not.toHaveBeenCalled();
+    expect(harness.bindActionAtPriority).toHaveBeenCalledTimes(1);
+    expect(harness.bindActionAtPriority.mock.calls[0].slice(4)).toEqual(["ButtonB", "Backspace"]);
 
     harness.layerStack.unregisterLayer(registration.id);
+    expect(harness.unbindAction).toHaveBeenCalledTimes(1);
+  });
+
+  it("dismisses the top-most enabled layer on the dismiss key and sinks the press", async () => {
+    const harness = await createLayerStackHarness();
+    const dismissed: string[] = [];
+
+    const lower = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => false,
+      onDismiss: () => dismissed.push("lower"),
+    });
+    const upper = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => false,
+      onDismiss: () => dismissed.push("upper"),
+    });
+
+    expect(harness.pressDismissKey("Begin")).toBe("Sink");
+    expect(harness.pressDismissKey("End")).toBe("Sink");
+    expect(dismissed).toEqual(["upper"]);
+
+    harness.layerStack.unregisterLayer(upper.id);
+    harness.layerStack.unregisterLayer(lower.id);
+  });
+
+  it("lets onEscapeKeyDown prevent the dismissal", async () => {
+    const harness = await createLayerStackHarness();
+    const onDismiss = vi.fn();
+
+    const registration = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => false,
+      onEscapeKeyDown: (event) => event.preventDefault(),
+      onDismiss,
+    });
+
+    harness.pressDismissKey("Begin");
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    harness.layerStack.unregisterLayer(registration.id);
+  });
+
+  it("passes the dismiss key through when no layer is enabled or a TextBox is focused", async () => {
+    const harness = await createLayerStackHarness();
+    const onDismiss = vi.fn();
+    let enabled = false;
+
+    const registration = harness.layerStack.registerLayer({
+      getEnabled: () => enabled,
+      isPointerOutside: () => false,
+      onDismiss,
+    });
+
+    expect(harness.pressDismissKey("Begin")).toBe("Pass");
+
+    enabled = true;
+    harness.focusedTextBox.current = {};
+    expect(harness.pressDismissKey("Begin", "Backspace")).toBe("Pass");
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    harness.layerStack.unregisterLayer(registration.id);
+  });
+
+  it("keeps sinking a dismiss key until release when its layer unmounts on press", async () => {
+    const harness = await createLayerStackHarness();
+    let registrationId = 0;
+
+    const registration = harness.layerStack.registerLayer({
+      getEnabled: () => true,
+      isPointerOutside: () => false,
+      onDismiss: () => harness.layerStack.unregisterLayer(registrationId),
+    });
+    registrationId = registration.id;
+
+    expect(harness.pressDismissKey("Begin")).toBe("Sink");
     expect(harness.unbindAction).not.toHaveBeenCalled();
+
+    expect(harness.pressDismissKey("End")).toBe("Sink");
+    expect(harness.unbindAction).toHaveBeenCalledTimes(1);
   });
 
   it("only dismisses on pointer input when the hit is outside", async () => {

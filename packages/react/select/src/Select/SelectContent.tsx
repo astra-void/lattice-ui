@@ -28,6 +28,7 @@ const OWN_PROPS = [
   "collisionPadding",
   "onPointerDownOutside",
   "onInteractOutside",
+  "onEscapeKeyDown",
   "children",
 ] as const;
 
@@ -64,6 +65,7 @@ function SelectContentImpl(props: {
   collisionPadding?: number;
   forceMount?: boolean;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
@@ -158,6 +160,7 @@ function SelectContentImpl(props: {
       modal={false}
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
+      onEscapeKeyDown={props.onEscapeKeyDown}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
       insideRefs={[selectContext.triggerRef]}
@@ -201,6 +204,7 @@ export function SelectContent(props: SelectContentProps) {
         collisionPadding={props.collisionPadding}
         forceMount={props.forceMount}
         onInteractOutside={props.onInteractOutside}
+        onEscapeKeyDown={props.onEscapeKeyDown}
         onPointerDownOutside={props.onPointerDownOutside}
         asChild={props.asChild}
       >
@@ -224,6 +228,7 @@ export function SelectContent(props: SelectContentProps) {
           collisionPadding={props.collisionPadding}
           forceMount={props.forceMount}
           onInteractOutside={props.onInteractOutside}
+          onEscapeKeyDown={props.onEscapeKeyDown}
           onPointerDownOutside={props.onPointerDownOutside}
           asChild={props.asChild}
         >

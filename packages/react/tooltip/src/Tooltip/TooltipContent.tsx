@@ -25,6 +25,7 @@ const OWN_PROPS = [
   "collisionPadding",
   "onPointerDownOutside",
   "onInteractOutside",
+  "onEscapeKeyDown",
   "children",
 ] as const;
 
@@ -63,6 +64,7 @@ function TooltipContentImpl(props: {
   collisionPadding?: number;
   forceMount?: boolean;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
@@ -149,6 +151,7 @@ function TooltipContentImpl(props: {
         modal={false}
         onDismiss={handleDismiss}
         onInteractOutside={props.onInteractOutside}
+        onEscapeKeyDown={props.onEscapeKeyDown}
         onPointerDownOutside={props.onPointerDownOutside}
         contentBoundaryRef={contentBoundaryRef}
       >
@@ -175,6 +178,7 @@ function TooltipContentImpl(props: {
       modal={false}
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
+      onEscapeKeyDown={props.onEscapeKeyDown}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
     >
@@ -204,6 +208,7 @@ export function TooltipContent(props: TooltipContentProps) {
         collisionPadding={props.collisionPadding}
         forceMount={props.forceMount}
         onInteractOutside={props.onInteractOutside}
+        onEscapeKeyDown={props.onEscapeKeyDown}
         onPointerDownOutside={props.onPointerDownOutside}
         asChild={props.asChild}
       >
@@ -227,6 +232,7 @@ export function TooltipContent(props: TooltipContentProps) {
           collisionPadding={props.collisionPadding}
           forceMount={props.forceMount}
           onInteractOutside={props.onInteractOutside}
+          onEscapeKeyDown={props.onEscapeKeyDown}
           onPointerDownOutside={props.onPointerDownOutside}
           asChild={props.asChild}
         >

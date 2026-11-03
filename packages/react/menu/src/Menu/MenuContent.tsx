@@ -27,6 +27,7 @@ const OWN_PROPS = [
   "collisionPadding",
   "onPointerDownOutside",
   "onInteractOutside",
+  "onEscapeKeyDown",
   "children",
 ] as const;
 
@@ -66,6 +67,7 @@ function MenuContentImpl(props: {
   collisionPadding?: number;
   forceMount?: boolean;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
@@ -162,6 +164,7 @@ function MenuContentImpl(props: {
       modal={menuContext.modal}
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
+      onEscapeKeyDown={props.onEscapeKeyDown}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
       insideRefs={[menuContext.triggerRef]}
@@ -205,6 +208,7 @@ export function MenuContent(props: MenuContentProps) {
         collisionPadding={props.collisionPadding}
         forceMount={props.forceMount}
         onInteractOutside={props.onInteractOutside}
+        onEscapeKeyDown={props.onEscapeKeyDown}
         onPointerDownOutside={props.onPointerDownOutside}
         asChild={props.asChild}
         passthrough={passthrough}
@@ -228,6 +232,7 @@ export function MenuContent(props: MenuContentProps) {
           collisionPadding={props.collisionPadding}
           forceMount={props.forceMount}
           onInteractOutside={props.onInteractOutside}
+          onEscapeKeyDown={props.onEscapeKeyDown}
           onPointerDownOutside={props.onPointerDownOutside}
           asChild={props.asChild}
           passthrough={passthrough}

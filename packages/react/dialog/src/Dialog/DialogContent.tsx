@@ -26,6 +26,7 @@ const OWN_PROPS = [
   "asChild",
   "onPointerDownOutside",
   "onInteractOutside",
+  "onEscapeKeyDown",
   "children",
 ] as const;
 
@@ -134,6 +135,7 @@ function DialogContentImpl(props: {
   trapFocus?: boolean;
   restoreFocus?: boolean;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
@@ -270,6 +272,7 @@ function DialogContentImpl(props: {
       modal={dialogContext.modal}
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
+      onEscapeKeyDown={props.onEscapeKeyDown}
       onPointerDownOutside={props.onPointerDownOutside}
     >
       <FocusScope active={open} restoreFocus={props.restoreFocus} trapped={props.trapFocus}>
@@ -298,6 +301,7 @@ export function DialogContent(props: DialogContentProps) {
         trapFocus={trapFocus}
         restoreFocus={restoreFocus}
         onInteractOutside={props.onInteractOutside}
+        onEscapeKeyDown={props.onEscapeKeyDown}
         onPointerDownOutside={props.onPointerDownOutside}
         passthrough={passthrough}
         transition={props.transition}
@@ -318,6 +322,7 @@ export function DialogContent(props: DialogContentProps) {
           trapFocus={trapFocus}
           restoreFocus={restoreFocus}
           onInteractOutside={props.onInteractOutside}
+          onEscapeKeyDown={props.onEscapeKeyDown}
           onPointerDownOutside={props.onPointerDownOutside}
           passthrough={passthrough}
           transition={props.transition}

@@ -28,6 +28,7 @@ const OWN_PROPS = [
   "collisionPadding",
   "onPointerDownOutside",
   "onInteractOutside",
+  "onEscapeKeyDown",
   "children",
 ] as const;
 
@@ -66,6 +67,7 @@ function PopoverContentImpl(props: {
   collisionPadding?: number;
   forceMount?: boolean;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   children?: React.ReactNode;
@@ -159,6 +161,7 @@ function PopoverContentImpl(props: {
       modal={popoverContext.modal}
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
+      onEscapeKeyDown={props.onEscapeKeyDown}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
       insideRefs={[popoverContext.triggerRef, popoverContext.anchorRef]}
@@ -195,6 +198,7 @@ export function PopoverContent(props: PopoverContentProps) {
         collisionPadding={props.collisionPadding}
         forceMount={props.forceMount}
         onInteractOutside={props.onInteractOutside}
+        onEscapeKeyDown={props.onEscapeKeyDown}
         onPointerDownOutside={props.onPointerDownOutside}
         asChild={props.asChild}
         passthrough={passthrough}
@@ -218,6 +222,7 @@ export function PopoverContent(props: PopoverContentProps) {
           collisionPadding={props.collisionPadding}
           forceMount={props.forceMount}
           onInteractOutside={props.onInteractOutside}
+          onEscapeKeyDown={props.onEscapeKeyDown}
           onPointerDownOutside={props.onPointerDownOutside}
           asChild={props.asChild}
           passthrough={passthrough}

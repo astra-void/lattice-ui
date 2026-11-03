@@ -27,6 +27,7 @@ const OWN_PROPS = [
   "collisionPadding",
   "onPointerDownOutside",
   "onInteractOutside",
+  "onEscapeKeyDown",
   "children",
 ] as const;
 
@@ -63,6 +64,7 @@ function ComboboxContentImpl(props: {
   forceMount?: boolean;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   asChild?: boolean;
   transition?: PresenceMotionConfig;
   children?: React.ReactNode;
@@ -168,6 +170,7 @@ function ComboboxContentImpl(props: {
       modal={false}
       onDismiss={handleDismiss}
       onInteractOutside={props.onInteractOutside}
+      onEscapeKeyDown={props.onEscapeKeyDown}
       onPointerDownOutside={props.onPointerDownOutside}
       contentBoundaryRef={contentBoundaryRef}
     >
@@ -198,6 +201,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
         forceMount={props.forceMount}
         motionPresent={open}
         onInteractOutside={props.onInteractOutside}
+        onEscapeKeyDown={props.onEscapeKeyDown}
         onPointerDownOutside={props.onPointerDownOutside}
         passthrough={passthrough}
         placement={props.placement}
@@ -221,6 +225,7 @@ export function ComboboxContent(props: ComboboxContentProps) {
           motionPresent={state.isPresent}
           onExitComplete={state.onExitComplete}
           onInteractOutside={props.onInteractOutside}
+          onEscapeKeyDown={props.onEscapeKeyDown}
           onPointerDownOutside={props.onPointerDownOutside}
           passthrough={passthrough}
           placement={props.placement}

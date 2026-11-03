@@ -58,5 +58,6 @@ export type TooltipContentProps = {
   collisionPadding?: number;
   onPointerDownOutside?: (event: LayerInteractEvent) => void;
   onInteractOutside?: (event: LayerInteractEvent) => void;
+  onEscapeKeyDown?: (event: LayerInteractEvent) => void;
   children?: React.ReactNode;
 } & PassthroughProps<Frame>;
