@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { usageError } from "../errors";
 import { readPackageJson } from "../project/readPackageJson";
@@ -62,7 +63,11 @@ function normalizePackageManagers(values: PackageManagerName[]): PackageManagerN
 
 async function isPackageManagerInstalled(managerName: PackageManagerName): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
+    // Probe from a neutral directory, never the user's project: pnpm 10+ reads the
+    // project's `devEngines.packageManager` pin, so probing there can install a
+    // pinned pnpm (writing a lockfile) or refuse to run when another manager is pinned.
     const child = spawn(managerName, ["--version"], {
+      cwd: os.tmpdir(),
       stdio: "ignore",
       shell: process.platform === "win32",
     });
