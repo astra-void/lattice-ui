@@ -1,5 +1,13 @@
 import { useFocusNode } from "@lattice-ui/react-focus";
-import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
+import {
+  composeEvents,
+  composeRefs,
+  flushSync,
+  getPassthroughProps,
+  React,
+  Slot,
+  toSlotProps,
+} from "@lattice-ui/react-runtime";
 import { useTextFieldContext } from "./context";
 import type { TextFieldInputProps } from "./types";
 
@@ -47,17 +55,31 @@ export function TextFieldInput(props: TextFieldInputProps) {
     [textFieldContext.inputRef],
   );
 
+  // The committed value, refreshed on every render. Read after a flushed update
+  // it is what the consumer accepted, not what was typed.
+  const committedValueRef = React.useRef(textFieldContext.value);
+  committedValueRef.current = textFieldContext.value;
+
   const handleTextChanged = React.useCallback(
     (textBox: TextBox) => {
-      if (disabled || readOnly) {
-        if (textBox.Text !== textFieldContext.value) {
-          textBox.Text = textFieldContext.value;
-        }
-
+      // React writing the committed value back fires this too; nothing to do.
+      if (textBox.Text === committedValueRef.current) {
         return;
       }
 
-      textFieldContext.setValue(textBox.Text);
+      if (disabled || readOnly) {
+        textBox.Text = committedValueRef.current;
+        return;
+      }
+
+      // A controlled consumer may reject or rewrite the edit. Commit it
+      // synchronously, then make the TextBox show what was actually committed:
+      // a rejected edit leaves no re-render that would write `Text` back.
+      const typed = textBox.Text;
+      flushSync(() => textFieldContext.setValue(typed));
+      if (textBox.Text !== committedValueRef.current) {
+        textBox.Text = committedValueRef.current;
+      }
     },
     [disabled, readOnly, textFieldContext],
   );

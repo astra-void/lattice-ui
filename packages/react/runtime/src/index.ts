@@ -1,4 +1,5 @@
 export * from "./context";
+export * from "./flushSync";
 export * from "./props";
 export { default as React } from "./react";
 export { default as ReactRoblox } from "./reactRoblox";
