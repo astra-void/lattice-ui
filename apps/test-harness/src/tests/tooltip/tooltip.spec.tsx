@@ -5,7 +5,6 @@ import { Tooltip } from "@lattice-ui/react-tooltip";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
-
 export = () => {
   describe("tooltip", () => {
     it("opens and closes from managed focus on the trigger", () => {

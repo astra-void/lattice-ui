@@ -255,7 +255,10 @@ export function createLogger(options: LoggerOptions): Logger {
       // Without a terminal nobody can answer. Fail loudly instead of returning
       // "no": a script or CI step that forgot --yes must not pass with exit 0.
       if (!stdin.isTTY || !stdout.isTTY) {
-        throw usageError(`${message} needs confirmation, but no terminal is attached.`, "Re-run with --yes to confirm.");
+        throw usageError(
+          `${message} needs confirmation, but no terminal is attached.`,
+          "Re-run with --yes to confirm.",
+        );
       }
 
       spacerBefore();
