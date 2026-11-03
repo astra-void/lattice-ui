@@ -14,6 +14,8 @@ export interface ContextOptions {
   dryRun: boolean;
   yes: boolean;
   verbose?: boolean;
+  /** Take the default package manager instead of prompting when several are installed. */
+  preferDefaultPackageManager?: boolean;
 }
 
 export interface CliContext {
@@ -50,6 +52,7 @@ export async function createContext(
 
   const pm = await detectPackageManager(projectRoot, options.pm, {
     stream: options.verbose ?? false,
+    preferDefault: options.preferDefaultPackageManager,
     runtime: {
       yes: options.yes,
       stdin: process.stdin,

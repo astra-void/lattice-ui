@@ -681,6 +681,9 @@ export async function runCli(argv: string[]): Promise<void> {
       dryRun: false,
       yes: false,
       verbose: doctorArgs.verbose,
+      // doctor only reports; it must not stop to ask which manager to use, and
+      // its own missing-lockfile check explains the ambiguity.
+      preferDefaultPackageManager: true,
     });
     await runDoctorCommand(ctx);
     return;

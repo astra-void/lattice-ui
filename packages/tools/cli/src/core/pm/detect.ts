@@ -29,6 +29,11 @@ export interface DetectPackageManagerOptions {
   stream?: boolean;
   promptSelectFn?: typeof promptSelect;
   detectInstalledPackageManagersFn?: () => Promise<PackageManagerName[]>;
+  /**
+   * With several managers installed and nothing else to go on, take the default (the first in
+   * prompt order) instead of prompting. For read-only commands such as `doctor`.
+   */
+  preferDefault?: boolean;
 }
 
 const promptPackageManagerOrder: PackageManagerName[] = ["npm", "pnpm", "yarn"];
@@ -193,9 +198,15 @@ export async function detectPackageManager(
   }
 
   const runtime = options?.runtime ?? { yes: false, stdin: process.stdin, stdout: process.stdout };
+  // `--yes` accepts the default answer to every prompt, including this one: the
+  // prompt's default is the first installed manager in prompt order.
+  if (runtime.yes || options?.preferDefault === true) {
+    return createResult(installed[0], lockfiles, installed, "installed", pins, options?.stream);
+  }
+
   const stdin = runtime.stdin ?? process.stdin;
   const stdout = runtime.stdout ?? process.stdout;
-  if (runtime.yes || !stdin.isTTY || !stdout.isTTY) {
+  if (!stdin.isTTY || !stdout.isTTY) {
     throw usageError(
       `Multiple package managers are installed (${installed.join(", ")}). Re-run with ${PACKAGE_MANAGER_HINT}.`,
     );

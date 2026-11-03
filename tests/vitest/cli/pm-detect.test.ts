@@ -100,12 +100,40 @@ describe("detectPackageManager", () => {
     expect(result.source).toBe("prompt");
   });
 
-  it("fails in --yes mode when multiple package managers are installed", async () => {
+  it("takes the default in --yes mode when multiple package managers are installed", async () => {
+    const dir = await createTempDir();
+
+    const result = await detectPackageManager(dir, undefined, {
+      runtime: { yes: true },
+      detectInstalledPackageManagersFn: async () => ["pnpm", "npm"],
+    });
+
+    // The prompt's default: the first installed manager in prompt order.
+    expect(result.name).toBe("npm");
+    expect(result.source).toBe("installed");
+  });
+
+  it("takes the default for read-only commands instead of prompting", async () => {
+    const dir = await createTempDir();
+    const promptSelectFn = vi.fn();
+
+    const result = await detectPackageManager(dir, undefined, {
+      runtime: { yes: false, stdin: { isTTY: false } as NodeJS.ReadStream },
+      preferDefault: true,
+      promptSelectFn,
+      detectInstalledPackageManagersFn: async () => ["npm", "yarn"],
+    });
+
+    expect(result.name).toBe("npm");
+    expect(promptSelectFn).not.toHaveBeenCalled();
+  });
+
+  it("still fails without a terminal when --yes was not passed", async () => {
     const dir = await createTempDir();
 
     await expect(
       detectPackageManager(dir, undefined, {
-        runtime: { yes: true },
+        runtime: { yes: false, stdin: { isTTY: false } as NodeJS.ReadStream, stdout: { isTTY: false } as NodeJS.WriteStream },
         detectInstalledPackageManagersFn: async () => ["npm", "pnpm"],
       }),
     ).rejects.toThrow(/Multiple package managers are installed/i);
