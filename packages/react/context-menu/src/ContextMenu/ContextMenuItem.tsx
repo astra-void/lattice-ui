@@ -1,3 +1,4 @@
+import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { ContextMenuItemContextProvider, useContextMenuContext } from "./context";
 import type { ContextMenuItemProps, ContextMenuSelectEvent } from "./types";
@@ -11,6 +12,9 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
   Text: "",
 };
+
+let nextItemId = 0;
+let nextItemOrder = 0;
 
 function createContextMenuSelectEvent(): ContextMenuSelectEvent {
   const event: ContextMenuSelectEvent = {
@@ -26,15 +30,50 @@ function createContextMenuSelectEvent(): ContextMenuSelectEvent {
 export function ContextMenuItem(props: ContextMenuItemProps) {
   const contextMenuContext = useContextMenuContext();
   const itemRef = React.useRef<GuiObject>();
+  const disabledRef = React.useRef(props.disabled === true);
 
-  const [highlighted, setHighlighted] = React.useState(false);
+  // Pointer hover and managed focus are tracked apart so neither clears the
+  // other: the item reads highlighted while either one is on it.
+  const [hovered, setHovered] = React.useState(false);
+  const [focused, setFocused] = React.useState(false);
+
+  React.useEffect(() => {
+    disabledRef.current = props.disabled === true;
+  }, [props.disabled]);
+
+  const itemIdRef = React.useRef(0);
+  if (itemIdRef.current === 0) {
+    nextItemId += 1;
+    itemIdRef.current = nextItemId;
+  }
+
+  const itemOrderRef = React.useRef(0);
+  if (itemOrderRef.current === 0) {
+    nextItemOrder += 1;
+    itemOrderRef.current = nextItemOrder;
+  }
+
+  const registerItem = contextMenuContext.registerItem;
+  React.useEffect(() => {
+    return registerItem({
+      id: itemIdRef.current,
+      order: itemOrderRef.current,
+      ref: itemRef,
+      getDisabled: () => disabledRef.current,
+    });
+  }, [registerItem]);
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
     itemRef.current = !instance?.IsA("GuiObject") ? undefined : instance;
   }, []);
 
+  const claimActivation = useActivationGuard();
+
+  // A click and a keyboard/gamepad activation both land here: the mouse through
+  // `Activated`, the keyboard through the focus node's `onActivate`. The guard
+  // collapses the pair the engine still fires for a single selection.
   const handleActivated = React.useCallback(() => {
-    if (props.disabled) {
+    if (props.disabled || !claimActivation()) {
       return;
     }
 
@@ -44,10 +83,19 @@ export function ContextMenuItem(props: ContextMenuItemProps) {
     if (!event.defaultPrevented) {
       contextMenuContext.setOpen(false);
     }
-  }, [contextMenuContext, props.disabled, props.onSelect]);
+  }, [claimActivation, contextMenuContext, props.disabled, props.onSelect]);
 
-  const handlePointerEnter = React.useCallback(() => setHighlighted(true), []);
-  const handlePointerLeave = React.useCallback(() => setHighlighted(false), []);
+  // Directional movement, Enter/Space activation and the highlight all come from
+  // the focus manager; the engine's own selection events are never consulted.
+  useFocusNode({
+    ref: itemRef,
+    getDisabled: () => disabledRef.current,
+    onFocusChange: setFocused,
+    onActivate: handleActivated,
+  });
+
+  const handlePointerEnter = React.useCallback(() => setHovered(true), []);
+  const handlePointerLeave = React.useCallback(() => setHovered(false), []);
 
   const ownEvents = React.useMemo(
     () => ({
@@ -63,16 +111,17 @@ export function ContextMenuItem(props: ContextMenuItemProps) {
   // Highlight is tracked, never painted: consumers read it here and style however they like.
   const itemContextValue = React.useMemo(
     () => ({
-      highlighted: highlighted && !disabled,
+      highlighted: (hovered || focused) && !disabled,
       disabled,
     }),
-    [disabled, highlighted],
+    [disabled, focused, hovered],
   );
 
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, ownEvents),
+    Selectable: !disabled,
   };
   const ref = composeRefs<Instance>(passthrough.ref as never, setItemRef);
 

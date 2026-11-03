@@ -6,6 +6,13 @@ import type React from "@rbxts/react";
 
 export type ContextMenuSetOpen = (open: boolean) => void;
 
+export type ContextMenuItemRegistration = {
+  id: number;
+  order: number;
+  ref: React.MutableRefObject<GuiObject | undefined>;
+  getDisabled: () => boolean;
+};
+
 export type ContextMenuContextValue = {
   open: boolean;
   setOpen: ContextMenuSetOpen;
@@ -20,6 +27,7 @@ export type ContextMenuContextValue = {
   openAtPosition: (position: Vector2) => void;
   virtualAnchorRef: React.MutableRefObject<GuiObject | undefined>;
   contentRef: React.MutableRefObject<GuiObject | undefined>;
+  registerItem: (item: ContextMenuItemRegistration) => () => void;
 };
 
 export type ContextMenuProps = {

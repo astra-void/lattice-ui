@@ -21,7 +21,7 @@ const NEUTRAL_PROPS = {
  * `InputObject.Position`) into the inset-adjusted space used by
  * `GuiObject.AbsolutePosition`, which is what the popper positions against.
  */
-function toAnchorPosition(rawPosition: Vector3) {
+function toAnchorPosition(rawPosition: Vector2 | Vector3) {
   const [insetTopLeft] = GuiService.GetGuiInset();
   return new Vector2(rawPosition.X - insetTopLeft.X, rawPosition.Y - insetTopLeft.Y);
 }
@@ -42,10 +42,28 @@ export function ContextMenuTrigger(props: ContextMenuTriggerProps) {
     [contextMenuContext, props.disabled],
   );
 
+  // Touch has no secondary button: a long press is the platform's context gesture.
+  const handleTouchLongPress = React.useCallback(
+    (_rbx: GuiObject, touchPositions: Array<Vector2>, state: Enum.UserInputState) => {
+      if (props.disabled || state !== Enum.UserInputState.Begin) {
+        return;
+      }
+
+      const touchPosition = touchPositions[0];
+      if (touchPosition !== undefined) {
+        contextMenuContext.openAtPosition(toAnchorPosition(touchPosition));
+      }
+    },
+    [contextMenuContext, props.disabled],
+  );
+
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: props.disabled !== true,
-    Event: composeEvents(passthrough.Event, { InputBegan: handleInputBegan }),
+    Event: composeEvents(passthrough.Event, {
+      InputBegan: handleInputBegan,
+      TouchLongPress: handleTouchLongPress,
+    }),
   };
 
   if (props.asChild) {

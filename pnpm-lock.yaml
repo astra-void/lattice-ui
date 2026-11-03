@@ -585,6 +585,9 @@ importers:
 
   packages/react/context-menu:
     dependencies:
+      '@lattice-ui/react-focus':
+        specifier: workspace:*
+        version: link:../focus
       '@lattice-ui/react-layer':
         specifier: workspace:*
         version: link:../layer

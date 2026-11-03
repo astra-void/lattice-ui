@@ -74,7 +74,7 @@ export = () => {
       });
     });
 
-    it("mounts items when opened without touching native gamepad selection", () => {
+    it("moves managed focus to the first item when opened", () => {
       withReactHarness("ContextMenuOpenNoNativeSelection", (harness) => {
         GuiService.SelectedObject = undefined;
 
@@ -86,9 +86,10 @@ export = () => {
         assert(alphaItem !== undefined, "Context menu items should mount when opened.");
         assert(betaItem !== undefined, "Context menu items should mount when opened.");
 
+        // SelectedObject is the render-only mirror of managed focus (bridge.ts).
         assert(
-          GuiService.SelectedObject === undefined,
-          "Opening ContextMenuContent should not drive native gamepad selection.",
+          GuiService.SelectedObject === alphaItem,
+          "Opening ContextMenuContent should focus its first item like Menu.Content.",
         );
       });
     });

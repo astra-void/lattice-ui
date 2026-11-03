@@ -1,3 +1,4 @@
+import { FocusScope } from "@lattice-ui/react-focus";
 import type { LayerInteractEvent } from "@lattice-ui/react-layer";
 import { DismissableLayer, Presence } from "@lattice-ui/react-layer";
 import type { PresenceMotionConfig } from "@lattice-ui/react-motion";
@@ -189,15 +190,25 @@ function ContextMenuContentImpl(props: {
         Visible={false}
         ref={setVirtualAnchorRef}
       />
-      <frame
-        {...NEUTRAL_PROPS}
-        AnchorPoint={popper.anchorPoint}
-        Position={popperPosition}
-        Size={popperWrapperSize}
-        Visible={shouldRender}
+      {/* Like Menu.Content: an ordered vertical scope, trapped while modal. */}
+      <FocusScope
+        active={open}
+        restoreFocus={true}
+        trapped={contextMenuContext.modal}
+        navStrategy="ordered"
+        navOrientation="vertical"
+        navWrap={true}
       >
-        {contentNode}
-      </frame>
+        <frame
+          {...NEUTRAL_PROPS}
+          AnchorPoint={popper.anchorPoint}
+          Position={popperPosition}
+          Size={popperWrapperSize}
+          Visible={shouldRender}
+        >
+          {contentNode}
+        </frame>
+      </FocusScope>
     </DismissableLayer>
   );
 }
