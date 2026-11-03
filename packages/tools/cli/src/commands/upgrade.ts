@@ -11,7 +11,7 @@ import { LEGACY_PACKAGE_RENAMES } from "../core/project/legacyPackages";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
-import { applyPackageManagerPin } from "./pin";
+import { announcePackageManagerPin, applyPackageManagerPin } from "./pin";
 import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 function getSelectedRegistryPackages(ctx: CliContext, input: SelectionInput): string[] {
@@ -123,7 +123,7 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
     return;
   }
 
-  await applyPackageManagerPin(ctx);
+  announcePackageManagerPin(ctx);
   if (dependencySpecs.length > 0) {
     ctx.logger.command(`${ctx.pmName} add ${dependencySpecs.join(" ")}`);
   }
@@ -142,6 +142,8 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
     ctx.logger.outcome("Cancelled. Nothing changed.", "warn");
     return;
   }
+
+  await applyPackageManagerPin(ctx);
 
   const spinner = ctx.logger.spinner(`Upgrading ${planned} ${plural(planned, "package")}…`);
   try {

@@ -13,7 +13,7 @@ import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import { parseProviderRequirement } from "../core/registry/schema";
 import type { CliContext } from "../ctx";
-import { applyPackageManagerPin } from "./pin";
+import { announcePackageManagerPin, applyPackageManagerPin } from "./pin";
 import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 async function resolveSelectionInput(ctx: CliContext, input: SelectionInput): Promise<SelectionInput> {
@@ -128,7 +128,7 @@ export async function runAddCommand(ctx: CliContext, input: SelectionInput): Pro
   }
 
   if (plannedSpecs.length > 0) {
-    await applyPackageManagerPin(ctx);
+    announcePackageManagerPin(ctx);
     ctx.logger.command(`${ctx.pmName} add ${plannedSpecs.join(" ")}`);
   }
 
@@ -151,6 +151,8 @@ export async function runAddCommand(ctx: CliContext, input: SelectionInput): Pro
     ctx.logger.outcome("Cancelled. Nothing changed.", "warn");
     return;
   }
+
+  await applyPackageManagerPin(ctx);
 
   const spinner = ctx.logger.spinner(`Installing ${plannedSpecs.length} ${plural(plannedSpecs.length, "package")}…`);
   try {

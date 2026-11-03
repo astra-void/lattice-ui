@@ -11,7 +11,7 @@ import {
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
-import { applyPackageManagerPin } from "./pin";
+import { announcePackageManagerPin, applyPackageManagerPin } from "./pin";
 import { resolveComponentSelection, type SelectionInput } from "./selection";
 
 function normalizeList(values: string[]): string[] {
@@ -91,7 +91,7 @@ export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): 
     return;
   }
 
-  await applyPackageManagerPin(ctx);
+  announcePackageManagerPin(ctx);
   ctx.logger.command(`${ctx.pmName} remove ${plannedSpecs.join(" ")}`);
 
   if (dryRun) {
@@ -107,6 +107,8 @@ export async function runRemoveCommand(ctx: CliContext, input: SelectionInput): 
     ctx.logger.outcome("Cancelled. Nothing changed.", "warn");
     return;
   }
+
+  await applyPackageManagerPin(ctx);
 
   const spinner = ctx.logger.spinner(`Removing ${plannedSpecs.length} ${plural(plannedSpecs.length, "package")}…`);
   try {

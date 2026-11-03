@@ -1411,6 +1411,59 @@ describe("command behavior", () => {
     expect(outcomesOf(logger)).toEqual(["Nothing changed. Re-run without --dry-run to apply."]);
   });
 
+  it("add leaves the package-manager pin alone when the install is declined", async () => {
+    const dir = await createTempDir();
+    const manifest = {
+      name: "tmp",
+      dependencies: {},
+      devEngines: { packageManager: { name: "pnpm", version: "^9" } },
+    };
+    const original = JSON.stringify(manifest, null, 2);
+    await writeFile(path.join(dir, "package.json"), original, "utf8");
+
+    const logger = createLogger({ confirm: vi.fn(async () => false) });
+    const ctx = createContext({
+      projectRoot: dir,
+      options: { yes: false },
+      logger,
+      pins: [{ name: "pnpm", field: "devEngines" }],
+      registry: {
+        packages: { style: { npm: "@lattice-ui/react-style" } },
+        presets: {},
+      },
+    });
+
+    await runAddCommand(ctx, { names: ["style"], presets: [] });
+
+    // The repin is announced before the prompt, but nothing is written on "no".
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/^Repinning .* to npm/));
+    expect(outcomesOf(logger)).toEqual(["Cancelled. Nothing changed."]);
+    expect(await readFile(path.join(dir, "package.json"), "utf8")).toBe(original);
+  });
+
+  it("add repins the package manager once the install is confirmed", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "tmp", dependencies: {}, devEngines: { packageManager: { name: "pnpm" } } }, null, 2),
+      "utf8",
+    );
+
+    const ctx = createContext({
+      projectRoot: dir,
+      pins: [{ name: "pnpm", field: "devEngines" }],
+      registry: {
+        packages: { style: { npm: "@lattice-ui/react-style" } },
+        presets: {},
+      },
+    });
+
+    await runAddCommand(ctx, { names: ["style"], presets: [] });
+
+    const written = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+    expect(written.devEngines.packageManager.name).toBe("npm");
+  });
+
   it("add requires explicit selection in --yes mode", async () => {
     const dir = await createTempDir();
     await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp", dependencies: {} }, null, 2), "utf8");

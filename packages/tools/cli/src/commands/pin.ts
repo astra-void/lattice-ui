@@ -3,25 +3,28 @@ import { readPackageJson } from "../core/project/readPackageJson";
 import { writePackageJson } from "../core/project/writePackageJson";
 import type { CliContext } from "../ctx";
 
+function conflictingPins(ctx: CliContext) {
+  return ctx.pins.filter((pin) => pin.name !== ctx.pmName);
+}
+
 /**
- * Repins package.json at the package manager this run uses.
+ * Warns that package.json will be repinned at the package manager this run uses. Called before the
+ * confirmation prompt so the user sees it; nothing is written until `applyPackageManagerPin`.
  *
  * npm and pnpm both refuse to install when `devEngines.packageManager` names the other one, so a
  * project scaffolded with one manager cannot be touched by another until the pin moves.
  */
-export async function applyPackageManagerPin(ctx: CliContext): Promise<void> {
-  const conflicts = ctx.pins.filter((pin) => pin.name !== ctx.pmName);
-  if (conflicts.length === 0) {
-    return;
-  }
-
-  for (const pin of conflicts) {
+export function announcePackageManagerPin(ctx: CliContext): void {
+  for (const pin of conflictingPins(ctx)) {
     ctx.logger.warn(
       `Repinning ${describePackageManagerPin(pin)} to ${ctx.pmName}; ${pin.name} would refuse to install.`,
     );
   }
+}
 
-  if (ctx.options.dryRun) {
+/** Repins package.json at this run's package manager. Call only after the user confirmed. */
+export async function applyPackageManagerPin(ctx: CliContext): Promise<void> {
+  if (conflictingPins(ctx).length === 0 || ctx.options.dryRun) {
     return;
   }
 
