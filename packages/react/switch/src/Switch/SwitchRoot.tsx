@@ -64,7 +64,7 @@ export function SwitchRoot(props: SwitchProps) {
   // directional moves. Activation stays on the engine's `Activated`.
   const rootRef = React.useRef<GuiObject>();
   const setRootRef = React.useCallback((instance: Instance | undefined) => {
-    rootRef.current = instance?.IsA("GuiObject") ? instance : undefined;
+    rootRef.current = typeIs(instance, "Instance") && instance.IsA("GuiObject") ? instance : undefined;
   }, []);
 
   useFocusNode({
