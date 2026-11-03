@@ -1,3 +1,4 @@
+import { useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE, updateTooltipTriggerActivity } from "./activity";
 import { useTooltipContext } from "./context";
@@ -71,12 +72,19 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     tooltipContext.close();
   }, [props.disabled, tooltipContext]);
 
+  // Focus-open follows managed focus, not the engine's selection events: the
+  // navigation controller only reaches registered nodes, and SelectedObject is
+  // a render-only mirror of managed focus.
+  useFocusNode({
+    ref: tooltipContext.triggerRef,
+    disabled: props.disabled === true,
+    onFocusChange: (focused) => applyActivity("focus", focused),
+  });
+
   const eventHandlers = React.useMemo(
     () => ({
       MouseEnter: () => applyActivity("hover", true),
       MouseLeave: () => applyActivity("hover", false),
-      SelectionGained: () => applyActivity("focus", true),
-      SelectionLost: () => applyActivity("focus", false),
     }),
     [applyActivity],
   );

@@ -1,14 +1,14 @@
+import { clearFocus, focusGuiObject } from "@lattice-ui/react-focus";
 import { PortalProvider } from "@lattice-ui/react-layer";
 import { React } from "@lattice-ui/react-runtime";
 import { Tooltip } from "@lattice-ui/react-tooltip";
 import { findTextButtonByText, findTextLabelByText } from "../../test-utils/guiFind";
 import { waitForEffects, withReactHarness } from "../../test-utils/reactHarness";
 
-const GuiService = game.GetService("GuiService");
 
 export = () => {
   describe("tooltip", () => {
-    it("opens and closes from selection focus on the trigger", () => {
+    it("opens and closes from managed focus on the trigger", () => {
       withReactHarness("TooltipSelectionFocus", (harness) => {
         harness.render(
           <PortalProvider container={harness.playerGui}>
@@ -37,7 +37,7 @@ export = () => {
         assert(trigger !== undefined, "Tooltip trigger should mount.");
         assert(outside !== undefined, "Outside button should mount.");
 
-        GuiService.SelectedObject = trigger;
+        focusGuiObject(trigger);
         waitForEffects(4);
 
         const markerWhileOpen = findTextLabelByText(harness.playerGui, "tooltip-marker");
@@ -45,20 +45,20 @@ export = () => {
         assert(markerWhileOpen !== undefined, "Forced tooltip content should mount its marker.");
         assert(
           markerParentWhileOpen?.IsA("GuiObject") && markerParentWhileOpen.Visible === true,
-          "Selection focus on the trigger should make tooltip content visible.",
+          "Managed focus on the trigger should make tooltip content visible.",
         );
 
-        GuiService.SelectedObject = outside;
+        focusGuiObject(outside);
         waitForEffects(4);
 
         const markerAfterBlur = findTextLabelByText(harness.playerGui, "tooltip-marker");
         const markerParentAfterBlur = markerAfterBlur?.Parent;
         assert(
           markerParentAfterBlur?.IsA("GuiObject") && markerParentAfterBlur.Visible === false,
-          "Moving selection away from the trigger should hide forced tooltip content.",
+          "Moving focus away from the trigger should hide forced tooltip content.",
         );
 
-        GuiService.SelectedObject = undefined;
+        clearFocus();
       });
     });
   });
