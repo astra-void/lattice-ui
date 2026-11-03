@@ -108,4 +108,61 @@ describe("ComboboxRoot closed-state input sync", () => {
     // though the item itself is unmounted.
     expect(getContext().inputValue).toBe("Beta Option");
   });
+
+  it("moves the highlight over matching items and commits it", () => {
+    const onValueChange = vi.fn();
+    const onOpenChange = vi.fn();
+    const { getContext } = renderCombobox({ defaultOpen: true, onValueChange, onOpenChange });
+
+    act(() => {
+      getContext().registerItem(makeItem({ id: 1, value: "alpha", text: "Alpha" }));
+      getContext().registerItem(makeItem({ id: 2, value: "beta", text: "Beta" }));
+      getContext().registerItem(makeItem({ id: 3, value: "gamma", text: "Gamma" }));
+    });
+    expect(getContext().highlightedValue).toBeUndefined();
+
+    act(() => getContext().moveHighlight(1));
+    expect(getContext().highlightedValue).toBe("alpha");
+    act(() => getContext().moveHighlight(1));
+    expect(getContext().highlightedValue).toBe("beta");
+    act(() => getContext().moveHighlight(-1));
+    act(() => getContext().moveHighlight(-1));
+    expect(getContext().highlightedValue).toBe("gamma");
+
+    let committed = false;
+    act(() => {
+      committed = getContext().commitHighlight();
+    });
+
+    expect(committed).toBe(true);
+    expect(onValueChange).toHaveBeenLastCalledWith("gamma");
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("re-targets the highlight when filtering removes the highlighted item", () => {
+    const { getContext } = renderCombobox({ defaultOpen: true });
+
+    act(() => {
+      getContext().registerItem(makeItem({ id: 1, value: "alpha", text: "Alpha" }));
+      getContext().registerItem(makeItem({ id: 2, value: "beta", text: "Beta" }));
+    });
+    act(() => getContext().moveHighlight(1));
+    expect(getContext().highlightedValue).toBe("alpha");
+
+    act(() => getContext().setInputValue("be"));
+    expect(getContext().highlightedValue).toBe("beta");
+
+    act(() => getContext().setInputValue("zzz"));
+    expect(getContext().highlightedValue).toBeUndefined();
+    expect(getContext().commitHighlight()).toBe(false);
+  });
+
+  it("opens a closed list on the first highlight move", () => {
+    const onOpenChange = vi.fn();
+    const { getContext } = renderCombobox({ onOpenChange });
+
+    act(() => getContext().moveHighlight(1));
+
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+  });
 });

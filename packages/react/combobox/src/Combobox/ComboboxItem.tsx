@@ -26,8 +26,6 @@ export function ComboboxItem(props: ComboboxItemProps) {
   const textValueRef = React.useRef(textValue);
   const instanceRef = React.useRef<GuiObject>();
 
-  const [highlighted, setHighlighted] = React.useState(false);
-
   React.useEffect(() => {
     disabledRef.current = disabled;
   }, [disabled]);
@@ -74,55 +72,46 @@ export function ComboboxItem(props: ComboboxItemProps) {
     comboboxContext.setOpen(false);
   }, [comboboxContext, interactionDisabled, props.value]);
 
-  const handleInputBegan = React.useCallback(
-    (_rbx: GuiObject, inputObject: InputObject) => {
-      if (interactionDisabled) {
-        return;
-      }
-
-      const keyCode = inputObject.KeyCode;
-      if (keyCode !== Enum.KeyCode.Return && keyCode !== Enum.KeyCode.Space) {
-        return;
-      }
-
-      comboboxContext.setValue(props.value);
-      comboboxContext.setOpen(false);
-    },
-    [comboboxContext, interactionDisabled, props.value],
-  );
-
-  // Pointer and gamepad/keyboard focus both feed the same flag, so a controller-driven selection
-  // highlights exactly like a hover does.
-  const handlePointerEnter = React.useCallback(() => setHighlighted(true), []);
-  const handlePointerLeave = React.useCallback(() => setHighlighted(false), []);
+  // The highlight lives on the root (active-descendant model): the input keeps
+  // focus and moves it with the arrow keys, and pointer hover moves it too, so
+  // keyboard and mouse always agree on which item Enter would commit.
+  const setHighlightedValue = comboboxContext.setHighlightedValue;
+  const handlePointerEnter = React.useCallback(() => {
+    if (!interactionDisabled) {
+      setHighlightedValue(props.value);
+    }
+  }, [interactionDisabled, props.value, setHighlightedValue]);
+  const handlePointerLeave = React.useCallback(() => {
+    if (comboboxContext.highlightedValue === props.value) {
+      setHighlightedValue(undefined);
+    }
+  }, [comboboxContext.highlightedValue, props.value, setHighlightedValue]);
 
   const ownEvents = React.useMemo(
     () => ({
       Activated: handleSelect,
-      InputBegan: handleInputBegan,
       MouseEnter: handlePointerEnter,
       MouseLeave: handlePointerLeave,
-      SelectionGained: handlePointerEnter,
-      SelectionLost: handlePointerLeave,
     }),
-    [handleInputBegan, handleSelect, handlePointerEnter, handlePointerLeave],
+    [handleSelect, handlePointerEnter, handlePointerLeave],
   );
 
   // Highlight is tracked, never painted: consumers read it here and style however they like. An
   // item filtered out of the query is hidden, so it never reads as highlighted.
   const itemContextValue = React.useMemo(
     () => ({
-      highlighted: highlighted && !interactionDisabled,
+      highlighted: comboboxContext.highlightedValue === props.value && !interactionDisabled,
       disabled,
     }),
-    [disabled, highlighted, interactionDisabled],
+    [comboboxContext.highlightedValue, disabled, interactionDisabled, props.value],
   );
 
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !interactionDisabled,
     Event: composeEvents(passthrough.Event, ownEvents),
-    // The input keeps focus while the list is open, so items are never selection targets.
+    // The input keeps focus while the list is open (the highlight moves instead), so items are
+    // never selection targets.
     Selectable: false,
     // Filtering is what this part does: items that no longer match the query are hidden.
     Visible: itemQueryMatch,

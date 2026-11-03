@@ -1,6 +1,13 @@
 import { React, useControllableState } from "@lattice-ui/react-runtime";
 import { ComboboxContextProvider } from "./context";
-import { type ComboboxOption, defaultComboboxFilter, resolveForcedComboboxValue } from "./logic";
+import {
+  type ComboboxOption,
+  defaultComboboxFilter,
+  getNavigableComboboxValues,
+  moveComboboxHighlight,
+  resolveComboboxHighlight,
+  resolveForcedComboboxValue,
+} from "./logic";
 import type { ComboboxItemRegistration, ComboboxProps } from "./types";
 
 function getOrderedItems(items: Array<ComboboxItemRegistration>) {
@@ -211,6 +218,55 @@ export function ComboboxRoot(props: ComboboxProps) {
 
   const queryValue = open ? visibleQueryValue : inputValue;
 
+  const [highlightedValue, setHighlightedValue] = React.useState<string | undefined>();
+
+  const getNavigableValues = React.useCallback(
+    () => getNavigableComboboxValues(toOptions(resolveOrderedItems()), queryValue, filterFn),
+    [filterFn, queryValue, resolveOrderedItems],
+  );
+
+  // Keep the highlight on an enabled item that still matches the query; it is
+  // cleared while closed so each open starts from the selected item.
+  React.useEffect(() => {
+    if (!open) {
+      setHighlightedValue(undefined);
+      return;
+    }
+
+    setHighlightedValue((current) => resolveComboboxHighlight(getNavigableValues(), current, value, queryValue));
+  }, [getNavigableValues, open, queryValue, registryRevision, value]);
+
+  const moveHighlight = React.useCallback(
+    (step: -1 | 1) => {
+      if (disabled) {
+        return;
+      }
+
+      if (!open) {
+        // The first press opens the list; items register once the content mounts.
+        setOpen(true);
+        return;
+      }
+
+      setHighlightedValue((current) => moveComboboxHighlight(getNavigableValues(), current, step));
+    },
+    [disabled, getNavigableValues, open, setOpen],
+  );
+
+  const commitHighlight = React.useCallback(() => {
+    if (!open || highlightedValue === undefined) {
+      return false;
+    }
+
+    if (!getNavigableValues().includes(highlightedValue)) {
+      return false;
+    }
+
+    setValue(highlightedValue);
+    setOpen(false);
+    return true;
+  }, [getNavigableValues, highlightedValue, open, setOpen, setValue]);
+
   const contextValue = React.useMemo(
     () => ({
       open,
@@ -231,12 +287,19 @@ export function ComboboxRoot(props: ComboboxProps) {
       contentRef,
       registerItem,
       getItemText,
+      highlightedValue,
+      setHighlightedValue,
+      moveHighlight,
+      commitHighlight,
     }),
     [
+      commitHighlight,
       disabled,
       filterFn,
       getItemText,
+      highlightedValue,
       inputValue,
+      moveHighlight,
       open,
       queryValue,
       readOnly,

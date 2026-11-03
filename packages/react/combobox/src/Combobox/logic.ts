@@ -58,3 +58,50 @@ export function filterComboboxOptions(
 ) {
   return options.filter((option) => filterFn(option.textValue, query));
 }
+
+/** Values the highlight may land on: enabled options that match the current query. */
+export function getNavigableComboboxValues(
+  options: Array<ComboboxOption>,
+  query: string,
+  filterFn: ComboboxFilterFn = defaultComboboxFilter,
+) {
+  return options
+    .filter((option) => !option.disabled && filterFn(option.textValue, query))
+    .map((option) => option.value);
+}
+
+/** Steps the highlight through the navigable values, wrapping at either end. */
+export function moveComboboxHighlight(navigable: Array<string>, current: string | undefined, step: -1 | 1) {
+  const count = navigable.size();
+  if (count === 0) {
+    return undefined;
+  }
+
+  const currentIndex = current !== undefined ? navigable.indexOf(current) : -1;
+  if (currentIndex === -1) {
+    return step > 0 ? navigable[0] : navigable[count - 1];
+  }
+
+  return navigable[(currentIndex + step + count) % count];
+}
+
+/**
+ * Keeps the highlight on a navigable value as the query and item set change: the current highlight
+ * if it still matches, else the selected value, else the first match while the user is filtering.
+ */
+export function resolveComboboxHighlight(
+  navigable: Array<string>,
+  current: string | undefined,
+  selected: string | undefined,
+  query: string,
+) {
+  if (current !== undefined && navigable.includes(current)) {
+    return current;
+  }
+
+  if (selected !== undefined && navigable.includes(selected)) {
+    return selected;
+  }
+
+  return query !== "" ? navigable[0] : undefined;
+}

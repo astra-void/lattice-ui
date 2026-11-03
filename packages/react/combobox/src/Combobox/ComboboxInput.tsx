@@ -1,3 +1,4 @@
+import { useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useComboboxContext } from "./context";
 import type { ComboboxInputProps } from "./types";
@@ -40,6 +41,17 @@ export function ComboboxInput(props: ComboboxInputProps) {
   };
 
   const focusedConnectionRef = React.useRef<RBXScriptConnection>();
+  const [editing, setEditing] = React.useState(false);
+
+  // A focus node so the navigation controller can reach the field inside a
+  // FocusScope (e.g. a Dialog). While the text is being edited, arrows belong to
+  // the field (text cursor / list highlight), so the controller passes them through.
+  const focusRef = React.useRef<GuiObject>();
+  useFocusNode({
+    ref: focusRef,
+    disabled,
+    getCapturesDirectional: () => editing,
+  });
 
   const setInputRef = React.useCallback(
     (instance: Instance | undefined) => {
@@ -47,6 +59,7 @@ export function ComboboxInput(props: ComboboxInputProps) {
       const nextInput = toTextBox(instance);
 
       comboboxContext.inputRef.current = nextInput;
+      focusRef.current = nextInput;
 
       focusedConnectionRef.current?.Disconnect();
       focusedConnectionRef.current = undefined;
@@ -92,6 +105,39 @@ export function ComboboxInput(props: ComboboxInputProps) {
     [comboboxContext, disabled, readOnly],
   );
 
+  // Up/Down move the list highlight while the field keeps focus (the
+  // active-descendant pattern); the first press opens a closed list.
+  const handleInputBegan = React.useCallback(
+    (_rbx: TextBox, inputObject: InputObject) => {
+      if (disabled) {
+        return;
+      }
+
+      const keyCode = inputObject.KeyCode;
+      if (keyCode === Enum.KeyCode.Down) {
+        comboboxContext.moveHighlight(1);
+      } else if (keyCode === Enum.KeyCode.Up) {
+        comboboxContext.moveHighlight(-1);
+      }
+    },
+    [comboboxContext, disabled],
+  );
+
+  const handleFocused = React.useCallback(() => {
+    setEditing(true);
+  }, []);
+
+  // Enter releases the TextBox; when it does, commit the highlighted item.
+  const handleFocusLost = React.useCallback(
+    (_rbx: TextBox, enterPressed: boolean) => {
+      setEditing(false);
+      if (enterPressed && !disabled) {
+        comboboxContext.commitHighlight();
+      }
+    },
+    [comboboxContext, disabled],
+  );
+
   const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS);
   const behaviorProps = {
     Active: !disabled,
@@ -103,6 +149,11 @@ export function ComboboxInput(props: ComboboxInputProps) {
     TextEditable: !disabled && !readOnly,
     Change: composeEvents(passthrough.Change, {
       Text: handleTextChanged as Callback,
+    }),
+    Event: composeEvents(passthrough.Event, {
+      InputBegan: handleInputBegan as Callback,
+      Focused: handleFocused as Callback,
+      FocusLost: handleFocusLost as Callback,
     }),
     ref: composeRefs<Instance>(passthrough.ref as never, setInputRef),
   };

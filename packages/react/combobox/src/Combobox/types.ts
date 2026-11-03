@@ -38,6 +38,13 @@ export type ComboboxContextValue = {
   contentRef: React.MutableRefObject<GuiObject | undefined>;
   registerItem: (item: ComboboxItemRegistration) => () => void;
   getItemText: (value: string) => string | undefined;
+  /** The item keyboard/gamepad input would commit; the input keeps focus (active-descendant model). */
+  highlightedValue?: string;
+  setHighlightedValue: (value: string | undefined) => void;
+  /** Moves the highlight to the next (`1`) or previous (`-1`) enabled, matching item, wrapping. */
+  moveHighlight: (step: -1 | 1) => void;
+  /** Selects the highlighted item and closes; returns false when nothing is highlighted. */
+  commitHighlight: () => boolean;
 };
 
 /** Per-item state consumers read to style the item; the primitive never paints it. */
