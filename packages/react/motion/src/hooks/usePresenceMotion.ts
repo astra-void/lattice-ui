@@ -31,6 +31,12 @@ export function usePresenceMotionController<T extends Instance = Instance>(
   const ref = React.useRef<T>();
   const policy = useMotionPolicy();
   const onExitCompleteRef = React.useRef(options.onExitComplete);
+  // Consumers commonly build the config inline (`transition={createRecipe()}`),
+  // so its identity changes on every render. Read it through a ref: presence
+  // motion re-runs on semantic changes (present/ready/policy), never on a fresh
+  // config object, or a re-render mid-reveal would restart the reveal.
+  const configRef = React.useRef(options.config);
+  configRef.current = options.config;
   const motionHostRef = React.useRef<MotionHost>();
   const setupGenerationRef = React.useRef(0);
   const completedExitGenerationRef = React.useRef<number>();
@@ -102,6 +108,7 @@ export function usePresenceMotionController<T extends Instance = Instance>(
         return;
       }
 
+      const config = configRef.current;
       const instance = ref.current;
       if (!instance) {
         if (!options.present && phaseRef.current !== "exited") {
@@ -118,20 +125,23 @@ export function usePresenceMotionController<T extends Instance = Instance>(
 
       if (!motionHostRef.current || motionHostRef.current.instance !== instance) {
         motionHostRef.current?.stop();
-        motionHostRef.current = new MotionHost(instance, options.config.target);
+        motionHostRef.current = new MotionHost(instance, config.target);
         hasEnteredRef.current = false;
       } else {
-        motionHostRef.current.setTargetContract(options.config.target);
+        motionHostRef.current.setTargetContract(config.target);
       }
       const motion = motionHostRef.current;
 
       if (options.present) {
         completedExitGenerationRef.current = undefined;
-        const entering = !hasEnteredRef.current || phaseRef.current !== "visible";
+        // Only a real enter (first mount, or after a completed exit) starts from
+        // `initial`. A reveal already in flight, or a reopen mid-exit, is
+        // retargeted from the instance's current values instead of snapping back.
+        const entering = !hasEnteredRef.current;
 
         if (entering) {
           setPhase("mounted");
-          applyPresenceSnapshot(motion, options.config.initial, "initial", options.config.target);
+          applyPresenceSnapshot(motion, config.initial, "initial", config.target);
         }
 
         if (!ready) {
@@ -142,26 +152,20 @@ export function usePresenceMotionController<T extends Instance = Instance>(
         setPhase("ready");
         hasEnteredRef.current = true;
 
-        const revealTarget = options.config.reveal?.target ?? options.config.target;
+        const revealTarget = config.reveal?.target ?? config.target;
 
-        if (!options.config.reveal) {
+        if (!config.reveal) {
           completeReveal();
           return;
         }
 
         if (policy.disableAllMotion) {
-          applyPresenceSnapshot(motion, options.config.reveal.values, "reveal", revealTarget);
+          applyPresenceSnapshot(motion, config.reveal.values, "reveal", revealTarget);
           completeReveal();
           return;
         }
 
-        revealPresence(
-          motion,
-          options.config.reveal.values,
-          options.config.reveal.intent,
-          completeReveal,
-          revealTarget,
-        );
+        revealPresence(motion, config.reveal.values, config.reveal.intent, completeReveal, revealTarget);
         return;
       }
 
@@ -169,9 +173,9 @@ export function usePresenceMotionController<T extends Instance = Instance>(
         if (options.forceMount) {
           applyPresenceSnapshot(
             motion,
-            options.config.exit?.values ?? options.config.initial,
+            config.exit?.values ?? config.initial,
             "exited",
-            options.config.exit?.target ?? options.config.target,
+            config.exit?.target ?? config.target,
           );
         }
         return;
@@ -179,24 +183,24 @@ export function usePresenceMotionController<T extends Instance = Instance>(
 
       setPhase("exiting");
 
-      if (!options.config.exit) {
+      if (!config.exit) {
         completeExit();
         return;
       }
 
-      const exitTarget = options.config.exit.target ?? options.config.target;
+      const exitTarget = config.exit.target ?? config.target;
 
       if (policy.disableAllMotion) {
-        applyPresenceSnapshot(motion, options.config.exit.values, "exit", exitTarget);
+        applyPresenceSnapshot(motion, config.exit.values, "exit", exitTarget);
         completeExit();
         return;
       }
 
-      exitPresence(motion, options.config.exit.values, options.config.exit.intent, completeExit, exitTarget);
+      exitPresence(motion, config.exit.values, config.exit.intent, completeExit, exitTarget);
     };
 
     applyMotion();
-  }, [mounted, options.config, options.forceMount, options.present, policy.disableAllMotion, ready, setPhase]);
+  }, [mounted, options.forceMount, options.present, policy.disableAllMotion, ready, setPhase]);
 
   return {
     ref,

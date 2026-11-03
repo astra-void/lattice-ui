@@ -130,6 +130,67 @@ describe("motion hooks", () => {
     expect(runService.listenerCount()).toBe(0);
   });
 
+  it("does not restart the reveal when re-rendered with a fresh config object mid-reveal", () => {
+    const instance = {
+      Position: UDim2.fromOffset(0, 0),
+      BackgroundTransparency: 1,
+    };
+
+    const { rerender } = render(
+      <PresenceHarness config={createSurfaceRevealRecipe(8, 0.5)} instance={instance} present={true} />,
+    );
+
+    act(() => {
+      runService.step(0.05);
+    });
+    const midTransparency = instance.BackgroundTransparency;
+    expect(midTransparency).toBeLessThan(1);
+
+    rerender(<PresenceHarness config={createSurfaceRevealRecipe(8, 0.5)} instance={instance} present={true} />);
+
+    expect(instance.BackgroundTransparency).toBe(midTransparency);
+    expect(instance.Position).not.toEqual(UDim2.fromOffset(0, 8));
+
+    act(() => {
+      runService.step(1);
+    });
+
+    expect(instance.BackgroundTransparency).toBe(0);
+    expect(instance.Position).toEqual(UDim2.fromOffset(0, 0));
+  });
+
+  it("reverses from the current values when reopened mid-exit instead of snapping to initial", () => {
+    const instance = {
+      Position: UDim2.fromOffset(0, 0),
+      BackgroundTransparency: 1,
+    };
+    const config = createSurfaceRevealRecipe(8, 0.5);
+
+    const { rerender } = render(<PresenceHarness config={config} instance={instance} present={true} />);
+    act(() => {
+      runService.step(1);
+    });
+    expect(instance.BackgroundTransparency).toBe(0);
+
+    rerender(<PresenceHarness config={config} instance={instance} present={false} />);
+    act(() => {
+      runService.step(0.03);
+    });
+    const midTransparency = instance.BackgroundTransparency;
+    expect(midTransparency).toBeGreaterThan(0);
+    expect(midTransparency).toBeLessThan(1);
+
+    rerender(<PresenceHarness config={config} instance={instance} present={true} />);
+
+    expect(instance.BackgroundTransparency).toBe(midTransparency);
+
+    act(() => {
+      runService.step(1);
+    });
+
+    expect(instance.BackgroundTransparency).toBe(0);
+  });
+
   it("keeps exit mounted until hide motion completes and then fires onExitComplete", async () => {
     const instance = {
       Position: UDim2.fromOffset(0, 0),
