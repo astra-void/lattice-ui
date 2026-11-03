@@ -104,6 +104,19 @@ function moveHandlersToReactKeyedProps(props: SlotPropBag, key: "Event" | "Chang
   props[key] = undefined;
 }
 
+/**
+ * Prepares props for `React.cloneElement` onto a host element. `@rbxts/react` turns `Event` and
+ * `Change` tables into React-keyed props only inside `createElement`; `cloneElement` passes them
+ * through untouched, so a consumer's `Event={{ MouseEnter }}` would never connect. Handlers the
+ * child already carries are composed, child first — the same rule `Slot` applies.
+ */
+export function toCloneElementProps<T extends Record<string, unknown>>(props: T): T {
+  const out = { ...props } as unknown as SlotPropBag;
+  moveHandlersToReactKeyedProps(out, "Event");
+  moveHandlersToReactKeyedProps(out, "Change");
+  return out as unknown as T;
+}
+
 // Roblox attaches UI modifiers as children rather than as properties, so an `asChild` subtree can
 // legitimately hold more than one element: the consumer's GuiObject plus any number of these. A
 // Tailwind-style transform emits exactly that shape — `rounded-md` on an `asChild` part becomes a

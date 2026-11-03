@@ -177,6 +177,7 @@ vi.mock("@lattice-ui/react-runtime", async () => {
     getSlotChild: runtimeSlot.getSlotChild,
     mergeSlotModifiers: runtimeSlot.mergeSlotModifiers,
     resolveSlotChildren: runtimeSlot.resolveSlotChildren,
+    toCloneElementProps: runtimeSlot.toCloneElementProps,
     getPassthroughProps: runtimeProps.getPassthroughProps,
     toSlotProps: runtimeProps.toSlotProps,
     React: InstrumentedReact,

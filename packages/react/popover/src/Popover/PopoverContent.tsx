@@ -12,6 +12,7 @@ import {
   type PassthroughProps,
   React,
   resolveSlotChildren,
+  toCloneElementProps,
 } from "@lattice-ui/react-runtime";
 import { usePopoverContext } from "./context";
 import type { PopoverContentProps } from "./types";
@@ -141,13 +142,16 @@ function PopoverContentImpl(props: {
 
       // No neutral defaults here: the rendered element belongs to the consumer. AutomaticSize is
       // left to the child too, since the consumer owns that element's layout.
-      return React.cloneElement(child as React.ReactElement<GuiPropBag>, {
-        ...childProps,
-        children: mergeSlotModifiers(modifiers, childProps.children),
-        ...passthrough,
-        Visible: contentVisible,
-        ref: composeRefs<Instance>(childRef, contentRef),
-      });
+      return React.cloneElement(
+        child as React.ReactElement<GuiPropBag>,
+        toCloneElementProps({
+          ...childProps,
+          children: mergeSlotModifiers(modifiers, childProps.children),
+          ...passthrough,
+          Visible: contentVisible,
+          ref: composeRefs<Instance>(childRef, contentRef),
+        }),
+      );
     })()
   ) : (
     <frame {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps}>

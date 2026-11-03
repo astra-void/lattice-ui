@@ -13,6 +13,7 @@ import {
   type PassthroughProps,
   React,
   resolveSlotChildren,
+  toCloneElementProps,
 } from "@lattice-ui/react-runtime";
 import { useContextMenuContext } from "./context";
 import type { ContextMenuContentProps } from "./types";
@@ -155,14 +156,17 @@ function ContextMenuContentImpl(props: {
       return (
         <frame {...NEUTRAL_PROPS} {...contentBehaviorProps} ref={setContentRef as React.Ref<Frame>}>
           {/* No neutral defaults here: the rendered element belongs to the consumer. */}
-          {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
-            ...childProps,
-            children: mergeSlotModifiers(modifiers, childProps.children),
-            ...passthrough,
-            Position: ZERO_UDIM2,
-            Visible: contentVisible,
-            ref: composeRefs(childRef, (passthrough.ref ?? undefined) as never),
-          })}
+          {React.cloneElement(
+            child as React.ReactElement<GuiPropBag>,
+            toCloneElementProps({
+              ...childProps,
+              children: mergeSlotModifiers(modifiers, childProps.children),
+              ...passthrough,
+              Position: ZERO_UDIM2,
+              Visible: contentVisible,
+              ref: composeRefs(childRef, (passthrough.ref ?? undefined) as never),
+            }),
+          )}
         </frame>
       );
     })()

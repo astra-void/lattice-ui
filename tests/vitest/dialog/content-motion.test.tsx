@@ -110,6 +110,7 @@ vi.mock("@lattice-ui/react-runtime", async () => {
     composeRefs: runtimeRefs.composeRefs,
     mergeSlotModifiers: runtimeSlot.mergeSlotModifiers,
     resolveSlotChildren: runtimeSlot.resolveSlotChildren,
+    toCloneElementProps: runtimeSlot.toCloneElementProps,
     React,
     Slot,
     getElementRef,

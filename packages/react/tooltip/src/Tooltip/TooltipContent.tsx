@@ -11,6 +11,7 @@ import {
   type PassthroughProps,
   React,
   resolveSlotChildren,
+  toCloneElementProps,
 } from "@lattice-ui/react-runtime";
 import { useTooltipContext } from "./context";
 import type { TooltipContentProps } from "./types";
@@ -157,15 +158,18 @@ function TooltipContentImpl(props: {
       >
         <frame {...wrapperProps}>
           <frame {...NEUTRAL_PROPS} {...contentBehaviorProps} ref={setContentRef as React.Ref<Frame>}>
-            {React.cloneElement(child as React.ReactElement<GuiPropBag>, {
-              // No neutral defaults here: the rendered element belongs to the consumer.
-              ...childProps,
-              children: mergeSlotModifiers(modifiers, childProps.children),
-              ...passthrough,
-              Position: UDim2.fromOffset(0, 0),
-              Visible: contentVisible,
-              ref: composeRefs(childRef),
-            })}
+            {React.cloneElement(
+              child as React.ReactElement<GuiPropBag>,
+              toCloneElementProps({
+                // No neutral defaults here: the rendered element belongs to the consumer.
+                ...childProps,
+                children: mergeSlotModifiers(modifiers, childProps.children),
+                ...passthrough,
+                Position: UDim2.fromOffset(0, 0),
+                Visible: contentVisible,
+                ref: composeRefs(childRef),
+              }),
+            )}
           </frame>
         </frame>
       </DismissableLayer>

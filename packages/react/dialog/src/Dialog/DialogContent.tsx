@@ -10,6 +10,7 @@ import {
   type PassthroughProps,
   React,
   resolveSlotChildren,
+  toCloneElementProps,
 } from "@lattice-ui/react-runtime";
 import { useDialogContext } from "./context";
 import type { DialogContentProps } from "./types";
@@ -250,13 +251,16 @@ function DialogContentImpl(props: {
 
       // No neutral defaults here: the rendered element belongs to the consumer. Size stays owned,
       // because it is the layer geometry this element inherits by standing in for the host.
-      return React.cloneElement(slotChild as React.ReactElement<GuiPropBag>, {
-        ...slotChildProps,
-        children: mergeSlotModifiers(slot?.modifiers ?? [], renderedChildren.content),
-        ...passthrough,
-        ...behaviorProps,
-        ref: composeRefs<Instance>(childRef, hostRef as never),
-      });
+      return React.cloneElement(
+        slotChild as React.ReactElement<GuiPropBag>,
+        toCloneElementProps({
+          ...slotChildProps,
+          children: mergeSlotModifiers(slot?.modifiers ?? [], renderedChildren.content),
+          ...passthrough,
+          ...behaviorProps,
+          ref: composeRefs<Instance>(childRef, hostRef as never),
+        }),
+      );
     })()
   ) : (
     <frame {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={hostRef}>

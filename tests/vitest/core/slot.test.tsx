@@ -10,7 +10,7 @@
 import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Slot } from "../../../packages/react/runtime/src/slot";
+import { Slot, toCloneElementProps } from "../../../packages/react/runtime/src/slot";
 import { getElementRef, toRef } from "../../../packages/react/runtime/src/refs";
 
 const EVENT_ACTIVATED = "__REACT_EVENT_Activated";
@@ -134,5 +134,29 @@ describe("ref sentinel filtering", () => {
     } as unknown as React.ReactElement;
 
     expect(getElementRef(elementLike)).toBe(propsRef);
+  });
+});
+
+describe("toCloneElementProps", () => {
+  it("converts Event/Change tables to React keys and composes with the child's own handler", () => {
+    const calls: string[] = [];
+    const childHandler = () => calls.push("child");
+    const consumerHandler = () => calls.push("consumer");
+    const sizeHandler = vi.fn();
+
+    const props = toCloneElementProps({
+      [EVENT_ACTIVATED]: childHandler,
+      Event: { Activated: consumerHandler },
+      Change: { AbsoluteSize: sizeHandler },
+      Visible: true,
+    });
+
+    expect(props.Event).toBeUndefined();
+    expect(props.Change).toBeUndefined();
+    expect(props.Visible).toBe(true);
+    expect(props[CHANGE_ABSOLUTE_SIZE]).toBe(sizeHandler);
+
+    (props[EVENT_ACTIVATED] as () => void)();
+    expect(calls).toEqual(["child", "consumer"]);
   });
 });
