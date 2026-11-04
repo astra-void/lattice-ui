@@ -1,4 +1,4 @@
-import type { MotionIntent, MotionTone } from "../core/types";
+import type { LoopMotionRepeat, MotionIntent, MotionTone } from "../core/types";
 
 export type MotionCurve = "linear" | "accelerate" | "decelerate" | "standard";
 export type TimedStepName = "reveal" | "exit" | "accent" | "recover";
@@ -117,5 +117,17 @@ export function resolveFeedbackDriver(step: "accent" | "recover", intent?: Motio
     duration,
     curve: step === "accent" ? (tone === "expressive" ? "standard" : "decelerate") : "accelerate",
     precision: 0.0005,
+  };
+}
+
+export type LoopDriverConfig = {
+  duration: number;
+  repeat: LoopMotionRepeat;
+};
+
+export function resolveLoopDriver(duration: number, repeatMode?: LoopMotionRepeat): LoopDriverConfig {
+  return {
+    duration: math.max(0, duration),
+    repeat: repeatMode ?? "restart",
   };
 }

@@ -1,7 +1,6 @@
+import { type LoopMotionConfig, useLoopMotion } from "@lattice-ui/react-motion";
 import { composeRefs, getPassthroughProps, getSlotChild, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import type { SpinnerProps } from "./types";
-
-const RunService = game.GetService("RunService");
 
 const OWN_PROPS = ["spinning", "speedDegPerSecond", "asChild", "children"] as const;
 
@@ -11,45 +10,28 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-function toGuiObject(instance: Instance | undefined) {
-  if (!instance?.IsA("GuiObject")) {
-    return undefined;
-  }
+// One full turn per cycle; a negative speed turns the other way.
+function createSpinLoop(speedDegPerSecond: number): LoopMotionConfig {
+  const direction = speedDegPerSecond < 0 ? -1 : 1;
 
-  return instance;
+  return {
+    from: { Rotation: 0 },
+    to: { Rotation: 360 * direction },
+    duration: speedDegPerSecond === 0 ? 0 : 360 / math.abs(speedDegPerSecond),
+  };
 }
 
 export function Spinner(props: SpinnerProps) {
   const spinning = props.spinning ?? true;
   const speedDegPerSecond = props.speedDegPerSecond ?? 180;
 
-  const spinnerRef = React.useRef<GuiObject>();
-
-  const setSpinnerRef = React.useCallback((instance: Instance | undefined) => {
-    spinnerRef.current = toGuiObject(instance);
-  }, []);
-
-  React.useEffect(() => {
-    if (!spinning) {
-      return;
-    }
-
-    const connection = RunService.Heartbeat.Connect((deltaSeconds) => {
-      const spinner = spinnerRef.current;
-      if (!spinner) {
-        return;
-      }
-
-      spinner.Rotation += speedDegPerSecond * deltaSeconds;
-    });
-
-    return () => {
-      connection.Disconnect();
-    };
-  }, [spinning, speedDegPerSecond]);
+  // Rotation is driven by the motion runtime, so it follows the motion policy: with motion
+  // disabled or the platform's reduced-motion setting on, the spinner rests unrotated.
+  const spinLoop = React.useMemo(() => createSpinLoop(speedDegPerSecond), [speedDegPerSecond]);
+  const motionRef = useLoopMotion<GuiObject>(spinning && speedDegPerSecond !== 0, spinLoop);
 
   const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
-  const ref = composeRefs<GuiObject>(passthrough.ref as never, setSpinnerRef);
+  const ref = composeRefs<GuiObject>(passthrough.ref as never, motionRef);
   const behaviorProps = {
     Visible: spinning,
   };

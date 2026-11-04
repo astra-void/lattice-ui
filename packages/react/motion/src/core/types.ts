@@ -1,6 +1,6 @@
 export type MotionTempo = "instant" | "swift" | "steady" | "gentle";
 export type MotionTone = "calm" | "responsive" | "expressive";
-export type MotionDomain = "presence" | "response" | "feedback";
+export type MotionDomain = "presence" | "response" | "feedback" | "loop";
 export type MotionTargetRole = "appearance" | "offset-wrapper" | "size-wrapper" | "layout" | "custom";
 export type PresenceMotionPhase = "exited" | "mounted" | "preparing" | "ready" | "visible" | "exiting";
 
@@ -50,6 +50,25 @@ export interface FeedbackEffectConfig {
   target?: MotionTargetContract;
   accent?: MotionIntent;
   recover?: MotionIntent;
+}
+
+export type LoopMotionRepeat = "restart" | "reverse";
+
+/**
+ * A continuous property loop, e.g. a spinner's `Rotation` from 0 to 360.
+ *
+ * Each cycle interpolates linearly from `from` to `to` over `duration` seconds. `"restart"` (the
+ * default) begins every cycle at `from` again, which is seamless for wrap-around values such as a
+ * full turn; `"reverse"` plays every other cycle back from `to` to `from`. A property missing from
+ * `from` loops from the value the instance has when the loop starts.
+ */
+export interface LoopMotionConfig {
+  target?: MotionTargetContract;
+  from: MotionProperties;
+  to: MotionProperties;
+  /** Seconds per cycle. A cycle of zero or less does not loop. */
+  duration: number;
+  repeat?: LoopMotionRepeat;
 }
 
 export type MotionStateTargets = {

@@ -10,7 +10,13 @@ import {
 } from "../targets/instance";
 import { reportMotionDiagnostic } from "./diagnostics";
 import { scheduleHost, unscheduleHost } from "./scheduler";
-import { applyMotionCurve, type FollowDriverConfig, type TimedDriverConfig, type TimedStepName } from "./spec";
+import {
+  applyMotionCurve,
+  type FollowDriverConfig,
+  type LoopDriverConfig,
+  type TimedDriverConfig,
+  type TimedStepName,
+} from "./spec";
 
 type MotionTrack =
   | {
@@ -38,6 +44,19 @@ type MotionTrack =
       applied: unknown;
       elapsed: number;
       config: FollowDriverConfig;
+    }
+  | {
+      mode: "loop";
+      key: string;
+      domain: MotionDomain;
+      phase: string;
+      targetContract?: MotionTargetContract;
+      from: unknown;
+      target: unknown;
+      current: unknown;
+      applied: unknown;
+      elapsed: number;
+      config: LoopDriverConfig;
     };
 
 function isCollectionEmpty(collection: Map<unknown, unknown>) {
@@ -171,6 +190,35 @@ export class MotionHost {
     }
   }
 
+  /**
+   * Loops each property in `to` from its `from` value (or its current value) until the track is
+   * replaced or the host stops. Re-running with the same endpoints keeps the running cycle, and a
+   * new cycle length keeps the current phase, so a fresh config object never makes it jump.
+   */
+  public runLoop(
+    domain: MotionDomain,
+    from: MotionProperties | undefined,
+    to: MotionProperties | undefined,
+    config: LoopDriverConfig,
+    targetContract?: MotionTargetContract,
+  ) {
+    if (!to) {
+      return;
+    }
+
+    for (const [key, value] of pairs(to)) {
+      const fromValue = from?.[key];
+      this.setLoopTrack(
+        domain,
+        key,
+        fromValue === undefined ? undefined : this.resolveMotionValue(domain, "loop", key, fromValue, targetContract),
+        this.resolveMotionValue(domain, "loop", key, value, targetContract),
+        config,
+        targetContract,
+      );
+    }
+  }
+
   public stop() {
     if (!isCollectionEmpty(this.tracks)) {
       this.tracks.clear();
@@ -196,6 +244,16 @@ export class MotionHost {
           nextValue = track.target;
           finished = true;
         }
+      } else if (track.mode === "loop") {
+        // Loops never finish on their own. Elapsed time wraps at the full cycle so it stays small
+        // however long the loop runs.
+        const duration = track.config.duration;
+        const cycle = track.config.repeat === "reverse" ? duration * 2 : duration;
+        track.elapsed = (track.elapsed + dt) % cycle;
+        const progress = track.elapsed / duration;
+        const alpha = progress > 1 ? 2 - progress : progress;
+
+        nextValue = interpolateMotionValue(track.from, track.target, alpha, this.createContext(track, track.key));
       } else {
         track.elapsed += dt;
         const alpha = track.config.halfLife <= 0 ? 1 : 1 - math.pow(2, -dt / track.config.halfLife);
@@ -371,6 +429,69 @@ export class MotionHost {
 
     scheduleHost(this);
     return true;
+  }
+
+  private setLoopTrack(
+    domain: MotionDomain,
+    key: string,
+    from: unknown,
+    target: unknown,
+    config: LoopDriverConfig,
+    targetContract?: MotionTargetContract,
+  ) {
+    const existing = this.tracks.get(key);
+
+    if (
+      existing?.mode === "loop" &&
+      existing.config.repeat === config.repeat &&
+      areMotionValuesEqual(existing.target, target) &&
+      (from === undefined || areMotionValuesEqual(existing.from, from))
+    ) {
+      // Same loop: keep the running cycle. A new cycle length rescales elapsed time so the
+      // current phase is preserved instead of jumping.
+      if (existing.config.duration !== config.duration && config.duration > 0) {
+        existing.elapsed = (existing.elapsed / existing.config.duration) * config.duration;
+        existing.config = config;
+      }
+      existing.targetContract = targetContract ?? this.targetContract;
+      return;
+    }
+
+    this.reportConflict(existing, domain, "loop", key, targetContract);
+
+    const context = this.createOperationContext(domain, "loop", key, targetContract);
+    const current = existing?.applied ?? readMotionProperty(this.instance, key, context);
+    const start = from ?? current;
+
+    if (start === undefined) {
+      return;
+    }
+
+    if (!canInterpolateMotionValue(start, target)) {
+      interpolateMotionValue(start, target, 0.5, context);
+      return;
+    }
+
+    if (config.duration <= 0) {
+      this.setImmediate(domain, "loop", key, start, targetContract);
+      return;
+    }
+
+    this.tracks.set(key, {
+      mode: "loop",
+      key,
+      domain,
+      phase: "loop",
+      targetContract: targetContract ?? this.targetContract,
+      from: start,
+      target,
+      current: start,
+      applied: current,
+      elapsed: 0,
+      config,
+    });
+
+    scheduleHost(this);
   }
 
   private setFollowTrack(

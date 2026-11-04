@@ -2,6 +2,7 @@ export * from "./core/policy";
 export * from "./core/tokens";
 export * from "./core/types";
 export * from "./hooks/useFeedbackEffect";
+export * from "./hooks/useLoopMotion";
 export * from "./hooks/usePresenceMotion";
 export * from "./hooks/useResponseMotion";
 export * from "./recipes/feedback";
