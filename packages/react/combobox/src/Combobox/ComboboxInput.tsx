@@ -153,7 +153,9 @@ export function ComboboxInput(props: ComboboxInputProps) {
     Active: !disabled,
     // Roblox clears a TextBox on focus by default, which would wipe the controlled query.
     ClearTextOnFocus: false,
-    PlaceholderText: props.placeholder ?? "",
+    // Only when `placeholder` is given, so a passthrough or asChild `PlaceholderText` is not
+    // overwritten with "" (behavior props spread last).
+    ...(props.placeholder !== undefined ? { PlaceholderText: props.placeholder } : {}),
     Selectable: !disabled,
     Text: comboboxContext.inputValue,
     TextEditable: !disabled && !readOnly,
