@@ -5,13 +5,9 @@ import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { usePresenceMotionController, createToastRevealRecipe, defaultRecipe, slotPropsLog } = vi.hoisted(() => {
-  const defaultRecipe = { initial: { BackgroundTransparency: 1 } };
-
+const { usePresenceMotionController, slotPropsLog } = vi.hoisted(() => {
   return {
     usePresenceMotionController: vi.fn(),
-    createToastRevealRecipe: vi.fn(() => defaultRecipe),
-    defaultRecipe,
     slotPropsLog: [] as Array<Record<string, unknown>>,
   };
 });
@@ -49,7 +45,6 @@ vi.mock("@lattice-ui/react-runtime", async () => {
 
 vi.mock("@lattice-ui/react-motion", () => ({
   usePresenceMotionController,
-  createToastRevealRecipe,
 }));
 
 import { ToastRoot } from "../../../packages/react/toast/src/Toast/ToastRoot";
@@ -97,8 +92,8 @@ describe("ToastRoot motion regressions", () => {
     });
   });
 
-  // Unstyled primitives ship no default animation: the toast reveal recipe animated hardcoded
-  // offsets/transparency, so it is the consumer's to supply via `transition`.
+  // Unstyled primitives ship no default animation: a reveal animates appearance, so it is the
+  // consumer's to supply via `transition`.
   it("uses no motion when no transition is given", () => {
     usePresenceMotionController.mockReturnValue(controller());
 
@@ -108,7 +103,6 @@ describe("ToastRoot motion regressions", () => {
       </ToastRoot>,
     );
 
-    expect(createToastRevealRecipe).not.toHaveBeenCalled();
     expect(usePresenceMotionController).toHaveBeenCalledWith(expect.objectContaining({ config: {} }));
   });
 

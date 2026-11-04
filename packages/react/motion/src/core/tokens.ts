@@ -1,10 +1,11 @@
 /**
  * Canonical presence-motion tokens.
  *
- * Every built-in enter/exit recipe derives its default duration and travel
- * distance from these values so that components share one coherent motion feel.
- * Override per call site only for a deliberate, documented exception — not to
- * reintroduce ad-hoc magic numbers.
+ * The package ships no enter/exit recipes: what a surface looks like once it
+ * has revealed (its transparency, colour or travel) is the consumer's to supply
+ * through `transition`. These values are timing and distance defaults a
+ * consumer-owned `PresenceMotionConfig` can draw on so separate surfaces share
+ * one coherent motion feel.
  */
 
 /** Reveal (enter) durations, in seconds. Exit is always {@link motionExitDuration}. */

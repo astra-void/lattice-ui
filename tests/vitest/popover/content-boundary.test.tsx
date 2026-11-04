@@ -107,16 +107,6 @@ vi.mock("@lattice-ui/react-layer", () => ({
 }));
 
 vi.mock("@lattice-ui/react-motion", () => ({
-  createCanvasGroupPopperEntranceRecipe: () => ({
-    initial: {},
-    reveal: { values: {}, intent: {} },
-    exit: { values: {}, intent: {} },
-  }),
-  createPopperEntranceRecipe: () => ({
-    initial: {},
-    reveal: { values: {}, intent: {} },
-    exit: { values: {}, intent: {} },
-  }),
   usePresenceMotionController: () => ({
     ref: { current: undefined },
     phase: "visible",

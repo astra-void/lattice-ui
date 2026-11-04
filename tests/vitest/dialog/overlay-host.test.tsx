@@ -45,7 +45,6 @@ vi.mock("@lattice-ui/react-runtime", async () => {
 });
 
 vi.mock("@lattice-ui/react-motion", () => ({
-  createOverlayFadeRecipe: () => ({}),
   usePresenceMotionController: () => ({
     mounted: true,
     phase: "visible",

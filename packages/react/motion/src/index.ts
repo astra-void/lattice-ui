@@ -5,7 +5,6 @@ export * from "./hooks/useFeedbackEffect";
 export * from "./hooks/usePresenceMotion";
 export * from "./hooks/useResponseMotion";
 export * from "./recipes/feedback";
-export * from "./recipes/presence";
 export * from "./recipes/response";
 export * from "./targets/instance";
 export * from "./targets/offset";

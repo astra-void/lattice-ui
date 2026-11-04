@@ -235,7 +235,6 @@ vi.mock("@lattice-ui/react-popper", () => ({
   usePopper: () => mockPopperResult,
 }));
 
-import { createPopperEntranceRecipe } from "@lattice-ui/react-motion";
 import { Popover } from "@lattice-ui/react-popover";
 
 beforeEach(() => {
@@ -251,6 +250,13 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const bottomEntrance = {
+  target: { role: "offset-wrapper" },
+  initial: { Position: UDim2.fromOffset(0, 10) },
+  reveal: { values: { Position: UDim2.fromOffset(0, 0) }, intent: { duration: 0.12, tempo: "swift", tone: "responsive" } },
+  exit: { values: { Position: UDim2.fromOffset(0, 10) }, intent: { duration: 0.1, tempo: "swift", tone: "calm" } },
+};
+
 describe("Popover.Content motion host", () => {
   // The primitive no longer ships a default entrance recipe (it animated hardcoded offsets), so the
   // transition is passed explicitly here. What is under test is unchanged: positioning stays on the
@@ -258,7 +264,7 @@ describe("Popover.Content motion host", () => {
   it("keeps positioning on the outer host and animates asChild content relative to it", () => {
     const { getByTestId } = render(
       <Popover.Root open={true}>
-        <Popover.Content asChild transition={createPopperEntranceRecipe("bottom")}>
+        <Popover.Content asChild transition={bottomEntrance}>
           <div data-testid="content" />
         </Popover.Content>
       </Popover.Root>,

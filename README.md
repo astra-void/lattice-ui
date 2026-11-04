@@ -95,17 +95,32 @@ Beyond those, geometry is owned wherever the primitive computes it:
 
 ### What a `transition` animates
 
-No part renders a `CanvasGroup`. Presence hosts — every `Content` part and `Toast.Root` — are plain `Frame`s, so a `transition` animates that one instance and nothing below it: a fade moves the host's own `BackgroundTransparency`, and children keep whatever transparency you gave them. `createSurfaceRevealRecipe` and `createPopperEntranceRecipe` are the recipes written against that host.
+No part renders a `CanvasGroup`. Presence hosts — every `Content` part and `Toast.Root` — are plain `Frame`s, so a `transition` animates that one instance and nothing below it: a fade moves the host's own `BackgroundTransparency`, and children keep whatever transparency you gave them.
 
-To fade a whole subtree as a single composited layer, slot your own `canvasgroup` with `asChild` and animate it with `createCanvasGroupRevealRecipe` or `createCanvasGroupPopperEntranceRecipe`:
+`@lattice-ui/react-motion` ships no enter/exit recipes, because where a reveal ends (how opaque, what colour, how far it travels) is appearance. A `transition` is a plain `PresenceMotionConfig` you write against the host you styled; `motionTargets` declares which properties it may write, and the timing tokens (`motionDuration`, `motionExitDuration`, `motionOffset`) and `createPlacementOffset` are there to keep separate surfaces consistent:
 
 ```tsx
-<Popover.Content asChild transition={createCanvasGroupPopperEntranceRecipe("bottom")}>
-  <canvasgroup BackgroundColor3={Color3.fromRGB(24, 24, 27)} />
-</Popover.Content>
+const offset = createPlacementOffset("bottom", motionOffset.popper);
+const popoverEntrance: PresenceMotionConfig = {
+  // Motion may only write Position on a target that declares it owns it.
+  target: motionTargets.offsetWrapper("popover entrance"),
+  initial: { Position: offset, BackgroundTransparency: 1 },
+  reveal: {
+    values: { Position: UDim2.fromOffset(0, 0), BackgroundTransparency: 0.1 },
+    intent: { duration: motionDuration.reveal, tempo: "swift", tone: "responsive" },
+  },
+  exit: {
+    values: { Position: offset, BackgroundTransparency: 1 },
+    intent: { duration: motionExitDuration(motionDuration.reveal), tempo: "swift", tone: "calm" },
+  },
+};
+
+<Popover.Content transition={popoverEntrance} BackgroundColor3={Color3.fromRGB(24, 24, 27)} />;
 ```
 
-`GroupTransparency` and `GroupColor3` only exist on a `CanvasGroup`. Passing them to a part is a compile error, and a `transition` that animates them on a `Frame` host is skipped silently rather than reported — so migrate those recipes to `BackgroundTransparency` rather than waiting for a diagnostic.
+To fade a whole subtree as a single composited layer, slot your own `canvasgroup` with `asChild` and animate `GroupTransparency` in the same way.
+
+`GroupTransparency` and `GroupColor3` only exist on a `CanvasGroup`. Passing them to a part is a compile error, and a `transition` that animates them on a `Frame` host is skipped silently rather than reported — so move those transitions to `BackgroundTransparency` rather than waiting for a diagnostic.
 
 ## Development
 

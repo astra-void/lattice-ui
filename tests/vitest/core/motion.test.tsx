@@ -55,11 +55,33 @@ vi.mock("@lattice-ui/react-runtime", () => ({
   React: require("react"),
 }));
 
-import { createSurfaceRevealRecipe, MotionProvider, usePresenceMotion, useResponseMotion } from "@lattice-ui/react-motion";
+import {
+  MotionProvider,
+  motionTargets,
+  type PresenceMotionConfig,
+  usePresenceMotion,
+  useResponseMotion,
+} from "@lattice-ui/react-motion";
+
+// The package ships no presence recipes, so the tests build the consumer-owned config they animate.
+function createSurfaceReveal(offsetY: number, duration: number): PresenceMotionConfig {
+  return {
+    target: motionTargets.offsetWrapper("surface reveal"),
+    initial: { Position: UDim2.fromOffset(0, offsetY), BackgroundTransparency: 1 },
+    reveal: {
+      values: { Position: UDim2.fromOffset(0, 0), BackgroundTransparency: 0 },
+      intent: { duration, tempo: "swift", tone: "calm" },
+    },
+    exit: {
+      values: { Position: UDim2.fromOffset(0, offsetY), BackgroundTransparency: 1 },
+      intent: { duration: duration * 0.8, tempo: "swift", tone: "calm" },
+    },
+  };
+}
 
 function PresenceHarness(props: {
   present: boolean;
-  config: ReturnType<typeof createSurfaceRevealRecipe>;
+  config: PresenceMotionConfig;
   instance: Record<string, unknown>;
   onExitComplete?: () => void;
 }) {
@@ -113,7 +135,7 @@ describe("motion hooks", () => {
       Position: UDim2.fromOffset(0, 0),
       BackgroundTransparency: 1,
     };
-    const config = createSurfaceRevealRecipe(8, 0.12);
+    const config = createSurfaceReveal(8, 0.12);
 
     render(<PresenceHarness config={config} instance={instance} present={true} />);
 
@@ -137,7 +159,7 @@ describe("motion hooks", () => {
     };
 
     const { rerender } = render(
-      <PresenceHarness config={createSurfaceRevealRecipe(8, 0.5)} instance={instance} present={true} />,
+      <PresenceHarness config={createSurfaceReveal(8, 0.5)} instance={instance} present={true} />,
     );
 
     act(() => {
@@ -146,7 +168,7 @@ describe("motion hooks", () => {
     const midTransparency = instance.BackgroundTransparency;
     expect(midTransparency).toBeLessThan(1);
 
-    rerender(<PresenceHarness config={createSurfaceRevealRecipe(8, 0.5)} instance={instance} present={true} />);
+    rerender(<PresenceHarness config={createSurfaceReveal(8, 0.5)} instance={instance} present={true} />);
 
     expect(instance.BackgroundTransparency).toBe(midTransparency);
     expect(instance.Position).not.toEqual(UDim2.fromOffset(0, 8));
@@ -164,7 +186,7 @@ describe("motion hooks", () => {
       Position: UDim2.fromOffset(0, 0),
       BackgroundTransparency: 1,
     };
-    const config = createSurfaceRevealRecipe(8, 0.5);
+    const config = createSurfaceReveal(8, 0.5);
 
     const { rerender } = render(<PresenceHarness config={config} instance={instance} present={true} />);
     act(() => {
@@ -196,7 +218,7 @@ describe("motion hooks", () => {
       Position: UDim2.fromOffset(0, 0),
       BackgroundTransparency: 1,
     };
-    const config = createSurfaceRevealRecipe(6, 0.1);
+    const config = createSurfaceReveal(6, 0.1);
     const onExitComplete = vi.fn();
 
     const { rerender } = render(
