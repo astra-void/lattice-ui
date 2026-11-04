@@ -10,6 +10,17 @@ export type RecipeSelection<Variants extends RecipeVariants<GuiPropRecord>> = Pa
   Record<keyof Variants & string, string>
 >;
 
+/**
+ * Merge order, last wins (`Event`/`Change` handlers are composed, not replaced):
+ * 1. `base`
+ * 2. the selected value of each variant group, in ascending (byte-wise) order of group name
+ * 3. matching `compoundVariants`, in array order
+ *
+ * Group order is by name, not declaration order, because Luau tables keep no
+ * key order. When two groups set the same property (say `density` and `size`
+ * both set `TextSize`), the later name (`size`) wins; use a compound variant to
+ * pick a different winner for a specific combination.
+ */
 export type RecipeConfig<Props extends GuiPropRecord, Variants extends RecipeVariants<Props>> = {
   base?: Sx<Props>;
   variants?: Variants;
@@ -57,8 +68,20 @@ export function createRecipe<Props extends GuiPropRecord, Variants extends Recip
       const variantsRecord = variants as Record<string, Record<string, Sx<Props>>>;
       const resolvedRecord = resolvedSelection as Record<string, string | undefined>;
 
-      for (const [rawVariantName, rawVariantMap] of pairs(variantsRecord)) {
-        if (!typeIs(rawVariantName, "string") || !typeIs(rawVariantMap, "table")) {
+      // `pairs` has no defined order for string keys in Luau, so merge groups in
+      // sorted name order. Without this, two groups that set the same property
+      // would resolve differently from run to run.
+      const variantNames: string[] = [];
+      for (const [rawVariantName] of pairs(variantsRecord)) {
+        if (typeIs(rawVariantName, "string")) {
+          variantNames.push(rawVariantName);
+        }
+      }
+      variantNames.sort();
+
+      for (const rawVariantName of variantNames) {
+        const rawVariantMap = variantsRecord[rawVariantName];
+        if (!typeIs(rawVariantMap, "table")) {
           continue;
         }
 
