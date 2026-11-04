@@ -369,7 +369,7 @@ export async function runCreateCommand(
     ...Object.values(CORE_VERSION_PACKAGES),
     ...(lintEnabled ? Object.values(LINT_VERSION_PACKAGES) : []),
   ]);
-  const versions = applyPinnedVersions(await resolveLatestVersionsFn(packagesToResolve));
+  const versions = applyPinnedVersions(await resolveLatestVersionsFn(packagesToResolve, { cwd: input.cwd }));
   versionSpinner.succeed("Package versions resolved.");
 
   const templateDir = path.resolve(__dirname, "../../templates/init");

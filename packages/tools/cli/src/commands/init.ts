@@ -535,7 +535,7 @@ export async function runInitCommand(
     ...(lintEnabled ? Object.values(LINT_VERSION_PACKAGES) : []),
     ...resolveLegacyReplacements(currentManifest),
   ]);
-  const versions = applyPinnedVersions(await resolveLatestVersionsFn(packagesToResolve));
+  const versions = applyPinnedVersions(await resolveLatestVersionsFn(packagesToResolve, { cwd: projectRoot }));
   const replacements = buildVersionReplacements(inferProjectName(projectRoot, currentManifest), versions);
 
   const templateDir = path.resolve(__dirname, "../../templates/init");

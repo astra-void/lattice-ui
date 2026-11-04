@@ -87,6 +87,12 @@ open the directory, package names open their npm page.
 | `NO_HYPERLINK` | Disable clickable links. |
 | `FORCE_HYPERLINK` | Force links on (`0` disables). Off automatically when `CI` is set. |
 
+`create` and `init` look up the latest package versions on the registry your project is configured
+for: `npm_config_registry`, then `.npmrc` files from the project upwards, then `~/.npmrc`
+(including scoped `@scope:registry` entries and their `_authToken`). A failed lookup names the URL
+it tried. Node's built-in `fetch` does not use `HTTPS_PROXY` on its own; on Node versions that
+support it, set `NODE_USE_ENV_PROXY=1` behind a proxy.
+
 The package manager's own output is buffered while a spinner runs and printed only if the
 command fails. Pass `--verbose` to stream it live instead.
 
