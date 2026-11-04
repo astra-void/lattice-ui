@@ -1,5 +1,6 @@
 import * as os from "node:os";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 import type { PackageManagerResolutionSource } from "./pm/detect";
 import type { PackageManagerName } from "./pm/types";
 import { hyperlink } from "./style";
@@ -39,7 +40,9 @@ export function shortenPath(target: string, cwd = process.cwd(), home = os.homed
 
 /** A shortened, clickable path. Terminals without OSC 8 support see the label alone. */
 export function linkPath(target: string, cwd?: string): string {
-  return hyperlink(shortenPath(target, cwd), `file://${target}`);
+  // `pathToFileURL` percent-encodes spaces and `#`, and yields `file:///C:/…` for a Windows path,
+  // where `file://${target}` would read the drive letter as a host.
+  return hyperlink(shortenPath(target, cwd), pathToFileURL(target).href);
 }
 
 /**

@@ -13,6 +13,7 @@ import type { PackageManagerName } from "../core/pm/types";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { writePackageJson } from "../core/project/writePackageJson";
 import { type PromptRuntime, promptConfirm, promptInput, promptSelect } from "../core/prompt";
+import { toSpawnInvocation } from "../core/spawnCommand";
 
 export interface CreateCommandInput {
   cwd: string;
@@ -175,10 +176,11 @@ async function discardTargetRoot(targetRoot: string, createdTargetRoot: boolean)
 
 async function runProcess(command: string, args: string[], cwd: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, {
+    const invocation = toSpawnInvocation(command, args);
+    const child = spawn(invocation.command, invocation.args, {
       cwd,
       stdio: "inherit",
-      shell: process.platform === "win32",
+      shell: invocation.shell,
     });
 
     child.on("error", (error) => {

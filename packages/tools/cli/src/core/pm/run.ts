@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { packageManagerFailedError } from "../errors";
+import { toSpawnInvocation } from "../spawnCommand";
 
 export interface RunProcessOptions {
   cwd: string;
@@ -28,10 +29,11 @@ function tail(output: string): string[] {
 
 export function runProcess(command: string, args: string[], options: RunProcessOptions): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const invocation = toSpawnInvocation(command, args);
+    const child = spawn(invocation.command, invocation.args, {
       cwd: options.cwd,
       stdio: options.stream ? "inherit" : ["ignore", "pipe", "pipe"],
-      shell: process.platform === "win32",
+      shell: invocation.shell,
     });
 
     let captured = "";

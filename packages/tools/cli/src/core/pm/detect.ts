@@ -7,6 +7,7 @@ import { findWorkspaceRoot } from "../project/findRoot";
 import { readPackageJson } from "../project/readPackageJson";
 import type { PromptRuntime } from "../prompt";
 import { promptSelect } from "../prompt";
+import { toSpawnInvocation } from "../spawnCommand";
 import { type PackageManagerPin, readPackageManagerPins } from "./devEngines";
 import { createNpmPackageManager } from "./npm";
 import { createPnpmPackageManager } from "./pnpm";
@@ -83,10 +84,11 @@ async function isPackageManagerInstalled(managerName: PackageManagerName): Promi
     // Probe from a neutral directory, never the user's project: pnpm 10+ reads the
     // project's `devEngines.packageManager` pin, so probing there can install a
     // pinned pnpm (writing a lockfile) or refuse to run when another manager is pinned.
-    const child = spawn(managerName, ["--version"], {
+    const invocation = toSpawnInvocation(managerName, ["--version"]);
+    const child = spawn(invocation.command, invocation.args, {
       cwd: os.tmpdir(),
       stdio: "ignore",
-      shell: process.platform === "win32",
+      shell: invocation.shell,
     });
 
     child.on("error", () => {
