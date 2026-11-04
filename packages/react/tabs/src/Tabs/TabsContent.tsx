@@ -68,8 +68,14 @@ function TabsContentImpl(props: {
     );
   }
 
+  // The name pairs the panel with its trigger, so it is wiring rather than appearance.
+  const behaviorProps = {
+    Name: contentName,
+    Visible: visible,
+  };
+
   return (
-    <frame {...NEUTRAL_PROPS} {...passthrough} Visible={visible} ref={ref}>
+    <frame {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref}>
       {props.children}
     </frame>
   );
