@@ -8,5 +8,6 @@ export const Progress = {
   Spinner,
 } as const;
 
-export { clampProgressValue, resolveProgressRatio } from "./Progress/math";
+export { useProgressContext } from "./Progress/context";
+export { clampProgressValue, INDETERMINATE_PROGRESS_RATIO, resolveProgressRatio } from "./Progress/math";
 export type { ProgressContextValue, ProgressIndicatorProps, ProgressProps, SpinnerProps } from "./Progress/types";

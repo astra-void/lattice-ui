@@ -30,7 +30,8 @@ const CHILD_FILL_PROPS = {
 export function ProgressIndicator(props: ProgressIndicatorProps) {
   const progressContext = useProgressContext();
 
-  const widthScale = progressContext.indeterminate ? 0.35 : progressContext.ratio;
+  // `ratio` already resolves the indeterminate fill, so the rendered width and the context agree.
+  const widthScale = progressContext.ratio;
 
   const motionRef = useResponseMotion<Frame>(
     true,
