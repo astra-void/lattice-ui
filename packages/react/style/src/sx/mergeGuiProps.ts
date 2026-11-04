@@ -54,6 +54,14 @@ function mergeHandlerTables(tables: Array<GuiHandlerTable | undefined>): GuiHand
   return next(out)[0] !== undefined ? out : undefined;
 }
 
+/**
+ * Merges GUI prop layers. Plain props: later layers win (`user` over `variant`
+ * over `base`). `Event` and `Change` tables are composed per key instead, so
+ * every layer's handler runs, in `base`, `variant`, `user` order.
+ *
+ * Components in `@lattice-ui/react-style` and `@lattice-ui/react-system` call
+ * this as `(defaults, sx, directProps)`, so direct props win over `sx`.
+ */
 export function mergeGuiProps<Props extends GuiPropRecord>(
   base?: Partial<Props>,
   variant?: Partial<Props>,

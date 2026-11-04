@@ -8,6 +8,10 @@ type StyleProps = React.Attributes & Record<string, unknown>;
 
 export type SurfaceProps = {
   tone?: SurfaceToken;
+  /**
+   * Theme-aware style props. Direct props win over `sx` when both set the same
+   * property; `Event`/`Change` handlers from both are composed (`sx` first).
+   */
   sx?: Sx<StyleProps>;
   children?: React.ReactNode;
 } & StyleProps;

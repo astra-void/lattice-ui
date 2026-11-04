@@ -8,6 +8,10 @@ type StyleProps = React.Attributes & Record<string, unknown>;
 
 export type TextProps = {
   asChild?: boolean;
+  /**
+   * Theme-aware style props. Direct props win over `sx` when both set the same
+   * property; `Event`/`Change` handlers from both are composed (`sx` first).
+   */
   sx?: Sx<StyleProps>;
   /**
    * Opt-in single-line overflow handling. When `true`, text that does not fit
@@ -37,9 +41,9 @@ export const Text = React.forwardRef<Instance, TextProps>((props, ref) => {
   }
 
   const { theme } = useTheme();
-  // `truncate` is a shorthand default; explicit props/sx still override it.
+  // `truncate` is a shorthand default; `sx` and then direct props override it.
   const baseProps: StyleProps = truncate === true ? { TextTruncate: Enum.TextTruncate.AtEnd } : {};
-  const mergedProps = mergeGuiProps(baseProps, restProps, resolveSx(sx, theme));
+  const mergedProps = mergeGuiProps(baseProps, resolveSx(sx, theme), restProps);
 
   if (asChild) {
     if (!React.isValidElement(children)) {

@@ -26,6 +26,10 @@ export type StackProps = {
   align?: StackAlign;
   justify?: StackJustify;
   autoSize?: StackAutoSize;
+  /**
+   * Theme-aware style props. Direct props win over `sx` when both set the same
+   * property; `Event`/`Change` handlers from both are composed (`sx` first).
+   */
   sx?: Sx<StyleProps>;
   children?: React.ReactNode;
 } & StackPadding &
@@ -41,6 +45,10 @@ export type GridProps = {
   rowGap?: SpaceValue;
   columnGap?: SpaceValue;
   autoSize?: StackAutoSize;
+  /**
+   * Theme-aware style props. Direct props win over `sx` when both set the same
+   * property; `Event`/`Change` handlers from both are composed (`sx` first).
+   */
   sx?: Sx<StyleProps>;
   children?: React.ReactNode;
 } & StackPadding &
