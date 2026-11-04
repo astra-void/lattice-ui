@@ -8,7 +8,8 @@ export function resolveThumbSize(viewportSize: number, contentSize: number, trac
   }
 
   const proportionalSize = (viewportSize / contentSize) * trackSize;
-  return math.clamp(proportionalSize, minimumThumbSize, trackSize);
+  // A track shorter than the minimum caps the thumb at the track; Luau's math.clamp errors when min > max.
+  return math.clamp(proportionalSize, math.min(minimumThumbSize, trackSize), trackSize);
 }
 
 export function resolveThumbOffset(

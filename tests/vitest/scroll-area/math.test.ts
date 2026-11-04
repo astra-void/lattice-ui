@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   resolveCanvasPositionFromThumbOffset,
   resolveCanvasPositionFromTrackPosition,
@@ -12,6 +12,15 @@ import {
 describe("scroll-area math", () => {
   it("computes thumb size proportionally", () => {
     expect(resolveThumbSize(100, 400, 100, 10)).toBe(25);
+  });
+
+  it("caps the minimum thumb at a track shorter than the minimum", () => {
+    // Luau's math.clamp errors when min > max, so the minimum must not exceed the track.
+    const clamp = vi.spyOn(math, "clamp");
+    expect(resolveThumbSize(200, 10000, 10)).toBe(10);
+    for (const [, min, max] of clamp.mock.calls) {
+      expect(min).toBeLessThanOrEqual(max);
+    }
   });
 
   it("computes thumb offset from canvas position", () => {

@@ -54,8 +54,54 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
   const thumbRef = React.useRef<GuiObject>();
   const dragStateRef = React.useRef<DragState>();
 
+  // The thumb's Size/Position are scales of its track (its parent), so they are computed against the
+  // track's measured length, the same length the drag and track-click math read. The viewport length
+  // is only a fallback until the track has been laid out.
+  const [thumbInstance, setThumbInstance] = React.useState<GuiObject>();
+  const [measuredTrackSize, setMeasuredTrackSize] = React.useState(0);
+
+  // The composed ref changes identity every render, so the thumb is picked up here rather than by
+  // setting state from the ref callback.
+  React.useEffect(() => {
+    if (thumbRef.current !== thumbInstance) {
+      setThumbInstance(thumbRef.current);
+    }
+  });
+
+  React.useEffect(() => {
+    const thumb = thumbInstance;
+    if (!thumb) {
+      setMeasuredTrackSize(0);
+      return;
+    }
+
+    let sizeConnection: RBXScriptConnection | undefined;
+    const bindTrack = () => {
+      sizeConnection?.Disconnect();
+      sizeConnection = undefined;
+
+      const track = thumb.Parent;
+      if (!track?.IsA("GuiObject")) {
+        setMeasuredTrackSize(0);
+        return;
+      }
+
+      const measure = () => setMeasuredTrackSize(vertical ? track.AbsoluteSize.Y : track.AbsoluteSize.X);
+      sizeConnection = track.GetPropertyChangedSignal("AbsoluteSize").Connect(measure);
+      measure();
+    };
+
+    bindTrack();
+    const parentConnection = thumb.GetPropertyChangedSignal("Parent").Connect(bindTrack);
+
+    return () => {
+      parentConnection.Disconnect();
+      sizeConnection?.Disconnect();
+    };
+  }, [thumbInstance, vertical]);
+
   const axisMetrics = vertical ? scrollAreaContext.vertical : scrollAreaContext.horizontal;
-  const trackSize = math.max(1, axisMetrics.viewportSize);
+  const trackSize = math.max(1, measuredTrackSize > 0 ? measuredTrackSize : axisMetrics.viewportSize);
   const thumbSize = resolveThumbSize(axisMetrics.viewportSize, axisMetrics.contentSize, trackSize);
   const thumbOffset = resolveThumbOffset(
     axisMetrics.scrollPosition,
