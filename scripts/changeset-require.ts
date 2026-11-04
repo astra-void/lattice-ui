@@ -18,8 +18,8 @@ const files = fs
   .filter((fileName) => fileName !== "README.md");
 
 if (files.length === 0) {
-  console.log("No pending changesets.");
-  process.exit(0);
+  console.error('No pending changesets. Add one with "pnpm changeset:add" before preparing a release.');
+  process.exit(1);
 }
 
 console.log(`Pending changesets: ${files.length}`);
