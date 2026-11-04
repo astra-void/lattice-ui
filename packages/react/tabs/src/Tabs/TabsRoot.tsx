@@ -27,10 +27,22 @@ function resolveNextValue(
     return selectedEnabled.value;
   }
 
-  const selected = orderedTriggers.find((trigger) => trigger.value === currentValue);
-  const anchorOrder = selected?.order ?? fallbackOrder;
-  if (anchorOrder !== undefined) {
-    const after = enabled.find((trigger) => trigger.order > anchorOrder);
+  // A selected trigger that is still mounted but disabled hands off to the next enabled one in tree
+  // order. One that unmounted has no tree position left, so its registration order is the anchor.
+  const selectedIndex = orderedTriggers.findIndex((trigger) => trigger.value === currentValue);
+  if (selectedIndex >= 0) {
+    for (let index = selectedIndex + 1; index < orderedTriggers.size(); index++) {
+      const trigger = orderedTriggers[index];
+      if (!trigger.getDisabled()) {
+        return trigger.value;
+      }
+    }
+
+    return enabled[0]?.value;
+  }
+
+  if (fallbackOrder !== undefined) {
+    const after = enabled.find((trigger) => trigger.order > fallbackOrder);
     if (after) {
       return after.value;
     }

@@ -6,8 +6,9 @@ export type FocusRestoreSnapshot = {
 export type NavDirection = "up" | "down" | "left" | "right";
 
 // How a scope resolves a directional move between the nodes it owns.
-// - "ordered": step through nodes by registration order along the scope's
-//   primary axis (roving); cross-axis directions escape to the parent scope.
+// - "ordered": step through nodes in tree order (sibling LayoutOrder, mount
+//   order as the tiebreak) along the scope's primary axis (roving); cross-axis
+//   directions escape to the parent scope.
 // - "spatial": pick the nearest node in the pressed direction by geometry.
 export type NavStrategy = "ordered" | "spatial";
 

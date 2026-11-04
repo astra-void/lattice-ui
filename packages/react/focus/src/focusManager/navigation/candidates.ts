@@ -1,11 +1,13 @@
 import { isInsideRoot } from "../guiObject";
 import { resolveFocusNodeRecord } from "../resolution";
 import { focusNodes } from "../state";
+import { sortByTreeOrder } from "../treeOrder";
 import type { ResolvedFocusNode, ResolveNodeOptions } from "../types";
 
 // Collects every currently-resolvable focus node (visible, enabled, inside the
-// active trap boundary), sorted by registration order. This is the candidate
-// pool shared by ordered stepping, spatial resolution, and Tab traversal.
+// active trap boundary), sorted by tree order (sibling LayoutOrder, registration
+// order as the tiebreak; see treeOrder.ts). This is the candidate pool shared by
+// ordered stepping, spatial resolution, and Tab traversal.
 export function getResolvableNodes(options?: ResolveNodeOptions): Array<ResolvedFocusNode> {
   const resolved: Array<ResolvedFocusNode> = [];
   for (const record of focusNodes) {
@@ -15,8 +17,11 @@ export function getResolvableNodes(options?: ResolveNodeOptions): Array<Resolved
     }
   }
 
-  resolved.sort((left, right) => left.record.order < right.record.order);
-  return resolved;
+  return sortByTreeOrder(
+    resolved,
+    (node) => node.guiObject,
+    (node) => node.record.order,
+  );
 }
 
 // Narrows an already-collected pool to one scope root. Resolving a move walks

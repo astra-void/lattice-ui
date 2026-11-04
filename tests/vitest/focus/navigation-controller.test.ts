@@ -21,6 +21,9 @@ function createGuiObject(name: string, parent?: MockGuiObject, selectable = true
     IsA(className: string) {
       return className === "GuiObject" || className === "Instance";
     },
+    FindFirstChildWhichIsA() {
+      return undefined;
+    },
     IsDescendantOf(ancestor: Instance) {
       let current = this.Parent;
       while (current !== undefined) {

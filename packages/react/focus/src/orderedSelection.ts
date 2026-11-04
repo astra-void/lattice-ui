@@ -1,5 +1,6 @@
 import type { React } from "@lattice-ui/react-runtime";
 import { focusGuiObject as focusManagedGuiObject, getFocusedGuiObject } from "./focusManager";
+import { sortByTreeOrder } from "./focusManager/treeOrder";
 
 export type OrderedSelectionDirection = -1 | 1;
 
@@ -24,10 +25,14 @@ function isEntryVisible(entry: OrderedSelectionEntry) {
   return target.Visible;
 }
 
+// Tree order (sibling LayoutOrder, `order` as the tiebreak), so an entry that
+// mounts later still sorts where the layout shows it.
 export function getOrderedSelectionEntries<T extends OrderedSelectionEntry>(entries: Array<T>): Array<T> {
-  const ordered = [...entries];
-  ordered.sort((left, right) => left.order < right.order);
-  return ordered;
+  return sortByTreeOrder(
+    entries,
+    (entry) => entry.ref.current,
+    (entry) => entry.order,
+  );
 }
 
 export function isOrderedSelectionEntryAvailable(entry: OrderedSelectionEntry) {

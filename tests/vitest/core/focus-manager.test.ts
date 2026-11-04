@@ -42,6 +42,9 @@ function createGuiObject(
     IsA(className: string) {
       return className === "GuiObject" || className === "Instance";
     },
+    FindFirstChildWhichIsA() {
+      return undefined;
+    },
     IsDescendantOf(ancestor: Instance) {
       let currentParent = this.Parent;
       while (currentParent !== undefined) {
@@ -401,6 +404,80 @@ describe("focusManager", () => {
     // Stepping backward from the first node wraps to the last.
     harness.focusManager.focusGuiObject(first);
     expect(harness.focusManager.resolveNavigation({ type: "move", direction: "up" })?.guiObject).toBe(third);
+  });
+
+  it("steps through an ordered scope in layout order when an item mounts later", async () => {
+    const harness = await createFocusManagerHarness();
+    const scopeRoot = createGuiObject("ordered-root", {
+      parent: harness.mountRoot,
+      selectable: false,
+    });
+    // Roblox appends a late-parented child, so GetChildren order matches mount
+    // order; only LayoutOrder says the late item sits in the middle.
+    const first = Object.assign(createGuiObject("first", { parent: scopeRoot }), { LayoutOrder: 1 });
+    const third = Object.assign(createGuiObject("third", { parent: scopeRoot }), { LayoutOrder: 3 });
+
+    const scopeId = harness.focusManager.createFocusScopeId();
+    harness.focusManager.registerFocusScope(scopeId, {
+      getRoot: () => scopeRoot,
+      getActive: () => true,
+      getTrapped: () => false,
+      getNavStrategy: () => "ordered",
+      getNavOrientation: () => "vertical",
+    });
+
+    const firstId = harness.focusManager.registerFocusNode({ scopeId, getGuiObject: () => first });
+    harness.focusManager.registerFocusNode({ scopeId, getGuiObject: () => third });
+
+    const second = Object.assign(createGuiObject("second", { parent: scopeRoot }), { LayoutOrder: 2 });
+    harness.focusManager.registerFocusNode({ scopeId, getGuiObject: () => second });
+
+    harness.focusManager.focusNode(firstId);
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "down" })?.guiObject).toBe(second);
+    harness.focusManager.focusGuiObject(second);
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "down" })?.guiObject).toBe(third);
+    harness.focusManager.focusGuiObject(third);
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "up" })?.guiObject).toBe(second);
+
+    // Tab follows the same order.
+    harness.focusManager.focusGuiObject(first);
+    expect(harness.focusManager.resolveNavigation({ type: "next" })?.guiObject).toBe(second);
+  });
+
+  it("keeps mount order for tied siblings and sorts by Name under a SortOrder.Name layout", async () => {
+    const harness = await createFocusManagerHarness();
+    Object.assign(Enum as unknown as Record<string, unknown>, { SortOrder: { Name: "Name", LayoutOrder: "LayoutOrder" } });
+
+    const tiedRoot = createGuiObject("tied-root", { parent: harness.mountRoot, selectable: false });
+    // Each item sits in its own wrapper, so the tie is broken per subtree.
+    const tiedA = createGuiObject("b", { parent: createGuiObject("wrap-a", { parent: tiedRoot, selectable: false }) });
+    const tiedB = createGuiObject("a", { parent: createGuiObject("wrap-b", { parent: tiedRoot, selectable: false }) });
+
+    const namedRoot = createGuiObject("named-root", { parent: harness.mountRoot, selectable: false });
+    Object.assign(namedRoot, { FindFirstChildWhichIsA: () => ({ SortOrder: "Name" }) });
+    const namedB = createGuiObject("b", { parent: namedRoot });
+    const namedA = createGuiObject("a", { parent: namedRoot });
+
+    const register = (root: MockGuiObject, items: MockGuiObject[]) => {
+      const scopeId = harness.focusManager.createFocusScopeId();
+      harness.focusManager.registerFocusScope(scopeId, {
+        getRoot: () => root,
+        getActive: () => true,
+        getTrapped: () => false,
+        getNavStrategy: () => "ordered",
+        getNavOrientation: () => "vertical",
+      });
+      return items.map((item) => harness.focusManager.registerFocusNode({ scopeId, getGuiObject: () => item }));
+    };
+
+    const [tiedAId] = register(tiedRoot, [tiedA, tiedB]);
+    register(namedRoot, [namedB, namedA]);
+
+    harness.focusManager.focusNode(tiedAId);
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "down" })?.guiObject).toBe(tiedB);
+
+    harness.focusManager.focusGuiObject(namedA);
+    expect(harness.focusManager.resolveNavigation({ type: "move", direction: "down" })?.guiObject).toBe(namedB);
   });
 
   it("prefers actual tree order over registration order for trapped scope fallback", async () => {

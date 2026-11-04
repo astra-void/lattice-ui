@@ -16,8 +16,14 @@ Focus management primitives for Roblox UI.
 - `GuiService.SelectedObject` is a render-only mirror; external changes are not
   read back into focus state.
 - Resolution is hybrid. A scope's `navStrategy` selects between:
-  - `"ordered"`: step through nodes by registration order along
-    `navOrientation`; cross-axis moves escape to the parent scope.
+  - `"ordered"`: step through nodes in tree order along `navOrientation`;
+    cross-axis moves escape to the parent scope.
+- Tree order is what a `UIListLayout` / `UIGridLayout` shows: siblings sort by
+  `LayoutOrder` (or by `Name` under a layout with `SortOrder.Name`), and siblings
+  that tie keep mount order. An item that mounts later therefore sorts where it
+  is laid out, not at the end, as long as its `LayoutOrder` (or `Name`) places
+  it. Tab traversal and the roving helpers in `orderedSelection` (used by Tabs and
+  RadioGroup) use the same order.
   - `"spatial"` (default): pick the nearest node in the pressed direction by
     geometry.
 - Focus nodes can consume a direction themselves via `getCapturesDirectional`

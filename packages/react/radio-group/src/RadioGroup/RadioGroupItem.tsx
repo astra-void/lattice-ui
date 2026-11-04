@@ -41,15 +41,18 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     itemOrderRef.current = nextItemOrder;
   }
 
+  // Depend on `registerItem` rather than the whole context: the context object changes on every
+  // value change, and re-registering every item per selection costs 2N root state updates.
+  const registerItem = radioGroupContext.registerItem;
   React.useEffect(() => {
-    return radioGroupContext.registerItem({
+    return registerItem({
       id: itemIdRef.current,
       value: props.value,
       order: itemOrderRef.current,
       ref: itemRef,
       getDisabled: () => disabledRef.current,
     });
-  }, [props.value, radioGroupContext]);
+  }, [props.value, registerItem]);
 
   useFocusNode({
     ref: itemRef,

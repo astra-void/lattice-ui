@@ -46,15 +46,18 @@ export function TabsTrigger(props: TabsTriggerProps) {
     triggerOrderRef.current = nextTriggerOrder;
   }
 
+  // Depend on `registerTrigger` rather than the whole context: the context object changes on every
+  // value change, and re-registering every trigger per selection costs 2N root state updates.
+  const registerTrigger = tabsContext.registerTrigger;
   React.useEffect(() => {
-    return tabsContext.registerTrigger({
+    return registerTrigger({
       id: triggerIdRef.current,
       value: props.value,
       ref: triggerRef,
       order: triggerOrderRef.current,
       getDisabled: () => disabledRef.current,
     });
-  }, [disabled, props.value, tabsContext]);
+  }, [disabled, props.value, registerTrigger]);
 
   useFocusNode({
     ref: triggerRef,

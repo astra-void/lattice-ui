@@ -170,6 +170,30 @@ if (removableArrayProto.remove === undefined) {
   });
 }
 
+// roblox-ts compiles `array.sort(compare)` to Luau's table.sort, whose
+// comparator answers "does left go before right" with a boolean. JS reads a
+// boolean result as 0/1, which does not sort, so translate boolean answers into
+// the -1/0/1 JS expects. Numeric comparators pass through unchanged.
+const nativeSort = Array.prototype.sort;
+Object.defineProperty(Array.prototype, "sort", {
+  value(this: Array<unknown>, compare?: (left: unknown, right: unknown) => unknown) {
+    if (compare === undefined) {
+      return nativeSort.call(this);
+    }
+
+    return nativeSort.call(this, (left, right) => {
+      const result = compare(left, right);
+      if (typeof result !== "boolean") {
+        return result as number;
+      }
+
+      return result ? -1 : compare(right, left) ? 1 : 0;
+    });
+  },
+  configurable: true,
+  writable: true,
+});
+
 const stringProto = String.prototype as unknown as { size?: () => number };
 if (stringProto.size === undefined) {
   Object.defineProperty(stringProto, "size", {
