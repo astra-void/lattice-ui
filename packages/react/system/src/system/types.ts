@@ -18,7 +18,12 @@ export type SystemThemeContextValue = {
   /** Raw theme before density transforms. Writes must target this base theme. */
   baseTheme: Theme;
   density: DensityToken;
-  /** Use this to update the raw/base theme source. */
+  /**
+   * Use this to update the raw/base theme source. `useTheme().setTheme` from
+   * `@lattice-ui/react-style` writes here too inside a system-managed tree, so
+   * pass a base theme (for example derived from `baseTheme`), not the
+   * density-resolved `theme`, or density is applied twice.
+   */
   setBaseTheme: (next: Theme) => void;
   setDensity: (next: DensityToken) => void;
 };

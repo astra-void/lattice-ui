@@ -47,10 +47,14 @@ export function DensityProvider(props: DensityProviderProps) {
     [baseTheme, densityValue, resolvedTheme, setBaseTheme, setDensity],
   );
 
+  // ThemeProvider is controlled here and ignores its own writes, so forward
+  // `useTheme().setTheme` to the base theme; density is re-applied on read.
   return (
     <DensityContextProvider value={densityContextValue}>
       <SystemThemeContextProvider value={systemThemeContextValue}>
-        <ThemeProvider theme={resolvedTheme}>{props.children}</ThemeProvider>
+        <ThemeProvider onThemeChange={setBaseTheme} theme={resolvedTheme}>
+          {props.children}
+        </ThemeProvider>
       </SystemThemeContextProvider>
     </DensityContextProvider>
   );
