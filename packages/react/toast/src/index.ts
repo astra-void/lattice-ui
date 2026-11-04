@@ -14,10 +14,26 @@ export const Toast = {
   Description: ToastDescription,
   Action: ToastAction,
   Close: ToastClose,
-} as const;
+} as const satisfies {
+  Provider: typeof ToastProvider;
+  Viewport: typeof ToastViewport;
+  Root: typeof ToastRoot;
+  Title: typeof ToastTitle;
+  Description: typeof ToastDescription;
+  Action: typeof ToastAction;
+  Close: typeof ToastClose;
+};
 
 export type { ToastRecord } from "./Toast/queue";
-export { dequeueToast, enqueueToast, getVisibleToasts, pruneExpiredToasts } from "./Toast/queue";
+export {
+  clearToasts,
+  dequeueToast,
+  enqueueToast,
+  finalizeToast,
+  getVisibleToasts,
+  pruneExpiredToasts,
+  TOAST_EXIT_TIMEOUT_MS,
+} from "./Toast/queue";
 export { useToast } from "./Toast/ToastProvider";
 export type {
   ToastActionProps,
@@ -30,3 +46,4 @@ export type {
   ToastTitleProps,
   ToastViewportProps,
 } from "./Toast/types";
+export { ToastAction, ToastClose, ToastDescription, ToastProvider, ToastRoot, ToastTitle, ToastViewport };

@@ -10,7 +10,13 @@ export const Tooltip = {
   Trigger: TooltipTrigger,
   Portal: TooltipPortal,
   Content: TooltipContent,
-} as const;
+} as const satisfies {
+  Provider: typeof TooltipProvider;
+  Root: typeof TooltipRoot;
+  Trigger: typeof TooltipTrigger;
+  Portal: typeof TooltipPortal;
+  Content: typeof TooltipContent;
+};
 
 export type {
   TooltipContentProps,
@@ -19,3 +25,4 @@ export type {
   TooltipProviderProps,
   TooltipTriggerProps,
 } from "./Tooltip/types";
+export { TooltipContent, TooltipPortal, TooltipProvider, TooltipRoot, TooltipTrigger };

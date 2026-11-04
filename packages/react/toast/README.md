@@ -14,8 +14,13 @@ Headless toast primitives for Roblox UI with queue-based visibility and automati
 - `Toast.Close`
 - `useToast`
 
+Each part is also exported by name: `ToastProvider`, `ToastViewport`, `ToastRoot`, `ToastTitle`,
+`ToastDescription`, `ToastAction`, `ToastClose`.
+
 ## Notes
 
 - Imperative API is provided through `useToast()`.
 - Default toast timing is `durationMs=4000` with `maxVisible=3`.
-- Queue helpers are exported for deterministic unit testing.
+- Queue helpers are exported for deterministic unit testing: `enqueueToast`, `dequeueToast`,
+  `getVisibleToasts`, `clearToasts`, `finalizeToast`, `pruneExpiredToasts`, `TOAST_EXIT_TIMEOUT_MS`
+  and the `ToastRecord` type.
