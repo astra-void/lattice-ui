@@ -1,4 +1,9 @@
 import {
+  findOrderedSelectionEntry,
+  focusOrderedSelectionEntry,
+  getRelativeOrderedSelectionEntry,
+} from "@lattice-ui/react-focus";
+import {
   getPassthroughProps,
   getSlotChild,
   React,
@@ -7,9 +12,18 @@ import {
   useControllableState,
 } from "@lattice-ui/react-runtime";
 import { ToggleGroupContextProvider } from "./context";
-import type { ToggleGroupProps } from "./types";
+import type { ToggleGroupItemRegistration, ToggleGroupProps } from "./types";
 
-const OWN_PROPS = ["type", "value", "defaultValue", "onValueChange", "disabled", "asChild", "children"] as const;
+const OWN_PROPS = [
+  "type",
+  "value",
+  "defaultValue",
+  "onValueChange",
+  "disabled",
+  "orientation",
+  "asChild",
+  "children",
+] as const;
 
 // Roblox instance defaults are themselves a look: a bare `frame` renders an opaque grey box.
 // Neutralize only that, and leave every real appearance decision to the consumer. Passthrough props
@@ -45,6 +59,7 @@ function normalizeMultiple(value: unknown): Array<string> {
 
 export function ToggleGroupRoot(props: ToggleGroupProps) {
   const disabled = props.disabled === true;
+  const orientation = props.orientation ?? "horizontal";
 
   const [singleValue, setSingleValueState] = useControllableState<string | undefined>({
     value: props.type === "single" ? props.value : undefined,
@@ -98,14 +113,41 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
     [disabled, multipleValue, props.type, setMultipleValueState, setSingleValueState, singleValue],
   );
 
+  // Roving only reads the registry when an arrow is pressed, so registration needs no re-render.
+  const itemEntriesRef = React.useRef<Array<ToggleGroupItemRegistration>>([]);
+
+  const registerItem = React.useCallback((item: ToggleGroupItemRegistration) => {
+    itemEntriesRef.current.push(item);
+
+    return () => {
+      const index = itemEntriesRef.current.findIndex((entry) => entry.id === item.id);
+      if (index >= 0) {
+        itemEntriesRef.current.remove(index);
+      }
+    };
+  }, []);
+
+  const moveFocus = React.useCallback((fromValue: string, direction: -1 | 1) => {
+    const currentItem = findOrderedSelectionEntry(itemEntriesRef.current, (item) => item.value === fromValue);
+    const nextItem = getRelativeOrderedSelectionEntry(itemEntriesRef.current, currentItem?.id, direction);
+    if (!nextItem) {
+      return;
+    }
+
+    focusOrderedSelectionEntry(nextItem);
+  }, []);
+
   const contextValue = React.useMemo(
     () => ({
       type: props.type,
       disabled,
+      orientation,
       isPressed,
       toggleValue,
+      registerItem,
+      moveFocus,
     }),
-    [disabled, isPressed, props.type, toggleValue],
+    [disabled, isPressed, moveFocus, orientation, props.type, registerItem, toggleValue],
   );
 
   const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);

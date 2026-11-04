@@ -15,10 +15,39 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
+let nextItemId = 0;
+let nextItemOrder = 0;
+
 export function ToggleGroupItem(props: ToggleGroupItemProps) {
   const toggleGroupContext = useToggleGroupContext();
   const disabled = toggleGroupContext.disabled || props.disabled === true;
   const itemRef = React.useRef<GuiObject>();
+  const disabledRef = React.useRef(disabled);
+  disabledRef.current = disabled;
+
+  const itemIdRef = React.useRef(0);
+  if (itemIdRef.current === 0) {
+    nextItemId += 1;
+    itemIdRef.current = nextItemId;
+  }
+
+  const itemOrderRef = React.useRef(0);
+  if (itemOrderRef.current === 0) {
+    nextItemOrder += 1;
+    itemOrderRef.current = nextItemOrder;
+  }
+
+  // Depend on `registerItem` rather than the whole context, which changes whenever pressing does.
+  const registerItem = toggleGroupContext.registerItem;
+  React.useEffect(() => {
+    return registerItem({
+      id: itemIdRef.current,
+      value: props.value,
+      order: itemOrderRef.current,
+      ref: itemRef,
+      getDisabled: () => disabledRef.current,
+    });
+  }, [props.value, registerItem]);
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
     itemRef.current = instance?.IsA("GuiObject") ? instance : undefined;
@@ -45,13 +74,34 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
   const handleInputBegan = React.useCallback(
     (_rbx: TextButton, inputObject: InputObject) => {
       const keyCode = inputObject.KeyCode;
+      const direction =
+        toggleGroupContext.orientation === "horizontal"
+          ? keyCode === Enum.KeyCode.Left
+            ? -1
+            : keyCode === Enum.KeyCode.Right
+              ? 1
+              : undefined
+          : keyCode === Enum.KeyCode.Up
+            ? -1
+            : keyCode === Enum.KeyCode.Down
+              ? 1
+              : undefined;
+
+      // Arrows rove focus only; an item toggles on activation, not on focus.
+      if (direction !== undefined) {
+        if (!disabled) {
+          toggleGroupContext.moveFocus(props.value, direction);
+        }
+        return;
+      }
+
       if (keyCode !== Enum.KeyCode.Return && keyCode !== Enum.KeyCode.Space) {
         return;
       }
 
       handleToggle();
     },
-    [handleToggle],
+    [disabled, handleToggle, props.value, toggleGroupContext],
   );
 
   const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);

@@ -8,13 +8,15 @@
 
 import { act, cleanup, render } from "@testing-library/react";
 import React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@lattice-ui/react-runtime", async () => {
   const runtimeProps = await import("../../../packages/react/runtime/src/props");
   const runtimeRefs = await import("../../../packages/react/runtime/src/refs");
   const react = await import("react");
   const strictContext = await import("../../../packages/react/runtime/src/context");
+  const controllable = await import("../../../packages/react/runtime/src/useControllableState");
+  const runtimeSlot = await import("../../../packages/react/runtime/src/slot");
 
   function Slot(props: { children?: React.ReactNode } & Record<string, unknown>) {
     const { children, ...slotProps } = props;
@@ -35,12 +37,20 @@ vi.mock("@lattice-ui/react-runtime", async () => {
     React: react.default,
     Slot,
     createStrictContext: strictContext.createStrictContext,
+    getSlotChild: runtimeSlot.getSlotChild,
+    useControllableState: controllable.useControllableState,
   };
 });
 
+const focusedEntries = vi.hoisted(() => new Array<unknown>());
+
 vi.mock("@lattice-ui/react-focus", async () => {
   const guard = await import("../../../packages/react/focus/src/useActivationGuard");
+  const ordered = await import("../../../packages/react/focus/src/orderedSelection");
   return {
+    findOrderedSelectionEntry: ordered.findOrderedSelectionEntry,
+    focusOrderedSelectionEntry: (entry: unknown) => focusedEntries.push(entry),
+    getRelativeOrderedSelectionEntry: ordered.getRelativeOrderedSelectionEntry,
     useActivationGuard: guard.useActivationGuard,
     useFocusNode: () => ({ current: undefined }),
   };
@@ -51,12 +61,26 @@ vi.mock("@lattice-ui/react-motion", () => ({
   useResponseMotion: () => ({ current: undefined }),
 }));
 
-import { ToggleGroupContextProvider } from "../../../packages/react/toggle-group/src/ToggleGroup/context";
+import {
+  ToggleGroupContextProvider,
+  useToggleGroupContext,
+} from "../../../packages/react/toggle-group/src/ToggleGroup/context";
 import { ToggleGroupItem } from "../../../packages/react/toggle-group/src/ToggleGroup/ToggleGroupItem";
+import { ToggleGroupRoot } from "../../../packages/react/toggle-group/src/ToggleGroup/ToggleGroupRoot";
 import type { ToggleGroupContextValue } from "../../../packages/react/toggle-group/src/ToggleGroup/types";
+
+beforeEach(() => {
+  Object.assign((Enum as unknown as { KeyCode: Record<string, string> }).KeyCode, {
+    Up: "Up",
+    Down: "Down",
+    Left: "Left",
+    Right: "Right",
+  });
+});
 
 afterEach(() => {
   cleanup();
+  focusedEntries.splice(0);
 });
 
 const RETURN = "Return";
@@ -84,8 +108,11 @@ function makeContext(overrides: Partial<ToggleGroupContextValue> = {}): ToggleGr
   return {
     type: "single",
     disabled: false,
+    orientation: "horizontal",
     isPressed: () => false,
     toggleValue: vi.fn(),
+    registerItem: () => () => {},
+    moveFocus: vi.fn(),
     ...overrides,
   };
 }
@@ -151,5 +178,124 @@ describe("ToggleGroupItem gamepad activation", () => {
     });
 
     expect(toggleValue).not.toHaveBeenCalled();
+  });
+});
+
+describe("ToggleGroupItem roving arrows", () => {
+  it("moves focus along a horizontal group without toggling", () => {
+    const toggleValue = vi.fn();
+    const moveFocus = vi.fn();
+    const { Probe, getProps } = captureChildProps();
+    renderItem(makeContext({ toggleValue, moveFocus }), { value: "bold" }, React.createElement(Probe));
+
+    const events = getProps().Event as EventTable;
+    act(() => {
+      events.InputBegan({}, { KeyCode: "Right" });
+      events.InputBegan({}, { KeyCode: "Left" });
+      events.InputBegan({}, { KeyCode: "Down" });
+    });
+
+    expect(moveFocus.mock.calls).toEqual([
+      ["bold", 1],
+      ["bold", -1],
+    ]);
+    expect(toggleValue).not.toHaveBeenCalled();
+  });
+
+  it("uses Up/Down when vertical", () => {
+    const moveFocus = vi.fn();
+    const { Probe, getProps } = captureChildProps();
+    renderItem(makeContext({ orientation: "vertical", moveFocus }), { value: "bold" }, React.createElement(Probe));
+
+    const events = getProps().Event as EventTable;
+    act(() => {
+      events.InputBegan({}, { KeyCode: "Up" });
+      events.InputBegan({}, { KeyCode: "Right" });
+      events.InputBegan({}, { KeyCode: "Down" });
+    });
+
+    expect(moveFocus.mock.calls).toEqual([
+      ["bold", -1],
+      ["bold", 1],
+    ]);
+  });
+
+  it("registers once across pressing changes", () => {
+    const registerItem = vi.fn(() => () => {});
+    const { Probe } = captureChildProps();
+    const context = makeContext({ registerItem });
+    const view = renderItem(context, { value: "bold" }, React.createElement(Probe));
+
+    view.rerender(
+      React.createElement(
+        ToggleGroupContextProvider,
+        { value: { ...context, isPressed: () => true } },
+        React.createElement(ToggleGroupItem, { asChild: true, value: "bold" }, React.createElement(Probe)),
+      ),
+    );
+
+    expect(registerItem).toHaveBeenCalledTimes(1);
+    expect(registerItem.mock.calls[0][0]).toMatchObject({ value: "bold" });
+  });
+});
+
+describe("ToggleGroup.Root roving", () => {
+  function createGuiObject(name: string, parent: unknown, layoutOrder: number, selectable = true) {
+    return {
+      Name: name,
+      Parent: parent,
+      Visible: true,
+      Selectable: selectable,
+      LayoutOrder: layoutOrder,
+      IsA: (className: string) => className === "GuiObject" || className === "Instance",
+      FindFirstChildWhichIsA: () => undefined,
+    };
+  }
+
+  it("focuses the next available item in layout order and leaves pressing alone", () => {
+    let context: ToggleGroupContextValue | undefined;
+    function Capture() {
+      context = useToggleGroupContext();
+      return null;
+    }
+
+    const onValueChange = vi.fn();
+    render(
+      React.createElement(
+        ToggleGroupRoot,
+        { type: "single", defaultValue: "bold", onValueChange, asChild: true },
+        React.createElement(Capture),
+      ),
+    );
+
+    const list = createGuiObject("list", { Parent: undefined, IsA: () => false }, 0, false);
+    const entry = (id: number, value: string, layoutOrder: number, disabled = false) => ({
+      id,
+      value,
+      order: id,
+      ref: { current: createGuiObject(value, list, layoutOrder) },
+      getDisabled: () => disabled,
+    });
+    act(() => {
+      context?.registerItem(entry(1, "bold", 1));
+      context?.registerItem(entry(2, "underline", 4));
+      context?.registerItem(entry(3, "italic", 2, true));
+      // Mounted last, laid out third.
+      context?.registerItem(entry(4, "strike", 3));
+    });
+
+    act(() => {
+      context?.moveFocus("bold", 1);
+    });
+    expect((focusedEntries.at(-1) as { value: string }).value).toBe("strike");
+
+    act(() => {
+      context?.moveFocus("underline", -1);
+    });
+    expect((focusedEntries.at(-1) as { value: string }).value).toBe("strike");
+
+    expect(context?.orientation).toBe("horizontal");
+    expect(context?.isPressed("bold")).toBe(true);
+    expect(onValueChange).not.toHaveBeenCalled();
   });
 });

@@ -3,9 +3,20 @@ import type React from "@rbxts/react";
 
 export type ToggleGroupType = "single" | "multiple";
 export type ToggleGroupValue = string | string[];
+export type ToggleGroupOrientation = "horizontal" | "vertical";
+
+export type ToggleGroupItemRegistration = {
+  id: number;
+  value: string;
+  order: number;
+  ref: React.MutableRefObject<GuiObject | undefined>;
+  getDisabled: () => boolean;
+};
 
 export type ToggleGroupCommonProps = {
   disabled?: boolean;
+  // Axis the arrow keys rove along. Defaults to "horizontal".
+  orientation?: ToggleGroupOrientation;
   asChild?: boolean;
   children?: React.ReactNode;
 } & PassthroughProps<Frame>;
@@ -29,8 +40,12 @@ export type ToggleGroupProps = ToggleGroupCommonProps & (ToggleGroupSingleProps 
 export type ToggleGroupContextValue = {
   type: ToggleGroupType;
   disabled: boolean;
+  orientation: ToggleGroupOrientation;
   isPressed: (itemValue: string) => boolean;
   toggleValue: (itemValue: string) => void;
+  registerItem: (item: ToggleGroupItemRegistration) => () => void;
+  // Moves focus to the neighbouring item. Unlike RadioGroup, pressing state does not follow focus.
+  moveFocus: (fromValue: string, direction: -1 | 1) => void;
 };
 
 export type ToggleGroupItemProps = {
