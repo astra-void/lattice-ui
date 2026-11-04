@@ -10,6 +10,7 @@ It contains:
   (currently only `react`; the CLI lives outside that axis under `packages/tools/cli`)
 - app workspaces under `apps/*`
   - `apps/playground`: Roblox playground for manual UI verification
+  - `apps/playground-vela`: styling-comparison clone of the playground, scenes styled with `vela-rbxts` `className` utilities instead of `@lattice-ui/react-style`
   - `apps/loom-preview`: typecheck-only preview integration workspace
   - `apps/test-harness`: Roblox TestEZ harness for package-level behavior checks
 

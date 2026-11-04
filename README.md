@@ -125,6 +125,7 @@ Workspaces:
 - `packages/react/*` — publishable React packages (`@lattice-ui/react-<name>`).
 - `packages/tools/cli` — the `lattice-ui` CLI.
 - `apps/playground` — Roblox playground for manual UI verification.
+- `apps/playground-vela` — styling-comparison clone of the playground with every scene styled through `vela-rbxts` `className` utilities instead of `@lattice-ui/react-style`.
 - `apps/test-harness` — Roblox TestEZ harness for package-level behavior checks.
 - `apps/loom-preview` — typecheck-only preview integration workspace.
 
@@ -157,12 +158,12 @@ A future `v1` milestone for the main UI layer does **not** automatically mean ev
 
 ## Roadmap
 
-### v0.6.x
+### v0.8.x
 
 - improve reliability across layered and composite primitives
 - continue hardening motion, presence, and exit-transition behavior
-- build a proper keyboard navigation foundation instead of relying too heavily on Roblox default selection behavior
-- strengthen focus restoration, ordered navigation, trapping, and cross-scope keyboard flow
+- harden the `react-focus` navigation controller that replaced Roblox default selection behavior
+- strengthen focus restoration, ordered and spatial navigation, trapping, and cross-scope keyboard and gamepad flow
 - expand regression coverage and debugging for the stable-direction package surface
 - keep feature-limited packages flexible while their API surface is still settling
 
@@ -172,7 +173,7 @@ The `v1.0` milestone is focused on the main stable UI layer, not every package i
 
 The priority is to ship:
 
-- a stable foundation around `core`, `focus`, `layer`, `motion`, `style`, and `system`
+- a stable foundation around `react-runtime`, `react-focus`, `react-layer`, `react-motion`, `react-style`, and `react-system`
 - dependable composition and state semantics across the main UI primitives
 - predictable focus, keyboard navigation, layering, portal, and motion behavior
 - clearer semver expectations for packages that are considered part of the stable UI surface

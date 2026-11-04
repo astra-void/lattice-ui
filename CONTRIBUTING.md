@@ -48,6 +48,7 @@ This is a [pnpm](https://pnpm.io/) monorepo managed with [Turbo](https://turbo.b
 | `packages/react/*` | Publishable React packages, published as `@lattice-ui/react-<name>` |
 | `packages/tools/cli` | The `lattice-ui` CLI |
 | `apps/playground` | Roblox playground for manual UI verification |
+| `apps/playground-vela` | Styling-comparison clone of the playground, scenes styled with `vela-rbxts` `className` utilities instead of `react-style` |
 | `apps/test-harness` | Roblox TestEZ harness for package-level behavior checks |
 | `apps/loom-preview` | Typecheck-only preview integration workspace |
 | `tests/vitest/*` | Node-side unit tests (Vitest) |

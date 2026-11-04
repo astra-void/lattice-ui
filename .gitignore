@@ -20,6 +20,7 @@ run-in-roblox.log
 .turbo
 
 .loom-preview-cache
+graft/
 
 .idea
 .vscode
