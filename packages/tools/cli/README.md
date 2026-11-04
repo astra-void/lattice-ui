@@ -46,6 +46,9 @@ lattice help add     # same output
 - `--verbose` — print debug-level progress output
 - `-y` is accepted everywhere `--yes` is
 
+`--verbose` and `--yes` / `-y` work before the command name as well as after it, so
+`lattice --verbose add dialog` and `lattice add dialog --verbose` are the same run.
+
 ### Output
 
 In a terminal, a run is drawn as one continuous flow: a vertical gutter connects the header, each

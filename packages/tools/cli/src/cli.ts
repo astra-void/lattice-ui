@@ -23,14 +23,20 @@ interface CommandSpec {
   extra?: (registry: Registry) => string[];
 }
 
-const GLOBAL_OPTIONS: [string, string][] = [
-  ["-h, --help", "Show help for the CLI or a command."],
-  ["-v, --version", "Print the CLI version."],
-  ["    --verbose", "Print debug-level progress output."],
-];
-
 const PM_OPTION: [string, string] = ["    --pm <pnpm|npm|yarn>", "Force a package manager instead of detecting one."];
 const YES_OPTION: [string, string] = ["-y, --yes", "Skip prompts and accept the default answer for each."];
+const HELP_OPTION: [string, string] = ["-h, --help", "Show help for the CLI or a command."];
+const VERBOSE_OPTION: [string, string] = ["    --verbose", "Print debug-level progress output."];
+
+const GLOBAL_OPTIONS: [string, string][] = [
+  HELP_OPTION,
+  ["-v, --version", "Print the CLI version."],
+  VERBOSE_OPTION,
+  YES_OPTION,
+];
+
+/** Options accepted before the command name as well as after it. Every command takes them. */
+const GLOBAL_COMMAND_OPTIONS: [string, string][] = [HELP_OPTION, VERBOSE_OPTION];
 const DRY_RUN_OPTION: [string, string] = ["    --dry-run", "Show what would happen without touching the project."];
 
 function listRegistryNames(registry: Registry): string[] {
@@ -191,7 +197,7 @@ function renderCommandHelp(command: CommandSpec, registry?: Registry): string {
     `  ${command.usage}`,
     "",
     "Options:",
-    ...renderOptionRows([...command.options, ...GLOBAL_OPTIONS.slice(0, 1)]),
+    ...renderOptionRows([...command.options, ...GLOBAL_COMMAND_OPTIONS]),
   ];
 
   if (command.extra && registry) {
@@ -208,6 +214,10 @@ interface ParsedCommandLine {
   commandArgs: string[];
   showHelp: boolean;
   showVersion: boolean;
+  /** `--verbose` given before the command name. */
+  verbose: boolean;
+  /** `--yes` / `-y` given before the command name. */
+  yes: boolean;
 }
 
 interface ParsedCreateArgs {
@@ -291,12 +301,30 @@ function unknownOptionError(command: string, token: string): never {
   );
 }
 
-function parseTopLevel(argv: string[]): ParsedCommandLine {
+function parseTopLevel(rawArgv: string[]): ParsedCommandLine {
+  // The documented global options may also come before the command name: `lattice --verbose add`.
+  let verbose = false;
+  let yes = false;
+  let start = 0;
+  for (; start < rawArgv.length; start += 1) {
+    const token = rawArgv[start];
+    if (token === "--verbose") {
+      verbose = true;
+    } else if (token === "--yes" || token === "-y") {
+      yes = true;
+    } else {
+      break;
+    }
+  }
+  const argv = rawArgv.slice(start);
+
   if (argv.length === 0) {
     return {
       showHelp: true,
       showVersion: false,
       commandArgs: [],
+      verbose,
+      yes,
     };
   }
 
@@ -307,6 +335,8 @@ function parseTopLevel(argv: string[]): ParsedCommandLine {
       showVersion: false,
       // `lattice help add` is the same request as `lattice add --help`.
       commandArgs: argv.slice(1),
+      verbose,
+      yes,
     };
   }
 
@@ -315,6 +345,8 @@ function parseTopLevel(argv: string[]): ParsedCommandLine {
       showHelp: false,
       showVersion: true,
       commandArgs: [],
+      verbose,
+      yes,
     };
   }
 
@@ -327,6 +359,8 @@ function parseTopLevel(argv: string[]): ParsedCommandLine {
     commandArgs: argv.slice(1),
     showHelp: false,
     showVersion: false,
+    verbose,
+    yes,
   };
 }
 
@@ -627,6 +661,8 @@ export async function runCli(argv: string[]): Promise<void> {
     await runInitCommand({
       cwd: process.cwd(),
       ...initArgs,
+      yes: initArgs.yes || parsed.yes,
+      verbose: initArgs.verbose || parsed.verbose,
     });
     return;
   }
@@ -636,6 +672,8 @@ export async function runCli(argv: string[]): Promise<void> {
     await runCreateCommand({
       cwd: process.cwd(),
       ...createArgs,
+      yes: createArgs.yes || parsed.yes,
+      verbose: createArgs.verbose || parsed.verbose,
     });
     return;
   }
@@ -656,8 +694,8 @@ export async function runCli(argv: string[]): Promise<void> {
         cwd: process.cwd(),
         pm: selection.pm,
         dryRun: selection.dryRun,
-        yes: selection.yes,
-        verbose: selection.verbose,
+        yes: selection.yes || parsed.yes,
+        verbose: selection.verbose || parsed.verbose,
       },
       { registry },
     );
@@ -680,7 +718,7 @@ export async function runCli(argv: string[]): Promise<void> {
       pm: doctorArgs.pm,
       dryRun: false,
       yes: false,
-      verbose: doctorArgs.verbose,
+      verbose: doctorArgs.verbose || parsed.verbose,
       // doctor only reports; it must not stop to ask which manager to use, and
       // its own missing-lockfile check explains the ambiguity.
       preferDefaultPackageManager: true,
