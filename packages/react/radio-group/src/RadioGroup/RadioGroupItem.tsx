@@ -1,4 +1,4 @@
-import { useFocusNode } from "@lattice-ui/react-focus";
+import { type FocusChangeSource, isNativeSelectionChange, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { RadioGroupItemContextProvider, useRadioGroupContext } from "./context";
 import type { RadioGroupItemProps } from "./types";
@@ -54,9 +54,24 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     });
   }, [props.value, registerItem]);
 
+  // Selection follows focus, but only focus the user moved. A trapped scope seeding focus on its
+  // first item (a Dialog opening) is programmatic and must not change the value.
+  const setValueRef = React.useRef(radioGroupContext.setValue);
+  setValueRef.current = radioGroupContext.setValue;
+  const valueRef = React.useRef(props.value);
+  valueRef.current = props.value;
+  const handleFocusChange = React.useCallback((focused: boolean, source: FocusChangeSource) => {
+    if (!focused || source !== "navigation" || disabledRef.current) {
+      return;
+    }
+
+    setValueRef.current(valueRef.current);
+  }, []);
+
   useFocusNode({
     ref: itemRef,
     getDisabled: () => disabledRef.current,
+    onFocusChange: handleFocusChange,
   });
 
   const setItemRef = React.useCallback((instance: Instance | undefined) => {
@@ -71,8 +86,10 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     radioGroupContext.setValue(props.value);
   }, [disabled, props.value, radioGroupContext]);
 
+  // Native selection only counts as input for inline items with no active FocusScope; otherwise
+  // SelectedObject is the focus bridge's render-only mirror and `handleFocusChange` decides.
   const handleSelectionGained = React.useCallback(() => {
-    if (disabled) {
+    if (disabled || !isNativeSelectionChange()) {
       return;
     }
 

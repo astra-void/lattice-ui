@@ -480,6 +480,45 @@ describe("focusManager", () => {
     expect(harness.focusManager.resolveNavigation({ type: "move", direction: "down" })?.guiObject).toBe(namedB);
   });
 
+  it("seeds a trapped scope's focus as a programmatic change, not navigation", async () => {
+    const harness = await createFocusManagerHarness();
+    const env = await import("../../../packages/react/focus/src/env");
+    const scopeRoot = createGuiObject("scope-root", {
+      parent: harness.mountRoot,
+      selectable: false,
+    });
+    const first = createGuiObject("first", { parent: scopeRoot });
+
+    const sources = new Array<string>();
+    harness.focusManager.registerFocusNode({
+      getGuiObject: () => first,
+      onFocusChange: (focused, source) => sources.push(`${focused}:${source}`),
+    });
+
+    // An Immediate-mode SelectionGained fires from inside the bridge's write;
+    // it must not read as the user moving native selection.
+    const nativeDuringWrite = new Array<boolean>();
+    env.GuiService.GetPropertyChangedSignal("SelectedObject").Connect(() => {
+      nativeDuringWrite.push(harness.focusManager.isNativeSelectionChange());
+    });
+
+    let active = false;
+    const scopeId = harness.focusManager.createFocusScopeId();
+    harness.focusManager.registerFocusScope(scopeId, {
+      getRoot: () => scopeRoot,
+      getActive: () => active,
+      getTrapped: () => true,
+    });
+
+    active = true;
+    harness.focusManager.syncFocusScope(scopeId);
+
+    expect(harness.getSelectedObject()).toBe(first);
+    expect(sources).toEqual(["true:programmatic"]);
+    expect(nativeDuringWrite).toEqual([false]);
+    expect(harness.focusManager.isNativeSelectionChange()).toBe(true);
+  });
+
   it("prefers actual tree order over registration order for trapped scope fallback", async () => {
     const harness = await createFocusManagerHarness();
     const scopeRoot = createGuiObject("scope-root", {
@@ -545,19 +584,19 @@ describe("focusManager", () => {
     });
 
     harness.focusManager.focusNode(firstId);
-    expect(onFirstFocusChange.mock.calls).toEqual([[true]]);
+    expect(onFirstFocusChange.mock.calls).toEqual([[true, "programmatic"]]);
 
     // Re-focusing the same node is not a change and must not re-notify.
     harness.focusManager.focusNode(firstId);
-    expect(onFirstFocusChange.mock.calls).toEqual([[true]]);
+    expect(onFirstFocusChange.mock.calls).toEqual([[true, "programmatic"]]);
 
     harness.focusManager.focusNode(secondId);
-    expect(onFirstFocusChange.mock.calls).toEqual([[true], [false]]);
-    expect(onSecondFocusChange.mock.calls).toEqual([[true]]);
+    expect(onFirstFocusChange.mock.calls).toEqual([[true, "programmatic"], [false, "programmatic"]]);
+    expect(onSecondFocusChange.mock.calls).toEqual([[true, "programmatic"]]);
 
     // A node that unregisters while focused still hears that it lost focus.
     harness.focusManager.unregisterFocusNode(secondId);
-    expect(onSecondFocusChange.mock.calls).toEqual([[true], [false]]);
+    expect(onSecondFocusChange.mock.calls).toEqual([[true, "programmatic"], [false, "programmatic"]]);
   });
 
   it("routes activation to the focused node and reports when it went unhandled", async () => {

@@ -16,6 +16,13 @@ export type NavStrategy = "ordered" | "spatial";
 // -> left/right step. Cross-axis directions escape.
 export type NavOrientation = "vertical" | "horizontal";
 
+// Why focus moved. "navigation" is the navigation controller answering the
+// user's directional or Tab input. "programmatic" is everything else: a trapped
+// scope seeding focus, focus restore, an explicit focusNode/focusGuiObject call.
+// Widgets whose selection follows focus commit only on "navigation", so opening
+// a dialog never picks a value on the user's behalf.
+export type FocusChangeSource = "navigation" | "programmatic";
+
 export type FocusNodeRecord = {
   id: number;
   scopeId?: number;
@@ -31,7 +38,7 @@ export type FocusNodeRecord = {
   getCapturesDirectional: (direction: NavDirection) => boolean;
   // Called when focus enters or leaves this node, so a widget can drive its own
   // highlight from the focus manager instead of the engine's selection events.
-  onFocusChange: (focused: boolean) => void;
+  onFocusChange: (focused: boolean, source: FocusChangeSource) => void;
   // Runs the widget's activation (Enter/Space/ButtonA while focused). Returns
   // false when the node has no activation of its own, so the navigation
   // controller can pass the input through.
@@ -63,7 +70,7 @@ export type RegisterFocusNodeParams = {
   getVisible?: () => boolean | undefined;
   getSyncToRoblox?: () => boolean;
   getCapturesDirectional?: (direction: NavDirection) => boolean;
-  onFocusChange?: (focused: boolean) => void;
+  onFocusChange?: (focused: boolean, source: FocusChangeSource) => void;
   activate?: () => boolean;
 };
 

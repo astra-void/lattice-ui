@@ -4,6 +4,7 @@ import { getFocusNodeRecord } from "./registry";
 import { getResolvedFocusNode, getTopTrappedScope, resolveFocusNodeByGuiObject } from "./resolution";
 import { focusNodes, focusScopes, focusState } from "./state";
 import { getBestScopeFallbackNode } from "./traversal";
+import type { FocusChangeSource } from "./types";
 
 function updateScopeLastFocusedNode(nodeId: number, guiObject: GuiObject) {
   for (const scopeRecord of focusScopes) {
@@ -26,12 +27,14 @@ export function notifyFocusChange(previousNodeId: number | undefined, nextNodeId
     return;
   }
 
+  const source: FocusChangeSource = focusState.navigationFocusDepth > 0 ? "navigation" : "programmatic";
+
   if (previousNodeId !== undefined) {
-    getFocusNodeRecord(previousNodeId)?.onFocusChange(false);
+    getFocusNodeRecord(previousNodeId)?.onFocusChange(false, source);
   }
 
   if (nextNodeId !== undefined) {
-    getFocusNodeRecord(nextNodeId)?.onFocusChange(true);
+    getFocusNodeRecord(nextNodeId)?.onFocusChange(true, source);
   }
 }
 
@@ -113,6 +116,17 @@ export function focusNode(nodeId: number) {
   }
 
   return setCurrentFocusedNode(resolvedNode.record.id);
+}
+
+// Focuses a node on behalf of the user's navigation input; its focus
+// notifications report "navigation" instead of "programmatic".
+export function focusNodeFromNavigation(nodeId: number) {
+  focusState.navigationFocusDepth += 1;
+  try {
+    return focusNode(nodeId);
+  } finally {
+    focusState.navigationFocusDepth -= 1;
+  }
 }
 
 export function focusGuiObject(guiObject: GuiObject | undefined) {

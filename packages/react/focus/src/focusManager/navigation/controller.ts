@@ -1,4 +1,4 @@
-import { activateFocusedNode, focusNode, getFocusedNode } from "../engine";
+import { activateFocusedNode, focusNodeFromNavigation, getFocusedNode } from "../engine";
 import { focusState } from "../state";
 import type { NavDirection } from "../types";
 import { ContextActionService, GuiService, RunService, UserInputService } from "./env";
@@ -41,7 +41,7 @@ function moveFocus(direction: NavDirection): MoveResult {
 
   const target = resolveNavigation({ type: "move", direction });
   if (target) {
-    focusNode(target.record.id);
+    focusNodeFromNavigation(target.record.id);
     return "moved";
   }
 
@@ -81,7 +81,7 @@ function handleTab(_actionName: string, inputState: Enum.UserInputState): Enum.C
     UserInputService.IsKeyDown(Enum.KeyCode.LeftShift) || UserInputService.IsKeyDown(Enum.KeyCode.RightShift);
   const target = resolveNavigation({ type: shift ? "prev" : "next" });
   if (target) {
-    focusNode(target.record.id);
+    focusNodeFromNavigation(target.record.id);
     return Enum.ContextActionResult.Sink;
   }
 
@@ -159,6 +159,11 @@ function handleHeartbeat(deltaTime: number) {
     stickRepeatTimer = STICK_REPEAT_INTERVAL;
     moveFocus(direction);
   }
+}
+
+// True while the controller owns directional input (some FocusScope is active).
+export function isNavigationBound() {
+  return bound;
 }
 
 function bindNavigation() {

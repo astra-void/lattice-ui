@@ -1,4 +1,4 @@
-import { useFocusNode } from "@lattice-ui/react-focus";
+import { type FocusChangeSource, isNativeSelectionChange, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
 import { useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
@@ -59,9 +59,24 @@ export function TabsTrigger(props: TabsTriggerProps) {
     });
   }, [disabled, props.value, registerTrigger]);
 
+  // Selection follows focus, but only focus the user moved. A trapped scope seeding focus on its
+  // first trigger (a Dialog opening) is programmatic and must not change the value.
+  const setValueRef = React.useRef(tabsContext.setValue);
+  setValueRef.current = tabsContext.setValue;
+  const valueRef = React.useRef(props.value);
+  valueRef.current = props.value;
+  const handleFocusChange = React.useCallback((focused: boolean, source: FocusChangeSource) => {
+    if (!focused || source !== "navigation" || disabledRef.current) {
+      return;
+    }
+
+    setValueRef.current(valueRef.current);
+  }, []);
+
   useFocusNode({
     ref: triggerRef,
     getDisabled: () => disabledRef.current,
+    onFocusChange: handleFocusChange,
   });
 
   const setTriggerRef = React.useCallback((instance: Instance | undefined) => {
@@ -76,8 +91,10 @@ export function TabsTrigger(props: TabsTriggerProps) {
     tabsContext.setValue(props.value);
   }, [disabled, props.value, tabsContext]);
 
+  // Native selection only counts as input for inline triggers with no active FocusScope; otherwise
+  // SelectedObject is the focus bridge's render-only mirror and `handleFocusChange` decides.
   const handleSelectionGained = React.useCallback(() => {
-    if (disabled) {
+    if (disabled || !isNativeSelectionChange()) {
       return;
     }
 

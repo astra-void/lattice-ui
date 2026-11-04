@@ -1,6 +1,6 @@
 import { React } from "@lattice-ui/react-runtime";
 import { useFocusScopeId } from "./context";
-import { type NavDirection, registerFocusNode, unregisterFocusNode } from "./focusManager";
+import { type FocusChangeSource, type NavDirection, registerFocusNode, unregisterFocusNode } from "./focusManager";
 
 function useLatest<T>(value: T): React.MutableRefObject<T> {
   const ref = React.useRef(value);
@@ -22,8 +22,10 @@ export type UseFocusNodeOptions = {
   // instead of moving focus.
   getCapturesDirectional?: (direction: NavDirection) => boolean;
   // Called when managed focus enters or leaves this node. Drive a widget's
-  // highlight from here instead of `SelectionGained`/`SelectionLost`.
-  onFocusChange?: (focused: boolean) => void;
+  // highlight from here instead of `SelectionGained`/`SelectionLost`. `source`
+  // is "navigation" only when the user's directional/Tab input moved focus;
+  // commit selection-follows-focus on that, not on programmatic focus.
+  onFocusChange?: (focused: boolean, source: FocusChangeSource) => void;
   // Runs on Enter/Space/ButtonA while this node is focused. Providing it makes
   // the navigation controller own the widget's keyboard activation; omit it to
   // leave activation to the engine's own `Activated` event.
@@ -51,7 +53,7 @@ export function useFocusNode(options: UseFocusNodeOptions): React.MutableRefObje
       getVisible: () => getVisibleRef.current?.(),
       getSyncToRoblox: () => syncToRobloxRef.current,
       getCapturesDirectional: (direction) => getCapturesDirectionalRef.current?.(direction) === true,
-      onFocusChange: (focused) => onFocusChangeRef.current?.(focused),
+      onFocusChange: (focused, source) => onFocusChangeRef.current?.(focused, source),
       activate: () => {
         const activate = onActivateRef.current;
         if (!activate) {

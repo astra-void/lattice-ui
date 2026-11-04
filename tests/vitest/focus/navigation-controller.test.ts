@@ -117,8 +117,17 @@ async function createControllerHarness() {
     getNavStrategy: () => "ordered",
     getNavOrientation: () => "vertical",
   });
-  const firstId = focusManager.registerFocusNode({ scopeId, getGuiObject: () => first });
-  const secondId = focusManager.registerFocusNode({ scopeId, getGuiObject: () => second });
+  const focusEvents = new Array<string>();
+  const firstId = focusManager.registerFocusNode({
+    scopeId,
+    getGuiObject: () => first,
+    onFocusChange: (focused, source) => focusEvents.push(`first:${focused}:${source}`),
+  });
+  const secondId = focusManager.registerFocusNode({
+    scopeId,
+    getGuiObject: () => second,
+    onFocusChange: (focused, source) => focusEvents.push(`second:${focused}:${source}`),
+  });
 
   focusManager.retainNavigation();
 
@@ -130,6 +139,8 @@ async function createControllerHarness() {
     firstId,
     secondId,
     stick,
+    press: (actionName: string) => handlers.get(actionName)?.(actionName, UserInputState.Begin, {}),
+    focusEvents,
     tick: (deltaTime: number) => heartbeat?.(deltaTime),
     navGuiService,
   };
@@ -207,5 +218,28 @@ describe("navigation controller ownership", () => {
     harness.focusManager.releaseNavigation();
     expect(harness.navGuiService.GuiNavigationEnabled).toBe(true);
     expect(harness.navGuiService.AutoSelectGuiEnabled).toBe(true);
+  });
+});
+
+describe("navigation controller focus source", () => {
+  it("reports navigation for moves it applies and programmatic for everything else", async () => {
+    const harness = await createControllerHarness();
+
+    harness.focusManager.focusNode(harness.firstId);
+    expect(harness.focusEvents).toEqual(["first:true:programmatic"]);
+
+    harness.press("LatticeNavDown");
+    expect(harness.focusEvents.slice(1)).toEqual(["first:false:navigation", "second:true:navigation"]);
+
+    harness.focusManager.focusNode(harness.firstId);
+    expect(harness.focusEvents.slice(3)).toEqual(["second:false:programmatic", "first:true:programmatic"]);
+  });
+
+  it("does not treat native selection as input while bound", async () => {
+    const harness = await createControllerHarness();
+
+    expect(harness.focusManager.isNativeSelectionChange()).toBe(false);
+    harness.focusManager.releaseNavigation();
+    expect(harness.focusManager.isNativeSelectionChange()).toBe(true);
   });
 });

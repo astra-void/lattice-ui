@@ -26,6 +26,14 @@ Focus management primitives for Roblox UI.
   RadioGroup) use the same order.
   - `"spatial"` (default): pick the nearest node in the pressed direction by
     geometry.
+- `useFocusNode`'s `onFocusChange(focused, source)` reports `source`
+  `"navigation"` when the controller moved focus for the user's directional or
+  Tab input, and `"programmatic"` for everything else (trapped-scope fallback,
+  restore, `focusNode` calls). Widgets whose selection follows focus (Tabs,
+  RadioGroup) commit only on `"navigation"`.
+- `isNativeSelectionChange()` tells a `SelectionGained` handler whether it is
+  seeing the user move Roblox's own selection (no scope active, and not the
+  bridge's own write), for inline widgets outside any `FocusScope`.
 - Focus nodes can consume a direction themselves via `getCapturesDirectional`
   (e.g. text inputs move the text cursor while editing); the controller passes
   those inputs through instead of moving focus.

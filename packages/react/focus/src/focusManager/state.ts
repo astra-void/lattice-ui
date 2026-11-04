@@ -15,4 +15,7 @@ export const focusState = {
   // while this is > 0 so game controls keep working when no UI is active.
   navigationConsumerCount: 0,
   bridgeWriteDepth: 0,
+  // > 0 while the navigation controller applies a move the user asked for, so
+  // focus notifications can report their source.
+  navigationFocusDepth: 0,
 };

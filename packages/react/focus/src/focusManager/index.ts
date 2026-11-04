@@ -5,6 +5,7 @@ import {
   pruneImplicitFocusNodes,
   setCurrentFocusedNode,
 } from "./engine";
+import { isNavigationBound } from "./navigation/controller";
 import { findFocusNodeIndex, findFocusScopeIndex, getFocusNodeRecord, getFocusScopeRecord } from "./registry";
 import { captureRestoreSnapshot, getCurrentFocusGuiObject, restoreScopeFocus } from "./restore";
 import { focusNodes, focusScopes, focusState } from "./state";
@@ -24,11 +25,12 @@ export {
   getFocusedGuiObject,
   getFocusedNode,
 } from "./engine";
-export { releaseNavigation, retainNavigation } from "./navigation/controller";
+export { isNavigationBound, releaseNavigation, retainNavigation } from "./navigation/controller";
 export type { NavIntent } from "./navigation/resolve";
 export { resolveNavigation } from "./navigation/resolve";
 export { captureRestoreSnapshot } from "./restore";
 export type {
+  FocusChangeSource,
   FocusNodeRecord,
   FocusRestoreSnapshot,
   NavDirection,
@@ -76,6 +78,16 @@ export function registerFocusNode(params: RegisterFocusNodeParams) {
   return nodeRecord.id;
 }
 
+// Whether a native `SelectionGained` / `SelectionLost` the caller is handling
+// reflects the user moving Roblox's own selection. It does not while the
+// navigation controller is bound (it owns directional input, and SelectedObject
+// is only its render-only mirror) or while the focus bridge is writing
+// SelectedObject (an Immediate-mode signal firing from inside that write).
+// Inline widgets with no active FocusScope can still follow native selection.
+export function isNativeSelectionChange() {
+  return !isNavigationBound() && focusState.bridgeWriteDepth === 0;
+}
+
 export function createFocusScopeId() {
   focusState.nextFocusScopeId += 1;
   return focusState.nextFocusScopeId;
@@ -99,7 +111,7 @@ export function unregisterFocusNode(nodeId: number) {
     focusState.currentFocusedNodeId = undefined;
     // The record is already out of the registry, so notify it directly: a node
     // that unregisters while focused still has to drop its highlight.
-    nodeRecord?.onFocusChange(false);
+    nodeRecord?.onFocusChange(false, "programmatic");
   }
 
   pruneImplicitFocusNodes();
