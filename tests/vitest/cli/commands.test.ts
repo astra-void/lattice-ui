@@ -1,4 +1,4 @@
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -761,6 +761,71 @@ describe("command behavior", () => {
     ).rejects.toThrow(/npm install exited with code 1/);
 
     await expect(access(projectRoot)).rejects.toThrow();
+  });
+
+  it("templates ship no files that npm strips from the published tarball", async () => {
+    const templatesDir = path.resolve(__dirname, "../../../packages/tools/cli/templates");
+    const entries = await readdir(templatesDir, { recursive: true });
+    const stripped = entries.filter((entry) => [".gitignore", ".npmignore", ".npmrc"].includes(path.basename(entry)));
+
+    // A template copy of these only exists in a dev checkout; create and init generate them.
+    expect(stripped).toEqual([]);
+  });
+
+  it("init counts a generated .gitignore once", async () => {
+    const dir = await createTempDir();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp" }, null, 2), "utf8");
+
+    const logger = createLogger();
+    await runInitCommand(
+      { cwd: dir, yes: true, dryRun: false, pm: "npm" },
+      {
+        createLoggerFn: () => logger,
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "npm" as const,
+          manager: createPackageManager(),
+          lockfiles: [],
+          installed: ["npm" as const],
+          source: "override" as const,
+          pins: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    const created = (await readdir(dir, { recursive: true, withFileTypes: true })).filter(
+      (entry) => entry.isFile() && entry.name !== "package.json",
+    );
+    expect(created.map((entry) => entry.name)).toContain(".gitignore");
+    expect(outcomesOf(logger)).toEqual([expect.stringContaining(`— ${created.length} created, 1 merged,`)]);
+  });
+
+  it("create counts the generated .gitignore", async () => {
+    const dir = await createTempDir();
+    const projectRoot = path.join(dir, "my-game");
+    const logger = createLogger();
+
+    await runCreateCommand(
+      { cwd: dir, projectPath: "my-game", yes: true, pm: "npm", template: "rbxts", git: false, lint: false },
+      {
+        createLoggerFn: () => logger,
+        detectPackageManagerFn: vi.fn(async () => ({
+          name: "npm" as const,
+          manager: createPackageManager(),
+          lockfiles: [],
+          installed: ["npm" as const],
+          source: "override" as const,
+          pins: [],
+        })),
+        resolveLatestVersionsFn: createResolvedVersions(),
+      },
+    );
+
+    const files = (await readdir(projectRoot, { recursive: true, withFileTypes: true })).filter((entry) =>
+      entry.isFile(),
+    );
+    expect(await readFile(path.join(projectRoot, ".gitignore"), "utf8")).toContain("node_modules\n");
+    expect(outcomesOf(logger)).toEqual([expect.stringContaining(`— ${files.length} files created,`)]);
   });
 
   it("init fails when package.json cannot be found", async () => {

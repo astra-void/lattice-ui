@@ -196,13 +196,19 @@ async function runProcess(command: string, args: string[], cwd: string): Promise
   });
 }
 
-async function ensureGitignoreExists(targetRoot: string): Promise<void> {
+/**
+ * Written here rather than shipped as `templates/init/.gitignore`: npm strips `.gitignore` files
+ * from published tarballs, so a template copy would only ever exist in a dev checkout.
+ */
+async function ensureGitignoreExists(targetRoot: string): Promise<boolean> {
   const gitignorePath = path.join(targetRoot, ".gitignore");
 
   try {
     await fs.access(gitignorePath);
+    return false;
   } catch {
     await fs.writeFile(gitignorePath, GITIGNORE_CONTENT, "utf8");
+    return true;
   }
 }
 
@@ -377,6 +383,7 @@ export async function runCreateCommand(
   // Scaffolding, install and git init are one unit: a failure at any step discards the
   // whole target directory instead of leaving an unusable half-created project behind.
   let report: CopyTemplateReport;
+  let createdCount = 0;
   let createdTargetRoot = false;
   try {
     createdTargetRoot = await createTargetDirectory(targetRoot);
@@ -421,7 +428,8 @@ export async function runCreateCommand(
     }
 
     await ensureProjectDirectories(targetRoot);
-    await ensureGitignoreExists(targetRoot);
+    const gitignoreCreated = await ensureGitignoreExists(targetRoot);
+    createdCount = report.created.length + (gitignoreCreated ? 1 : 0);
     await ensurePnpmNodeLinkerConfig(targetRoot, resolvedPm.name);
     await ensurePackageManagerPin(targetRoot, resolvedPm.name);
 
@@ -446,7 +454,7 @@ export async function runCreateCommand(
   }
 
   logger.outcome(
-    `Created ${path.basename(targetRoot)} — ${report.created.length} ${plural(report.created.length, "file")} created, ${report.merged.length} merged.`,
+    `Created ${path.basename(targetRoot)} — ${createdCount} ${plural(createdCount, "file")} created, ${report.merged.length} merged.`,
   );
   logger.next([
     `cd ${relativeProjectPath}`,
