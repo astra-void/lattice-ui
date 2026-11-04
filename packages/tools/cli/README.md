@@ -102,7 +102,7 @@ npx lattice-ui upgrade --dry-run
 npx lattice-ui doctor
 ```
 
-When `--pm` is omitted, the CLI resolves a package manager automatically from the project lockfile or installed managers. Use `--pm` to override that choice explicitly. Every command reports which manager it picked and why, e.g. `npm (lockfile)`.
+When `--pm` is omitted, the CLI resolves a package manager automatically from the project lockfile or installed managers. Inside a pnpm, yarn or npm workspace member, the lockfile at the workspace root (the nearest parent with `pnpm-workspace.yaml` or a package.json `workspaces` field, stopping at the git root) counts as the project lockfile. Use `--pm` to override that choice explicitly. Every command reports which manager it picked and why, e.g. `npm (lockfile)`.
 
 ### Prompts
 

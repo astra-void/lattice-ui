@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { usageError } from "../errors";
+import { findWorkspaceRoot } from "../project/findRoot";
 import { readPackageJson } from "../project/readPackageJson";
 import type { PromptRuntime } from "../prompt";
 import { promptSelect } from "../prompt";
@@ -59,6 +60,17 @@ async function exists(filePath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function findLockfiles(dir: string): Promise<PackageManagerName[]> {
+  const lockfiles: PackageManagerName[] = [];
+  for (const managerName of lockfileDetectionOrder) {
+    if (await exists(path.join(dir, lockfileByManager[managerName]))) {
+      lockfiles.push(managerName);
+    }
+  }
+
+  return lockfiles;
 }
 
 function normalizePackageManagers(values: PackageManagerName[]): PackageManagerName[] {
@@ -159,10 +171,12 @@ export async function detectPackageManager(
     throw usageError(`Invalid --pm value "${override}". Use pnpm, npm, or yarn.`);
   }
 
-  const lockfiles: PackageManagerName[] = [];
-  for (const managerName of lockfileDetectionOrder) {
-    if (await exists(path.join(cwd, lockfileByManager[managerName]))) {
-      lockfiles.push(managerName);
+  // A workspace member has no lockfile of its own; the shared one sits at the workspace root.
+  let lockfiles = await findLockfiles(cwd);
+  if (lockfiles.length === 0) {
+    const workspaceRoot = await findWorkspaceRoot(cwd);
+    if (workspaceRoot !== undefined) {
+      lockfiles = await findLockfiles(workspaceRoot);
     }
   }
 

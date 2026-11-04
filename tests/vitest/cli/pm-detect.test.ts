@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -31,6 +31,63 @@ describe("detectPackageManager", () => {
     expect(result.lockfiles).toEqual(["pnpm", "yarn", "npm"]);
     expect(result.installed).toEqual(["npm", "pnpm", "yarn"]);
     expect(result.source).toBe("lockfile");
+  });
+
+  it("reads the lockfile at the workspace root from a workspace member", async () => {
+    const dir = await createTempDir();
+    const member = path.join(dir, "packages", "game");
+    await mkdir(member, { recursive: true });
+    await writeFile(path.join(dir, "pnpm-workspace.yaml"), "packages:\n  - packages/*\n", "utf8");
+    await writeFile(path.join(dir, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n", "utf8");
+    await writeFile(path.join(member, "package.json"), "{}\n", "utf8");
+
+    const result = await detectPackageManager(member, undefined, {
+      detectInstalledPackageManagersFn: async () => ["npm", "pnpm"],
+    });
+
+    expect(result.name).toBe("pnpm");
+    expect(result.lockfiles).toEqual(["pnpm"]);
+    expect(result.source).toBe("lockfile");
+  });
+
+  it("recognises package.json workspaces as a workspace root", async () => {
+    const dir = await createTempDir();
+    const member = path.join(dir, "apps", "game");
+    await mkdir(member, { recursive: true });
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ workspaces: { packages: ["apps/*"] } }), "utf8");
+    await writeFile(path.join(dir, "yarn.lock"), "# yarn\n", "utf8");
+    await writeFile(path.join(member, "package.json"), "{}\n", "utf8");
+
+    const result = await detectPackageManager(member, undefined, {
+      detectInstalledPackageManagersFn: async () => ["npm", "yarn"],
+    });
+
+    expect(result.name).toBe("yarn");
+    expect(result.source).toBe("lockfile");
+  });
+
+  it("ignores lockfiles in parents that are not workspace roots or sit above the git root", async () => {
+    const dir = await createTempDir();
+    const project = path.join(dir, "game");
+    await mkdir(project, { recursive: true });
+    // A stray lockfile in a plain parent directory says nothing about this project.
+    await writeFile(path.join(dir, "package-lock.json"), "{}\n", "utf8");
+    await writeFile(path.join(project, "package.json"), "{}\n", "utf8");
+
+    const plain = await detectPackageManager(project, undefined, {
+      detectInstalledPackageManagersFn: async () => ["pnpm"],
+    });
+    expect(plain.lockfiles).toEqual([]);
+
+    // Nor does a workspace root outside the project's own repository.
+    await writeFile(path.join(dir, "pnpm-workspace.yaml"), "packages: []\n", "utf8");
+    await writeFile(path.join(dir, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n", "utf8");
+    await mkdir(path.join(project, ".git"));
+
+    const repo = await detectPackageManager(project, undefined, {
+      detectInstalledPackageManagersFn: async () => ["pnpm"],
+    });
+    expect(repo.lockfiles).toEqual([]);
   });
 
   it("uses override when provided", async () => {
