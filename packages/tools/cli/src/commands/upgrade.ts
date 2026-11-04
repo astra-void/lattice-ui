@@ -9,7 +9,6 @@ import {
 } from "../core/output";
 import { LEGACY_PACKAGE_RENAMES } from "../core/project/legacyPackages";
 import { readPackageJson } from "../core/project/readPackageJson";
-import { promptMultiSelect } from "../core/prompt";
 import type { CliContext } from "../ctx";
 import { announcePackageManagerPin, applyPackageManagerPin } from "./pin";
 import { resolveComponentSelection, type SelectionInput } from "./selection";
@@ -35,27 +34,20 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
   const legacyInstalled = normalizeList(installedNames.filter((name) => LEGACY_PACKAGE_RENAMES[name] !== undefined));
   const installedLattice = normalizeList(installedNames.filter((name) => LEGACY_PACKAGE_RENAMES[name] === undefined));
 
-  let targets: string[];
+  // @lattice-ui/* packages are released in lockstep and pin each other exactly, so upgrading a
+  // subset would mix versions and nest duplicate copies with separate React contexts. Every
+  // installed package moves together; a selection only decides whether there is anything to do.
+  let targets = installedLattice;
   let missingRequested: string[] = [];
-  if (input.names.length === 0 && input.presets.length === 0) {
-    if (ctx.options.yes) {
-      targets = installedLattice;
-    } else {
-      targets = await promptMultiSelect(
-        { yes: ctx.options.yes },
-        "Select installed @lattice-ui/* packages to upgrade",
-        installedLattice.map((name) => ({ label: name, value: name })),
-        {
-          allowEmpty: false,
-          defaultIndices: installedLattice.map((_, index) => index),
-        },
-      );
-    }
-  } else {
+  let alongside: string[] = [];
+  if (input.names.length > 0 || input.presets.length > 0) {
     const requestedRegistryPackages = getSelectedRegistryPackages(ctx, input);
     const installedSet = new Set(installedLattice);
-    targets = normalizeList(requestedRegistryPackages.filter((pkg) => installedSet.has(pkg)));
+    const requestedSet = new Set(requestedRegistryPackages);
+    const matched = requestedRegistryPackages.filter((pkg) => installedSet.has(pkg));
     missingRequested = normalizeList(requestedRegistryPackages.filter((pkg) => !installedSet.has(pkg)));
+    targets = matched.length > 0 ? installedLattice : [];
+    alongside = matched.length > 0 ? installedLattice.filter((pkg) => !requestedSet.has(pkg)) : [];
   }
 
   const localLattice = resolveLocalLatticeCommand(ctx.pmName);
@@ -99,6 +91,13 @@ export async function runUpgradeCommand(ctx: CliContext, input: SelectionInput):
 
   if (missingRequested.length > 0) {
     ctx.logger.group("Not installed, skipped", missingRequested, { tone: "warn", limit: ITEM_LIMIT });
+  }
+
+  if (alongside.length > 0) {
+    ctx.logger.group("Also upgraded to keep @lattice-ui/* on one version", alongside, {
+      tone: "warn",
+      limit: ITEM_LIMIT,
+    });
   }
 
   if (dependencySpecs.length > 0) {

@@ -123,10 +123,10 @@ const COMMANDS: CommandSpec[] = [
   },
   {
     name: "upgrade",
-    summary: "Upgrade installed @lattice-ui/* packages.",
+    summary: "Upgrade every installed @lattice-ui/* package together.",
     usage: "lattice upgrade [name...] [options]",
     options: [
-      ["    --preset <preset...>", "Limit the upgrade to a preset. Comma-separated."],
+      ["    --preset <preset...>", "Select by preset; installed packages still move together."],
       YES_OPTION,
       DRY_RUN_OPTION,
       PM_OPTION,

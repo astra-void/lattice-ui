@@ -25,6 +25,12 @@ lattice <command> [options]
 - `lattice help [command]`
 - `lattice version`
 
+`@lattice-ui/*` packages are released in lockstep and depend on each other at exact versions, so
+the CLI keeps a project on one version. `add` installs new packages at the version the project
+already uses (read from `node_modules`, or the manifest when nothing is installed yet) instead of
+`latest`, and `upgrade` always moves every installed `@lattice-ui/*` package together — naming
+components only checks that at least one of them is installed.
+
 Every command has its own help page. `lattice add --help` and `lattice remove --help` also print the
 full list of available components and presets, so there is no need to start a run to discover them.
 

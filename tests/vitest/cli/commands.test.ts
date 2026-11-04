@@ -1464,6 +1464,99 @@ describe("command behavior", () => {
     expect(written.devEngines.packageManager.name).toBe("npm");
   });
 
+  it("add pins new lattice packages to the installed lockstep version", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "tmp", dependencies: { "@lattice-ui/react-dialog": "^0.7.1" } }, null, 2),
+      "utf8",
+    );
+    // node_modules wins over the manifest specifier: it is what the project actually runs.
+    await mkdir(path.join(dir, "node_modules", "@lattice-ui", "react-dialog"), { recursive: true });
+    await writeFile(
+      path.join(dir, "node_modules", "@lattice-ui", "react-dialog", "package.json"),
+      JSON.stringify({ name: "@lattice-ui/react-dialog", version: "0.7.3" }),
+      "utf8",
+    );
+
+    const add = vi.fn(async () => undefined);
+    const ctx = createContext({
+      projectRoot: dir,
+      pm: { name: "npm", add },
+      registry: {
+        packages: {
+          popover: {
+            npm: "@lattice-ui/react-popover",
+            peers: ["@rbxts/react"],
+            providers: ["@lattice-ui/react-layer:PortalProvider"],
+          },
+        },
+        presets: {},
+      },
+    });
+
+    await runAddCommand(ctx, { names: ["popover"], presets: [] });
+
+    expect(add.mock.calls[0]).toEqual([
+      false,
+      ["@lattice-ui/react-layer@0.7.3", "@lattice-ui/react-popover@0.7.3", "@rbxts/react"],
+      dir,
+    ]);
+  });
+
+  it("add falls back to the manifest version and warns when installed versions are mixed", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "tmp",
+          dependencies: { "@lattice-ui/react-dialog": "0.7.1", "@lattice-ui/react-style": "~0.7.2" },
+          devDependencies: { "@lattice-ui/react-focus": "workspace:*" },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const add = vi.fn(async () => undefined);
+    const logger = createLogger();
+    const ctx = createContext({
+      projectRoot: dir,
+      logger,
+      pm: { name: "npm", add },
+      registry: {
+        packages: { popover: { npm: "@lattice-ui/react-popover" } },
+        presets: {},
+      },
+    });
+
+    await runAddCommand(ctx, { names: ["popover"], presets: [] });
+
+    expect(add.mock.calls[0]).toEqual([false, ["@lattice-ui/react-popover@0.7.2"], dir]);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("different versions (0.7.1, 0.7.2)"));
+  });
+
+  it("add installs the latest release when no lattice package is installed yet", async () => {
+    const dir = await createTempDir();
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp", dependencies: {} }, null, 2), "utf8");
+
+    const add = vi.fn(async () => undefined);
+    const ctx = createContext({
+      projectRoot: dir,
+      pm: { name: "npm", add },
+      registry: {
+        packages: { popover: { npm: "@lattice-ui/react-popover" } },
+        presets: {},
+      },
+    });
+
+    await runAddCommand(ctx, { names: ["popover"], presets: [] });
+
+    expect(add.mock.calls[0]).toEqual([false, ["@lattice-ui/react-popover"], dir]);
+  });
+
   it("add requires explicit selection in --yes mode", async () => {
     const dir = await createTempDir();
     await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp", dependencies: {} }, null, 2), "utf8");
@@ -1776,6 +1869,85 @@ describe("command behavior", () => {
     });
 
     expect(groupsOf(logger)["Would upgrade 10 dependencies"]).toHaveLength(10);
+  });
+
+  it("upgrade moves every installed lattice package when only some are named", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        {
+          name: "tmp",
+          dependencies: {
+            "@lattice-ui/react-dialog": "0.7.1",
+            "@lattice-ui/react-layer": "0.7.1",
+            "@rbxts/react": "^17.0.0",
+          },
+          devDependencies: { "@lattice-ui/react-focus": "0.7.1" },
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const add = vi.fn(async () => undefined);
+    const logger = createLogger();
+    const ctx = createContext({
+      projectRoot: dir,
+      logger,
+      pm: { name: "npm", add },
+      registry: {
+        packages: {
+          dialog: { npm: "@lattice-ui/react-dialog" },
+          popover: { npm: "@lattice-ui/react-popover" },
+        },
+        presets: {},
+      },
+    });
+
+    await runUpgradeCommand(ctx, { names: ["dialog", "popover"], presets: [] });
+
+    expect(add.mock.calls).toEqual([
+      [false, ["@lattice-ui/react-dialog@latest", "@lattice-ui/react-layer@latest"], dir],
+      [true, ["@lattice-ui/react-focus@latest"], dir],
+    ]);
+    expect(groupsOf(logger)["Also upgraded to keep @lattice-ui/* on one version"]).toEqual([
+      "@lattice-ui/react-focus",
+      "@lattice-ui/react-layer",
+    ]);
+    expect(groupsOf(logger)["Not installed, skipped"]).toEqual(["@lattice-ui/react-popover"]);
+  });
+
+  it("upgrade does not ask which packages to upgrade", async () => {
+    const dir = await createTempDir();
+    await writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify(
+        { name: "tmp", dependencies: { "@lattice-ui/react-dialog": "0.7.1", "@lattice-ui/react-layer": "0.7.1" } },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+
+    const promptSpy = vi.spyOn(promptModule, "promptMultiSelect");
+    const add = vi.fn(async () => undefined);
+    const ctx = createContext({
+      projectRoot: dir,
+      options: { yes: false },
+      pm: { name: "npm", add },
+      registry: { packages: { dialog: { npm: "@lattice-ui/react-dialog" } }, presets: {} },
+    });
+
+    await runUpgradeCommand(ctx, { names: [], presets: [] });
+
+    expect(promptSpy).not.toHaveBeenCalled();
+    expect(add.mock.calls[0]).toEqual([
+      false,
+      ["@lattice-ui/react-dialog@latest", "@lattice-ui/react-layer@latest"],
+      dir,
+    ]);
   });
 
   it("upgrade reports a clear result when no requested packages are installed", async () => {

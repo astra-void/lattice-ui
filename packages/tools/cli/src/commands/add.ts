@@ -9,6 +9,7 @@ import {
   plural,
   resolveLocalLatticeCommand,
 } from "../core/output";
+import { isLatticePackage, resolveInstalledLatticeVersion } from "../core/project/latticeVersion";
 import { readPackageJson } from "../core/project/readPackageJson";
 import { promptMultiSelect } from "../core/prompt";
 import { parseProviderRequirement } from "../core/registry/schema";
@@ -91,8 +92,16 @@ export async function runAddCommand(ctx: CliContext, input: SelectionInput): Pro
 
   const packageJson = await readPackageJson(ctx.projectRoot);
   const installed = getDependencyNames(packageJson);
+  // New @lattice-ui/* packages join the version the project is already on; `latest` would mix
+  // versions and nest duplicate copies of the shared packages.
+  const lattice = await resolveInstalledLatticeVersion(ctx.projectRoot, packageJson);
   const plannedSpecs = [...specs]
     .filter((spec) => !installed.has(toPackageName(spec)))
+    .map((spec) =>
+      lattice.version !== undefined && isLatticePackage(spec) && spec === toPackageName(spec)
+        ? `${spec}@${lattice.version}`
+        : spec,
+    )
     .sort((left, right) => left.localeCompare(right));
   const localLattice = resolveLocalLatticeCommand(ctx.pmName);
   const dryRun = ctx.options.dryRun;
@@ -109,6 +118,12 @@ export async function runAddCommand(ctx: CliContext, input: SelectionInput): Pro
       `${dryRun ? "Would install" : "Install"} ${plannedSpecs.length} ${plural(plannedSpecs.length, "package")}`,
       plannedSpecs.map(linkPackage),
       { limit: ITEM_LIMIT },
+    );
+  }
+
+  if (lattice.versions.length > 1) {
+    ctx.logger.warn(
+      `Installed @lattice-ui/* packages are on different versions (${lattice.versions.join(", ")}); adding at ${lattice.version}. Run \`${localLattice} upgrade\` to align them.`,
     );
   }
 
