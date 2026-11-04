@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { spawnSync } from "node:child_process";
 import * as path from "node:path";
 import {
   coerceInternalDependencySpec,
@@ -14,6 +15,7 @@ import {
   jsonEqual,
   listApps,
   listPackages,
+  listPathMapFiles,
   normalizePackageManifest,
   type PackageManifest,
   ROOT_DIR,
@@ -21,6 +23,26 @@ import {
   sortRecord,
   writeJson,
 } from "./workspace-utils";
+
+interface PathMapTsconfig {
+  compilerOptions?: {
+    baseUrl?: string;
+    paths?: Record<string, string[]>;
+  };
+}
+
+/** Inserts each missing entry at its sorted position, leaving the existing (hand-ordered) entries alone. */
+function insertPathEntries(
+  paths: Record<string, string[]>,
+  additions: Array<[string, string[]]>,
+): Record<string, string[]> {
+  const entries = Object.entries(paths);
+  for (const [name, target] of additions) {
+    const index = entries.findIndex(([existingName]) => existingName.localeCompare(name) > 0);
+    entries.splice(index === -1 ? entries.length : index, 0, [name, target]);
+  }
+  return Object.fromEntries(entries);
+}
 
 interface ChangesetConfigOptions {
   access: string;
@@ -168,6 +190,52 @@ for (const pkg of packages) {
   }
 }
 
+const updatedPathMapFiles: string[] = [];
+for (const configPath of listPathMapFiles(apps)) {
+  if (!fileExists(configPath)) {
+    continue;
+  }
+
+  const config = readJson<PathMapTsconfig>(configPath);
+  const compilerOptions = config.compilerOptions;
+  const paths = compilerOptions?.paths;
+  if (!compilerOptions || !paths) {
+    continue;
+  }
+
+  const baseDir = path.resolve(path.dirname(configPath), compilerOptions.baseUrl ?? ".");
+  const additions = typecheckPathPackages
+    .filter((pkg) => paths[pkg.manifest.name] === undefined)
+    .map((pkg): [string, string[]] => [
+      pkg.manifest.name,
+      [
+        path
+          .relative(baseDir, path.join(pkg.dirPath, "src", "index.ts"))
+          .split(path.sep)
+          .join("/"),
+      ],
+    ]);
+  if (additions.length === 0) {
+    continue;
+  }
+
+  compilerOptions.paths = insertPathEntries(paths, additions);
+  writeJson(configPath, config);
+  updatedPathMapFiles.push(configPath);
+}
+
+if (updatedPathMapFiles.length > 0) {
+  // writeJson expands every array; let Biome restore the repository's formatting of these tsconfigs.
+  const formatResult = spawnSync("pnpm", ["exec", "biome", "format", "--write", ...updatedPathMapFiles], {
+    cwd: ROOT_DIR,
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+  if (formatResult.status !== 0) {
+    console.warn("Could not format the updated tsconfig paths maps; run pnpm format.");
+  }
+}
+
 const changesetDir = path.join(ROOT_DIR, ".changeset");
 ensureDir(changesetDir);
 const changesetConfigPath = path.join(changesetDir, "config.json");
@@ -192,4 +260,5 @@ if (!jsonEqual(existingChangesetConfig, expectedChangesetConfig)) {
 
 console.log(`Synced package manifests: ${manifestUpdates}`);
 console.log(`Synced tsconfig.typecheck.json files: ${typecheckUpdates}`);
+console.log(`Synced tsconfig paths maps: ${updatedPathMapFiles.length}`);
 console.log(`Synced .changeset/config.json: ${changesetUpdated ? "yes" : "no"}`);

@@ -12,6 +12,7 @@ import {
   jsonEqual,
   listApps,
   listPackages,
+  listPathMapFiles,
   parseMajor,
   ROOT_DIR,
   readJson,
@@ -176,13 +177,12 @@ for (const pkg of packages) {
  * Hand-maintained `paths` maps drift silently: a package missing from one still resolves locally
  * through its built `out/`, so only CI — which typechecks before building — sees the failure.
  */
-const pathMapFiles = ["tsconfig.eslint.json", ...apps.map((app) => path.join("apps", app.dirName, "tsconfig.json"))];
 const expectedPathNames = packages
   .filter((pkg) => !isToolingPackage(policy, pkg.manifest.name))
   .map((pkg) => pkg.manifest.name);
 
-for (const relativePath of pathMapFiles) {
-  const absolutePath = path.join(ROOT_DIR, relativePath);
+for (const absolutePath of listPathMapFiles(apps)) {
+  const relativePath = path.relative(ROOT_DIR, absolutePath).split(path.sep).join("/");
   if (!fileExists(absolutePath)) {
     continue;
   }
@@ -195,7 +195,7 @@ for (const relativePath of pathMapFiles) {
 
   const missing = expectedPathNames.filter((name) => paths[name] === undefined);
   if (missing.length > 0) {
-    errors.push(`${relativePath} is missing paths entries for: ${missing.join(", ")}.`);
+    errors.push(`${relativePath} is missing paths entries for: ${missing.join(", ")}. Run "pnpm workspace:sync".`);
   }
 }
 

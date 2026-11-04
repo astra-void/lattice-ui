@@ -154,6 +154,8 @@ const lockedVersion = getLockedVersion(policy, packages);
 const dependencySpec = policy.internalDependencyVersion ?? "workspace:*";
 const defaultScripts = policy.packageDefaults?.scripts ?? {
   build: "rbxtsc -p tsconfig.json",
+  lint: "biome check src",
+  "lint:fix": "biome check src --write --unsafe",
   watch: "rbxtsc -p tsconfig.json -w",
   typecheck: "tsc -p tsconfig.typecheck.json",
 };

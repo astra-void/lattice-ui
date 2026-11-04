@@ -215,6 +215,15 @@ export function createWorkspacePaths(packages: WorkspaceEntry[]): Record<string,
 }
 
 /**
+ * Root and app tsconfigs that keep a `paths` map of every non-tooling package, so the eslint program
+ * and each app resolve workspace packages from source. `workspace:sync` fills in missing entries and
+ * `workspace:check` verifies them.
+ */
+export function listPathMapFiles(apps: WorkspaceEntry[]): string[] {
+  return [path.join(ROOT_DIR, "tsconfig.eslint.json"), ...apps.map((app) => path.join(app.dirPath, "tsconfig.json"))];
+}
+
+/**
  * Canonical `tsconfig.typecheck.json` contents. `baseUrl`/`rootDir` resolve to `packages/`, which is
  * two levels up from a package directory (`packages/<layer>/<name>`), matching `dirName` in the paths map.
  */

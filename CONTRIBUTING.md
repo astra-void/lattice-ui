@@ -178,7 +178,8 @@ Package manifests, lockedstep versions, required files, canonical scripts, peer 
 hand-maintained tsconfig path maps are enforced by `pnpm run workspace:check` (a CI job of its own —
 nothing else in CI would notice them drifting).
 
-- `pnpm run workspace:sync` rewrites manifests and generated tsconfigs to the canonical shape.
+- `pnpm run workspace:sync` rewrites manifests and generated tsconfigs to the canonical shape, and
+  adds missing packages to the `paths` maps in `tsconfig.eslint.json` and `apps/*/tsconfig.json`.
 - `pnpm run workspace:check` verifies them; it fails with a list of exactly what drifted.
 
 Keep internal `@lattice-ui/*` dependencies on `workspace:*`, and do not hand-edit package versions —
