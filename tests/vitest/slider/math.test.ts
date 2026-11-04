@@ -24,6 +24,15 @@ describe("slider math helpers", () => {
     expect(snapValueToStep(-9, 0, 100, 10)).toBe(0);
   });
 
+  it("snaps fractional steps without floating-point drift", () => {
+    expect(snapValueToStep(0.3, 0.2, 1, 0.1)).toBe(0.3);
+    expect(snapValueToStep(0.2 + 0.1, 0, 1, 0.1)).toBe(0.3);
+    expect(snapValueToStep(0.7, 0, 1, 0.1)).toBe(0.7);
+    expect(snapValueToStep(0.14, 0, 1, 0.07)).toBe(0.14);
+    expect(snapValueToStep(1.26, 0.05, 2, 0.25)).toBe(1.3);
+    expect(snapValueToStep(-0.3, -1, 0, 0.1)).toBe(-0.3);
+  });
+
   it("computes percentage from value", () => {
     expect(valueToPercent(50, 0, 100)).toBe(0.5);
     expect(valueToPercent(200, 0, 100)).toBe(1);
