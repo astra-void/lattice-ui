@@ -5,6 +5,8 @@ export enum ExitCode {
   ProjectNotFound = 3,
   RegistryInvalid = 4,
   PackageManagerFailed = 5,
+  /** The conventional "terminated by SIGINT" status, used when the user presses Ctrl+C. */
+  Cancelled = 130,
 }
 
 export type CliErrorKind =
@@ -13,6 +15,7 @@ export type CliErrorKind =
   | "ProjectNotFound"
   | "RegistryInvalid"
   | "PackageManagerFailed"
+  | "Cancelled"
   | "Unexpected";
 
 export class CliError extends Error {
@@ -83,9 +86,21 @@ export function packageManagerFailedError(message: string, cause?: unknown): Cli
   return new CliError(message, "PackageManagerFailed", ExitCode.PackageManagerFailed, cause);
 }
 
+/**
+ * `readline/promises` rejects a pending `question()` with an `AbortError` when the user presses
+ * Ctrl+C at a text or y/N prompt. That is a cancellation, not a crash.
+ */
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 export function toCliError(error: unknown): CliError {
   if (error instanceof CliError) {
     return error;
+  }
+
+  if (isAbortError(error)) {
+    return new CliError("Cancelled.", "Cancelled", ExitCode.Cancelled, error);
   }
 
   if (error instanceof Error) {

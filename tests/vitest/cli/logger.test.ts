@@ -1,5 +1,6 @@
 import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
+import { toCliError } from "../../../packages/tools/cli/src/core/errors";
 import { createLogger } from "../../../packages/tools/cli/src/core/logger";
 import { hyperlink } from "../../../packages/tools/cli/src/core/style";
 
@@ -254,6 +255,27 @@ describe("logger confirm", () => {
       name: expect.anything(),
       message: expect.stringMatching(/needs confirmation/),
     });
+  });
+
+  it("treats Ctrl+C at the y/N question as a cancellation", async () => {
+    const stdin = createReadStream(true);
+    (stdin as unknown as { setRawMode: (value: boolean) => void }).setRawMode = () => {};
+    const stdout = new PassThrough();
+    (stdout as unknown as { isTTY: boolean }).isTTY = true;
+    const logger = createLogger({
+      verbose: false,
+      yes: false,
+      env: {},
+      stdin,
+      stdout: stdout as unknown as NodeJS.WriteStream,
+      stderr: new PassThrough() as unknown as NodeJS.WriteStream,
+    });
+
+    const settled = logger.confirm("Install 1 package?").catch((error: unknown) => error);
+    await new Promise((resolve) => setImmediate(resolve));
+    (stdin as unknown as PassThrough).write("\u0003");
+
+    expect(toCliError(await settled)).toMatchObject({ kind: "Cancelled", exitCode: 130 });
   });
 
   it("confirms without prompting under --yes", async () => {

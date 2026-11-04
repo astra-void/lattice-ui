@@ -1,5 +1,6 @@
 import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
+import { ExitCode, toCliError } from "../../../packages/tools/cli/src/core/errors";
 import {
   promptConfirm,
   promptInput,
@@ -310,5 +311,33 @@ describe("promptInput", () => {
     await harness.press("\n");
 
     expect(await pending).toBe("lattice-app");
+  });
+});
+
+describe("Ctrl+C at a text prompt", () => {
+  const CTRL_C = "\u0003";
+
+  it("cancels promptInput quietly with exit code 130", async () => {
+    const harness = createHarness();
+    const pending = promptInput(harness.runtime, "Project name", { required: true });
+    const settled = pending.catch((error: unknown) => error);
+
+    await harness.press(CTRL_C);
+
+    const cliError = toCliError(await settled);
+    expect(cliError.kind).toBe("Cancelled");
+    expect(cliError.exitCode).toBe(ExitCode.Cancelled);
+  });
+
+  it("cancels promptConfirm quietly with exit code 130", async () => {
+    const harness = createHarness();
+    const pending = promptConfirm(harness.runtime, "Initialize git", { defaultValue: false });
+    const settled = pending.catch((error: unknown) => error);
+
+    await harness.press(CTRL_C);
+
+    const cliError = toCliError(await settled);
+    expect(cliError.kind).toBe("Cancelled");
+    expect(cliError.exitCode).toBe(130);
   });
 });

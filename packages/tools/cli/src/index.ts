@@ -15,6 +15,13 @@ function reportError(cliError: CliError) {
     return;
   }
 
+  // Ctrl+C at a text prompt leaves the cursor after the question. End that line and stay quiet,
+  // like the list prompts do; the exit code already says the run was cancelled.
+  if (cliError.kind === "Cancelled") {
+    process.stdout.write("\n");
+    return;
+  }
+
   const colored = shouldUseColor(process.stdout, process.stderr);
   const label = colored ? `${ANSI.red}Error${ANSI.reset}` : "Error";
   process.stderr.write(`${label}: ${cliError.message}\n`);

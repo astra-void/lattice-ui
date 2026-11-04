@@ -117,5 +117,6 @@ Selection prompts are keyboard-driven:
 | `ctrl+c` / `esc` | Cancel |
 
 Long lists scroll inside a window sized to the terminal, with the visible range shown underneath.
-An unparseable answer re-asks instead of failing the command. Prompts need a TTY; in a
+An unparseable answer re-asks instead of failing the command. `ctrl+c` at any prompt, including
+text and y/N questions, cancels the run quietly with exit code 130. Prompts need a TTY; in a
 non-interactive environment pass `--yes` along with the values as options.

@@ -1,5 +1,5 @@
 import { createInterface } from "node:readline/promises";
-import { usageError } from "./errors";
+import { ExitCode, usageError } from "./errors";
 import { ANSI, createStyle, type Style } from "./style";
 
 export interface PromptRuntime {
@@ -93,7 +93,7 @@ function withRawMode<T>(
       restore();
       // 130 is the conventional "terminated by SIGINT" status. Re-raising the signal instead
       // would let Node's default handler exit without unwinding through the restore above.
-      process.exit(130);
+      process.exit(ExitCode.Cancelled);
     };
 
     try {
