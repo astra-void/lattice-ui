@@ -1,9 +1,15 @@
 import { ReactRoblox } from "@lattice-ui/react-runtime";
-import { usePortalContext } from "./PortalProvider";
+import { portalContextMissing, useOptionalPortalContext } from "./context";
 import type { PortalProps } from "./types";
 
 export function Portal(props: PortalProps) {
-  const contextValue = usePortalContext();
-  const target = props.container ?? contextValue.container;
+  // Read non-strictly: an explicit `container` needs no PortalProvider. With neither, keep the
+  // strict context error.
+  const contextValue = useOptionalPortalContext();
+  const target = props.container ?? contextValue?.container;
+  if (target === undefined) {
+    portalContextMissing();
+  }
+
   return ReactRoblox.createPortal(props.children, target);
 }

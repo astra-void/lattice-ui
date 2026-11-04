@@ -1,8 +1,7 @@
-import { createStrictContext, React } from "@lattice-ui/react-runtime";
+import { React } from "@lattice-ui/react-runtime";
 import { DEFAULT_DISPLAY_ORDER_BASE } from "../internals/constants";
-import type { PortalContextValue, PortalProviderProps } from "./types";
-
-const [PortalContextProvider, usePortalContext] = createStrictContext<PortalContextValue>("PortalProvider");
+import { PortalContextProvider, usePortalContext } from "./context";
+import type { PortalProviderProps } from "./types";
 
 export function PortalProvider(props: PortalProviderProps) {
   const displayOrderBase = props.displayOrderBase ?? DEFAULT_DISPLAY_ORDER_BASE;
