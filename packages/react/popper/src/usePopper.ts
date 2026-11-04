@@ -1,4 +1,4 @@
-import React from "@rbxts/react";
+import { React } from "@lattice-ui/react-runtime";
 import { computePopper } from "./compute";
 import { subscribeAnchor, subscribeContent, subscribeViewport } from "./observers";
 import { normalizePopperPositioningOptions } from "./options";
@@ -27,18 +27,6 @@ function areVector2Equal(a: Vector2, b: Vector2) {
 
 function hasMeasuredContentSize(contentSize: Vector2) {
   return contentSize.X > 0 || contentSize.Y > 0;
-}
-
-function _findNearestScreenGui(node: GuiObject | undefined) {
-  let current: Instance | undefined = node;
-  while (current) {
-    if (current.IsA("ScreenGui")) {
-      return current;
-    }
-    current = current.Parent;
-  }
-
-  return undefined;
 }
 
 function areResultsEqual(a: ComputePopperResult, b: ComputePopperResult) {

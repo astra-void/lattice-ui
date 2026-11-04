@@ -733,9 +733,6 @@ importers:
 
   packages/react/popper:
     dependencies:
-      '@lattice-ui/react-motion':
-        specifier: workspace:*
-        version: link:../motion
       '@lattice-ui/react-runtime':
         specifier: workspace:*
         version: link:../runtime

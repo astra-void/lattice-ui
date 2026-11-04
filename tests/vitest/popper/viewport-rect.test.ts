@@ -12,7 +12,10 @@
 // The previous implementation had the two branches swapped, shifting every
 // popover/tooltip collision rect down by the topbar inset (36px).
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@lattice-ui/react-runtime", () => ({ React: require("react") }));
+
 import { resolveScreenGuiViewportRect } from "../../../packages/react/popper/src/usePopper";
 
 const INSET = new Vector2(0, 36);
