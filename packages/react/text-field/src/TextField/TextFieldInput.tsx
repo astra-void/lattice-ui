@@ -35,7 +35,8 @@ export const TextFieldInput = React.forwardRef<TextBox, TextFieldInputProps>((pr
   const textFieldContext = useTextFieldContext();
   const disabled = textFieldContext.disabled || props.disabled === true;
   const readOnly = textFieldContext.readOnly || props.readOnly === true;
-  const [focused, setFocused] = React.useState(false);
+  const focused = textFieldContext.focused;
+  const setFocused = textFieldContext.setFocused;
 
   const focusRef = React.useRef<GuiObject>();
   useFocusNode({
@@ -86,7 +87,7 @@ export const TextFieldInput = React.forwardRef<TextBox, TextFieldInputProps>((pr
 
   const handleFocused = React.useCallback(() => {
     setFocused(true);
-  }, []);
+  }, [setFocused]);
 
   const handleFocusLost = React.useCallback(
     (textBox: TextBox) => {
@@ -97,7 +98,7 @@ export const TextFieldInput = React.forwardRef<TextBox, TextFieldInputProps>((pr
 
       textFieldContext.commitValue(textBox.Text);
     },
-    [disabled, textFieldContext],
+    [disabled, setFocused, textFieldContext],
   );
 
   const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS, forwardedRef);

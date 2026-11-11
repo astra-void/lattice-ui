@@ -15,6 +15,7 @@ export function TextFieldRoot(props: TextFieldProps) {
   const invalid = props.invalid === true;
 
   const inputRef = React.useRef<TextBox>();
+  const [focused, setFocused] = React.useState(false);
 
   const setValue = React.useCallback(
     (nextValue: string) => {
@@ -43,10 +44,12 @@ export function TextFieldRoot(props: TextFieldProps) {
       readOnly,
       required,
       invalid,
+      focused,
+      setFocused,
       name: props.name,
       inputRef,
     }),
-    [commitValue, disabled, invalid, props.name, readOnly, required, setValue, value],
+    [commitValue, disabled, focused, invalid, props.name, readOnly, required, setValue, value],
   );
 
   return <TextFieldContextProvider value={contextValue}>{props.children}</TextFieldContextProvider>;

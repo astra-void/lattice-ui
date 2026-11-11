@@ -1,6 +1,6 @@
 import { type FocusChangeSource, isNativeSelectionChange, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
-import { useTabsContext } from "./context";
+import { TabsTriggerContextProvider, useTabsContext } from "./context";
 import { createTabsTriggerName } from "./internals/ids";
 import type { TabsTriggerProps } from "./types";
 
@@ -150,6 +150,11 @@ export const TabsTrigger = React.forwardRef<TextButton, TabsTriggerProps>((props
     Selectable: !disabled,
   };
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setTriggerRef);
+  const selected = tabsContext.value === props.value;
+  const triggerContextValue = React.useMemo(
+    () => ({ value: props.value, selected, disabled }),
+    [disabled, props.value, selected],
+  );
 
   if (props.asChild) {
     const child = props.children;
@@ -159,16 +164,20 @@ export const TabsTrigger = React.forwardRef<TextButton, TabsTriggerProps>((props
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
-        {child}
-      </Slot>
+      <TabsTriggerContextProvider value={triggerContextValue}>
+        <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
+          {child}
+        </Slot>
+      </TabsTriggerContextProvider>
     );
   }
 
   return (
-    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
-      {props.children}
-    </textbutton>
+    <TabsTriggerContextProvider value={triggerContextValue}>
+      <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
+        {props.children}
+      </textbutton>
+    </TabsTriggerContextProvider>
   );
 });
 TabsTrigger.displayName = "TabsTrigger";

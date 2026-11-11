@@ -10,11 +10,13 @@ export const Tabs = {
   Content: TabsContent,
 } as const;
 
+export { useTabsTriggerContext } from "./Tabs/context";
 export type {
   TabsContentProps,
   TabsContextValue,
   TabsListProps,
   TabsOrientation,
   TabsProps,
+  TabsTriggerContextValue,
   TabsTriggerProps,
 } from "./Tabs/types";

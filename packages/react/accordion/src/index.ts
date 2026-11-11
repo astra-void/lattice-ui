@@ -12,6 +12,7 @@ export const Accordion = {
   Content: AccordionContent,
 } as const;
 
+export { useAccordionItemContext } from "./Accordion/context";
 export type { AccordionType } from "./Accordion/state";
 export { nextAccordionValues, normalizeAccordionValue } from "./Accordion/state";
 export type {

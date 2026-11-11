@@ -12,6 +12,7 @@ export const TextField = {
   Message: TextFieldMessage,
 } as const;
 
+export { useTextFieldContext } from "./TextField/context";
 export type {
   TextFieldCommitValue,
   TextFieldContextValue,

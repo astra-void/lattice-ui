@@ -6,9 +6,11 @@ export const ToggleGroup = {
   Item: ToggleGroupItem,
 } as const;
 
+export { useToggleGroupItemContext } from "./ToggleGroup/context";
 export type {
   ToggleGroupCommonProps,
   ToggleGroupContextValue,
+  ToggleGroupItemContextValue,
   ToggleGroupItemProps,
   ToggleGroupItemRegistration,
   ToggleGroupMultipleProps,

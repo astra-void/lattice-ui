@@ -12,6 +12,10 @@ export type TextareaContextValue = {
   readOnly: boolean;
   required: boolean;
   invalid: boolean;
+  // True while the field's input has keyboard focus. Set by the Input part; read it to style focus
+  // anywhere under the Root.
+  focused: boolean;
+  setFocused: (focused: boolean) => void;
   name?: string;
   autoResize: boolean;
   minRows: number;

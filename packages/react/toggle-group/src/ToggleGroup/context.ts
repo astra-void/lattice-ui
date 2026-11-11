@@ -1,6 +1,9 @@
 import { createStrictContext } from "@lattice-ui/react-runtime";
-import type { ToggleGroupContextValue } from "./types";
+import type { ToggleGroupContextValue, ToggleGroupItemContextValue } from "./types";
 
 const [ToggleGroupContextProvider, useToggleGroupContext] = createStrictContext<ToggleGroupContextValue>("ToggleGroup");
 
-export { ToggleGroupContextProvider, useToggleGroupContext };
+const [ToggleGroupItemContextProvider, useToggleGroupItemContext] =
+  createStrictContext<ToggleGroupItemContextValue>("ToggleGroupItem");
+
+export { ToggleGroupContextProvider, ToggleGroupItemContextProvider, useToggleGroupContext, useToggleGroupItemContext };

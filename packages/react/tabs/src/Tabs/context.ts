@@ -1,6 +1,7 @@
 import { createStrictContext } from "@lattice-ui/react-runtime";
-import type { TabsContextValue } from "./types";
+import type { TabsContextValue, TabsTriggerContextValue } from "./types";
 
 const [TabsContextProvider, useTabsContext] = createStrictContext<TabsContextValue>("Tabs");
+const [TabsTriggerContextProvider, useTabsTriggerContext] = createStrictContext<TabsTriggerContextValue>("TabsTrigger");
 
-export { TabsContextProvider, useTabsContext };
+export { TabsContextProvider, TabsTriggerContextProvider, useTabsContext, useTabsTriggerContext };

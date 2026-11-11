@@ -13,6 +13,7 @@ export const Textarea = {
 } as const;
 
 export { resolveTextareaHeight } from "./Textarea/autoResize";
+export { useTextareaContext } from "./Textarea/context";
 export type {
   TextareaCommitValue,
   TextareaContextValue,

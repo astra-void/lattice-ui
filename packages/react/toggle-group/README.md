@@ -7,6 +7,7 @@ Behavior-only ToggleGroup primitives for Roblox UI, aligned with the lattice com
 - `ToggleGroup`
 - `ToggleGroup.Root`
 - `ToggleGroup.Item`
+- `useToggleGroupItemContext`
 
 ## Notes
 
@@ -16,3 +17,4 @@ Behavior-only ToggleGroup primitives for Roblox UI, aligned with the lattice com
 - `orientation` (`"horizontal"` by default, or `"vertical"`) picks the arrow keys that move focus
   between enabled items, in layout order (`LayoutOrder`). Unlike RadioGroup, moving focus does not
   change which items are pressed.
+- `useToggleGroupItemContext()` inside a `ToggleGroup.Item` returns `{ value, pressed, disabled }`.

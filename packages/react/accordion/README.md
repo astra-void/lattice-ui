@@ -10,8 +10,11 @@ Headless accordion primitives for Roblox UI with single and multiple disclosure 
 - `Accordion.Header`
 - `Accordion.Trigger`
 - `Accordion.Content`
+- `useAccordionItemContext`
 
 ## Notes
 
 - Supports `type="single" | "multiple"`.
 - Supports controlled/uncontrolled `value`.
+- `useAccordionItemContext()` inside an `Accordion.Item` returns `{ value, open, disabled }`, for
+  styling open state (a chevron, say) without mirroring `onValueChange`.

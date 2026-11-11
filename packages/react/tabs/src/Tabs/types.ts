@@ -21,6 +21,14 @@ export type TabsContextValue = {
   moveSelection: (fromValue: string, direction: -1 | 1) => void;
 };
 
+// Read-only state of one trigger, provided to everything it renders so consumers can style the
+// selected tab without mirroring `onValueChange`.
+export type TabsTriggerContextValue = {
+  value: string;
+  selected: boolean;
+  disabled: boolean;
+};
+
 export type TabsProps = {
   value?: string;
   defaultValue?: string;

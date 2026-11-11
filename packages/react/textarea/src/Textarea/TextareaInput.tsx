@@ -65,7 +65,8 @@ export const TextareaInput = React.forwardRef<TextBox, TextareaInputProps>((prop
   const textareaContext = useTextareaContext();
   const disabled = textareaContext.disabled || props.disabled === true;
   const readOnly = textareaContext.readOnly || props.readOnly === true;
-  const [focused, setFocused] = React.useState(false);
+  const focused = textareaContext.focused;
+  const setFocused = textareaContext.setFocused;
 
   const focusRef = React.useRef<GuiObject>();
   useFocusNode({
@@ -151,7 +152,7 @@ export const TextareaInput = React.forwardRef<TextBox, TextareaInputProps>((prop
 
   const handleFocused = React.useCallback(() => {
     setFocused(true);
-  }, []);
+  }, [setFocused]);
 
   const handleFocusLost = React.useCallback(
     (textBox: TextBox) => {
@@ -162,7 +163,7 @@ export const TextareaInput = React.forwardRef<TextBox, TextareaInputProps>((prop
 
       textareaContext.commitValue(textBox.Text);
     },
-    [disabled, textareaContext],
+    [disabled, setFocused, textareaContext],
   );
 
   React.useEffect(() => {

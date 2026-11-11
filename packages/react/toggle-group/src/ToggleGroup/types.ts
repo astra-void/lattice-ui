@@ -48,6 +48,14 @@ export type ToggleGroupContextValue = {
   moveFocus: (fromValue: string, direction: -1 | 1) => void;
 };
 
+// Read-only state of one item, provided to everything it renders so consumers can style the pressed
+// state without tracking the group value themselves.
+export type ToggleGroupItemContextValue = {
+  value: string;
+  pressed: boolean;
+  disabled: boolean;
+};
+
 export type ToggleGroupItemProps = {
   value: string;
   disabled?: boolean;

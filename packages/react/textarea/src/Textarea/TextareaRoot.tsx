@@ -18,6 +18,7 @@ export function TextareaRoot(props: TextareaProps) {
   const maxRows = props.maxRows !== undefined ? math.max(minRows, props.maxRows) : undefined;
 
   const inputRef = React.useRef<TextBox>();
+  const [focused, setFocused] = React.useState(false);
 
   const setValue = React.useCallback(
     (nextValue: string) => {
@@ -46,13 +47,28 @@ export function TextareaRoot(props: TextareaProps) {
       readOnly,
       required,
       invalid,
+      focused,
+      setFocused,
       name: props.name,
       autoResize,
       minRows,
       maxRows,
       inputRef,
     }),
-    [autoResize, commitValue, disabled, invalid, maxRows, minRows, props.name, readOnly, required, setValue, value],
+    [
+      autoResize,
+      commitValue,
+      disabled,
+      focused,
+      invalid,
+      maxRows,
+      minRows,
+      props.name,
+      readOnly,
+      required,
+      setValue,
+      value,
+    ],
   );
 
   return <TextareaContextProvider value={contextValue}>{props.children}</TextareaContextProvider>;

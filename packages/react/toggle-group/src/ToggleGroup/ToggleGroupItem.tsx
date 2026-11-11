@@ -1,6 +1,6 @@
 import { useActivationGuard, useFocusNode } from "@lattice-ui/react-focus";
 import { composeEvents, composeRefs, getPassthroughProps, React, Slot, toSlotProps } from "@lattice-ui/react-runtime";
-import { useToggleGroupContext } from "./context";
+import { ToggleGroupItemContextProvider, useToggleGroupContext } from "./context";
 import type { ToggleGroupItemProps } from "./types";
 
 const OWN_PROPS = ["value", "disabled", "asChild", "children"] as const;
@@ -114,6 +114,11 @@ export const ToggleGroupItem = React.forwardRef<TextButton, ToggleGroupItemProps
     Selectable: !disabled,
   };
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setItemRef);
+  const pressed = toggleGroupContext.isPressed(props.value);
+  const itemContextValue = React.useMemo(
+    () => ({ value: props.value, pressed, disabled }),
+    [disabled, pressed, props.value],
+  );
 
   if (props.asChild) {
     const child = props.children;
@@ -123,16 +128,20 @@ export const ToggleGroupItem = React.forwardRef<TextButton, ToggleGroupItemProps
 
     // No neutral defaults here: the rendered element belongs to the consumer.
     return (
-      <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
-        {child}
-      </Slot>
+      <ToggleGroupItemContextProvider value={itemContextValue}>
+        <Slot {...toSlotProps(passthrough)} {...behaviorProps} ref={ref as never}>
+          {child}
+        </Slot>
+      </ToggleGroupItemContextProvider>
     );
   }
 
   return (
-    <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
-      {props.children}
-    </textbutton>
+    <ToggleGroupItemContextProvider value={itemContextValue}>
+      <textbutton {...NEUTRAL_PROPS} {...passthrough} {...behaviorProps} ref={ref as never}>
+        {props.children}
+      </textbutton>
+    </ToggleGroupItemContextProvider>
   );
 });
 ToggleGroupItem.displayName = "ToggleGroupItem";
