@@ -11,11 +11,11 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function TextareaMessage(props: TextareaMessageProps) {
+export const TextareaMessage = React.forwardRef<TextLabel, TextareaMessageProps>((props, forwardedRef) => {
   // Renders nothing of its own, but must still be inside a `Textarea.Root`.
   useTextareaContext();
 
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -32,4 +32,5 @@ export function TextareaMessage(props: TextareaMessageProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+TextareaMessage.displayName = "TextareaMessage";

@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function AccordionHeader(props: AccordionHeaderProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const AccordionHeader = React.forwardRef<Frame, AccordionHeaderProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function AccordionHeader(props: AccordionHeaderProps) {
       {props.children}
     </frame>
   );
-}
+});
+AccordionHeader.displayName = "AccordionHeader";

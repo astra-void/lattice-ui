@@ -12,7 +12,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function TextareaLabel(props: TextareaLabelProps) {
+export const TextareaLabel = React.forwardRef<TextButton, TextareaLabelProps>((props, forwardedRef) => {
   const textareaContext = useTextareaContext();
   const disabled = textareaContext.disabled;
 
@@ -24,7 +24,7 @@ export function TextareaLabel(props: TextareaLabelProps) {
     textareaContext.inputRef.current?.CaptureFocus();
   }, [disabled, textareaContext.inputRef]);
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Selectable: !disabled,
@@ -50,4 +50,5 @@ export function TextareaLabel(props: TextareaLabelProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+TextareaLabel.displayName = "TextareaLabel";

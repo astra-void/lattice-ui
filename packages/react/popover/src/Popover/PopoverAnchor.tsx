@@ -18,7 +18,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function PopoverAnchor(props: PopoverAnchorProps) {
+export const PopoverAnchor = React.forwardRef<Frame, PopoverAnchorProps>((props, forwardedRef) => {
   const popoverContext = usePopoverContext();
 
   const setAnchorRef = React.useCallback(
@@ -28,7 +28,7 @@ export function PopoverAnchor(props: PopoverAnchorProps) {
     [popoverContext.anchorRef],
   );
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     ref: composeRefs<Instance>(passthrough.ref as never, setAnchorRef),
   };
@@ -52,4 +52,5 @@ export function PopoverAnchor(props: PopoverAnchorProps) {
       {props.children}
     </frame>
   );
-}
+});
+PopoverAnchor.displayName = "PopoverAnchor";

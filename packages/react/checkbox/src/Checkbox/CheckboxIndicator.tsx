@@ -72,11 +72,11 @@ function CheckboxIndicatorImpl(props: {
   );
 }
 
-export function CheckboxIndicator(props: CheckboxIndicatorProps) {
+export const CheckboxIndicator = React.forwardRef<Frame, CheckboxIndicatorProps>((props, forwardedRef) => {
   const checkboxContext = useCheckboxContext();
   const visible = checkboxContext.checked !== false;
   const forceMount = props.forceMount === true;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (forceMount) {
     return (
@@ -108,4 +108,5 @@ export function CheckboxIndicator(props: CheckboxIndicatorProps) {
       )}
     />
   );
-}
+});
+CheckboxIndicator.displayName = "CheckboxIndicator";

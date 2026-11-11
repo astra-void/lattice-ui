@@ -10,8 +10,8 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function ToastDescription(props: ToastDescriptionProps) {
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+export const ToastDescription = React.forwardRef<TextLabel, ToastDescriptionProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -28,4 +28,5 @@ export function ToastDescription(props: ToastDescriptionProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+ToastDescription.displayName = "ToastDescription";

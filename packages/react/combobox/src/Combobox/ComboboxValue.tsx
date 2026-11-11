@@ -11,7 +11,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function ComboboxValue(props: ComboboxValueProps) {
+export const ComboboxValue = React.forwardRef<TextLabel, ComboboxValueProps>((props, forwardedRef) => {
   const comboboxContext = useComboboxContext();
   const selectedValue = comboboxContext.value;
   const hasValue = selectedValue !== undefined;
@@ -24,7 +24,7 @@ export function ComboboxValue(props: ComboboxValueProps) {
     return comboboxContext.getItemText(selectedValue) ?? selectedValue;
   }, [comboboxContext, hasValue, props.placeholder, selectedValue]);
 
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
   // Rendering the selected label *is* this part's behavior, so `Text` is state-driven, not styling.
   const behaviorProps = {
     Text: resolvedText,
@@ -48,4 +48,5 @@ export function ComboboxValue(props: ComboboxValueProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+ComboboxValue.displayName = "ComboboxValue";

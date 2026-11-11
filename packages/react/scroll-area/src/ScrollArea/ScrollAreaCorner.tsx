@@ -11,11 +11,11 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function ScrollAreaCorner(props: ScrollAreaCornerProps) {
+export const ScrollAreaCorner = React.forwardRef<Frame, ScrollAreaCornerProps>((props, forwardedRef) => {
   const scrollAreaContext = useScrollAreaContext();
   const visible = scrollAreaContext.showHorizontalScrollbar && scrollAreaContext.showVerticalScrollbar;
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Visible: visible,
   };
@@ -39,4 +39,5 @@ export function ScrollAreaCorner(props: ScrollAreaCornerProps) {
       {props.children}
     </frame>
   );
-}
+});
+ScrollAreaCorner.displayName = "ScrollAreaCorner";

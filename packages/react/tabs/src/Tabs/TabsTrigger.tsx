@@ -27,7 +27,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function TabsTrigger(props: TabsTriggerProps) {
+export const TabsTrigger = React.forwardRef<TextButton, TabsTriggerProps>((props, forwardedRef) => {
   const tabsContext = useTabsContext();
   const triggerRef = React.useRef<GuiObject>();
   const disabled = props.disabled === true;
@@ -137,7 +137,7 @@ export function TabsTrigger(props: TabsTriggerProps) {
 
   const triggerName = React.useMemo(() => createTabsTriggerName(props.value), [props.value]);
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -170,4 +170,5 @@ export function TabsTrigger(props: TabsTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+TabsTrigger.displayName = "TabsTrigger";

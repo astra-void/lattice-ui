@@ -15,7 +15,7 @@ const NEUTRAL_PROPS = {
 let nextItemId = 0;
 let nextItemOrder = 0;
 
-export function ComboboxItem(props: ComboboxItemProps) {
+export const ComboboxItem = React.forwardRef<TextButton, ComboboxItemProps>((props, forwardedRef) => {
   const comboboxContext = useComboboxContext();
   const textValue = props.textValue ?? props.value;
   const itemQueryMatch = comboboxContext.filterFn(textValue, comboboxContext.queryValue);
@@ -106,7 +106,7 @@ export function ComboboxItem(props: ComboboxItemProps) {
     [comboboxContext.highlightedValue, disabled, interactionDisabled, props.value],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !interactionDisabled,
     Event: composeEvents(passthrough.Event, ownEvents),
@@ -141,4 +141,5 @@ export function ComboboxItem(props: ComboboxItemProps) {
       </textbutton>
     </ComboboxItemContextProvider>
   );
-}
+});
+ComboboxItem.displayName = "ComboboxItem";

@@ -61,7 +61,7 @@ function resolveMeasuredRows(textBox: TextBox, lineHeight: number) {
   return math.max(1, math.ceil(textBoundsHeight / lineHeight));
 }
 
-export function TextareaInput(props: TextareaInputProps) {
+export const TextareaInput = React.forwardRef<TextBox, TextareaInputProps>((props, forwardedRef) => {
   const textareaContext = useTextareaContext();
   const disabled = textareaContext.disabled || props.disabled === true;
   const readOnly = textareaContext.readOnly || props.readOnly === true;
@@ -179,7 +179,7 @@ export function TextareaInput(props: TextareaInputProps) {
     });
   }, [applyAutoResize, textareaContext.inputRef, textareaContext.value]);
 
-  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     ClearTextOnFocus: false,
@@ -219,4 +219,5 @@ export function TextareaInput(props: TextareaInputProps) {
       {props.children}
     </textbox>
   );
-}
+});
+TextareaInput.displayName = "TextareaInput";

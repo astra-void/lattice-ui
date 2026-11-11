@@ -24,7 +24,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function SwitchRoot(props: SwitchProps) {
+export const SwitchRoot = React.forwardRef<TextButton, SwitchProps>((props, forwardedRef) => {
   const [checked, setCheckedState] = useControllableState<boolean>({
     value: props.checked,
     defaultValue: props.defaultChecked ?? false,
@@ -73,7 +73,7 @@ export function SwitchRoot(props: SwitchProps) {
   });
 
   const child = props.children;
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, { Activated: toggle }),
@@ -103,4 +103,5 @@ export function SwitchRoot(props: SwitchProps) {
       )}
     </SwitchContextProvider>
   );
-}
+});
+SwitchRoot.displayName = "SwitchRoot";

@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function SelectSeparator(props: SelectSeparatorProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const SelectSeparator = React.forwardRef<Frame, SelectSeparatorProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function SelectSeparator(props: SelectSeparatorProps) {
       {props.children}
     </frame>
   );
-}
+});
+SelectSeparator.displayName = "SelectSeparator";

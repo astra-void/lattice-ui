@@ -186,10 +186,10 @@ function PopoverContentImpl(props: {
   );
 }
 
-export function PopoverContent(props: PopoverContentProps) {
+export const PopoverContent = React.forwardRef<Frame, PopoverContentProps>((props, forwardedRef) => {
   const popoverContext = usePopoverContext();
   const open = popoverContext.open;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -236,4 +236,5 @@ export function PopoverContent(props: PopoverContentProps) {
       )}
     />
   );
-}
+});
+PopoverContent.displayName = "PopoverContent";

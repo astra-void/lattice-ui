@@ -23,7 +23,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function MenuTrigger(props: MenuTriggerProps) {
+export const MenuTrigger = React.forwardRef<TextButton, MenuTriggerProps>((props, forwardedRef) => {
   const menuContext = useMenuContext();
   const triggerRef = menuContext.triggerRef;
 
@@ -57,7 +57,7 @@ export function MenuTrigger(props: MenuTriggerProps) {
     onActivate: handleActivated,
   });
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -84,4 +84,5 @@ export function MenuTrigger(props: MenuTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+MenuTrigger.displayName = "MenuTrigger";

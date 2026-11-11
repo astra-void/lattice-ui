@@ -32,7 +32,7 @@ function isPointerStartInput(inputObject: InputObject) {
   );
 }
 
-export function SliderThumb(props: SliderThumbProps) {
+export const SliderThumb = React.forwardRef<TextButton, SliderThumbProps>((props, forwardedRef) => {
   const sliderContext = useSliderContext();
   const percent = valueToPercent(sliderContext.value, sliderContext.min, sliderContext.max);
 
@@ -116,7 +116,7 @@ export function SliderThumb(props: SliderThumbProps) {
     [isHorizontal, sliderContext],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setNodeRef);
   const behaviorProps = {
     Active: !sliderContext.disabled,
@@ -146,4 +146,5 @@ export function SliderThumb(props: SliderThumbProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+SliderThumb.displayName = "SliderThumb";

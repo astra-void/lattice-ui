@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function SelectGroup(props: SelectGroupProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const SelectGroup = React.forwardRef<Frame, SelectGroupProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function SelectGroup(props: SelectGroupProps) {
       {props.children}
     </frame>
   );
-}
+});
+SelectGroup.displayName = "SelectGroup";

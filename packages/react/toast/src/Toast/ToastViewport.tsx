@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function ToastViewport(props: ToastViewportProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const ToastViewport = React.forwardRef<Frame, ToastViewportProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -29,4 +29,5 @@ export function ToastViewport(props: ToastViewportProps) {
       {props.children}
     </frame>
   );
-}
+});
+ToastViewport.displayName = "ToastViewport";

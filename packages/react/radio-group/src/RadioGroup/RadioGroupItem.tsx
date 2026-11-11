@@ -18,7 +18,7 @@ const NEUTRAL_PROPS = {
 let nextItemId = 0;
 let nextItemOrder = 0;
 
-export function RadioGroupItem(props: RadioGroupItemProps) {
+export const RadioGroupItem = React.forwardRef<TextButton, RadioGroupItemProps>((props, forwardedRef) => {
   const radioGroupContext = useRadioGroupContext();
   const disabled = radioGroupContext.disabled || props.disabled === true;
   const checked = radioGroupContext.value === props.value;
@@ -138,7 +138,7 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     [checked, disabled],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -173,4 +173,5 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
       )}
     </RadioGroupItemContextProvider>
   );
-}
+});
+RadioGroupItem.displayName = "RadioGroupItem";

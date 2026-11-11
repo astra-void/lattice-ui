@@ -106,10 +106,10 @@ function DialogOverlayGui(props: { children?: React.ReactNode }) {
   );
 }
 
-export function DialogOverlay(props: DialogOverlayProps) {
+export const DialogOverlay = React.forwardRef<TextButton, DialogOverlayProps>((props, forwardedRef) => {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -144,4 +144,5 @@ export function DialogOverlay(props: DialogOverlayProps) {
       )}
     />
   );
-}
+});
+DialogOverlay.displayName = "DialogOverlay";

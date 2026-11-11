@@ -40,7 +40,7 @@ function getNextCheckedState(checked: CheckedState) {
   return !checked;
 }
 
-export function CheckboxRoot(props: CheckboxProps) {
+export const CheckboxRoot = React.forwardRef<TextButton, CheckboxProps>((props, forwardedRef) => {
   const [checked, setCheckedState] = useControllableState<CheckedState>({
     value: props.checked,
     defaultValue: props.defaultChecked ?? false,
@@ -93,7 +93,7 @@ export function CheckboxRoot(props: CheckboxProps) {
   });
 
   const child = props.children;
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, { Activated: toggle }),
@@ -123,4 +123,5 @@ export function CheckboxRoot(props: CheckboxProps) {
       )}
     </CheckboxContextProvider>
   );
-}
+});
+CheckboxRoot.displayName = "CheckboxRoot";

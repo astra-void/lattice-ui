@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function ContextMenuGroup(props: ContextMenuGroupProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const ContextMenuGroup = React.forwardRef<Frame, ContextMenuGroupProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function ContextMenuGroup(props: ContextMenuGroupProps) {
       {props.children}
     </frame>
   );
-}
+});
+ContextMenuGroup.displayName = "ContextMenuGroup";

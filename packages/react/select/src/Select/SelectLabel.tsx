@@ -10,8 +10,8 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function SelectLabel(props: SelectLabelProps) {
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+export const SelectLabel = React.forwardRef<TextLabel, SelectLabelProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -28,4 +28,5 @@ export function SelectLabel(props: SelectLabelProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+SelectLabel.displayName = "SelectLabel";

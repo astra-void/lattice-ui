@@ -13,7 +13,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function DialogClose(props: DialogCloseProps) {
+export const DialogClose = React.forwardRef<TextButton, DialogCloseProps>((props, forwardedRef) => {
   const dialogContext = useDialogContext();
 
   const closeRef = React.useRef<GuiObject>();
@@ -40,7 +40,7 @@ export function DialogClose(props: DialogCloseProps) {
     onActivate: handleActivated,
   });
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -67,4 +67,5 @@ export function DialogClose(props: DialogCloseProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+DialogClose.displayName = "DialogClose";

@@ -22,7 +22,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function ComboboxTrigger(props: ComboboxTriggerProps) {
+export const ComboboxTrigger = React.forwardRef<TextButton, ComboboxTriggerProps>((props, forwardedRef) => {
   const comboboxContext = useComboboxContext();
   const disabled = comboboxContext.disabled || props.disabled === true;
 
@@ -71,7 +71,7 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
     [comboboxContext, disabled],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -103,4 +103,5 @@ export function ComboboxTrigger(props: ComboboxTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+ComboboxTrigger.displayName = "ComboboxTrigger";

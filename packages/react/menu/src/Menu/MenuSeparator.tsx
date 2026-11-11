@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function MenuSeparator(props: MenuSeparatorProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const MenuSeparator = React.forwardRef<Frame, MenuSeparatorProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function MenuSeparator(props: MenuSeparatorProps) {
       {props.children}
     </frame>
   );
-}
+});
+MenuSeparator.displayName = "MenuSeparator";

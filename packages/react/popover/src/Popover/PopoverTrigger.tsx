@@ -23,7 +23,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function PopoverTrigger(props: PopoverTriggerProps) {
+export const PopoverTrigger = React.forwardRef<TextButton, PopoverTriggerProps>((props, forwardedRef) => {
   const popoverContext = usePopoverContext();
   const triggerRef = popoverContext.triggerRef;
 
@@ -64,7 +64,7 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
     onActivate: handleActivated,
   });
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -91,4 +91,5 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+PopoverTrigger.displayName = "PopoverTrigger";

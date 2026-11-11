@@ -81,11 +81,11 @@ function TabsContentImpl(props: {
   );
 }
 
-export function TabsContent(props: TabsContentProps) {
+export const TabsContent = React.forwardRef<Frame, TabsContentProps>((props, forwardedRef) => {
   const tabsContext = useTabsContext();
   const selected = tabsContext.value === props.value;
   const forceMount = props.forceMount === true;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (forceMount) {
     return (
@@ -119,4 +119,5 @@ export function TabsContent(props: TabsContentProps) {
       )}
     />
   );
-}
+});
+TabsContent.displayName = "TabsContent";

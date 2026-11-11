@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function ContextMenuSeparator(props: ContextMenuSeparatorProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const ContextMenuSeparator = React.forwardRef<Frame, ContextMenuSeparatorProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function ContextMenuSeparator(props: ContextMenuSeparatorProps) {
       {props.children}
     </frame>
   );
-}
+});
+ContextMenuSeparator.displayName = "ContextMenuSeparator";

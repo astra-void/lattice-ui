@@ -26,7 +26,7 @@ function toAnchorPosition(rawPosition: Vector2 | Vector3) {
   return new Vector2(rawPosition.X - insetTopLeft.X, rawPosition.Y - insetTopLeft.Y);
 }
 
-export function ContextMenuTrigger(props: ContextMenuTriggerProps) {
+export const ContextMenuTrigger = React.forwardRef<TextButton, ContextMenuTriggerProps>((props, forwardedRef) => {
   const contextMenuContext = useContextMenuContext();
 
   const handleInputBegan = React.useCallback(
@@ -57,7 +57,7 @@ export function ContextMenuTrigger(props: ContextMenuTriggerProps) {
     [contextMenuContext, props.disabled],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, {
@@ -85,4 +85,5 @@ export function ContextMenuTrigger(props: ContextMenuTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+ContextMenuTrigger.displayName = "ContextMenuTrigger";

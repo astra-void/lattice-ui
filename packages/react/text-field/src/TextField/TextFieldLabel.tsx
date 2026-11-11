@@ -12,7 +12,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function TextFieldLabel(props: TextFieldLabelProps) {
+export const TextFieldLabel = React.forwardRef<TextButton, TextFieldLabelProps>((props, forwardedRef) => {
   const textFieldContext = useTextFieldContext();
   const disabled = textFieldContext.disabled;
 
@@ -24,7 +24,7 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
     textFieldContext.inputRef.current?.CaptureFocus();
   }, [disabled, textFieldContext.inputRef]);
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Selectable: !disabled,
@@ -50,4 +50,5 @@ export function TextFieldLabel(props: TextFieldLabelProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+TextFieldLabel.displayName = "TextFieldLabel";

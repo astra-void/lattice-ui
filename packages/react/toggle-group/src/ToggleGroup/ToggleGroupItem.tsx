@@ -18,7 +18,7 @@ const NEUTRAL_PROPS = {
 let nextItemId = 0;
 let nextItemOrder = 0;
 
-export function ToggleGroupItem(props: ToggleGroupItemProps) {
+export const ToggleGroupItem = React.forwardRef<TextButton, ToggleGroupItemProps>((props, forwardedRef) => {
   const toggleGroupContext = useToggleGroupContext();
   const disabled = toggleGroupContext.disabled || props.disabled === true;
   const itemRef = React.useRef<GuiObject>();
@@ -104,7 +104,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
     [disabled, handleToggle, props.value, toggleGroupContext],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -134,4 +134,5 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+ToggleGroupItem.displayName = "ToggleGroupItem";

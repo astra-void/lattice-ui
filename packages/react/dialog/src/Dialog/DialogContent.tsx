@@ -289,12 +289,12 @@ function DialogContentImpl(props: {
   );
 }
 
-export function DialogContent(props: DialogContentProps) {
+export const DialogContent = React.forwardRef<Frame, DialogContentProps>((props, forwardedRef) => {
   const dialogContext = useDialogContext();
   const open = dialogContext.open;
   const trapFocus = props.trapFocus ?? true;
   const restoreFocus = props.restoreFocus ?? true;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -336,4 +336,5 @@ export function DialogContent(props: DialogContentProps) {
       )}
     />
   );
-}
+});
+DialogContent.displayName = "DialogContent";

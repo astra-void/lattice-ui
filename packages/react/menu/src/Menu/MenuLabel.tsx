@@ -10,8 +10,8 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function MenuLabel(props: MenuLabelProps) {
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+export const MenuLabel = React.forwardRef<TextLabel, MenuLabelProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -28,4 +28,5 @@ export function MenuLabel(props: MenuLabelProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+MenuLabel.displayName = "MenuLabel";

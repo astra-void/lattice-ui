@@ -12,7 +12,7 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function AccordionItem(props: AccordionItemProps) {
+export const AccordionItem = React.forwardRef<Frame, AccordionItemProps>((props, forwardedRef) => {
   const accordionContext = useAccordionContext();
   const open = accordionContext.openValues.includes(props.value);
   const disabled = props.disabled === true;
@@ -26,7 +26,7 @@ export function AccordionItem(props: AccordionItemProps) {
     [disabled, open, props.value],
   );
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -49,4 +49,5 @@ export function AccordionItem(props: AccordionItemProps) {
       </frame>
     </AccordionItemContextProvider>
   );
-}
+});
+AccordionItem.displayName = "AccordionItem";

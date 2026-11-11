@@ -11,12 +11,12 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function ToastClose(props: ToastCloseProps) {
+export const ToastClose = React.forwardRef<TextButton, ToastCloseProps>((props, forwardedRef) => {
   const handleActivated = React.useCallback(() => {
     props.onClose?.();
   }, [props]);
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -42,4 +42,5 @@ export function ToastClose(props: ToastCloseProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+ToastClose.displayName = "ToastClose";

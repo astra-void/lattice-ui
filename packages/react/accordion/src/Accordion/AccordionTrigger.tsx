@@ -15,7 +15,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function AccordionTrigger(props: AccordionTriggerProps) {
+export const AccordionTrigger = React.forwardRef<TextButton, AccordionTriggerProps>((props, forwardedRef) => {
   const accordionContext = useAccordionContext();
   const itemContext = useAccordionItemContext();
   const disabled = itemContext.disabled;
@@ -54,7 +54,7 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
     [toggle],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -84,4 +84,5 @@ export function AccordionTrigger(props: AccordionTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+AccordionTrigger.displayName = "AccordionTrigger";

@@ -19,7 +19,7 @@ function toImageObject(instance: Instance | undefined) {
   return undefined;
 }
 
-export function AvatarImage(props: AvatarImageProps) {
+export const AvatarImage = React.forwardRef<ImageLabel | ImageButton, AvatarImageProps>((props, forwardedRef) => {
   const avatarContext = useAvatarContext();
   const source = props.src ?? avatarContext.src;
 
@@ -77,7 +77,7 @@ export function AvatarImage(props: AvatarImageProps) {
     };
   }, [setStatus, source, status]);
 
-  const passthrough = getPassthroughProps<ImageLabel | ImageButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<ImageLabel | ImageButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     // `Image` is data, not appearance: it is the source the load state is derived from.
     Image: source ?? "",
@@ -104,4 +104,5 @@ export function AvatarImage(props: AvatarImageProps) {
       {props.children}
     </imagelabel>
   );
-}
+});
+AvatarImage.displayName = "AvatarImage";

@@ -10,8 +10,8 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function ComboboxLabel(props: ComboboxLabelProps) {
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+export const ComboboxLabel = React.forwardRef<TextLabel, ComboboxLabelProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -28,4 +28,5 @@ export function ComboboxLabel(props: ComboboxLabelProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+ComboboxLabel.displayName = "ComboboxLabel";

@@ -31,7 +31,7 @@ function toTextBox(instance: Instance | undefined) {
   return instance;
 }
 
-export function TextFieldInput(props: TextFieldInputProps) {
+export const TextFieldInput = React.forwardRef<TextBox, TextFieldInputProps>((props, forwardedRef) => {
   const textFieldContext = useTextFieldContext();
   const disabled = textFieldContext.disabled || props.disabled === true;
   const readOnly = textFieldContext.readOnly || props.readOnly === true;
@@ -100,7 +100,7 @@ export function TextFieldInput(props: TextFieldInputProps) {
     [disabled, textFieldContext],
   );
 
-  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     ClearTextOnFocus: false,
@@ -136,4 +136,5 @@ export function TextFieldInput(props: TextFieldInputProps) {
       {props.children}
     </textbox>
   );
-}
+});
+TextFieldInput.displayName = "TextFieldInput";

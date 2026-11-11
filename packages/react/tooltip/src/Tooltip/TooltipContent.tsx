@@ -136,6 +136,13 @@ function TooltipContentImpl(props: {
   };
 
   const passthrough = props.passthrough;
+  // Compose the consumer's ref with the one popper, dismissal and motion read, rather than letting
+  // the internal ref replace it. Memoized so neither is detached and reattached on every render.
+  const consumerRef = passthrough.ref;
+  const contentRef = React.useMemo(
+    () => composeRefs<Instance>(consumerRef as never, setContentRef),
+    [consumerRef, setContentRef],
+  );
 
   if (props.asChild) {
     const { target: child, modifiers } = resolveSlotChildren(props.children);
@@ -167,7 +174,7 @@ function TooltipContentImpl(props: {
                 ...passthrough,
                 Position: UDim2.fromOffset(0, 0),
                 Visible: contentVisible,
-                ref: composeRefs(childRef),
+                ref: composeRefs(childRef, consumerRef as never),
               }),
             )}
           </frame>
@@ -187,7 +194,7 @@ function TooltipContentImpl(props: {
       contentBoundaryRef={contentBoundaryRef}
     >
       <frame {...wrapperProps}>
-        <frame {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={setContentRef}>
+        <frame {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={contentRef}>
           {props.children}
         </frame>
       </frame>
@@ -195,10 +202,10 @@ function TooltipContentImpl(props: {
   );
 }
 
-export function TooltipContent(props: TooltipContentProps) {
+export const TooltipContent = React.forwardRef<Frame, TooltipContentProps>((props, forwardedRef) => {
   const tooltipContext = useTooltipContext();
   const open = tooltipContext.open;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -245,4 +252,5 @@ export function TooltipContent(props: TooltipContentProps) {
       )}
     />
   );
-}
+});
+TooltipContent.displayName = "TooltipContent";

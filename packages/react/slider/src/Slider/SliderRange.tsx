@@ -18,7 +18,7 @@ const CHILD_FILL_PROPS = {
   Size: UDim2.fromScale(1, 1),
 };
 
-export function SliderRange(props: SliderRangeProps) {
+export const SliderRange = React.forwardRef<Frame, SliderRangeProps>((props, forwardedRef) => {
   const sliderContext = useSliderContext();
   const percent = valueToPercent(sliderContext.value, sliderContext.min, sliderContext.max);
 
@@ -37,7 +37,7 @@ export function SliderRange(props: SliderRangeProps) {
     createProgressResponseRecipe(sliderContext.isDragging ? motionDrag.active : motionDrag.idle),
   );
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -63,4 +63,5 @@ export function SliderRange(props: SliderRangeProps) {
       {props.children}
     </frame>
   );
-}
+});
+SliderRange.displayName = "SliderRange";

@@ -134,6 +134,13 @@ function ContextMenuContentImpl(props: {
   const virtualAnchorSize = UDim2.fromOffset(popperContentSize.X, 0);
 
   const passthrough = props.passthrough;
+  // Compose the consumer's ref with the one popper, dismissal and motion read, rather than letting
+  // the internal ref replace it. Memoized so neither is detached and reattached on every render.
+  const consumerRef = passthrough.ref;
+  const contentRef = React.useMemo(
+    () => composeRefs<Instance>(consumerRef as never, setContentRef),
+    [consumerRef, setContentRef],
+  );
 
   // The content host measures itself against its items so the popper has something to position, and
   // it is the instance any consumer-supplied `transition` animates.
@@ -164,14 +171,14 @@ function ContextMenuContentImpl(props: {
               ...passthrough,
               Position: ZERO_UDIM2,
               Visible: contentVisible,
-              ref: composeRefs(childRef, (passthrough.ref ?? undefined) as never),
+              ref: composeRefs(childRef, consumerRef as never),
             }),
           )}
         </frame>
       );
     })()
   ) : (
-    <frame {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={setContentRef}>
+    <frame {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={contentRef}>
       {props.children}
     </frame>
   );
@@ -217,10 +224,10 @@ function ContextMenuContentImpl(props: {
   );
 }
 
-export function ContextMenuContent(props: ContextMenuContentProps) {
+export const ContextMenuContent = React.forwardRef<Frame, ContextMenuContentProps>((props, forwardedRef) => {
   const contextMenuContext = useContextMenuContext();
   const open = contextMenuContext.open;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -267,4 +274,5 @@ export function ContextMenuContent(props: ContextMenuContentProps) {
       )}
     />
   );
-}
+});
+ContextMenuContent.displayName = "ContextMenuContent";

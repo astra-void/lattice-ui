@@ -24,7 +24,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function TooltipTrigger(props: TooltipTriggerProps) {
+export const TooltipTrigger = React.forwardRef<TextButton, TooltipTriggerProps>((props, forwardedRef) => {
   const tooltipContext = useTooltipContext();
   const activityStateRef = React.useRef(DEFAULT_TOOLTIP_TRIGGER_ACTIVITY_STATE);
 
@@ -89,7 +89,7 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
     [applyActivity],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, eventHandlers),
@@ -116,4 +116,5 @@ export function TooltipTrigger(props: TooltipTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+TooltipTrigger.displayName = "TooltipTrigger";

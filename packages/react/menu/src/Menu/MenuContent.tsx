@@ -120,6 +120,13 @@ function MenuContentImpl(props: {
     : ZERO_UDIM2;
 
   const passthrough = props.passthrough;
+  // Compose the consumer's ref with the one popper, dismissal and motion read, rather than letting
+  // the internal ref replace it. Memoized so neither is detached and reattached on every render.
+  const consumerRef = passthrough.ref;
+  const contentRef = React.useMemo(
+    () => composeRefs<Instance>(consumerRef as never, setContentRef),
+    [consumerRef, setContentRef],
+  );
 
   // The content host measures itself against its items so the popper has something to position, and
   // it is the instance any consumer-supplied `transition` animates.
@@ -150,14 +157,14 @@ function MenuContentImpl(props: {
               ...passthrough,
               Position: ZERO_UDIM2,
               Visible: contentVisible,
-              ref: composeRefs(childRef, (passthrough.ref ?? undefined) as never),
+              ref: composeRefs(childRef, consumerRef as never),
             }),
           )}
         </frame>
       );
     })()
   ) : (
-    <frame {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={setContentRef}>
+    <frame {...NEUTRAL_PROPS} {...passthrough} {...contentBehaviorProps} ref={contentRef}>
       {props.children}
     </frame>
   );
@@ -196,10 +203,10 @@ function MenuContentImpl(props: {
   );
 }
 
-export function MenuContent(props: MenuContentProps) {
+export const MenuContent = React.forwardRef<Frame, MenuContentProps>((props, forwardedRef) => {
   const menuContext = useMenuContext();
   const open = menuContext.open;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -246,4 +253,5 @@ export function MenuContent(props: MenuContentProps) {
       )}
     />
   );
-}
+});
+MenuContent.displayName = "MenuContent";

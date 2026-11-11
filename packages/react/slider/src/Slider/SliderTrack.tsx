@@ -27,7 +27,7 @@ function isPointerStartInput(inputObject: InputObject) {
   );
 }
 
-export function SliderTrack(props: SliderTrackProps) {
+export const SliderTrack = React.forwardRef<Frame, SliderTrackProps>((props, forwardedRef) => {
   const sliderContext = useSliderContext();
 
   const handleInputBegan = React.useCallback(
@@ -41,7 +41,7 @@ export function SliderTrack(props: SliderTrackProps) {
     [sliderContext],
   );
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   // The track instance is measured to convert pointer position into a value, so its ref must reach
   // the slider even when the consumer forwards one of their own.
   const ref = composeRefs<GuiObject>(passthrough.ref as never, sliderContext.setTrackNode);
@@ -70,4 +70,5 @@ export function SliderTrack(props: SliderTrackProps) {
       {props.children}
     </frame>
   );
-}
+});
+SliderTrack.displayName = "SliderTrack";

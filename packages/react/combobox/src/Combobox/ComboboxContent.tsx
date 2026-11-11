@@ -187,10 +187,10 @@ function ComboboxContentImpl(props: {
   );
 }
 
-export function ComboboxContent(props: ComboboxContentProps) {
+export const ComboboxContent = React.forwardRef<Frame, ComboboxContentProps>((props, forwardedRef) => {
   const comboboxContext = useComboboxContext();
   const open = comboboxContext.open;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -237,4 +237,5 @@ export function ComboboxContent(props: ComboboxContentProps) {
       )}
     />
   );
-}
+});
+ComboboxContent.displayName = "ComboboxContent";

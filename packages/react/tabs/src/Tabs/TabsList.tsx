@@ -11,8 +11,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function TabsList(props: TabsListProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const TabsList = React.forwardRef<Frame, TabsListProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -29,4 +29,5 @@ export function TabsList(props: TabsListProps) {
       {props.children}
     </frame>
   );
-}
+});
+TabsList.displayName = "TabsList";

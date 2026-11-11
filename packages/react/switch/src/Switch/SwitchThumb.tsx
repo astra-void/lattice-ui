@@ -51,9 +51,9 @@ function toUDim2(value: unknown) {
   return typeIs(value, "UDim2") ? value : undefined;
 }
 
-export function SwitchThumb(props: SwitchThumbProps) {
+export const SwitchThumb = React.forwardRef<Frame, SwitchThumbProps>((props, forwardedRef) => {
   const switchContext = useSwitchContext();
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   // Motion owns the thumb's placement under the `layout` contract, so these are dropped rather than
   // written and then silently clobbered on the next frame.
   passthrough.AnchorPoint = undefined;
@@ -111,4 +111,5 @@ export function SwitchThumb(props: SwitchThumbProps) {
       {props.children}
     </frame>
   );
-}
+});
+SwitchThumb.displayName = "SwitchThumb";

@@ -21,7 +21,7 @@ function createSpinLoop(speedDegPerSecond: number): LoopMotionConfig {
   };
 }
 
-export function Spinner(props: SpinnerProps) {
+export const Spinner = React.forwardRef<Frame, SpinnerProps>((props, forwardedRef) => {
   const spinning = props.spinning ?? true;
   const speedDegPerSecond = props.speedDegPerSecond ?? 180;
 
@@ -30,7 +30,7 @@ export function Spinner(props: SpinnerProps) {
   const spinLoop = React.useMemo(() => createSpinLoop(speedDegPerSecond), [speedDegPerSecond]);
   const motionRef = useLoopMotion<GuiObject>(spinning && speedDegPerSecond !== 0, spinLoop);
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   const ref = composeRefs<GuiObject>(passthrough.ref as never, motionRef);
   const behaviorProps = {
     Visible: spinning,
@@ -55,4 +55,5 @@ export function Spinner(props: SpinnerProps) {
       {props.children}
     </frame>
   );
-}
+});
+Spinner.displayName = "Spinner";

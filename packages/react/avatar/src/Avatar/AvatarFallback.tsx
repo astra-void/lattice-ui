@@ -14,11 +14,11 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function AvatarFallback(props: AvatarFallbackProps) {
+export const AvatarFallback = React.forwardRef<TextLabel, AvatarFallbackProps>((props, forwardedRef) => {
   const avatarContext = useAvatarContext();
   const visible = resolveAvatarFallbackVisible(avatarContext.status, avatarContext.delayElapsed);
 
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Visible: visible,
   };
@@ -42,4 +42,5 @@ export function AvatarFallback(props: AvatarFallbackProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+AvatarFallback.displayName = "AvatarFallback";

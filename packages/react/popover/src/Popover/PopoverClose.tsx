@@ -13,7 +13,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function PopoverClose(props: PopoverCloseProps) {
+export const PopoverClose = React.forwardRef<TextButton, PopoverCloseProps>((props, forwardedRef) => {
   const popoverContext = usePopoverContext();
 
   const closeRef = React.useRef<GuiObject>();
@@ -40,7 +40,7 @@ export function PopoverClose(props: PopoverCloseProps) {
     onActivate: handleActivated,
   });
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -67,4 +67,5 @@ export function PopoverClose(props: PopoverCloseProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+PopoverClose.displayName = "PopoverClose";

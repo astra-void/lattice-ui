@@ -17,10 +17,16 @@ export type PassthroughProps<T extends Instance = GuiObject> = React.InstancePro
  * `ownKeys` must list the primitive's own API (`asChild`, `children`, state props, ...); anything
  * else is treated as an instance prop and forwarded verbatim. Pass the rendered instance as `T` so
  * the result spreads onto that element without widening it.
+ *
+ * `forwardedRef` is the second argument of a `React.forwardRef` part. @rbxts/react strips `ref` out
+ * of `props` before any component sees it, so a part can only receive a consumer ref through
+ * forwardRef; passing it here restores it as `passthrough.ref`, which every part already composes
+ * onto the instance it renders.
  */
 export function getPassthroughProps<T extends Instance = GuiObject>(
   props: object,
   ownKeys: readonly string[],
+  forwardedRef?: React.ForwardedRef<T>,
 ): PassthroughProps<T> {
   const rest: Record<string, unknown> = {};
 
@@ -34,6 +40,12 @@ export function getPassthroughProps<T extends Instance = GuiObject>(
     }
 
     rest[key] = value;
+  }
+
+  // Truthiness, not `!== undefined`: outside Roblox, React hands forwardRef parts `null` when no ref
+  // was passed.
+  if (forwardedRef) {
+    rest.ref = forwardedRef;
   }
 
   return rest as PassthroughProps<T>;

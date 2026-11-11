@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function MenuGroup(props: MenuGroupProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const MenuGroup = React.forwardRef<Frame, MenuGroupProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function MenuGroup(props: MenuGroupProps) {
       {props.children}
     </frame>
   );
-}
+});
+MenuGroup.displayName = "MenuGroup";

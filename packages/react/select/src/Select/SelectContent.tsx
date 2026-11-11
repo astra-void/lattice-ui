@@ -189,10 +189,10 @@ function SelectContentImpl(props: {
   );
 }
 
-export function SelectContent(props: SelectContentProps) {
+export const SelectContent = React.forwardRef<Frame, SelectContentProps>((props, forwardedRef) => {
   const selectContext = useSelectContext();
   const open = selectContext.open;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.forceMount) {
     return (
@@ -239,4 +239,5 @@ export function SelectContent(props: SelectContentProps) {
       )}
     />
   );
-}
+});
+SelectContent.displayName = "SelectContent";

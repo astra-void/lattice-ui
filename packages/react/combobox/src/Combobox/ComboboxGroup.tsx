@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function ComboboxGroup(props: ComboboxGroupProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const ComboboxGroup = React.forwardRef<Frame, ComboboxGroupProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function ComboboxGroup(props: ComboboxGroupProps) {
       {props.children}
     </frame>
   );
-}
+});
+ComboboxGroup.displayName = "ComboboxGroup";

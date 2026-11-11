@@ -22,7 +22,7 @@ function toTextBox(instance: Instance | undefined) {
   return instance;
 }
 
-export function ComboboxInput(props: ComboboxInputProps) {
+export const ComboboxInput = React.forwardRef<TextBox, ComboboxInputProps>((props, forwardedRef) => {
   const comboboxContext = useComboboxContext();
   const disabled = comboboxContext.disabled || props.disabled === true;
   const readOnly = comboboxContext.readOnly || props.readOnly === true;
@@ -148,7 +148,7 @@ export function ComboboxInput(props: ComboboxInputProps) {
     [comboboxContext, disabled],
   );
 
-  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextBox>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     // Roblox clears a TextBox on focus by default, which would wipe the controlled query.
@@ -188,4 +188,5 @@ export function ComboboxInput(props: ComboboxInputProps) {
       {props.children}
     </textbox>
   );
-}
+});
+ComboboxInput.displayName = "ComboboxInput";

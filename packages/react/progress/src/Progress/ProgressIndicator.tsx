@@ -27,7 +27,7 @@ const CHILD_FILL_PROPS = {
   Size: UDim2.fromScale(1, 1),
 };
 
-export function ProgressIndicator(props: ProgressIndicatorProps) {
+export const ProgressIndicator = React.forwardRef<Frame, ProgressIndicatorProps>((props, forwardedRef) => {
   const progressContext = useProgressContext();
 
   // `ratio` already resolves the indeterminate fill, so the rendered width and the context agree.
@@ -42,7 +42,7 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
     props.transition ?? createProgressResponseRecipe(),
   );
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -68,4 +68,5 @@ export function ProgressIndicator(props: ProgressIndicatorProps) {
       {props.children}
     </frame>
   );
-}
+});
+ProgressIndicator.displayName = "ProgressIndicator";

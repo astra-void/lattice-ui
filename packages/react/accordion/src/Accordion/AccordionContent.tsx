@@ -74,10 +74,10 @@ function AccordionContentImpl(props: {
   );
 }
 
-export function AccordionContent(props: AccordionContentProps) {
+export const AccordionContent = React.forwardRef<Frame, AccordionContentProps>((props, forwardedRef) => {
   const itemContext = useAccordionItemContext();
   const forceMount = props.forceMount === true;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (forceMount) {
     return (
@@ -109,4 +109,5 @@ export function AccordionContent(props: AccordionContentProps) {
       )}
     />
   );
-}
+});
+AccordionContent.displayName = "AccordionContent";

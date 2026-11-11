@@ -11,7 +11,7 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function SelectValue(props: SelectValueProps) {
+export const SelectValue = React.forwardRef<TextLabel, SelectValueProps>((props, forwardedRef) => {
   const selectContext = useSelectContext();
   const selectedValue = selectContext.value;
   const hasValue = selectedValue !== undefined;
@@ -24,7 +24,7 @@ export function SelectValue(props: SelectValueProps) {
     return selectContext.getItemText(selectedValue) ?? selectedValue;
   }, [hasValue, props.placeholder, selectContext, selectedValue]);
 
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
   // Rendering the selected label *is* this part's behavior, so `Text` is state-driven, not styling.
   const behaviorProps = {
     Text: resolvedText,
@@ -48,4 +48,5 @@ export function SelectValue(props: SelectValueProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+SelectValue.displayName = "SelectValue";

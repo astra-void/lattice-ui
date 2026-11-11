@@ -31,7 +31,7 @@ function toScrollingFrame(instance: Instance | undefined) {
   return instance;
 }
 
-export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
+export const ScrollAreaViewport = React.forwardRef<ScrollingFrame, ScrollAreaViewportProps>((props, forwardedRef) => {
   const scrollAreaContext = useScrollAreaContext();
 
   const { viewportRef, setViewport, setMetrics, notifyScrollActivity } = scrollAreaContext;
@@ -81,7 +81,7 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
     };
   }, [viewportRef, setMetrics, notifyScrollActivity]);
 
-  const passthrough = getPassthroughProps<ScrollingFrame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<ScrollingFrame>(props, OWN_PROPS, forwardedRef);
   // The viewport instance is measured for every scroll metric, so its ref must reach the root even
   // when the consumer forwards one of their own.
   const ref = composeRefs<ScrollingFrame>(passthrough.ref as never, setViewportRef);
@@ -105,4 +105,5 @@ export function ScrollAreaViewport(props: ScrollAreaViewportProps) {
       {props.children}
     </scrollingframe>
   );
-}
+});
+ScrollAreaViewport.displayName = "ScrollAreaViewport";

@@ -16,7 +16,7 @@ const NEUTRAL_PROPS = {
 let nextItemId = 0;
 let nextItemOrder = 0;
 
-export function SelectItem(props: SelectItemProps) {
+export const SelectItem = React.forwardRef<TextButton, SelectItemProps>((props, forwardedRef) => {
   const selectContext = useSelectContext();
   const disabled = selectContext.disabled || props.disabled === true;
   const textValue = props.textValue ?? props.value;
@@ -121,7 +121,7 @@ export function SelectItem(props: SelectItemProps) {
     [disabled, highlighted],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, ownEvents),
@@ -152,4 +152,5 @@ export function SelectItem(props: SelectItemProps) {
       </textbutton>
     </SelectItemContextProvider>
   );
-}
+});
+SelectItem.displayName = "SelectItem";

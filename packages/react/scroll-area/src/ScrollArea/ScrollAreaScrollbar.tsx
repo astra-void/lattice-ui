@@ -35,7 +35,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
+export const ScrollAreaScrollbar = React.forwardRef<Frame, ScrollAreaScrollbarProps>((props, forwardedRef) => {
   const scrollAreaContext = useScrollAreaContext();
   const scrollbarRef = React.useRef<GuiObject>();
 
@@ -91,7 +91,7 @@ export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
     ],
   );
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   // The bar instance is measured to turn a click into a canvas position, so its ref must reach this
   // primitive even when the consumer forwards one of their own.
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setScrollbarRef);
@@ -120,4 +120,5 @@ export function ScrollAreaScrollbar(props: ScrollAreaScrollbarProps) {
       {props.children}
     </frame>
   );
-}
+});
+ScrollAreaScrollbar.displayName = "ScrollAreaScrollbar";

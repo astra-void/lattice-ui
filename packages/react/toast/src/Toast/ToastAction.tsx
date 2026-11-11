@@ -11,12 +11,12 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function ToastAction(props: ToastActionProps) {
+export const ToastAction = React.forwardRef<TextButton, ToastActionProps>((props, forwardedRef) => {
   const handleActivated = React.useCallback(() => {
     props.onAction?.();
   }, [props]);
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -42,4 +42,5 @@ export function ToastAction(props: ToastActionProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+ToastAction.displayName = "ToastAction";

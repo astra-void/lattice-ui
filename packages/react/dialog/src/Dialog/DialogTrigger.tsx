@@ -23,7 +23,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function DialogTrigger(props: DialogTriggerProps) {
+export const DialogTrigger = React.forwardRef<TextButton, DialogTriggerProps>((props, forwardedRef) => {
   const dialogContext = useDialogContext();
   const triggerRef = dialogContext.triggerRef;
 
@@ -54,7 +54,7 @@ export function DialogTrigger(props: DialogTriggerProps) {
     onActivate: handleActivated,
   });
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: props.disabled !== true,
     Event: composeEvents(passthrough.Event, { Activated: handleActivated }),
@@ -81,4 +81,5 @@ export function DialogTrigger(props: DialogTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+DialogTrigger.displayName = "DialogTrigger";

@@ -72,11 +72,11 @@ function RadioGroupIndicatorImpl(props: {
   );
 }
 
-export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
+export const RadioGroupIndicator = React.forwardRef<Frame, RadioGroupIndicatorProps>((props, forwardedRef) => {
   const radioGroupItemContext = useRadioGroupItemContext();
   const visible = radioGroupItemContext.checked;
   const forceMount = props.forceMount === true;
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (forceMount) {
     return (
@@ -108,4 +108,5 @@ export function RadioGroupIndicator(props: RadioGroupIndicatorProps) {
       )}
     />
   );
-}
+});
+RadioGroupIndicator.displayName = "RadioGroupIndicator";

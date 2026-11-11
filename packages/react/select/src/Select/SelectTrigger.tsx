@@ -23,7 +23,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function SelectTrigger(props: SelectTriggerProps) {
+export const SelectTrigger = React.forwardRef<TextButton, SelectTriggerProps>((props, forwardedRef) => {
   const selectContext = useSelectContext();
   const disabled = selectContext.disabled || props.disabled === true;
   const triggerRef = selectContext.triggerRef;
@@ -63,7 +63,7 @@ export function SelectTrigger(props: SelectTriggerProps) {
     [toggleOpen],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, {
@@ -93,4 +93,5 @@ export function SelectTrigger(props: SelectTriggerProps) {
       {props.children}
     </textbutton>
   );
-}
+});
+SelectTrigger.displayName = "SelectTrigger";

@@ -10,8 +10,8 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function ContextMenuLabel(props: ContextMenuLabelProps) {
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+export const ContextMenuLabel = React.forwardRef<TextLabel, ContextMenuLabelProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -28,4 +28,5 @@ export function ContextMenuLabel(props: ContextMenuLabelProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+ContextMenuLabel.displayName = "ContextMenuLabel";

@@ -48,7 +48,7 @@ function toGuiObject(instance: Instance | undefined) {
   return instance;
 }
 
-export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
+export const ScrollAreaThumb = React.forwardRef<Frame, ScrollAreaThumbProps>((props, forwardedRef) => {
   const scrollAreaContext = useScrollAreaContext();
   const vertical = props.orientation === "vertical";
   const thumbRef = React.useRef<GuiObject>();
@@ -249,7 +249,7 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
     };
   }, []);
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   // The thumb instance is read back to find its track, so its ref must reach this primitive even
   // when the consumer forwards one of their own.
   const ref = composeRefs<GuiObject>(passthrough.ref as never, setThumbRef);
@@ -280,4 +280,5 @@ export function ScrollAreaThumb(props: ScrollAreaThumbProps) {
       {props.children}
     </frame>
   );
-}
+});
+ScrollAreaThumb.displayName = "ScrollAreaThumb";

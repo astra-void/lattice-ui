@@ -27,7 +27,7 @@ function createContextMenuSelectEvent(): ContextMenuSelectEvent {
   return event;
 }
 
-export function ContextMenuItem(props: ContextMenuItemProps) {
+export const ContextMenuItem = React.forwardRef<TextButton, ContextMenuItemProps>((props, forwardedRef) => {
   const contextMenuContext = useContextMenuContext();
   const itemRef = React.useRef<GuiObject>();
   const disabledRef = React.useRef(props.disabled === true);
@@ -117,7 +117,7 @@ export function ContextMenuItem(props: ContextMenuItemProps) {
     [disabled, focused, hovered],
   );
 
-  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextButton>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Active: !disabled,
     Event: composeEvents(passthrough.Event, ownEvents),
@@ -148,4 +148,5 @@ export function ContextMenuItem(props: ContextMenuItemProps) {
       </textbutton>
     </ContextMenuItemContextProvider>
   );
-}
+});
+ContextMenuItem.displayName = "ContextMenuItem";

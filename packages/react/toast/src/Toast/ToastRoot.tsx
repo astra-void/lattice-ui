@@ -16,7 +16,7 @@ const NEUTRAL_PROPS = {
 // owned here; consumers opt into motion with `transition`.
 const NO_MOTION: PresenceMotionConfig = {};
 
-export function ToastRoot(props: ToastRootProps) {
+export const ToastRoot = React.forwardRef<Frame, ToastRootProps>((props, forwardedRef) => {
   const visible = props.visible ?? true;
   const transition = props.transition ?? NO_MOTION;
 
@@ -30,7 +30,7 @@ export function ToastRoot(props: ToastRootProps) {
   // the instance only hides once the presence controller reports "exited".
   const motionVisible = motion.mounted && motion.phase !== "exited";
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
   const behaviorProps = {
     Visible: motionVisible,
     ref: composeRefs<Frame>(passthrough.ref as never, motion.ref),
@@ -55,4 +55,5 @@ export function ToastRoot(props: ToastRootProps) {
       {props.children}
     </frame>
   );
-}
+});
+ToastRoot.displayName = "ToastRoot";

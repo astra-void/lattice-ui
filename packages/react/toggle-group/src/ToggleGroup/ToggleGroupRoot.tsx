@@ -57,7 +57,7 @@ function normalizeMultiple(value: unknown): Array<string> {
   return nextValues;
 }
 
-export function ToggleGroupRoot(props: ToggleGroupProps) {
+export const ToggleGroupRoot = React.forwardRef<Frame, ToggleGroupProps>((props, forwardedRef) => {
   const disabled = props.disabled === true;
   const orientation = props.orientation ?? "horizontal";
 
@@ -150,7 +150,7 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
     [disabled, isPressed, moveFocus, orientation, props.type, registerItem, toggleValue],
   );
 
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   const groupNode = props.asChild ? (
     (() => {
@@ -169,4 +169,5 @@ export function ToggleGroupRoot(props: ToggleGroupProps) {
   );
 
   return <ToggleGroupContextProvider value={contextValue}>{groupNode}</ToggleGroupContextProvider>;
-}
+});
+ToggleGroupRoot.displayName = "ToggleGroupRoot";

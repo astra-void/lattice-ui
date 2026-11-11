@@ -9,8 +9,8 @@ const NEUTRAL_PROPS = {
   BorderSizePixel: 0,
 };
 
-export function ComboboxSeparator(props: ComboboxSeparatorProps) {
-  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS);
+export const ComboboxSeparator = React.forwardRef<Frame, ComboboxSeparatorProps>((props, forwardedRef) => {
+  const passthrough = getPassthroughProps<Frame>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -27,4 +27,5 @@ export function ComboboxSeparator(props: ComboboxSeparatorProps) {
       {props.children}
     </frame>
   );
-}
+});
+ComboboxSeparator.displayName = "ComboboxSeparator";

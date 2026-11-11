@@ -11,11 +11,11 @@ const NEUTRAL_PROPS = {
   Text: "",
 };
 
-export function TextFieldDescription(props: TextFieldDescriptionProps) {
+export const TextFieldDescription = React.forwardRef<TextLabel, TextFieldDescriptionProps>((props, forwardedRef) => {
   // Renders nothing of its own, but must still be inside a `TextField.Root`.
   useTextFieldContext();
 
-  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS);
+  const passthrough = getPassthroughProps<TextLabel>(props, OWN_PROPS, forwardedRef);
 
   if (props.asChild) {
     const child = props.children;
@@ -32,4 +32,5 @@ export function TextFieldDescription(props: TextFieldDescriptionProps) {
       {props.children}
     </textlabel>
   );
-}
+});
+TextFieldDescription.displayName = "TextFieldDescription";
