@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-11
+
+This release closes out the 2026-11 audit. Every primitive can now be driven without a pointer: overlays close with the platform back key, triggers, close buttons, checkboxes, switches, combobox inputs and context menus are reachable and activatable from the keyboard and gamepad, and ordered navigation follows the layout rather than mount order. The headless contract is tightened too: the remaining presence recipes that hardcoded an appearance are gone, every part forwards a consumer `ref` to the instance it renders, and the state that removed visuals used to show is exposed through context hooks. The `lattice` CLI keeps every `@lattice-ui/*` package on one version and stops touching the project while it detects package managers.
+
+Migration notes:
+
+- The presence recipes are removed: `createSurfaceRevealRecipe`, `createCanvasGroupRevealRecipe`, `createToastRevealRecipe`, `createOverlayFadeRecipe`, `createPopperEntranceRecipe`, `createCanvasGroupPopperEntranceRecipe` and `createIndicatorRevealRecipe`. If you passed one as a `transition`, write that `PresenceMotionConfig` in your app; `motionDuration`, `motionExitDuration`, `motionOffset` and `createPlacementOffset` stay exported for it.
+- On `Box` and `Text`, direct props now win over `sx`, as they already did on `Stack`, `Row`, `Grid` and `Surface`. If you relied on `sx` overriding a direct prop, drop the direct prop or move the value into `sx`.
+- `createRecipe` merges variant groups in ascending group-name order. When two groups set the same property, use a compound variant to choose the winner.
+- Under `SystemProvider`, `useTheme().setTheme` writes the base theme and density is applied on top, so pass a base theme rather than a density-resolved one.
+- `lattice upgrade` always moves every installed `@lattice-ui/*` package together and no longer offers a package selection. A confirmation with no terminal attached now fails with exit code 2 instead of answering "no"; pass `--yes` in scripts and CI.
+
+### Added
+
+- Every part that renders an instance forwards a consumer `ref` to it, so `<Menu.Content ref={contentRef}>`, `<Dialog.Trigger ref={anchorRef}>` and the rest can be measured, used as popper anchors or focused. `getPassthroughProps` takes the forwarded ref as an optional third argument. `Box`, `Text`, `Stack`, `Row`, `Grid` and `Surface` forward `ref` as well.
+- State context hooks for primitives whose built-in visuals were removed: `useTabsTriggerContext` (`selected`), `useToggleGroupItemContext` (`pressed`), `useAccordionItemContext` (`open`), `useCheckboxContext` (`checked`, including `"indeterminate"`), `useProgressContext` (`value`, `max`, `ratio`, `indeterminate`), and `useTextFieldContext` / `useTextareaContext` with a new `focused` flag that lives on the Root.
+- Overlays close with the platform back key: `ButtonB` on gamepad and `Backspace` on keyboard (ignored while a `TextBox` is focused) dismiss the top-most layer. Roblox reserves Escape, so it is not bound. Every `Content` part and `DismissableLayer` accept `onEscapeKeyDown`; call `event.preventDefault()` to keep the overlay open.
+- `Combobox` can be driven without a pointer: Up/Down in the input move a highlighted item (the first press opens a closed list), Enter commits it, and `useComboboxItemContext().highlighted` reflects keyboard and pointer alike.
+- `ContextMenu` works with keyboard, gamepad and touch: its content is an ordered, vertical focus scope like `Menu.Content`, and the trigger also opens on a touch long-press.
+- `ToggleGroup.Root` takes an `orientation` prop, and arrow keys move focus between enabled items in layout order.
+- `useLoopMotion` in `@lattice-ui/react-motion`, a continuous property loop driven by the motion scheduler that rests when motion is disabled or reduced. `Progress.Spinner` rotates through it.
+- `useFocusNode`'s `onFocusChange` receives a `source` (`"navigation"` or `"programmatic"`), and `isNativeSelectionChange()` is exported for `SelectionGained` handlers on inline widgets.
+- `@lattice-ui/react-runtime` exports `toCloneElementProps` and `flushSync`.
+- `@lattice-ui/react-tooltip` and `@lattice-ui/react-toast` export each part by name next to the namespace object; Toast also exports `clearToasts`, `finalizeToast` and `TOAST_EXIT_TIMEOUT_MS`.
+- READMEs for checkbox, context-menu, dialog, layer, menu, popover, radio-group, runtime, style, switch, system and tooltip, which shipped with empty npm pages.
+
+### Changed
+
+- While the navigation controller is bound it also turns off `GuiService.GuiNavigationEnabled`, restoring the previous value when it unbinds, so the engine's own arrow-key selection can no longer pull focus out of an open Select or Menu.
+- Ordered navigation, Tab, and the arrow-key roving in `Tabs` and `RadioGroup` follow the layout (`LayoutOrder`, or `Name` under `SortOrder.Name`) instead of mount order.
+- `Checkbox.Root`, `Switch.Root`, `Combobox.Input`, `Tooltip.Trigger`, `Dialog.Close`, `Popover.Close` and context-menu items register focus nodes; checkbox, switch, combobox, context-menu and tooltip now depend on `@lattice-ui/react-focus`.
+- `Select.Content` traps focus while open and moves it onto the selected (or first enabled) item on open.
+- `Tooltip.Trigger` opens from managed focus instead of the engine's `SelectionGained`/`SelectionLost`.
+- `@lattice-ui/react-popper` no longer depends on `@lattice-ui/react-motion`.
+- CLI: `lattice add` installs new packages at the version the project already uses and warns when installed packages disagree. `create` and `init` resolve versions from the configured registry (`npm_config_registry`, `.npmrc`, scoped registries and their tokens). With several package managers and no lockfile or pin, `--yes` takes the default instead of failing. Global `--verbose` and `--yes` / `-y` are accepted before the command name.
+
+### Deprecated
+
+- `Progress.Root`'s `onValueChange`. Progress is display-only and never called it.
+
+### Removed
+
+- The presence recipes listed in the migration notes.
+- The unused legacy `FocusScope/focusManager.ts` and `FocusScope/scopeStack.ts` modules, which wrote `GuiService.SelectedObject` outside the focus bridge.
+
+### Fixed
+
+- `Dialog.Trigger` and `Popover.Trigger` activate with Enter/ButtonA, and `Dialog.Close` / `Popover.Close` are reachable from the keyboard and gamepad.
+- Opening a trapped scope no longer changes a `RadioGroup` or `Tabs` value; items select on focus only when the user's navigation moved it.
+- Cross-axis moves in an `"ordered"` scope escape to the parent scope instead of landing diagonally on a sibling.
+- The navigation controller no longer swallows the left thumbstick while nothing in the UI is focused, and a cancelled stick input stops auto-repeat.
+- `Menu` moves focus to its first item once per open instead of on every item mount or unmount.
+- `Event` and `Change` handlers passed to a `Content` part with `asChild` connect instead of reaching the instance unconverted.
+- Clicks just above or below an open layer dismiss it again; the outside-press test no longer counted a GUI-inset-tall band as inside.
+- `Portal` with an explicit `container` renders without a `PortalProvider`.
+- `usePresenceMotion` no longer restarts a reveal when re-rendered with a fresh config object, and reopening during an exit reverses from the current values.
+- A controlled `TextField` or `Textarea` keeps showing its value when the consumer rejects or rewrites an edit.
+- `Select.Value` shows the selected item's `textValue` while the popup is closed.
+- `Combobox.Input` respects a consumer `PlaceholderText`, and Up/Down move the highlight while typing.
+- `ScrollArea` with `type="always"` shows its scrollbars without overflow, and the thumb is sized against its measured track.
+- `Slider` values snapped to a fractional `step` no longer carry floating-point noise.
+- `Avatar.Image` works with an `imagebutton` under `asChild`, and `delayMs` applies when `src` is only on `Avatar.Image`.
+- `Progress.Indicator` uses the context's indeterminate ratio, and a fractional `max` is no longer floored to 1.
+- `Tabs.Content` names its default frame `TabsContent:<value>`, as the `asChild` path already did.
+- `useTheme().setTheme` works inside a `SystemProvider` tree.
+- `createRecipe` results no longer depend on Luau table iteration order.
+- CLI: package-manager detection probes from the temp directory instead of the project and finds a workspace's shared lockfile; the package-manager pin is written only after confirmation; Ctrl+C at a text or y/N prompt exits 130 quietly; the generated `.gitignore` is created by `create` and `init`; Windows command lines are quoted correctly and project links use real `file://` URLs.
+
 ## [0.8.1] - 2026-08-10
 
 ### Fixed
