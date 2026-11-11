@@ -41,6 +41,7 @@
     "lattice-ui"
   ],
   "requiredFiles": [
+    "README.md",
     "default.project.json",
     "src/index.ts",
     "tsconfig.json",
